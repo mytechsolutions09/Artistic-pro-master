@@ -1,0 +1,6 @@
+title,price,category,description,tags,status,featured,image
+"Ethereal Dreams",29.99,"Abstract","A mesmerizing abstract piece that captures the essence of dreams and imagination.","digital,abstract,colorful",active,true,"https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=600"
+"Majestic Wolf",34.99,"Animals","A powerful portrait of a wolf in its natural habitat, showcasing the beauty of wildlife.","wildlife,nature,portrait",active,false,"https://images.pexels.com/photos/247502/pexels-photo-247502.jpeg?auto=compress&cs=tinysrgb&w=600"
+"Vintage Sports Car",39.99,"Cars","A stunning vintage sports car that embodies the golden age of automotive design.","vintage,automotive,classic",draft,false,"https://images.pexels.com/photos/210019/pexels-photo-210019.jpeg?auto=compress&cs=tinysrgb&w=600"
+"Sunset Over Mountains",24.99,"Landscape","A breathtaking landscape capturing the golden hour over majestic mountain peaks.","landscape,nature,sunset",active,false,"https://images.pexels.com/photos/2387866/pexels-photo-2387866.jpeg?auto=compress&cs=tinysrgb&w=600"
+"Urban Street Art",19.99,"Street Art","Vibrant street art that brings urban culture and creativity to life.","street art,urban,graffiti",active,true,"https://images.pexels.com/photos/3807755/pexels-photo-3807755.jpeg?auto=compress&cs=tinysrgb&w=600"

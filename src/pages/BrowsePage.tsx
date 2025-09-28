@@ -1,0 +1,365 @@
+import React, { useState, useEffect } from 'react';
+import { useProducts } from '../contexts/ProductContext';
+import FilterSidebar from '../components/FilterSidebar';
+import ProductCard from '../components/ProductCard';
+import { Product } from '../types';
+
+const BrowsePage: React.FC = () => {
+  const { adminProducts, loading, error } = useProducts();
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12; // Fixed items per load for infinite scroll
+  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [filters, setFilters] = useState({
+    priceRange: [0, 10000] as [number, number],
+    rating: 0,
+    featured: false,
+    sortBy: 'relevance',
+    category: undefined as string | undefined,
+    productType: 'all' as 'digital' | 'poster' | 'all',
+    tags: [] as string[],
+    status: 'all' as 'active' | 'inactive' | 'all'
+  });
+
+  useEffect(() => {
+    // Set initial filtered products when adminProducts change
+    setFilteredProducts(adminProducts);
+  }, [adminProducts]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [filters, adminProducts]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setDisplayedProducts([]);
+    setHasMore(true);
+  }, [filters]);
+
+  // Update displayed products for infinite scroll
+  useEffect(() => {
+    const endIndex = currentPage * itemsPerPage;
+    setDisplayedProducts(filteredProducts.slice(0, endIndex));
+    setHasMore(endIndex < filteredProducts.length);
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  const applyFilters = () => {
+    let filtered = [...adminProducts];
+
+    // Category filter
+    if (filters.category) {
+      filtered = filtered.filter(product => {
+        // Handle both old single category and new categories array
+        if (product.categories && Array.isArray(product.categories)) {
+          return product.categories.includes(filters.category!);
+        }
+        // Fallback for old data structure
+        return (product as any).category === filters.category;
+      });
+    }
+
+    // Product type filter
+    if (filters.productType !== 'all') {
+      filtered = filtered.filter(product => product.productType === filters.productType);
+    }
+
+    // Tags filter
+    if (filters.tags && filters.tags.length > 0) {
+      filtered = filtered.filter(product => 
+        filters.tags.some(tag => product.tags && product.tags.includes(tag))
+      );
+    }
+
+    // Status filter
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(product => product.status === filters.status);
+    }
+
+    // Price filter
+    filtered = filtered.filter(product => 
+      product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1]
+    );
+
+    // Rating filter
+    if (filters.rating > 0) {
+      filtered = filtered.filter(product => product.rating >= filters.rating);
+    }
+
+    // Featured filter
+    if (filters.featured) {
+      filtered = filtered.filter(product => product.featured);
+    }
+
+    // Sort
+    switch (filters.sortBy) {
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        filtered.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'downloads':
+        filtered.sort((a, b) => b.downloads - a.downloads);
+        break;
+      case 'relevance':
+      case 'newest':
+      default:
+        filtered.sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
+        break;
+    }
+
+    setFilteredProducts(filtered);
+  };
+
+  const updateFilters = (newFilters: Partial<typeof filters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
+
+  // Infinite scroll handler
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMore) return;
+    
+    setLoadingMore(true);
+    setTimeout(() => {
+      setCurrentPage(prev => prev + 1);
+      setLoadingMore(false);
+    }, 500); // Simulate loading delay
+  };
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && hasMore && !loadingMore) {
+          handleLoadMore();
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '100px'
+      }
+    );
+
+    const loadMoreTrigger = document.getElementById('load-more-trigger');
+    if (loadMoreTrigger) {
+      observer.observe(loadMoreTrigger);
+    }
+
+    return () => {
+      if (loadMoreTrigger) {
+        observer.unobserve(loadMoreTrigger);
+      }
+    };
+  }, [hasMore, loadingMore]);
+
+  // Check if there are more products to load
+  const hasMoreProducts = hasMore;
+
+  // Get unique categories from admin products
+  const getUniqueCategories = () => {
+    // Flatten all categories from all products and get unique ones
+    const allCategories = adminProducts.flatMap(product => {
+      // Handle both old single category and new categories array
+      if (product.categories && Array.isArray(product.categories)) {
+        return product.categories;
+      }
+      // Fallback for old data structure
+      return (product as any).category ? [(product as any).category] : [];
+    });
+    
+    const uniqueCategories = Array.from(new Set(allCategories.filter(Boolean)));
+    
+    return uniqueCategories.map(category => ({
+      id: category,
+      name: category.charAt(0).toUpperCase() + category.slice(1),
+      slug: category
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading products</h3>
+          <p className="text-gray-500 mb-4">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-gray-800 mb-1">Browse All Artwork</h1>
+            <p className="text-xs text-gray-500">
+              All artwork
+            </p>
+          </div>
+        </div>
+
+        {/* Top Controls Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-3 sm:space-y-0">
+          {/* Left Side - Filters Button */}
+          <div>
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2 text-xs"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <span>All Filters</span>
+            </button>
+          </div>
+          
+          {/* Right Side - Categories and Sort */}
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            {/* Categories Filter */}
+            <div className="flex items-center space-x-2">
+              <label className="text-xs text-gray-700">Category:</label>
+              <select
+                value={filters.category || 'all'}
+                onChange={(e) => updateFilters({ category: e.target.value === 'all' ? undefined : e.target.value })}
+                className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              >
+                <option value="all">All Categories</option>
+                {getUniqueCategories().map((category) => (
+                  <option key={category.id} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sort Options */}
+            <div className="flex items-center space-x-2">
+              <label className="text-xs text-gray-700">Sort by:</label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => updateFilters({ sortBy: e.target.value })}
+                className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="rating">Highest Rated</option>
+                <option value="downloads">Most Popular</option>
+                <option value="newest">Newest First</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Results count */}
+        <div className="mb-4 text-sm text-gray-600">
+          Showing {displayedProducts.length} of {filteredProducts.length} products
+          {hasMore && <span className="text-pink-500"> • Scroll for more</span>}
+        </div>
+
+
+        {/* Products Grid */}
+        <div className="flex-1">
+          {displayedProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {displayedProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="text-gray-400 mb-4">
+                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47-.881-6.08-2.33" />
+                </svg>
+              </div>
+              <h3 className="text-base font-medium text-gray-900 mb-2">No products found</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Try adjusting your filters or browse other categories
+              </p>
+              <button
+                onClick={() => setFilters({
+                  priceRange: [0, 10000] as [number, number],
+                  rating: 0,
+                  featured: false,
+                  sortBy: 'relevance',
+                  category: undefined,
+                  productType: 'all',
+                  tags: [],
+                  status: 'all'
+                })}
+                className="text-pink-500 hover:text-pink-600 font-medium text-sm"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Infinite Scroll Trigger */}
+        {hasMoreProducts && (
+          <div id="load-more-trigger" className="mt-8 flex items-center justify-center">
+            {loadingMore ? (
+              <div className="flex items-center space-x-2 text-gray-600">
+                <div className="w-5 h-5 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm">Loading more products...</span>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 text-sm">
+                Scroll down to load more products
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* End of results message */}
+        {!hasMoreProducts && displayedProducts.length > 0 && (
+          <div className="mt-8 text-center text-gray-500 text-sm">
+            You've reached the end of the results ({displayedProducts.length} products)
+          </div>
+        )}
+      </div>
+
+      {/* Filters Sidebar - Modal (Outside main content flow) */}
+      {showFilters && (
+        <FilterSidebar 
+          filters={filters}
+          onFilterChange={updateFilters}
+          products={adminProducts}
+          onClose={() => setShowFilters(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default BrowsePage;

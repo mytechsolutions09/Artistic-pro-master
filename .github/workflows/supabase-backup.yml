@@ -1,0 +1,24 @@
+name: supabase-backup
+on:
+  workflow_dispatch:  # lets you trigger manually from GitHub UI
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run pg_dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          pg_dump "$DATABASE_URL?sslmode=require" \
+            --format=custom \
+            --file=supabase_backup.dump
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup
+          path: supabase_backup.dump
