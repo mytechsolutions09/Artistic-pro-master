@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 import FilterSidebar from '../components/FilterSidebar';
 import ProductCard from '../components/ProductCard';
+import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import { Product } from '../types';
 
 const BrowsePage: React.FC = () => {
@@ -24,9 +25,16 @@ const BrowsePage: React.FC = () => {
     status: 'all' as 'active' | 'inactive' | 'all'
   });
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, []);
+
   useEffect(() => {
     // Set initial filtered products when adminProducts change
     setFilteredProducts(adminProducts);
+    // Scroll to top when products load
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   }, [adminProducts]);
 
   useEffect(() => {
@@ -38,16 +46,33 @@ const BrowsePage: React.FC = () => {
     setCurrentPage(1);
     setDisplayedProducts([]);
     setHasMore(true);
+    // Scroll to top when filters change
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   }, [filters]);
 
   // Update displayed products for infinite scroll
   useEffect(() => {
     const endIndex = currentPage * itemsPerPage;
-    setDisplayedProducts(filteredProducts.slice(0, endIndex));
+    const newDisplayedProducts = filteredProducts.slice(0, endIndex);
+    setDisplayedProducts(newDisplayedProducts);
     setHasMore(endIndex < filteredProducts.length);
+    
+    // Debug logging
+    console.log('BrowsePage - Updated displayed products:', {
+      currentPage,
+      endIndex,
+      filteredProductsLength: filteredProducts.length,
+      displayedProductsLength: newDisplayedProducts.length,
+      hasMore: endIndex < filteredProducts.length
+    });
   }, [filteredProducts, currentPage, itemsPerPage]);
 
   const applyFilters = () => {
+    console.log('BrowsePage - Applying filters:', {
+      adminProductsLength: adminProducts.length,
+      filters
+    });
+    
     let filtered = [...adminProducts];
 
     // Category filter
@@ -115,6 +140,12 @@ const BrowsePage: React.FC = () => {
         break;
     }
 
+    console.log('BrowsePage - Filtered products result:', {
+      originalLength: adminProducts.length,
+      filteredLength: filtered.length,
+      firstFewProducts: filtered.slice(0, 3).map(p => ({ id: p.id, title: p.title }))
+    });
+    
     setFilteredProducts(filtered);
   };
 
@@ -187,10 +218,31 @@ const BrowsePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading products...</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Skeleton */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <div className="space-y-2">
+                <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded w-24 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Products Grid Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(12)].map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -329,9 +381,12 @@ const BrowsePage: React.FC = () => {
         {hasMoreProducts && (
           <div id="load-more-trigger" className="mt-8 flex items-center justify-center">
             {loadingMore ? (
-              <div className="flex items-center space-x-2 text-gray-600">
-                <div className="w-5 h-5 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-sm">Loading more products...</span>
+              <div className="w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[...Array(4)].map((_, index) => (
+                    <ProductCardSkeleton key={`loading-${index}`} />
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="text-center text-gray-500 text-sm">
