@@ -9,7 +9,7 @@ export interface ArtWork {
   rating: number;
   tags: string[];
   // Additional fields for order items
-  productType?: 'digital' | 'poster';
+  productType?: 'digital' | 'poster' | 'clothing';
   posterSize?: string;
   itemDetails?: any;
 }
@@ -45,7 +45,7 @@ export interface CartItem {
   id: string;
   product: Product;
   quantity: number;
-  selectedProductType: 'digital' | 'poster';
+  selectedProductType: 'digital' | 'poster' | 'clothing';
   selectedPosterSize?: string;
   selectedPrice: number;
 }
@@ -104,7 +104,7 @@ export interface Product {
   pdf_url?: string; // PDF file URL (sent via email and available in profile)
   video_url?: string; // Product video URL
   image_url?: string; // For backward compatibility with supabase
-  productType: 'digital' | 'poster'; // Product type for different handling
+  productType: 'digital' | 'poster' | 'clothing'; // Product type for different handling
   posterSize?: string; // Size for poster products (e.g., "A4", "A3", "A2", "A1")
   posterPricing?: Record<string, number>; // Pricing for each poster size
   featured: boolean;
@@ -138,6 +138,15 @@ export interface Product {
     ecoFriendly: string;
     uniqueFeatures: string;
   };
+  // Clothing-specific fields
+  productId?: string; // SKU (Stock Keeping Unit)
+  gender?: string; // 'Men', 'Women', or 'Unisex'
+  details?: string; // Product details (material, weight, features)
+  washCare?: string; // Washing and care instructions
+  shipping?: string; // Shipping information
+  clothingType?: string; // Type: Oversized Hoodies, Extra Oversized Hoodies, etc.
+  material?: string; // Fabric material
+  brand?: string; // Product brand
 }
 
 export interface HomepageSection {

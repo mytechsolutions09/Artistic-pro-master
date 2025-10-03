@@ -57,7 +57,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       if (error) throw error;
 
       if (data.user) {
-        console.log('User logged in:', data.user);
+
         
         // Handle remember me functionality
         if (rememberMe) {
@@ -123,12 +123,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               <div className="flex items-center justify-center mb-4">
                 <Link 
                   to="/"
-                  className="w-8 h-8 rounded flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer"
-                  style={{ 
-                    background: `linear-gradient(to bottom right, ${settings.themeColors.pink}, ${settings.themeColors.darkPink})` 
-                  }}
+                  className="hover:scale-110 transition-transform duration-200 cursor-pointer"
                 >
-                  <span className="text-white font-bold text-sm">A</span>
+                  <img 
+                    src="/arvexa-logo.svg" 
+                    alt="ARVEXA" 
+                    className="h-8 w-auto"
+                  />
                 </Link>
               </div>
 

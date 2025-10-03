@@ -43,11 +43,11 @@ const Categories: React.FC = () => {
   // Create category
   const handleCreateCategory = async (categoryData: any) => {
     try {
-      console.log('Creating category from Categories page:', categoryData);
+
       const result = await categoryService.createCategory(categoryData);
       
       if (result) {
-        console.log('Category created successfully, refreshing list');
+
         await loadCategories();
         setShowCreateModal(false);
       } else {
@@ -137,7 +137,7 @@ const Categories: React.FC = () => {
         <div className="flex items-center justify-between">
             <div>
             <h2 className="text-xl font-bold text-gray-800">Category Management</h2>
-            <p className="text-sm text-gray-600">Organize your art gallery categories</p>
+            <p className="text-sm text-gray-600">Organize your ARVEXA categories</p>
               </div>
           <div className="flex items-center space-x-2">
               <button
@@ -218,7 +218,7 @@ const Categories: React.FC = () => {
                 setSortBy(field);
                 setSortOrder(order as 'asc' | 'desc');
               }}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+              className="sort-dropdown"
             >
               <option value="name-asc">Name A-Z</option>
               <option value="name-desc">Name Z-A</option>

@@ -41,7 +41,7 @@ export function isMemoryUsageHigh(threshold: number = 80): boolean {
 export function logMemoryUsage(prefix: string = 'Memory'): void {
   const stats = getMemoryStats();
   if (stats) {
-    console.log(`${prefix}: ${stats.usagePercentage}% (${formatBytes(stats.usedJSHeapSize)}/${formatBytes(stats.jsHeapSizeLimit)})`);
+
   }
 }
 

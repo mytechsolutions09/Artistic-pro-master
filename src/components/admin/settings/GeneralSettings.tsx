@@ -3,24 +3,24 @@ import { Save, Globe, Building, Mail } from 'lucide-react';
 
 const GeneralSettings: React.FC = () => {
   const [settings, setSettings] = useState({
-    siteName: 'ArtGallery',
+    siteName: 'ARVEXA',
     siteDescription: 'Premium digital art marketplace',
-    siteUrl: 'https://artgallery.com',
-    contactEmail: 'contact@artgallery.com',
-    supportEmail: 'support@artgallery.com',
+    siteUrl: 'https://arvexa.com',
+    contactEmail: 'contact@arvexa.com',
+    supportEmail: 'support@arvexa.com',
     phoneNumber: '+1 (555) 123-4567',
     address: '123 Art Street, Creative City, CC 12345',
-    companyName: 'ArtGallery Inc.',
+    companyName: 'ARVEXA Inc.',
     timezone: 'America/New_York',
     language: 'en',
     maintenanceMode: false,
     registrationEnabled: true,
-    termsUrl: 'https://artgallery.com/terms',
-    privacyUrl: 'https://artgallery.com/privacy'
+    termsUrl: 'https://arvexa.com/terms',
+    privacyUrl: 'https://arvexa.com/privacy'
   });
 
   const handleSave = () => {
-    console.log('Saving general settings:', settings);
+
     // Add save logic here
   };
 

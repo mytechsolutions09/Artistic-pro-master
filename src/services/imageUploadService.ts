@@ -107,9 +107,9 @@ export class ImageUploadService {
       const filePath = `${folder}/${fileName}`;
 
       // Debug logging
-      console.log('Attempting to upload to bucket:', bucketConfig.name);
-      console.log('File path:', filePath);
-      console.log('Supabase client:', supabase);
+
+
+
       
       // Upload file with optimized caching headers to reduce egress costs
       const { error } = await supabase.storage
@@ -128,12 +128,6 @@ export class ImageUploadService {
       const { data: urlData } = supabase.storage
         .from(bucketConfig.name)
         .getPublicUrl(filePath);
-
-      console.log('File upload successful:', {
-        filePath,
-        publicUrl: urlData.publicUrl,
-        bucket: bucketConfig.name
-      });
 
       return {
         success: true,
@@ -276,7 +270,7 @@ export class ImageUploadService {
    */
   static async testBucketConnection(bucketType: BucketType = this.DEFAULT_BUCKET): Promise<{ success: boolean; error?: string; bucketInfo?: any }> {
     try {
-      console.log('🔍 Testing storage bucket connection...');
+
       
       const bucketConfig = this.BUCKETS[bucketType];
       if (!bucketConfig) {
@@ -299,7 +293,7 @@ export class ImageUploadService {
         };
       }
       
-      console.log('✅ Bucket found:', targetBucket);
+
       
       // Test upload permissions with a small test file
       const testContent = 'test';
@@ -320,7 +314,7 @@ export class ImageUploadService {
         };
       }
       
-      console.log('✅ Upload test successful:', uploadData);
+
       
       // Clean up test file
       const { error: deleteError } = await supabase.storage

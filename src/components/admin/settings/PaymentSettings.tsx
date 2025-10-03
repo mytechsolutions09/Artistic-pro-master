@@ -30,7 +30,7 @@ const PaymentSettings: React.FC = () => {
   });
 
   const handleSave = () => {
-    console.log('Saving payment settings:', settings);
+
     // Add save logic here
   };
 

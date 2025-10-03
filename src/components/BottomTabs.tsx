@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Grid3X3, ShoppingCart, User, LogIn, Heart, Palette } from 'lucide-react';
+import { Home, Grid3X3, ShoppingCart, User, LogIn, Heart, Palette, Shirt } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { CartManager } from '../services/orderService';
 
@@ -69,7 +69,7 @@ const BottomTabs: React.FC = () => {
           <span className="text-xs font-medium">Categories</span>
         </Link>
 
-        {/* Browse Tab */}
+        {/* Art Tab */}
         <Link
           to="/browse"
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
@@ -83,7 +83,24 @@ const BottomTabs: React.FC = () => {
           }`}>
             <Palette className="w-4 h-4" />
           </div>
-          <span className="text-xs font-medium">Browse</span>
+          <span className="text-xs font-medium">Art</span>
+        </Link>
+
+        {/* Clothes Tab */}
+        <Link
+          to="/men"
+          className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-lg transition-all duration-200 ${
+            isActiveTab('/men') 
+              ? 'text-pink-600' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+            isActiveTab('/men') ? 'bg-pink-100' : 'bg-gray-100'
+          }`}>
+            <Shirt className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-medium">Clothes</span>
         </Link>
 
         {/* Favorites Tab */}

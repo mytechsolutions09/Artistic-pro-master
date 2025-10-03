@@ -57,23 +57,30 @@ const BrowsePage: React.FC = () => {
     setDisplayedProducts(newDisplayedProducts);
     setHasMore(endIndex < filteredProducts.length);
     
-    // Debug logging
-    console.log('BrowsePage - Updated displayed products:', {
-      currentPage,
-      endIndex,
-      filteredProductsLength: filteredProducts.length,
-      displayedProductsLength: newDisplayedProducts.length,
-      hasMore: endIndex < filteredProducts.length
-    });
+    // Debug logging removed
   }, [filteredProducts, currentPage, itemsPerPage]);
 
   const applyFilters = () => {
-    console.log('BrowsePage - Applying filters:', {
-      adminProductsLength: adminProducts.length,
-      filters
-    });
     
     let filtered = [...adminProducts];
+
+    // Exclude clothing products from browse page
+    filtered = filtered.filter(product => {
+      // Exclude if product has gender field (clothing indicator)
+      if (product.gender) return false;
+      
+      // Exclude if categories contain clothing-related keywords
+      if (product.categories && Array.isArray(product.categories)) {
+        const hasClothingCategory = product.categories.some((cat: string) => 
+          ['men', 'women', 'clothing'].some(keyword => 
+            cat.toLowerCase().includes(keyword)
+          )
+        );
+        if (hasClothingCategory) return false;
+      }
+      
+      return true;
+    });
 
     // Category filter
     if (filters.category) {
@@ -140,12 +147,6 @@ const BrowsePage: React.FC = () => {
         break;
     }
 
-    console.log('BrowsePage - Filtered products result:', {
-      originalLength: adminProducts.length,
-      filteredLength: filtered.length,
-      firstFewProducts: filtered.slice(0, 3).map(p => ({ id: p.id, title: p.title }))
-    });
-    
     setFilteredProducts(filtered);
   };
 
@@ -195,7 +196,7 @@ const BrowsePage: React.FC = () => {
   // Check if there are more products to load
   const hasMoreProducts = hasMore;
 
-  // Get unique categories from admin products
+  // Get unique categories from admin products (excluding clothing categories)
   const getUniqueCategories = () => {
     // Flatten all categories from all products and get unique ones
     const allCategories = adminProducts.flatMap(product => {
@@ -207,7 +208,12 @@ const BrowsePage: React.FC = () => {
       return (product as any).category ? [(product as any).category] : [];
     });
     
-    const uniqueCategories = Array.from(new Set(allCategories.filter(Boolean)));
+    // Exclude clothing-related categories
+    const uniqueCategories = Array.from(new Set(allCategories.filter(cat => {
+      if (!cat) return false;
+      const lowerCat = cat.toLowerCase();
+      return !['men', 'women', 'clothing'].some(keyword => lowerCat.includes(keyword));
+    })));
     
     return uniqueCategories.map(category => ({
       id: category,
@@ -268,75 +274,52 @@ const BrowsePage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Header Card with Controls in Same Row */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-800 mb-1">Browse All Artwork</h1>
-            <p className="text-xs text-gray-500">
-              All artwork
-            </p>
-          </div>
-        </div>
-
-        {/* Top Controls Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-3 sm:space-y-0">
-          {/* Left Side - Filters Button */}
-          <div>
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2 text-xs"
-            >
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              <span>All Filters</span>
-            </button>
-          </div>
-          
-          {/* Right Side - Categories and Sort */}
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            {/* Categories Filter */}
-            <div className="flex items-center space-x-2">
-              <label className="text-xs text-gray-700">Category:</label>
-              <select
-                value={filters.category || 'all'}
-                onChange={(e) => updateFilters({ category: e.target.value === 'all' ? undefined : e.target.value })}
-                className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            {/* Left Side - Filters Button */}
+            <div className="flex justify-center lg:justify-start">
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2 text-sm"
               >
-                <option value="all">All Categories</option>
-                {getUniqueCategories().map((category) => (
-                  <option key={category.id} value={category.slug}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span>All Filters</span>
+              </button>
             </div>
 
-            {/* Sort Options */}
-            <div className="flex items-center space-x-2">
-              <label className="text-xs text-gray-700">Sort by:</label>
-              <select
-                value={filters.sortBy}
-                onChange={(e) => updateFilters({ sortBy: e.target.value })}
-                className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              >
-                <option value="relevance">Relevance</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-                <option value="downloads">Most Popular</option>
-                <option value="newest">Newest First</option>
-              </select>
+            {/* Center - Header Content */}
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-gray-800 mb-1">Art</h1>
+              <p className="text-xs text-gray-500">
+                Discover amazing digital art from all categories
+              </p>
             </div>
 
+            {/* Right Side - Sort */}
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+              {/* Sort Options */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm text-gray-700">Sort by:</label>
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => updateFilters({ sortBy: e.target.value })}
+                  className="sort-dropdown"
+                >
+                  <option value="relevance">Relevance</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="downloads">Most Popular</option>
+                  <option value="newest">Newest First</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Results count */}
-        <div className="mb-4 text-sm text-gray-600">
-          Showing {displayedProducts.length} of {filteredProducts.length} products
-          {hasMore && <span className="text-pink-500"> • Scroll for more</span>}
-        </div>
 
 
         {/* Products Grid */}

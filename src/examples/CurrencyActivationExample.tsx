@@ -156,14 +156,14 @@ const { activateCurrency, deactivateCurrency, updateDefaultCurrency } = useCurre
 // Activate a currency
 const result = activateCurrency('EUR');
 if (result.success) {
-  console.log('EUR activated successfully');
+
 } else {
   console.error(result.message);
 }
 
 // Change default currency
 const defaultResult = updateDefaultCurrency('GBP');
-console.log(defaultResult.message);
+
 
 // Using Currency Service directly
 import CurrencyService from '../services/currencyService';
@@ -176,8 +176,8 @@ const canDeactivate = CurrencyService.canDeactivateCurrency('USD');
 
 // Get currency details
 const details = CurrencyService.getCurrencyDetails('EUR');
-console.log('Is default:', details.isDefault);
-console.log('Can deactivate:', details.canDeactivate);`}
+
+
         </pre>
       </div>
 

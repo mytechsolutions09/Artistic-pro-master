@@ -56,7 +56,7 @@ export class CompleteOrderService {
    */
   static async completeOrder(orderData: CompleteOrderData): Promise<OrderCompletionResult> {
     try {
-      console.log('🛒 Starting order completion process...', orderData);
+
 
       // Step 1: Create order in database
       const orderResult = await this.createOrderInDatabase(orderData);
@@ -91,12 +91,6 @@ export class CompleteOrderService {
 
       // Step 6: Update product download counts
       await this.updateProductDownloadCounts(orderData.items);
-
-      console.log('✅ Order completion successful:', {
-        orderId,
-        emailSent: emailResult.success,
-        downloadLinksCount: downloadLinks.length
-      });
 
       return {
         success: true,
@@ -173,7 +167,7 @@ export class CompleteOrderService {
         return { success: false, error: `Failed to create order items: ${itemsError.message}` };
       }
 
-      console.log('✅ Order created in database:', order.id);
+
       return { success: true, orderId: order.id };
 
     } catch (error) {
@@ -288,7 +282,7 @@ export class CompleteOrderService {
         throw error;
       }
 
-      console.log('✅ Updated order with download links');
+
 
     } catch (error) {
       console.error('❌ Error updating order:', error);
@@ -301,7 +295,7 @@ export class CompleteOrderService {
    */
   private static async sendOrderConfirmationEmail(emailData: EmailData): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log('📧 Sending order confirmation email...', emailData.customerEmail);
+
 
       // Import EmailService dynamically to avoid circular dependencies
       const { EmailService } = await import('./emailService');
@@ -320,7 +314,7 @@ export class CompleteOrderService {
       );
 
       if (result.success) {
-        console.log('✅ Order confirmation email sent successfully via Hostinger SMTP');
+
         return { success: true };
       } else {
         console.warn('⚠️ Email sending failed:', result.error);
@@ -407,7 +401,7 @@ export class CompleteOrderService {
         </div>
 
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-          <p style="color: #666; margin: 0;">Thank you for choosing our digital art gallery!</p>
+          <p style="color: #666; margin: 0;">Thank you for choosing ARVEXA!</p>
           <p style="color: #666; margin: 5px 0 0 0;">If you have any questions, please contact our support team.</p>
         </div>
       </body>
@@ -442,7 +436,7 @@ export class CompleteOrderService {
         }
       }
 
-      console.log('✅ Updated product download counts');
+
 
     } catch (error) {
       console.error('❌ Error updating download counts:', error);
@@ -469,7 +463,9 @@ export class CompleteOrderService {
               id,
               title,
               main_image,
-              pdf_url
+              pdf_url,
+              gender,
+              categories
             )
           )
         `)

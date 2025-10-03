@@ -21,7 +21,7 @@ export class PasswordResetService {
    */
   static async requestPasswordReset(email: string): Promise<PasswordResetResult> {
     try {
-      console.log('🔐 Processing password reset request for:', email);
+
 
       // Check if user exists
       const { data: user, error: userError } = await supabase.auth.getUser();
@@ -63,7 +63,7 @@ export class PasswordResetService {
         // Don't fail the request if custom email fails
       }
 
-      console.log('✅ Password reset email sent successfully');
+
       return {
         success: true,
         message: 'Password reset email sent. Please check your inbox.'
@@ -83,7 +83,7 @@ export class PasswordResetService {
    */
   static async updatePasswordWithToken(token: string, newPassword: string): Promise<PasswordResetResult> {
     try {
-      console.log('🔐 Updating password with token');
+
 
       // In a real implementation, you would verify the token and update the password
       // For now, we'll use Supabase's built-in password reset flow
@@ -99,7 +99,7 @@ export class PasswordResetService {
         };
       }
 
-      console.log('✅ Password updated successfully');
+
       return {
         success: true,
         message: 'Password updated successfully. You can now sign in with your new password.'
@@ -141,7 +141,7 @@ export class PasswordResetService {
    */
   static async sendPasswordResetConfirmation(email: string): Promise<PasswordResetResult> {
     try {
-      console.log('📧 Sending password reset confirmation email to:', email);
+
 
       const result = await EmailService.sendEmail({
         to: { email, name: email.split('@')[0] },
@@ -211,7 +211,7 @@ export class PasswordResetService {
       });
 
       if (result.success) {
-        console.log('✅ Password reset confirmation email sent');
+
         return { success: true, message: 'Confirmation email sent' };
       } else {
         console.warn('⚠️ Password reset confirmation email failed:', result.error);

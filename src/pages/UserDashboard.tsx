@@ -177,7 +177,7 @@ const UserDashboard: React.FC = () => {
         const userId = user?.id;
         
         if (!userId) {
-          console.log('No authenticated user, skipping order fetch');
+
           setUserOrders([]);
           setOrdersLoading(false);
           return;
@@ -286,9 +286,9 @@ const UserDashboard: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      console.log('Logout button clicked');
+
       await signOut();
-      console.log('Sign out successful, navigating to home');
+
       // Redirect to homepage after logout
       navigate('/');
     } catch (error) {
@@ -442,10 +442,10 @@ const UserDashboard: React.FC = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Browse button clicked');
+
                     try {
                       navigate('/browse');
-                      console.log('Navigate called successfully');
+
                     } catch (error) {
                       console.error('Navigation error:', error);
                       window.location.href = '/browse';
@@ -459,7 +459,7 @@ const UserDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('Downloads button clicked');
+
                     setActiveTab('downloads');
                   }}
                   className="w-full bg-white text-gray-800 p-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 transform hover:scale-105 shadow-lg hover:shadow-xl"
@@ -633,7 +633,7 @@ const UserDashboard: React.FC = () => {
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
-                    console.log('Browse orders button clicked');
+
                     navigate('/browse');
                   }}
                   className="inline-flex items-center space-x-2 bg-white text-gray-800 px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-200 text-sm"
@@ -720,7 +720,7 @@ const UserDashboard: React.FC = () => {
 
     const handleRemoveFavorite = (artworkId: string) => {
       // In a real app, this would remove from backend
-      console.log('Removing favorite:', artworkId);
+
       // For now, just show an alert
       alert('Favorite removed! (This would be saved to your account in a real app)');
     };
@@ -1474,7 +1474,7 @@ const UserDashboard: React.FC = () => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Dashboard logout button clicked');
+
               handleLogout();
             }}
             className="flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 text-red-500 hover:text-red-700"

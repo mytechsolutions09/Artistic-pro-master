@@ -332,7 +332,7 @@ class CategoryService {
       }
       
       // If no Supabase data, return real business categories
-      console.log('No categories found in Supabase, using real business categories');
+
       return this.categories;
     } catch (error) {
       console.error('Error fetching categories from Supabase:', error);
@@ -379,7 +379,7 @@ class CategoryService {
   // Create new category
   async createCategory(categoryData: CreateCategoryData): Promise<Category | null> {
     try {
-      console.log('Creating category with data:', categoryData);
+
       
       // Ensure slug is not null or empty
       const slug = categoryData.slug || categoryData.name
@@ -402,7 +402,7 @@ class CategoryService {
         tags: categoryData.tags
       });
       
-      console.log('Supabase category created:', supabaseCategory);
+
       
       if (supabaseCategory) {
         // Transform Supabase data to match our Category interface
@@ -425,7 +425,7 @@ class CategoryService {
         
         // Also add to local array for consistency
         this.categories.push(newCategory);
-        console.log('Category created successfully:', newCategory);
+
         return newCategory;
       }
       
@@ -441,7 +441,7 @@ class CategoryService {
       };
       
       this.categories.push(newCategory);
-      console.log('Category created locally:', newCategory);
+
       return newCategory;
     } catch (error) {
       console.error('Error creating category:', error);

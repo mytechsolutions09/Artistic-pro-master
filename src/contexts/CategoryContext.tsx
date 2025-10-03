@@ -48,7 +48,7 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
   useEffect(() => {
     const autoRefreshCounts = async () => {
       if (categories.length > 0 && categories.every(cat => cat.count === 0)) {
-        console.log('All category counts are zero, refreshing counts...');
+
         await refreshCategoryCounts();
       }
     };
@@ -61,11 +61,11 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
     const interval = setInterval(async () => {
       // Only refresh if we have categories and memory usage is not high
       if (categories.length > 0 && !isMemoryUsageHigh(75)) {
-        console.log('Periodic category count refresh...');
+
         await refreshCategoryCounts();
         logMemoryUsage('CategoryContext - After Refresh');
       } else if (isMemoryUsageHigh(75)) {
-        console.log('Skipping category refresh due to high memory usage');
+
       }
     }, 60000); // Refresh every 60 seconds (reduced frequency)
 
@@ -75,7 +75,7 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
   // Listen for custom events to trigger immediate refresh
   useEffect(() => {
     const handleCategoryCountsUpdated = async () => {
-      console.log('Received categoryCountsUpdated event, refreshing...');
+
       await forceRefreshCounts();
     };
 
@@ -123,7 +123,7 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
   // Force refresh category counts (for immediate updates)
   const forceRefreshCounts = async () => {
     try {
-      console.log('Force refreshing category counts...');
+
       setError(null);
       
       // First refresh the counts in the database
@@ -132,7 +132,7 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
       // Then reload the categories without showing loading state
       const data = await categoryService.getAllCategories();
       setCategories(data);
-      console.log('Category counts force refreshed successfully');
+
     } catch (err) {
       console.error('Error force refreshing category counts:', err);
       setError(err instanceof Error ? err.message : 'Failed to force refresh category counts');

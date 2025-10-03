@@ -378,37 +378,6 @@ const CartPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            
-            {/* Benefits */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-4">
-              <h4 className="font-medium text-gray-800 mb-3 text-sm">Why Choose Digital Art?</h4>
-              <div className="space-y-2 text-xs text-gray-700">
-                <div className="flex items-start space-x-2">
-                  <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-blue-600 text-xs">✓</span>
-                  </div>
-                  <span>Instant download after purchase</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-blue-600 text-xs">✓</span>
-                  </div>
-                  <span>High-resolution files (300 DPI)</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-blue-600 text-xs">✓</span>
-                  </div>
-                  <span>Multiple formats (JPG, PNG, PDF)</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-blue-600 text-xs">✓</span>
-                  </div>
-                  <span>Lifetime access & re-download</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

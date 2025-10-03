@@ -301,7 +301,7 @@ const BulkProductImport: React.FC<BulkProductImportProps> = ({ onImport, onClose
 
       // Success notification
       const successMessage = `Import completed! ${results.imported} imported, ${results.updated} updated, ${results.skipped} skipped.`;
-      console.log(successMessage);
+
       
       if (results.errors.length > 0) {
         console.warn('Some products had errors:', results.errors);

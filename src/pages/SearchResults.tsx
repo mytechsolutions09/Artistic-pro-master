@@ -151,7 +151,7 @@ const SearchResults: React.FC = () => {
               <select
                 value={filters.sortBy}
                 onChange={(e) => updateFilters({ sortBy: e.target.value })}
-                className="border border-gray-300 rounded-md px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="sort-dropdown"
               >
                 <option value="relevance">Relevance</option>
                 <option value="price-low">Price: Low to High</option>

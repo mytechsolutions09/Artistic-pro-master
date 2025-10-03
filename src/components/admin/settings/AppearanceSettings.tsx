@@ -118,8 +118,8 @@ const AppearanceSettings: React.FC = () => {
       
       // Check current user authentication
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log('Current user:', user);
-      console.log('User email:', user?.email);
+
+
       
       if (userError) {
         console.error('User error:', userError);
@@ -134,9 +134,9 @@ const AppearanceSettings: React.FC = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `auth-images/backgrounds/${Date.now()}.${fileExt}`;
       
-      console.log('Uploading file:', fileName);
-      console.log('File size:', file.size);
-      console.log('File type:', file.type);
+
+
+
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('public')

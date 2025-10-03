@@ -252,17 +252,12 @@ export class EmailService {
 
       // In a real implementation, you would use a library like nodemailer
       // For now, we'll simulate the email sending with Hostinger SMTP
-      console.log('📧 Sending email via Hostinger SMTP...', {
-        to: recipients.map(r => r.email),
-        subject: options.subject,
-        from: emailConfig.from.email
-      });
 
       // Simulate SMTP connection and sending
       const result = await this.simulateSMTPEmail(options);
       
       if (result.success) {
-        console.log('✅ Email sent successfully via Hostinger SMTP');
+
         this.updateRateLimit();
       }
 

@@ -51,7 +51,7 @@ export interface OrderCompletionResult {
  */
 export async function createOrderBypassRLS(orderData: CompleteOrderData): Promise<OrderCompletionResult> {
   try {
-    console.log('🛒 Creating order with service role (bypassing RLS)...', orderData);
+
 
     if (!supabaseService) {
       throw new Error('Service role key not configured. Please set VITE_SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
@@ -101,7 +101,7 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
       return { success: false, error: `Failed to create order items: ${itemsError.message}` };
     }
 
-    console.log('✅ Order created successfully with service role:', order.id);
+
     
     return {
       success: true,

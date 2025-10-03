@@ -35,7 +35,7 @@ export function getSupabase(): SupabaseClient {
     try {
       const config = getSupabaseConfig();
       _supabase = createClient(config.url, config.anonKey);
-      console.log('✅ Supabase client initialized successfully');
+
     } catch (error) {
       console.error('❌ Failed to initialize Supabase client:', error);
       throw error;
@@ -121,6 +121,7 @@ export interface OrderItem {
 // Storage bucket configuration
 export const STORAGE_BUCKETS = {
   PRODUCT_IMAGES: import.meta.env.VITE_PRODUCT_IMAGES_BUCKET || 'product-images',
+  CLOTHES_IMAGES: import.meta.env.VITE_CLOTHES_IMAGES_BUCKET || 'clothes-images',
   CATEGORY_IMAGES: import.meta.env.VITE_CATEGORY_IMAGES_BUCKET || 'category-images',
   USER_AVATARS: import.meta.env.VITE_USER_AVATARS_BUCKET || 'user-avatars'
 } as const;
@@ -134,7 +135,7 @@ async function ensureBucketExists(bucketName: string) {
     const bucketExists = buckets.some(bucket => bucket.name === bucketName);
     
     if (!bucketExists) {
-      console.log(`Creating bucket: ${bucketName}`);
+
       const { error: createError } = await supabase.storage.createBucket(bucketName, {
         public: true,
         allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'],
@@ -567,8 +568,8 @@ export class OrderService {
   static async updateOrderStatus(id: string, status: Order['status'], notes?: string): Promise<Order | null> {
     try {
       // In real implementation, this would update the database
-      console.log(`Updating order ${id} to status: ${status}`);
-      if (notes) console.log(`Notes: ${notes}`);
+
+
       
       const orders = await this.getAllOrders();
       const order = orders.find(o => o.id === id);
@@ -685,8 +686,8 @@ export class OrderService {
 
   static async refundOrder(id: string, reason?: string): Promise<boolean> {
     try {
-      console.log(`Processing refund for order ${id}`);
-      if (reason) console.log(`Refund reason: ${reason}`);
+
+
       // In real implementation, this would process the refund through payment gateway
       return true;
     } catch (error) {
@@ -697,8 +698,8 @@ export class OrderService {
 
   static async sendDownloadLinks(orderId: string, email?: string): Promise<boolean> {
     try {
-      console.log(`Sending download links for order ${orderId}`);
-      if (email) console.log(`Sending to: ${email}`);
+
+
       // In real implementation, this would send email with download links
       return true;
     } catch (error) {
@@ -734,7 +735,16 @@ export class ProductService {
         itemDetails: product.item_details,
         delivery: product.delivery_info,
         didYouKnow: product.did_you_know,
-        favoritesCount: product.favorites_count?.[0]?.count || 0
+        favoritesCount: product.favorites_count?.[0]?.count || 0,
+        // Clothing-specific fields
+        productId: product.productid,
+        gender: product.gender,
+        details: product.details,
+        washCare: product.washcare,
+        shipping: product.shipping,
+        clothingType: product.clothingtype,
+        material: product.material,
+        brand: product.brand
       }));
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -842,7 +852,16 @@ export class ProductService {
           created_by: user.id,
           item_details: productData.itemDetails || {},
           delivery_info: productData.delivery || {},
-          did_you_know: productData.didYouKnow || {}
+          did_you_know: productData.didYouKnow || {},
+          // Clothing-specific fields
+          productid: productData.productId,
+          gender: productData.gender,
+          details: productData.details,
+          washcare: productData.washCare,
+          shipping: productData.shipping,
+          clothingtype: productData.clothingType,
+          material: productData.material,
+          brand: productData.brand
         }])
         .select()
         .single();
@@ -860,7 +879,16 @@ export class ProductService {
         createdDate: data.created_date,
         itemDetails: data.item_details,
         delivery: data.delivery_info,
-        didYouKnow: data.did_you_know
+        didYouKnow: data.did_you_know,
+        // Clothing-specific fields
+        productId: data.productid,
+        gender: data.gender,
+        details: data.details,
+        washCare: data.washcare,
+        shipping: data.shipping,
+        clothingType: data.clothingtype,
+        material: data.material,
+        brand: data.brand
       };
     } catch (error) {
       console.error('Error creating product:', error);
@@ -874,8 +902,8 @@ export class ProductService {
     didYouKnow?: any;
   }): Promise<Product> {
     try {
-      console.log('ProductService.updateProduct called with:', { id, updates });
-      console.log('Categories being sent:', updates.categories);
+
+
       
       const updateData: any = {
         title: updates.title,
@@ -901,9 +929,19 @@ export class ProductService {
       if (updates.itemDetails !== undefined) updateData.item_details = updates.itemDetails;
       if (updates.delivery !== undefined) updateData.delivery_info = updates.delivery;
       if (updates.didYouKnow !== undefined) updateData.did_you_know = updates.didYouKnow;
+      
+      // Clothing-specific fields
+      if (updates.productId !== undefined) updateData.productid = updates.productId;
+      if (updates.gender !== undefined) updateData.gender = updates.gender;
+      if (updates.details !== undefined) updateData.details = updates.details;
+      if (updates.washCare !== undefined) updateData.washcare = updates.washCare;
+      if (updates.shipping !== undefined) updateData.shipping = updates.shipping;
+      if (updates.clothingType !== undefined) updateData.clothingtype = updates.clothingType;
+      if (updates.material !== undefined) updateData.material = updates.material;
+      if (updates.brand !== undefined) updateData.brand = updates.brand;
 
-      console.log('Update data being sent to database:', updateData);
-      console.log('Looking for product with ID:', id);
+
+
 
       const { data, error } = await supabase
         .from('products')
@@ -917,7 +955,7 @@ export class ProductService {
         throw error;
       }
       
-      console.log('Product updated successfully:', data);
+
       
       // Transform database fields to interface fields
       return {
@@ -930,7 +968,16 @@ export class ProductService {
         createdDate: data.created_date,
         itemDetails: data.item_details,
         delivery: data.delivery_info,
-        didYouKnow: data.did_you_know
+        didYouKnow: data.did_you_know,
+        // Clothing-specific fields
+        productId: data.productid,
+        gender: data.gender,
+        details: data.details,
+        washCare: data.washcare,
+        shipping: data.shipping,
+        clothingType: data.clothingtype,
+        material: data.material,
+        brand: data.brand
       };
     } catch (error) {
       console.error('Error updating product:', error);
@@ -965,7 +1012,29 @@ export class ProductService {
         if (error.code === 'PGRST116') return null; // No rows returned
         throw error;
       }
-      return data;
+      
+      // Transform database fields to interface fields
+      return {
+        ...data,
+        productType: data.product_type || 'digital',
+        posterSize: data.poster_size,
+        posterPricing: data.poster_pricing,
+        originalPrice: data.original_price,
+        discountPercentage: data.discount_percentage,
+        createdDate: data.created_date,
+        itemDetails: data.item_details,
+        delivery: data.delivery_info,
+        didYouKnow: data.did_you_know,
+        // Clothing-specific fields
+        productId: data.productid,
+        gender: data.gender,
+        details: data.details,
+        washCare: data.washcare,
+        shipping: data.shipping,
+        clothingType: data.clothingtype,
+        material: data.material,
+        brand: data.brand
+      };
     } catch (error) {
       console.error('Error fetching product by ID:', error);
       return null;
@@ -1009,7 +1078,29 @@ export class ProductService {
       const { data, error } = await queryBuilder.order('created_date', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform database fields to interface fields
+      return (data || []).map(product => ({
+        ...product,
+        productType: product.product_type || 'digital',
+        posterSize: product.poster_size,
+        posterPricing: product.poster_pricing,
+        originalPrice: product.original_price,
+        discountPercentage: product.discount_percentage,
+        createdDate: product.created_date,
+        itemDetails: product.item_details,
+        delivery: product.delivery_info,
+        didYouKnow: product.did_you_know,
+        // Clothing-specific fields
+        productId: product.productid,
+        gender: product.gender,
+        details: product.details,
+        washCare: product.washcare,
+        shipping: product.shipping,
+        clothingType: product.clothingtype,
+        material: product.material,
+        brand: product.brand
+      }));
     } catch (error) {
       console.error('Error searching products:', error);
       return [];
@@ -1026,7 +1117,29 @@ export class ProductService {
         .order('created_date', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform database fields to interface fields
+      return (data || []).map(product => ({
+        ...product,
+        productType: product.product_type || 'digital',
+        posterSize: product.poster_size,
+        posterPricing: product.poster_pricing,
+        originalPrice: product.original_price,
+        discountPercentage: product.discount_percentage,
+        createdDate: product.created_date,
+        itemDetails: product.item_details,
+        delivery: product.delivery_info,
+        didYouKnow: product.did_you_know,
+        // Clothing-specific fields
+        productId: product.productid,
+        gender: product.gender,
+        details: product.details,
+        washCare: product.washcare,
+        shipping: product.shipping,
+        clothingType: product.clothingtype,
+        material: product.material,
+        brand: product.brand
+      }));
     } catch (error) {
       console.error('Error fetching products by category:', error);
       return [];
@@ -1043,7 +1156,29 @@ export class ProductService {
         .order('created_date', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform database fields to interface fields
+      return (data || []).map(product => ({
+        ...product,
+        productType: product.product_type || 'digital',
+        posterSize: product.poster_size,
+        posterPricing: product.poster_pricing,
+        originalPrice: product.original_price,
+        discountPercentage: product.discount_percentage,
+        createdDate: product.created_date,
+        itemDetails: product.item_details,
+        delivery: product.delivery_info,
+        didYouKnow: product.did_you_know,
+        // Clothing-specific fields
+        productId: product.productid,
+        gender: product.gender,
+        details: product.details,
+        washCare: product.washcare,
+        shipping: product.shipping,
+        clothingType: product.clothingtype,
+        material: product.material,
+        brand: product.brand
+      }));
     } catch (error) {
       console.error('Error fetching featured products:', error);
       return [];
@@ -1159,6 +1294,74 @@ export class ProductService {
       return urls;
     } catch (error) {
       console.error('Error uploading multiple images:', error);
+      throw error;
+    }
+  }
+
+  // Upload clothing image to clothes-images bucket
+  static async uploadClothingImage(file: File, productId: string): Promise<string> {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Validate file
+      if (!file) throw new Error('No file provided');
+      
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('File size exceeds 10MB limit');
+      }
+      
+      // Check file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed');
+      }
+
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${productId}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      // Upload file to clothes-images bucket
+      const { data, error } = await supabase.storage
+        .from(STORAGE_BUCKETS.CLOTHES_IMAGES)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        if (error.message.includes('not found')) {
+          throw new Error(`Storage bucket '${STORAGE_BUCKETS.CLOTHES_IMAGES}' not found. Please create it in your Supabase dashboard.`);
+        }
+        throw new Error(`Upload failed: ${error.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(STORAGE_BUCKETS.CLOTHES_IMAGES)
+        .getPublicUrl(fileName);
+
+      if (!publicUrl) {
+        throw new Error('Failed to generate public URL for uploaded image');
+      }
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading clothing image:', error);
+      throw error;
+    }
+  }
+
+  // Upload multiple clothing images
+  static async uploadClothingImages(files: File[], productId: string): Promise<string[]> {
+    try {
+      const uploadPromises = files.map(file => this.uploadClothingImage(file, productId));
+      const urls = await Promise.all(uploadPromises);
+      return urls;
+    } catch (error) {
+      console.error('Error uploading multiple clothing images:', error);
       throw error;
     }
   }
@@ -1402,7 +1605,7 @@ export class CategoryService {
 
   static async createCategory(categoryData: { name: string; slug: string; description?: string; image?: string; status?: string; featured?: boolean; tags?: string[] }): Promise<any> {
     try {
-      console.log('Supabase createCategory called with:', categoryData);
+
       
       const { data, error } = await supabase
         .from('categories')
@@ -1415,7 +1618,7 @@ export class CategoryService {
         throw error;
       }
       
-      console.log('Supabase category created successfully:', data);
+
       return data;
     } catch (error) {
       console.error('Error creating category in Supabase:', error);
@@ -1505,7 +1708,7 @@ export class CategoryService {
   // Refresh category counts by recalculating from products table
   static async refreshCategoryCounts(): Promise<boolean> {
     try {
-      console.log('Starting category count refresh...');
+
       
       // Get all categories
       const { data: categories, error: categoriesError } = await supabase
@@ -1515,7 +1718,7 @@ export class CategoryService {
       if (categoriesError) throw categoriesError;
 
       if (!categories || categories.length === 0) {
-        console.log('No categories found to update');
+
         return true;
       }
 
@@ -1530,7 +1733,7 @@ export class CategoryService {
         throw productsError;
       }
 
-      console.log(`Found ${products?.length || 0} active products to count`);
+
 
       // Update each category's count
       const updatePromises = (categories || []).map(async (category) => {
@@ -1559,7 +1762,7 @@ export class CategoryService {
           console.error(`Error updating count for category ${category.name}:`, updateError);
           return false;
         } else {
-          console.log(`Updated category ${category.name} count to ${count}`);
+
           return true;
         }
       });
@@ -1568,7 +1771,7 @@ export class CategoryService {
       const results = await Promise.all(updatePromises);
       const successCount = results.filter(Boolean).length;
       
-      console.log(`Category count refresh completed: ${successCount}/${categories.length} categories updated successfully`);
+
       return successCount === categories.length;
     } catch (error) {
       console.error('Error refreshing category counts:', error);
@@ -1844,7 +2047,7 @@ export const initializeDatabase = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      console.log('No authenticated user found');
+
       return false;
     }
 
@@ -1859,7 +2062,7 @@ export const initializeDatabase = async () => {
       return false;
     }
 
-    console.log('Database connected successfully');
+
     return true;
   } catch (error) {
     console.error('Error initializing database:', error);

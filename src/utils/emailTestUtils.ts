@@ -11,7 +11,7 @@ export class EmailTestUtils {
    */
   static async testBasicEmail(): Promise<{ success: boolean; message: string }> {
     try {
-      console.log('🧪 Testing basic email functionality...');
+
       
       const result = await EmailService.sendEmail({
         to: { email: 'test@example.com', name: 'Test User' },
@@ -42,7 +42,7 @@ export class EmailTestUtils {
    */
   static async testOrderConfirmationEmail(): Promise<{ success: boolean; message: string }> {
     try {
-      console.log('🧪 Testing order confirmation email...');
+
       
       const result = await EmailService.sendOrderConfirmation(
         'test@example.com',
@@ -82,7 +82,7 @@ export class EmailTestUtils {
    */
   static async testWelcomeEmail(): Promise<{ success: boolean; message: string }> {
     try {
-      console.log('🧪 Testing welcome email...');
+
       
       const result = await EmailService.sendWelcomeEmail(
         'test@example.com',
@@ -107,7 +107,7 @@ export class EmailTestUtils {
    */
   static async testPasswordResetEmail(): Promise<{ success: boolean; message: string }> {
     try {
-      console.log('🧪 Testing password reset email...');
+
       
       const result = await PasswordResetService.requestPasswordReset('test@example.com');
 
@@ -129,7 +129,7 @@ export class EmailTestUtils {
    */
   static async testBulkEmail(): Promise<{ success: boolean; message: string }> {
     try {
-      console.log('🧪 Testing bulk email sending...');
+
       
       const recipients: EmailRecipient[] = [
         { email: 'test1@example.com', name: 'Test User 1' },
@@ -165,7 +165,7 @@ export class EmailTestUtils {
    */
   static async testRateLimiting(): Promise<{ success: boolean; message: string }> {
     try {
-      console.log('🧪 Testing email rate limiting...');
+
       
       const stats = EmailService.getEmailStats();
       
@@ -185,7 +185,7 @@ export class EmailTestUtils {
    * Run all email tests
    */
   static async runAllTests(): Promise<{ success: boolean; results: Array<{ test: string; result: { success: boolean; message: string } }> }> {
-    console.log('🧪 Running all email tests...');
+
     
     const tests = [
       { name: 'Basic Email', test: this.testBasicEmail },
@@ -218,7 +218,7 @@ export class EmailTestUtils {
       }
     }
 
-    console.log('🧪 All email tests completed:', { allPassed, results });
+
     
     return { success: allPassed, results };
   }
@@ -228,7 +228,7 @@ export class EmailTestUtils {
    */
   static testEmailConfiguration(): { success: boolean; message: string; config: any } {
     try {
-      console.log('🧪 Testing email configuration...');
+
       
       const config = {
         smtpHost: import.meta.env.VITE_SMTP_HOST,

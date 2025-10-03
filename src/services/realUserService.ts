@@ -36,7 +36,7 @@ export function getSupabase(): SupabaseClient {
     try {
       const config = getSupabaseConfig();
       _supabase = createClient(config.url, config.anonKey);
-      console.log('✅ Supabase client initialized successfully');
+
     } catch (error) {
       console.error('❌ Failed to initialize Supabase client:', error);
       throw error;
@@ -56,7 +56,7 @@ export function getSupabaseAdmin(): SupabaseClient {
           persistSession: false
         }
       });
-      console.log('✅ Supabase admin client initialized successfully');
+
     } catch (error) {
       console.error('❌ Failed to initialize Supabase admin client:', error);
       throw error;

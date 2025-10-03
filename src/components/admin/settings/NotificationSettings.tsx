@@ -31,14 +31,14 @@ const NotificationSettings: React.FC = () => {
       reportsDigest: 'weekly'
     },
     emailSettings: {
-      fromName: 'ArtGallery',
-      fromEmail: 'noreply@artgallery.com',
-      replyToEmail: 'support@artgallery.com'
+      fromName: 'ARVEXA',
+      fromEmail: 'noreply@arvexa.com',
+      replyToEmail: 'support@arvexa.com'
     }
   });
 
   const handleSave = () => {
-    console.log('Saving notification settings:', settings);
+
     // Add save logic here
   };
 

@@ -143,7 +143,7 @@ const Checkout: React.FC = () => {
       
       // If normal order fails with RLS error, try bypass method
       if (!result.success && result.error?.includes('row-level security policy')) {
-        console.log('🔄 RLS policy error detected, trying bypass method...');
+
         if (isServiceRoleAvailable()) {
           result = await createOrderBypassRLS(orderData);
         } else {

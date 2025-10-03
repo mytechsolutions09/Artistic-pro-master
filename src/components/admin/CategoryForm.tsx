@@ -93,7 +93,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
       onImageUploadingChange?.(false); // Notify parent component
       // Clear any previous image errors
       setErrors(prev => ({ ...prev, image: '' }));
-      console.log('✅ Image uploaded successfully:', result);
+
     } else {
       const errorMessage = result.error || 'Image upload failed';
       setErrors(prev => ({ ...prev, image: errorMessage }));
@@ -108,7 +108,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
     setFormData(prev => ({ ...prev, image: '' }));
     setImagePath(null);
     setErrors(prev => ({ ...prev, image: '' }));
-    console.log('🗑️ Image removed');
+
   };
 
   // Validate form
@@ -158,7 +158,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
     }
 
     try {
-      console.log('Submitting category form with data:', finalFormData);
+
       await onSubmit(finalFormData);
     } catch (error) {
       console.error('Form submission error:', error);

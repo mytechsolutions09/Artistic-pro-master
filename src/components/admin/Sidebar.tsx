@@ -35,13 +35,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/admin' },
     { id: 'orders', label: 'Orders', icon: ShoppingBag, path: '/admin/orders' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
+    { id: 'clothes', label: 'Clothes', icon: Table, path: '/admin/clothes' },
     { id: 'categories', label: 'Categories', icon: Palette, path: '/admin/categories' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
     { id: 'email', label: 'Email Management', icon: Mail, path: '/admin/email' },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, path: '/admin/analytics' },
     { id: 'homepage', label: 'Homepage', icon: Home, path: '/admin/homepage' },
     { id: 'database', label: 'Database', icon: Database, path: '/admin/database' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' }
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
+    { id: 'skeleton-test', label: 'Skeleton Test', icon: Palette, path: '/skeleton-test' }
   ];
 
   return (
@@ -49,12 +51,13 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
       {/* Logo */}
       <div className="p-4 border-b border-pink-100">
         <Link to="/" className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'}`}>
-          <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">A</span>
-          </div>
+          <img 
+            src="/arvexa-logo.svg" 
+            alt="ARVEXA" 
+            className={`${collapsed ? 'h-8 w-auto' : 'h-10 w-auto'}`}
+          />
           {!collapsed && (
             <div>
-              <h2 className="text-xl font-bold text-gray-800">ArtGallery</h2>
               <p className="text-sm text-gray-500">Admin Panel</p>
             </div>
           )}

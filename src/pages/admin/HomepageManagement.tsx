@@ -38,7 +38,7 @@ const HomepageManagement: React.FC = () => {
       
       // Load saved homepage settings if they exist
       if (savedSettings) {
-        console.log('Loading saved homepage settings:', savedSettings);
+
         
         // Apply saved settings to state variables
         if (savedSettings.hero_section) {
@@ -70,7 +70,7 @@ const HomepageManagement: React.FC = () => {
         }
         setSettingsLoaded(true);
       } else {
-        console.log('No saved homepage settings found, using default configurations');
+
         setSettingsLoaded(false);
       }
     } catch (error) {
@@ -158,7 +158,7 @@ const HomepageManagement: React.FC = () => {
       {
         id: '2',
         title: 'Watercolor Dreams',
-        subtitle: 'Delicate brushstrokes and flowing pigments',
+        subtitle: '',
         description: 'A dreamlike landscape that transports viewers to another world.',
         images: ['https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=800'],
         link: '/artwork/2'
@@ -376,7 +376,7 @@ const HomepageManagement: React.FC = () => {
       
       if (success) {
         setSaveStatus('saved');
-        console.log('Homepage settings saved successfully');
+
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
         throw new Error('Failed to save homepage settings');
@@ -411,7 +411,7 @@ const HomepageManagement: React.FC = () => {
             categoriesCard: { ...heroSection.categoriesCard, images: [uploadResult.url] }
           });
         }
-        console.log('Image uploaded successfully:', uploadResult.url);
+
       } else {
         throw new Error(uploadResult.error || 'Upload failed');
       }
@@ -918,6 +918,7 @@ const HomepageManagement: React.FC = () => {
                       id: Date.now().toString(),
                       images: ['https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800'],
                       title: 'New Slide',
+                      subtitle: '',
                       description: 'Enter description here',
                       artist: 'Artist Name',
                       link: '/artwork/new'
@@ -992,6 +993,20 @@ const HomepageManagement: React.FC = () => {
                             }}
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
                             placeholder="Enter slide title"
+              />
+            </div>
+            <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+              <input
+                type="text"
+                            value={slide.subtitle || ''}
+                            onChange={(e) => {
+                              const newSlides = [...imageSlider.slides];
+                              newSlides[index] = { ...slide, subtitle: e.target.value };
+                              setImageSlider({ ...imageSlider, slides: newSlides });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            placeholder="Enter slide subtitle"
               />
             </div>
             <div>

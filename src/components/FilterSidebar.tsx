@@ -25,9 +25,11 @@ interface FilterSidebarProps {
   }>) => void;
   products: Product[];
   onClose?: () => void;
+  displayedCount?: number;
+  filteredCount?: number;
 }
 
-const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, products, onClose }) => {
+const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, products, onClose, displayedCount, filteredCount }) => {
   const { currentCurrency, formatCurrency } = useCurrency();
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
 
@@ -95,16 +97,24 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
     <div className="fixed inset-0 z-50">
       <div className="fixed left-0 top-16 w-1/3 h-[calc(100vh-4rem)] bg-white shadow-xl border-r border-gray-200 overflow-y-auto overflow-x-hidden">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-8 py-5 flex items-center justify-between">
-          <h3 className="text-2xl font-serif text-gray-800">Filters</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        <div className="bg-white border-b border-gray-200 px-8 py-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-2xl font-serif text-gray-800">Filters</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          {/* Item Count Display */}
+          {displayedCount !== undefined && filteredCount !== undefined && (
+            <div className="text-sm text-gray-600">
+              Showing {displayedCount} of {filteredCount} items
+            </div>
+          )}
         </div>
 
         {/* Filter Content */}

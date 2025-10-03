@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Mail, Heart, Grid3X3 } from 'lucide-react';
 import { HomepageSettingsService } from '../services/homepageSettingsService';
@@ -6,6 +6,7 @@ import { ProductService, CategoryService } from '../services/supabaseService';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { generateProductUrl } from '../utils/slugUtils';
 import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
+import HomepageSkeleton from '../components/HomepageSkeleton';
 
 const Homepage: React.FC = () => {
   // Currency context
@@ -35,6 +36,7 @@ const Homepage: React.FC = () => {
         setRealProducts([]);
         setRealCategories([]);
         setRealStats(null);
+        setLoading(false);
         return;
       }
       
@@ -45,8 +47,6 @@ const Homepage: React.FC = () => {
         ProductService.getProductStats()
       ]);
       
-      console.log('Homepage settings loaded:', settings);
-      console.log('Settings is null?', settings === null);
       
       setHomepageSettings(settings);
       setRealProducts(products);
@@ -66,7 +66,6 @@ const Homepage: React.FC = () => {
   }, []);
 
   // These variables are used in loadHomepageData function
-  console.log('Real data loaded:', { realProducts, realCategories, realStats });
 
   // Dynamic configurations that use saved settings or fall back to defaults
   const heroSection = homepageSettings?.hero_section || {
@@ -222,19 +221,13 @@ const Homepage: React.FC = () => {
   // Get best sellers from real products data
   const getBestSellersProducts = () => {
     if (!realProducts || realProducts.length === 0) {
-      console.log('No real products available, using sample data');
       return bestSellers.selectedProducts; // Fallback to sample data
     }
-    
-    console.log('Real products available:', realProducts.length);
-    console.log('Sample product data:', realProducts[0]);
     
     // Get products with actual pricing data (originalPrice and discountPercentage)
     const productsWithDiscounts = realProducts.filter(product => 
       product.originalPrice && product.originalPrice > product.price
     );
-    
-    console.log('Products with discounts:', productsWithDiscounts.length);
     
     // If we have products with discounts, use them; otherwise use top products by downloads
     const bestSellersProducts = productsWithDiscounts.length > 0 
@@ -242,8 +235,6 @@ const Homepage: React.FC = () => {
       : realProducts
           .sort((a, b) => (b.downloads || 0) - (a.downloads || 0))
           .slice(0, 3);
-    
-    console.log('Selected best sellers products:', bestSellersProducts);
     
     return bestSellersProducts.map(product => ({
       id: product.id,
@@ -274,16 +265,11 @@ const Homepage: React.FC = () => {
   // Get featured artwork from real products data
   const getFeaturedArtworkProducts = () => {
     if (!realProducts || realProducts.length === 0) {
-      console.log('No real products available for featured artwork, using sample data');
       return featuredArtwork.selectedProducts; // Fallback to sample data
     }
     
-    console.log('Real products available for featured artwork:', realProducts.length);
-    
     // Get featured products (products marked as featured in database)
     const featuredProducts = realProducts.filter(product => product.featured === true);
-    
-    console.log('Featured products found:', featuredProducts.length);
     
     // If we have featured products, use them; otherwise use top products by rating
     const artworkProducts = featuredProducts.length > 0 
@@ -291,8 +277,6 @@ const Homepage: React.FC = () => {
       : realProducts
           .sort((a, b) => (b.rating || 0) - (a.rating || 0))
           .slice(0, 4);
-    
-    console.log('Selected featured artwork products:', artworkProducts);
     
     return artworkProducts.map(product => ({
       id: product.id,
@@ -483,7 +467,7 @@ const Homepage: React.FC = () => {
     ]
   };
 
-  const statsSection = homepageSettings?.stats || { stats: [] };
+  // const statsSection = homepageSettings?.stats || { stats: [] };
 
   const newsletterSection = homepageSettings?.newsletter || {
     title: 'Stay Updated',
@@ -534,14 +518,7 @@ const Homepage: React.FC = () => {
 
   // Show loading state while data is being fetched
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading homepage...</p>
-        </div>
-      </div>
-    );
+    return <HomepageSkeleton />;
   }
 
   return (
@@ -881,37 +858,37 @@ const Homepage: React.FC = () => {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-12 px-4">
+      {/* Categories Section - Compact */}
+      <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">{categoriesSection.title}</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">{categoriesSection.subtitle}</p>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{categoriesSection.title}</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto text-sm">{categoriesSection.subtitle}</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {categoriesSection.selectedCategories.map((category: any) => (
               <Link key={category.id} to={`/${category.slug}`} className="group">
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                   <div className="relative">
                     <img
                       src={category.image}
                       alt={category.name}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     {category.featured && (
-                      <div className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-medium text-white bg-pink-500">
+                      <div className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium text-white bg-pink-500">
                         Featured
                       </div>
                     )}
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">{category.name}</h3>
-                    <p className="text-gray-600 text-sm mb-3">{category.description}</p>
+                  <div className="p-4">
+                    <h3 className="text-sm font-bold text-gray-800 mb-1">{category.name}</h3>
+                    <p className="text-gray-600 text-xs mb-2 line-clamp-2">{category.description}</p>
                     {categoriesSection.showProductCount && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">{category.count} artworks</span>
-                        <span className="text-pink-600 text-sm font-medium group-hover:text-pink-700">
+                        <span className="text-xs text-gray-500">{category.count} artworks</span>
+                        <span className="text-pink-600 text-xs font-medium group-hover:text-pink-700">
                           Explore →
                         </span>
                       </div>
@@ -923,10 +900,10 @@ const Homepage: React.FC = () => {
           </div>
 
           {categoriesSection.showButton && (
-            <div className="text-center mt-8">
+            <div className="text-center mt-6">
               <Link
                 to={categoriesSection.buttonLink}
-                className="inline-block px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-full transition-colors"
+                className="inline-block px-5 py-2 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-full transition-colors text-sm"
               >
                 {categoriesSection.buttonText}
               </Link>

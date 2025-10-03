@@ -1,26 +1,13 @@
 import React from 'react';
-import { Palette, Brush, Image, Star } from 'lucide-react';
 import CategoryCard from '../components/CategoryCard';
+import CategoriesPageSkeleton from '../components/CategoriesPageSkeleton';
 import { useCategories } from '../contexts/CategoryContext';
 
 const CategoriesPage: React.FC = () => {
   const { categories, loading, error } = useCategories();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="flex justify-center space-x-2 mb-4">
-            <Palette className="w-8 h-8 animate-bounce" style={{animationDelay: '0ms', color: '#FAC6CF'}} />
-            <Brush className="w-8 h-8 animate-bounce" style={{animationDelay: '150ms', color: '#F48FB1'}} />
-            <Image className="w-8 h-8 animate-bounce" style={{animationDelay: '300ms', color: '#E91E63'}} />
-            <Star className="w-8 h-8 animate-bounce" style={{animationDelay: '450ms', color: '#F48FB1'}} />
-          </div>
-          <p className="text-gray-600 text-lg font-medium">Loading art categories...</p>
-          <p className="text-gray-500 text-sm mt-1"></p>
-        </div>
-      </div>
-    );
+    return <CategoriesPageSkeleton />;
   }
 
   if (error) {
@@ -58,15 +45,6 @@ const CategoriesPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-800 mb-1">Art Categories</h1>
-            <p className="text-xs text-gray-500 max-w-xl mx-auto">
-              Discover digital art across all genres and styles. From abstract masterpieces to realistic portraits, 
-              find the perfect artwork for your needs.
-            </p>
-          </div>
-        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {categories.map((category) => (

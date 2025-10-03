@@ -98,7 +98,7 @@ const OrderManagement: React.FC = () => {
         }).filter(Boolean);
 
         // Here you would typically send an email with download links
-        console.log('Download links generated:', downloadLinks);
+
         alert('Download links have been generated and will be sent to the customer.');
       }
     } catch (error) {

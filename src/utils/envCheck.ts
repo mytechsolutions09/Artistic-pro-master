@@ -25,16 +25,16 @@ export function checkEnvironmentVariables() {
     return false;
   }
   
-  console.log('All required environment variables are set');
-  console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-  console.log('Supabase Anon Key:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set' : 'Missing');
+
+
+
   
   // Check development variables
   if (import.meta.env.DEV) {
-    console.log('Development mode detected');
-    console.log('Localhost Host:', import.meta.env.VITE_DEV_SERVER_HOST || 'localhost');
-    console.log('Localhost Port:', import.meta.env.VITE_DEV_SERVER_PORT || '5173');
-    console.log('App URL:', import.meta.env.VITE_APP_URL || 'http://localhost:5173');
+
+
+
+
   }
   
   return true;

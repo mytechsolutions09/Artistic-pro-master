@@ -100,7 +100,16 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
       didYouKnow: dbProduct.did_you_know || {},
       productType: dbProduct.product_type || dbProduct.productType || 'digital',
       posterSize: dbProduct.poster_size || dbProduct.posterSize,
-      posterPricing: dbProduct.poster_pricing || dbProduct.posterPricing || {}
+      posterPricing: dbProduct.poster_pricing || dbProduct.posterPricing || {},
+      // Clothing-specific fields
+      productId: dbProduct.productid || dbProduct.productId,
+      gender: dbProduct.gender,
+      details: dbProduct.details,
+      washCare: dbProduct.washcare || dbProduct.washCare,
+      shipping: dbProduct.shipping,
+      clothingType: dbProduct.clothingtype || dbProduct.clothingType,
+      material: dbProduct.material,
+      brand: dbProduct.brand
     };
 
     // Enhance with sample images if needed
@@ -113,7 +122,6 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Refreshing products from database...');
       
       // Fetch all products and featured products
       const [allProductsData, featuredProductsData] = await Promise.all([
@@ -121,20 +129,15 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
         ProductService.getFeaturedProducts()
       ]);
 
-      console.log('📦 Raw products data from database:', allProductsData);
-      console.log('⭐ Featured products data from database:', featuredProductsData);
 
       // Map database fields to Product interface
       const mappedProducts = allProductsData.map(mapDatabaseProduct);
       const mappedFeatured = featuredProductsData.map(mapDatabaseProduct);
 
-      console.log('🔄 Mapped admin products:', mappedProducts);
-      console.log('🔄 Mapped featured products:', mappedFeatured);
 
       setAdminProducts(mappedProducts);
       setFeaturedArtworks(mappedFeatured as ArtWork[]);
       
-      console.log('✅ Products state updated successfully');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load products');
       console.error('❌ Error loading products:', err);
@@ -151,21 +154,16 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   }) => {
     try {
       setError(null);
-      console.log('➕ Creating new product with data:', productData);
       
       const newProduct = await ProductService.createProduct(productData);
-      console.log('✅ Product created in database:', newProduct);
       
       const mappedProduct = mapDatabaseProduct(newProduct);
-      console.log('🔄 Mapped product for state:', mappedProduct);
       
       setAdminProducts(prev => {
         const updated = [...prev, mappedProduct];
-        console.log('📦 Updated admin products state:', updated);
         return updated;
       });
       
-      console.log('✅ Product added to state successfully');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add product');
       console.error('❌ Error adding product:', err);
@@ -279,7 +277,6 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     setAdminProducts([]);
     setFeaturedArtworks([]);
     setError(null);
-    console.log('Local storage cleared and products reset for production.');
   };
 
   const value: ProductContextType = {

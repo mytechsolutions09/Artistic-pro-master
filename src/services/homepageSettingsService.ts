@@ -21,7 +21,7 @@ export class HomepageSettingsService {
    */
   static async getHomepageSettings(): Promise<HomepageSettings | null> {
     try {
-      console.log('Attempting to fetch homepage settings...');
+
       const { data, error } = await supabase
         .from('homepage_settings')
         .select('*')
@@ -30,16 +30,16 @@ export class HomepageSettingsService {
         .single();
 
       if (error) {
-        console.log('Error fetching homepage settings:', error);
+
         if (error.code === 'PGRST116') {
           // No rows found, return null
-          console.log('No homepage settings found in database');
+
           return null;
         }
         throw error;
       }
 
-      console.log('Homepage settings fetched successfully:', data);
+
       return data;
     } catch (error) {
       console.error('Error fetching homepage settings:', error);

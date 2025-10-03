@@ -2,6 +2,15 @@
   publish = "dist"
   command = "npm run build"
 
+# Redirect subdomain to Men's clothing page
+[[redirects]]
+  from = "/"
+  to = "/men"
+  status = 301
+  force = true
+  conditions = {Host = ["necessary.arvex.in"]}
+
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"

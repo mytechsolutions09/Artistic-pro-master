@@ -3,9 +3,9 @@ import { supabase } from './supabaseService';
 
 export async function testSupabaseConnection() {
   try {
-    console.log('Testing Supabase connection...');
-    console.log('Supabase URL:', supabase.supabaseUrl);
-    console.log('Supabase client:', supabase);
+
+
+
     
     // Test a simple query
     const { data, error } = await supabase
@@ -18,7 +18,7 @@ export async function testSupabaseConnection() {
       return false;
     }
     
-    console.log('Supabase connection successful!', data);
+
     return true;
   } catch (err) {
     console.error('Supabase connection failed:', err);
@@ -29,7 +29,7 @@ export async function testSupabaseConnection() {
 // Test storage
 export async function testStorageAccess() {
   try {
-    console.log('Testing storage access...');
+
     
     const { data: buckets, error } = await supabase.storage.listBuckets();
     
@@ -38,7 +38,7 @@ export async function testStorageAccess() {
       return false;
     }
     
-    console.log('Storage access successful!', buckets);
+
     return true;
   } catch (err) {
     console.error('Storage access failed:', err);

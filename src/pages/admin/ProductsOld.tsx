@@ -1258,7 +1258,7 @@ const Products: React.FC = () => {
 
   // CRUD Operations
   const createProduct = async (productData: any) => {
-    console.log('Creating product:', productData);
+
     
     try {
       // First create the product without images to get the real product ID
@@ -1332,8 +1332,8 @@ const Products: React.FC = () => {
 
   const editProduct = async (productData: any) => {
     try {
-      console.log('Editing product with data:', productData);
-      console.log('Product ID:', productData.id);
+
+
       
       // Check if the product ID is valid
       if (!productData.id || typeof productData.id !== 'string' || productData.id.length < 10) {
@@ -1394,14 +1394,14 @@ const Products: React.FC = () => {
         didYouKnow: productData.didYouKnow
       };
       
-      console.log('Sending update to database:', updatedProduct);
+
       
       const updatedProductFromDB = await ProductService.updateProduct(productData.id, updatedProduct);
       
       // Update local state after successful database update
       if (updatedProductFromDB) {
         updateProduct(productData.id, updatedProductFromDB);
-        console.log('Product updated successfully in database and local state');
+
       }
     } catch (error) {
       console.error('Error updating product:', error);
@@ -1461,7 +1461,7 @@ const Products: React.FC = () => {
   };
 
   const handleBulkImport = async (importedProducts: any[]) => {
-    console.log('Bulk importing products:', importedProducts);
+
     
     try {
       for (const product of importedProducts) {

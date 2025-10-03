@@ -17,6 +17,7 @@ import CategoriesPage from './pages/CategoriesPage';
 import BrowsePage from './pages/BrowsePage';
 import CategoryDetailPage from './pages/CategoryDetailPage';
 import ProductPage from './pages/ProductPage';
+import ClothingProductPage from './pages/ClothingProductPage';
 import UserDashboard from './pages/UserDashboard';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
@@ -25,6 +26,7 @@ import PaymentFailed from './pages/PaymentFailed';
 import DownloadPage from './pages/DownloadPage';
 import SearchResults from './pages/SearchResults';
 import FavoritesPage from './pages/FavoritesPage';
+import MenClothingPage from './pages/MenClothingPage';
 import LoginForm from './components/auth/LoginForm';
 import SignUpForm from './components/auth/SignUpForm';
 import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
@@ -44,8 +46,10 @@ import Settings from './pages/admin/Settings';
 import HomepageManagement from './pages/admin/HomepageManagement';
 import Reviews from './pages/admin/Reviews';
 import DatabaseManagement from './pages/admin/Database';
+import Clothes from './pages/admin/Clothes';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import EnvTest from './components/EnvTest';
+import SkeletonTest from './pages/SkeletonTest';
 
 function AppContent() {
   const location = useLocation();
@@ -65,6 +69,7 @@ function AppContent() {
                   <Route path="/" element={<Homepage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/browse" element={<BrowsePage />} />
+                  <Route path="/men" element={<MenClothingPage />} />
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/favorites" element={<FavoritesPage />} />
                   <Route path="/dashboard" element={<UserDashboard />} />
@@ -78,8 +83,11 @@ function AppContent() {
                   <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                   <Route path="/reset-password" element={<ResetPasswordForm />} />
                   <Route path="/env-test" element={<EnvTest />} />
+                  <Route path="/skeleton-test" element={<SkeletonTest />} />
                   
                   {/* Category and Product Routes - Order matters! */}
+                  {/* Clothing Product Route (must come before generic routes) */}
+                  <Route path="/men/:productSlug" element={<ClothingProductPage />} />
                   <Route path="/:categorySlug" element={<CategoryDetailPage />} />
                   <Route path="/:categorySlug/:productSlug" element={<ProductPage />} />
                   
@@ -89,6 +97,7 @@ function AppContent() {
                   <Route path="/admin" element={<AdminProtectedRoute><Dashboard /></AdminProtectedRoute>} />
                   <Route path="/admin/orders" element={<AdminProtectedRoute><Orders /></AdminProtectedRoute>} />
                   <Route path="/admin/products" element={<AdminProtectedRoute><Products /></AdminProtectedRoute>} />
+                  <Route path="/admin/clothes" element={<AdminProtectedRoute><Clothes /></AdminProtectedRoute>} />
                   <Route path="/admin/categories" element={<AdminProtectedRoute><Categories /></AdminProtectedRoute>} />
                   <Route path="/admin/users" element={<AdminProtectedRoute><Users /></AdminProtectedRoute>} />
                   <Route path="/admin/email" element={<AdminProtectedRoute><EmailManagement /></AdminProtectedRoute>} />
@@ -105,31 +114,24 @@ function AppContent() {
 function App() {
   // Validate environment variables on app startup
   useEffect(() => {
-    console.log('🚀 Starting Artistic Pro Application...');
+
     
     // Check environment variables
     const envValid = checkEnvironmentVariables();
     
     if (envValid) {
-      console.log('✅ Environment variables loaded successfully');
+
       
       // Log localhost configuration if in development
       if (isLocalhost()) {
         const localhostConfig = getLocalhostConfig();
-        console.log('🏠 Localhost Configuration:', localhostConfig);
+
       }
     } else {
       console.error('❌ Environment validation failed. Please check your .env file.');
     }
     
-    // Log current environment info
-    console.log('Environment Info:', {
-      mode: import.meta.env.MODE,
-      dev: import.meta.env.DEV,
-      prod: import.meta.env.PROD,
-      supabaseUrl: import.meta.env.VITE_SUPABASE_URL ? 'Set' : 'Missing',
-      supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set' : 'Missing'
-    });
+    // Environment info is loaded
   }, []);
 
   return (

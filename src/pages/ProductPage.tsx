@@ -20,10 +20,14 @@ import {
   Play,
   Crown,
   ArrowLeft as ArrowLeftIcon,
-  ArrowRight as ArrowRightIcon
+  ArrowRight as ArrowRightIcon,
+  FileText,
+  Truck,
+  Info
 } from 'lucide-react';
 
 import ArtCard from '../components/ArtCard';
+import ProductTabs from '../components/ProductTabs';
 import { CartManager } from '../services/orderService';
 import { NotificationManager } from '../components/Notification';
 import { SITE_COLORS } from '../constants/colors';
@@ -48,12 +52,7 @@ const ProductPage: React.FC = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    itemDetails: false,
-    delivery: false,
-    didYouKnow: false
-  });
+  const [activeTab, setActiveTab] = useState('itemDetails');
 
   // Scroll to top on product change (stable hook order)
   useEffect(() => {
@@ -146,9 +145,9 @@ const ProductPage: React.FC = () => {
 
   // Ensure products are loaded when component mounts
   React.useEffect(() => {
-    console.log('🔄 Component mounted, checking products...');
+
     if (allProducts.length === 0 && !loading) {
-      console.log('⚠️ No products loaded, this might indicate a loading issue');
+
     }
   }, [allProducts.length, loading]);
 
@@ -232,17 +231,11 @@ const ProductPage: React.FC = () => {
   const product = findProductBySlugs(allProducts, categorySlug || '', productSlug || '');
   
   // Debug: Log search results
-  console.log('🔍 Product Search Result:', product ? 'Found' : 'Not Found');
+
   if (product) {
-    console.log('✅ Found Product:', { id: product.id, title: product.title, category: (product as any).category || (product.categories && product.categories[0]) || 'General' });
+    // Product is loaded
   } else {
-    console.log('❌ Product Not Found');
-    console.log('🔍 Available Products:', allProducts.map(p => ({
-      id: p.id,
-      title: p.title,
-      category: (p as any).category || ((p as any).categories && (p as any).categories[0]) || 'General',
-      status: 'status' in p ? p.status : 'N/A'
-    })));
+    // Product not found
   }
 
   // Load reviews for the current product
@@ -376,8 +369,8 @@ const ProductPage: React.FC = () => {
   const productImages = (rawImages as string[]).filter((u) => typeof u === 'string' && /^https?:\/\//i.test(u));
   
   // Debug: Log product images for troubleshooting
-  console.log('Product images:', product.images);
-  console.log('Processed productImages:', productImages);
+
+
 
   // Reviews are now loaded from database via useEffect above
   
@@ -406,7 +399,7 @@ const ProductPage: React.FC = () => {
       }
 
       const currentPrice = getCurrentPrice(product);
-      console.log('Buy Now - Product:', product.title, 'Price:', currentPrice, 'Type:', selectedProductType);
+
       
       const params = new URLSearchParams({
         product: product.id,
@@ -419,7 +412,7 @@ const ProductPage: React.FC = () => {
       }
       
       const checkoutUrl = `/checkout?${params.toString()}`;
-      console.log('Redirecting to:', checkoutUrl);
+
       navigate(checkoutUrl);
     } catch (error) {
       console.error('Error in handleBuyNow:', error);
@@ -479,12 +472,6 @@ const ProductPage: React.FC = () => {
 
   
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
 
 
   // Media navigation (images + optional video at the end)
@@ -930,163 +917,121 @@ const ProductPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Full Width Dropdown Sections */}
+        {/* Tabbed Information Section */}
         <div className="w-full px-3 sm:px-4 lg:px-6 mb-6 sm:mb-8 lg:mb-10">
-          <div className="space-y-2">
-            {/* Item Details Dropdown */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <button
-                onClick={() => toggleSection('itemDetails')}
-                className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-all duration-200 border-0 rounded-t-xl"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-[#FAC6CF] rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <span className="font-semibold text-gray-800 text-base">Item Details</span>
-                </div>
-                <ChevronDown 
-                  className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
-                    expandedSections['itemDetails'] ? 'rotate-180' : ''
-                  }`} 
-                />
-              </button>
-              
-              {expandedSections['itemDetails'] && (
-                <div className="px-3 pb-3 bg-white border-t border-gray-100 rounded-b-xl">
-                  <div className="space-y-2 pt-2">
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="font-semibold text-gray-700 text-sm">Material</span>
-                      <span className="text-gray-600 text-sm">{selectedProductType === 'poster' ? 'Premium matte paper' : 'Digital file'}</span>
-                    </div>
-                    {selectedProductType === 'digital' && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="font-semibold text-gray-700 text-sm">Size</span>
-                        <span className="text-gray-600 text-sm">High resolution (300 DPI), 3000px X 4500px</span>
+          <ProductTabs
+            tabs={[
+              {
+                id: 'itemDetails',
+                label: 'Item Details',
+                icon: <FileText className="w-4 h-4" />,
+                content: (
+                  <div className="space-y-0">
+                    <div className="space-y-0">
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Material:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Premium matte paper' : 'Digital file'}</span>
                       </div>
-                    )}
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="font-semibold text-gray-700 text-sm">Frame</span>
-                      <span className="text-gray-600 text-sm">{selectedProductType === 'poster' ? 'No frame included' : 'No frame needed'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="font-semibold text-gray-700 text-sm">Style</span>
-                      <span className="text-gray-600 text-sm">{selectedProductType === 'poster' ? 'High-quality print' : 'Digital artwork'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="font-semibold text-gray-700 text-sm">Origin</span>
-                      <span className="text-gray-600 text-sm">{selectedProductType === 'poster' ? 'Printed in India' : 'Created digitally'}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Delivery Dropdown */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <button
-                onClick={() => toggleSection('delivery')}
-                className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-all duration-200 border-0 rounded-t-xl"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  </div>
-                  <span className="font-semibold text-gray-800 text-base">Delivery</span>
-                </div>
-                <ChevronDown 
-                  className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
-                    expandedSections['delivery'] ? 'rotate-180' : ''
-                  }`} 
-                />
-              </button>
-              
-              {expandedSections['delivery'] && (
-                <div className="px-3 pb-3 bg-white border-t border-gray-100 rounded-b-xl">
-                  <div className="space-y-2 pt-2">
-                    <div className="flex items-center space-x-3 py-3 bg-green-50 rounded-lg px-3">
-                      <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800 text-sm">
-                          {selectedProductType === 'poster' ? 'Free Standard Delivery' : 'Instant Digital Download'}
-                        </p>
-                        <p className="text-gray-600 text-xs mt-1">
-                          {selectedProductType === 'poster' ? '5-7 business days' : 'Available immediately after purchase'}
-                        </p>
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Style:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'High-quality print' : 'Digital artwork'}</span>
                       </div>
-                    </div>
-                    {selectedProductType === 'poster' && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center space-x-2">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <p className="text-blue-800 text-xs font-medium">
-                            Returns accepted within 30 days
-                          </p>
+                      {selectedProductType === 'digital' && (
+                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                          <span className="font-medium text-gray-900">Size:</span>
+                          <span className="text-gray-600">High resolution (300 DPI), 3000px X 4500px</span>
                         </div>
+                      )}
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Origin:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Printed in India' : 'Created digitally'}</span>
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Did You Know Dropdown */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <button
-                onClick={() => toggleSection('didYouKnow')}
-                className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-all duration-200 border-0 rounded-t-xl"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-[#F48FB1] rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <span className="font-semibold text-gray-800 text-base">Did You Know?</span>
-                </div>
-                <ChevronDown 
-                  className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
-                    expandedSections['didYouKnow'] ? 'rotate-180' : ''
-                  }`} 
-                />
-              </button>
-              
-              {expandedSections['didYouKnow'] && (
-                <div className="px-3 pb-3 bg-white border-t border-gray-100 rounded-b-xl">
-                  <div className="space-y-3 pt-2">
-                    <div className="p-2 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-green-600 text-lg">🌱</span>
-                        <div>
-                          <p className="font-semibold text-green-800 text-sm mb-1">Eco-Friendly</p>
-                          <p className="text-green-700 text-xs leading-relaxed">
-                            {selectedProductType === 'poster' ? 'Made with sustainable materials and eco-friendly paints. Each piece helps support local artisan communities.' : 'Digital format means zero environmental impact. No printing, shipping, or physical materials required.'}
-                          </p>
-                        </div>
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Frame:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'No frame included' : 'No frame needed'}</span>
                       </div>
-                    </div>
-                    <div className="p-2 bg-purple-50 rounded-lg border border-purple-200">
-                      <div className="flex items-start space-x-2">
-                        <span className="text-purple-600 text-lg">✨</span>
-                        <div>
-                          <p className="font-semibold text-purple-800 text-sm mb-1">Unique Features</p>
-                          <p className="text-purple-700 text-xs leading-relaxed">
-                            {selectedProductType === 'poster' ? 'Every artwork is one-of-a-kind with subtle variations that make it truly unique. Perfect for art collectors and interior designers.' : 'High-resolution digital file perfect for printing at any size. Compatible with all modern devices and printing services.'}
-                          </p>
-                        </div>
+                      <div className="flex justify-between items-center py-3">
+                        <span className="font-medium text-gray-900">Quality:</span>
+                        <span className="text-gray-600">Premium grade</span>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
+                )
+              },
+              {
+                id: 'delivery',
+                label: 'Delivery',
+                icon: <Truck className="w-4 h-4" />,
+                content: (
+                  <div className="space-y-0">
+                    <div className="space-y-0">
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Delivery Method:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Free Standard Delivery' : 'Instant Digital Download'}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Delivery Time:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? '5-7 business days' : 'Immediately after purchase'}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Tracking:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Tracking information provided' : 'Not applicable'}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Packaging:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Secure packaging guaranteed' : 'Digital files only'}</span>
+                      </div>
+                      {selectedProductType === 'poster' && (
+                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                          <span className="font-medium text-gray-900">Returns:</span>
+                          <span className="text-gray-600">Accepted within 30 days</span>
+                        </div>
+                      )}
+                      {selectedProductType === 'digital' && (
+                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                          <span className="font-medium text-gray-900">File Formats:</span>
+                          <span className="text-gray-600">PNG, PDF</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center py-3">
+                        <span className="font-medium text-gray-900">Support:</span>
+                        <span className="text-gray-600">Customer service available</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              },
+              {
+                id: 'didYouKnow',
+                label: 'Did You Know?',
+                icon: <Info className="w-4 h-4" />,
+                content: (
+                  <div className="space-y-0">
+                    <div className="space-y-0">
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Eco-Friendly:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Sustainable materials used' : 'Zero environmental impact'}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Uniqueness:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'One-of-a-kind variations' : 'High-resolution digital file'}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                        <span className="font-medium text-gray-900">Compatibility:</span>
+                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Standard framing sizes' : 'All modern devices'}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3">
+                        <span className="font-medium text-gray-900">Quality:</span>
+                        <span className="text-gray-600">Premium grade guarantee</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+            ]}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
         </div>
 
         {/* Reviews Section - Using Site Colors - Left Side */}

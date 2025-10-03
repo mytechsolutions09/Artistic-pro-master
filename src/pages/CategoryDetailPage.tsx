@@ -3,6 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useProducts } from '../contexts/ProductContext';
 import FilterSidebar from '../components/FilterSidebar';
 import ProductCard from '../components/ProductCard';
+import ProductCardSkeleton from '../components/ProductCardSkeleton';
+import CategoryPageSkeleton from '../components/CategoryPageSkeleton';
+import { categoryImageService } from '../services/categoryImageService';
 import { Product } from '../types';
 import { generateCategorySlug, generateSlug } from '../utils/slugUtils';
 
@@ -26,8 +29,8 @@ const CategoryDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (categorySlug && adminProducts.length > 0) {
-      console.log('CategoryDetailPage: Processing categorySlug:', categorySlug);
-      console.log('CategoryDetailPage: Total products available:', adminProducts.length);
+
+
       
               // Check if this might be a product URL by looking for products with matching category slug
         const categoryProducts = adminProducts.filter(product => {
@@ -44,7 +47,7 @@ const CategoryDetailPage: React.FC = () => {
               const incomingCategorySlug = generateCategorySlug(categorySlug);
               const matches = productCategorySlug === incomingCategorySlug;
               
-              console.log(`Product "${product.title}" has category "${category}" -> slug: "${productCategorySlug}" -> incoming slug "${incomingCategorySlug}" -> matches: ${matches}`);
+
               return matches;
             });
           } else if ((product as any).category) {
@@ -58,17 +61,17 @@ const CategoryDetailPage: React.FC = () => {
             const incomingCategorySlug = generateCategorySlug(categorySlug);
             const matches = productCategorySlug === incomingCategorySlug;
             
-            console.log(`Product "${product.title}" has category "${category}" -> slug: "${productCategorySlug}" -> incoming slug "${incomingCategorySlug}" -> matches: ${matches}`);
+
             return matches;
           }
           
           return false;
         });
       
-      console.log('CategoryDetailPage: Found products for category:', categoryProducts.length);
+
       
       if (categoryProducts.length === 0) {
-        console.log('CategoryDetailPage: No products found for category, checking if this might be a product URL...');
+
         // If no products found for this category, it might be a product URL
         // Check if there's a product with a title that matches this slug
         const possibleProduct = adminProducts.find(product => {
@@ -77,7 +80,7 @@ const CategoryDetailPage: React.FC = () => {
         });
         
         if (possibleProduct) {
-          console.log('CategoryDetailPage: Found product with matching title, redirecting to product page...');
+
           // This is likely a product URL, redirect to product page
           // Get the first category for the redirect URL
           const firstCategory = possibleProduct.categories && possibleProduct.categories.length > 0 
@@ -87,7 +90,7 @@ const CategoryDetailPage: React.FC = () => {
           return;
         }
         
-        console.log('CategoryDetailPage: No products or categories found for this slug');
+
       }
       
       const foundCategory = {
@@ -129,10 +132,25 @@ const CategoryDetailPage: React.FC = () => {
     setDisplayedProducts(filteredProducts.slice(0, endIndex));
   }, [filteredProducts, currentPage]);
 
+  // Preload images for better performance
+  useEffect(() => {
+    if (displayedProducts.length > 0) {
+      // Extract all image URLs from displayed products
+      const imageUrls = displayedProducts
+        .flatMap(product => product.images || [])
+        .filter(Boolean);
+
+      if (imageUrls.length > 0) {
+        // Preload above-the-fold images (first 8 products) with high priority
+        categoryImageService.preloadAboveFoldImages(imageUrls);
+      }
+    }
+  }, [displayedProducts]);
+
   const applyFilters = () => {
     if (!categorySlug) return;
     
-    console.log('CategoryDetailPage: applyFilters called with categorySlug:', categorySlug);
+
     
           let filtered = adminProducts.filter(product => {
         // Handle both old single category and new categories array
@@ -149,7 +167,7 @@ const CategoryDetailPage: React.FC = () => {
             const incomingCategorySlug = generateCategorySlug(categorySlug);
             const matches = productCategorySlug === incomingCategorySlug;
             
-            console.log(`Filtering product "${product.title}": category "${category}" -> slug "${productCategorySlug}" -> incoming slug "${incomingCategorySlug}" -> matches: ${matches}`);
+
             return matches;
           });
         } else if ((product as any).category) {
@@ -163,14 +181,14 @@ const CategoryDetailPage: React.FC = () => {
           const incomingCategorySlug = generateCategorySlug(categorySlug);
           const matches = productCategorySlug === incomingCategorySlug;
           
-          console.log(`Filtering product "${product.title}": category "${category}" -> slug "${productCategorySlug}" -> incoming slug "${incomingCategorySlug}" -> matches: ${matches}`);
+
           return matches;
         }
         
         return false;
       });
     
-    console.log('CategoryDetailPage: applyFilters found products:', filtered.length);
+
 
     // Price filter
     filtered = filtered.filter(product => 
@@ -249,14 +267,7 @@ const CategoryDetailPage: React.FC = () => {
   }, [loadingMore, hasMoreProducts]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading category products...</p>
-        </div>
-      </div>
-    );
+    return <CategoryPageSkeleton showFilters={showFilters} productCount={8} />;
   }
 
   if (error) {
@@ -298,52 +309,48 @@ const CategoryDetailPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
-        {/* Header Card */}
+        {/* Header Card with Controls in Same Row */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-800 mb-1">{category.name} Artwork</h1>
-            <p className="text-xs text-gray-500">
-              Discover amazing {category.name.toLowerCase()} digital art
-            </p>
-          </div>
-        </div>
-
-        {/* Top Controls Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          {/* Left Side - Filters Button */}
-          <div className="mb-4 sm:mb-0">
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2 text-sm"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              <span>Filters</span>
-            </button>
-          </div>
-          
-          {/* Right Side - Item Count and Sort */}
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <span className="text-sm text-gray-600">
-              Showing {displayedProducts.length} of {filteredProducts.length} items
-            </span>
-            
-            {/* Sort Options */}
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-700">Sort by:</label>
-              <select
-                value={filters.sortBy}
-                onChange={(e) => updateFilters({ sortBy: e.target.value })}
-                className="border border-gray-300 rounded-md px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            {/* Left Side - Filters Button */}
+            <div className="flex justify-center lg:justify-start">
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2 text-sm"
               >
-                <option value="relevance">Relevance</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-                <option value="downloads">Most Popular</option>
-                <option value="newest">Newest First</option>
-              </select>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span>Filters</span>
+              </button>
+            </div>
+
+            {/* Center - Header Content */}
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-gray-800 mb-1">{category.name} Artwork</h1>
+              <p className="text-xs text-gray-500">
+                Discover amazing {category.name.toLowerCase()} digital art
+              </p>
+            </div>
+
+            {/* Right Side - Sort */}
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+              {/* Sort Options */}
+              <div className="flex items-center space-x-2">
+                <label className="text-sm text-gray-700">Sort by:</label>
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => updateFilters({ sortBy: e.target.value })}
+                  className="sort-dropdown"
+                >
+                  <option value="relevance">Relevance</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="downloads">Most Popular</option>
+                  <option value="newest">Newest First</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -352,9 +359,21 @@ const CategoryDetailPage: React.FC = () => {
         <div className="flex-1">
           {displayedProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {displayedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {displayedProducts.map((product, index) => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product}
+                />
               ))}
+              
+              {/* Loading more skeleton cards */}
+              {loadingMore && (
+                <>
+                  {[...Array(4)].map((_, i) => (
+                    <ProductCardSkeleton key={`loading-${i}`} />
+                  ))}
+                </>
+              )}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -372,21 +391,13 @@ const CategoryDetailPage: React.FC = () => {
         </div>
 
         {/* Load More Button */}
-        {hasMoreProducts && (
+        {hasMoreProducts && !loadingMore && (
           <div className="mt-8 flex items-center justify-center">
             <button
               onClick={handleLoadMore}
-              disabled={loadingMore}
-              className="px-6 py-3 bg-pink-600 text-white font-medium rounded-md hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-3 bg-pink-600 text-white font-medium rounded-md hover:bg-pink-700 transition-colors"
             >
-              {loadingMore ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Loading...</span>
-                </div>
-              ) : (
-                'Load More Products'
-              )}
+              Load More Products
             </button>
           </div>
         )}
@@ -412,6 +423,8 @@ const CategoryDetailPage: React.FC = () => {
             return false;
           })}
           onClose={() => setShowFilters(false)}
+          displayedCount={displayedProducts.length}
+          filteredCount={filteredProducts.length}
         />
       )}
     </div>

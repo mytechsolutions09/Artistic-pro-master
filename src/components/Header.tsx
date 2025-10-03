@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X, Heart, Clock, TrendingUp, LogIn } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Heart, Clock, TrendingUp, ChevronDown } from 'lucide-react';
 import { CartManager } from '../services/orderService';
-import CurrencySelector from './CurrencySelector';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../utils/adminUtils';
+import { useCategories } from '../contexts/CategoryContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,11 +15,14 @@ const Header: React.FC = () => {
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const categoriesRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminPage = location.pathname.startsWith('/admin');
   const { user } = useAuth();
+  const { categories } = useCategories();
   
   useEffect(() => {
     // Initialize cart count
@@ -161,12 +164,50 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-pink-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
-            <span className="text-xl font-bold text-gray-800">ArtGallery</span>
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/arvexa-logo.svg" 
+              alt="ARVEXA" 
+              className="h-10 w-auto"
+            />
           </Link>
+
+          {/* Categories - Desktop with Dropdown */}
+          <div 
+            className="hidden lg:block relative ml-6"
+            ref={categoriesRef}
+            onMouseEnter={() => setShowCategoriesDropdown(true)}
+            onMouseLeave={() => setShowCategoriesDropdown(false)}
+          >
+            <Link 
+              to="/categories" 
+              className="flex items-center gap-1 text-gray-700 hover:text-pink-600 transition-colors py-2"
+            >
+              <span>Categories</span>
+              <ChevronDown className="w-4 h-4" />
+            </Link>
+
+            {/* Categories Dropdown */}
+            {showCategoriesDropdown && categories.length > 0 && (
+              <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2 max-h-96 overflow-y-auto">
+                {categories
+                  .filter(category => {
+                    // Exclude clothing-related categories
+                    const lowerName = category.name.toLowerCase();
+                    return !['men', 'women', 'clothing'].some(keyword => lowerName.includes(keyword));
+                  })
+                  .map((category) => (
+                    <Link
+                      key={category.id}
+                      to={`/category/${category.slug}`}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+              </div>
+            )}
+          </div>
 
           {/* Search Bar - Desktop */}
           <div className="hidden md:flex flex-1 max-w-xl mx-8">
@@ -242,15 +283,15 @@ const Header: React.FC = () => {
           </div>
 
           {/* Navigation - Desktop Only (lg+) */}
-          <nav className="hidden lg:flex items-center space-x-6">
+          <nav className="hidden lg:flex items-center space-x-4">
             <Link to="/favorites" className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
               <Heart className="w-6 h-6" />
             </Link>
-            <Link to="/categories" className="text-gray-700 hover:text-pink-600 transition-colors">
-              Categories
-            </Link>
             <Link to="/browse" className="text-gray-700 hover:text-pink-600 transition-colors">
-              Browse
+              Art
+            </Link>
+            <Link to="/men" className="text-gray-700 hover:text-pink-600 transition-colors">
+              Clothes
             </Link>
             {isAdmin(user?.email) && (
               <Link to="/admin" className="text-gray-700 hover:text-pink-600 transition-colors">
@@ -265,21 +306,13 @@ const Header: React.FC = () => {
                 </span>
               )}
             </Link>
-            {user ? (
-              <Link to="/dashboard" className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
-                <User className="w-6 h-6" />
-              </Link>
-            ) : (
-              <Link to="/sign-in" className="flex items-center space-x-1 text-gray-700 hover:text-pink-600 transition-colors px-3 py-2 rounded-md border border-gray-200 hover:border-pink-300">
-                <LogIn className="w-4 h-4" />
-                <span className="text-sm font-medium">Sign In</span>
-              </Link>
-            )}
-            <CurrencySelector />
+            <Link to={user ? "/dashboard" : "/sign-in"} className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
+              <User className="w-6 h-6" />
+            </Link>
           </nav>
 
           {/* Tablet Navigation - Search Tab */}
-          <div className="hidden md:flex lg:hidden items-center space-x-4">
+          <div className="hidden md:flex lg:hidden items-center space-x-3">
             <Link 
               to="/search" 
               className="p-2 text-gray-700 hover:text-pink-600 transition-colors"
@@ -295,15 +328,9 @@ const Header: React.FC = () => {
                 </span>
               )}
             </Link>
-            {user ? (
-              <Link to="/dashboard" className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
-                <User className="w-6 h-6" />
-              </Link>
-            ) : (
-              <Link to="/sign-in" className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
-                <LogIn className="w-6 h-6" />
-              </Link>
-            )}
+            <Link to={user ? "/dashboard" : "/sign-in"} className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
+              <User className="w-6 h-6" />
+            </Link>
           </div>
 
           {/* Mobile & Tablet Menu Button */}
@@ -410,7 +437,14 @@ const Header: React.FC = () => {
                 className="text-gray-700 hover:text-pink-600 transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Browse
+                Art
+              </Link>
+              <Link
+                to="/men"
+                className="text-gray-700 hover:text-pink-600 transition-colors py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Clothes
               </Link>
               {isAdmin(user?.email) && (
                 <Link
@@ -421,7 +455,7 @@ const Header: React.FC = () => {
                   Admin
                 </Link>
               )}
-              <div className="flex items-center space-x-4 pt-2">
+              <div className="flex items-center space-x-3 pt-2">
                 <Link 
                   to="/cart"
                   className="flex items-center text-gray-700 hover:text-pink-600 transition-colors"
@@ -430,25 +464,14 @@ const Header: React.FC = () => {
                   <ShoppingCart className="w-6 h-6 mr-2" />
                   Cart ({cartItemCount})
                 </Link>
-                {user ? (
-                  <Link
-                    to="/dashboard"
-                    className="flex items-center text-gray-700 hover:text-pink-600 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <User className="w-6 h-6 mr-2" />
-                    Dashboard
-                  </Link>
-                ) : (
-                  <Link
-                    to="/sign-in"
-                    className="flex items-center text-gray-700 hover:text-pink-600 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <LogIn className="w-6 h-6 mr-2" />
-                    Sign In
-                  </Link>
-                )}
+                <Link
+                  to={user ? "/dashboard" : "/sign-in"}
+                  className="flex items-center text-gray-700 hover:text-pink-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="w-6 h-6 mr-2" />
+                  {user ? "Dashboard" : "Sign In"}
+                </Link>
               </div>
             </nav>
           </div>

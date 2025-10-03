@@ -238,7 +238,7 @@ export class ActivityService {
   static async logActivity(activity: Omit<Activity, 'id' | 'timestamp'>): Promise<boolean> {
     try {
       // In a real implementation, you might want to store activities in a dedicated table
-      console.log('Activity logged:', activity);
+
       return true;
     } catch (error) {
       console.error('Error logging activity:', error);
