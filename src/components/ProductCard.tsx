@@ -177,19 +177,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <Link
       to={productUrl}
-      className="block group relative bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100"
+      className={`block group relative bg-white transition-all duration-300 overflow-hidden ${
+        isClothing 
+          ? 'rounded-none' 
+          : 'rounded-xl shadow-sm hover:shadow-lg border border-gray-100'
+      }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
     >
       {/* Image Container */}
-      <div className="relative overflow-hidden rounded-t-xl">
+      <div className={`relative overflow-hidden ${isClothing ? 'rounded-none' : 'rounded-t-xl'}`}>
         {/* Main Image */}
         {product.images && product.images.length > 0 && product.images[currentImageIndex] ? (
           <img
             src={product.images[currentImageIndex]}
             alt={product.title}
-            className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+            className={`w-full object-cover transition-transform duration-300 ${
+              isClothing 
+                ? 'h-80 group-hover:scale-102' 
+                : 'h-56 group-hover:scale-105'
+            }`}
           />
         ) : (
           <div className="w-full h-56 flex items-center justify-center bg-gray-100">
@@ -201,10 +209,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {!isClothing && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        )}
         
         {/* Image Navigation Arrows - Hidden Permanently */}
-        {product.images && product.images.length > 1 && (
+        {!isClothing && product.images && product.images.length > 1 && (
           <>
             <button
               onClick={prevImage}
@@ -225,8 +235,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </>
         )}
 
-        {/* Image Dots Indicator */}
-        {product.images && product.images.length > 1 && (
+        {/* Image Dots Indicator - Hidden for Clothing */}
+        {!isClothing && product.images && product.images.length > 1 && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
             <div className="flex space-x-2">
               {product.images.map((_, index) => (
@@ -248,83 +258,116 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
 
-        {/* Category Badge */}
-        <div className="absolute top-3 left-3">
-          <span className="px-3 py-1 bg-pink-100 text-pink-800 text-xs font-medium rounded-full">
-            {product.categories && product.categories.length > 0 
-              ? product.categories[0] 
-              : (product as any).category}
-          </span>
+        {/* Category Badge - Hidden for Clothing */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {!isClothing && (
+            <span className="px-3 py-1 bg-pink-100 text-pink-800 text-xs font-medium rounded-full">
+              {product.categories && product.categories.length > 0 
+                ? product.categories[0] 
+                : (product as any).category}
+            </span>
+          )}
+          
+          {/* Stock Badge for Clothing Items */}
+          {isClothing && product.trackInventory && (
+            <>
+              {product.stockQuantity === 0 ? (
+                <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-md">
+                  OUT OF STOCK
+                </span>
+              ) : product.stockQuantity && product.stockQuantity <= (product.lowStockThreshold || 10) ? (
+                <span className="px-2.5 py-1 bg-orange-500 text-white text-xs font-bold rounded-full shadow-md animate-pulse">
+                  LOW STOCK
+                </span>
+              ) : null}
+            </>
+          )}
         </div>
 
-        {/* Overlay Actions */}
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button 
-            onClick={handleFavoriteToggle}
-            disabled={favoriteLoading}
-            className="p-2 bg-white/90 hover:bg-white rounded-full shadow-md backdrop-blur-sm"
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            {favoriteLoading ? (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <Heart className={`w-5 h-5 text-gray-600 hover:text-pink-500 transition-colors ${isFavorite ? 'fill-current text-pink-500' : ''}`} />
-            )}
-          </button>
-        </div>
+        {/* Overlay Actions - Hidden for Clothing */}
+        {!isClothing && (
+          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button 
+              onClick={handleFavoriteToggle}
+              disabled={favoriteLoading}
+              className="p-2 bg-white/90 hover:bg-white rounded-full shadow-md backdrop-blur-sm"
+              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              {favoriteLoading ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Heart className={`w-5 h-5 text-gray-600 hover:text-pink-500 transition-colors ${isFavorite ? 'fill-current text-pink-500' : ''}`} />
+              )}
+            </button>
+          </div>
+        )}
 
 
 
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-800 mb-1 group-hover:text-pink-600 transition-colors line-clamp-1">
+      <div className={isClothing ? 'p-3' : 'p-4'}>
+        <h3 className={`font-semibold mb-1 transition-colors line-clamp-1 ${
+          isClothing 
+            ? 'text-xs uppercase tracking-wide text-gray-900' 
+            : 'text-gray-800 group-hover:text-pink-600'
+        }`}>
           {product.title}
         </h3>
         
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-1">
-            {renderStars(product.rating)}
-            <span className="text-sm font-medium text-gray-700">{product.rating}</span>
-            <span className="text-sm text-gray-500">({product.downloads})</span>
+        {/* Stars and Reviews - Hidden for Clothing */}
+        {!isClothing && (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-1">
+              {renderStars(product.rating)}
+              <span className="text-sm font-medium text-gray-700">{product.rating}</span>
+              <span className="text-sm text-gray-500">({product.downloads})</span>
+            </div>
+            <div className="flex items-center text-sm text-gray-500">
+              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              {product.downloads}
+            </div>
           </div>
-          <div className="flex items-center text-sm text-gray-500">
-            <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            {product.downloads}
-          </div>
-        </div>
+        )}
 
-        <div className="flex items-center justify-between">
+        <div className={`flex items-center justify-between ${isClothing ? 'mt-2' : ''}`}>
           <div className="flex flex-col">
             {product.originalPrice && product.discountPercentage && product.discountPercentage > 0 ? (
               <div className="flex flex-col space-y-1">
                 <div className="flex items-center space-x-2">
-                  <div className="text-lg font-bold text-pink-600">
+                  <div className={isClothing ? 'text-sm font-bold text-gray-900' : 'text-lg font-bold text-pink-600'}>
                     {formatUIPrice(getCurrentPrice(), 'INR')}
                   </div>
-                  <div className="text-sm text-gray-400 line-through">
-                    {formatUIPrice(getOriginalPrice(), 'INR')}
+                  {!isClothing && (
+                    <div className="text-sm text-gray-400 line-through">
+                      {formatUIPrice(getOriginalPrice(), 'INR')}
+                    </div>
+                  )}
+                </div>
+                {!isClothing && (
+                  <div className="text-xs text-green-600 font-semibold">
+                    {product.discountPercentage}% OFF
                   </div>
-                </div>
-                <div className="text-xs text-green-600 font-semibold">
-                  {product.discountPercentage}% OFF
-                </div>
+                )}
               </div>
             ) : (
-              <div className="text-lg font-bold text-gray-800">
+              <div className={isClothing ? 'text-sm font-bold text-gray-900' : 'text-lg font-bold text-gray-800'}>
                 {formatUIPrice(getCurrentPrice(), 'INR')}
               </div>
             )}
           </div>
-          <button 
-            className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors duration-200"
-            onClick={handleCardClick}
-          >
-            View Details
-          </button>
+          {/* View Details Button - Hidden for Clothing */}
+          {!isClothing && (
+            <button 
+              className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors duration-200"
+              onClick={handleCardClick}
+            >
+              View Details
+            </button>
+          )}
         </div>
       </div>
 

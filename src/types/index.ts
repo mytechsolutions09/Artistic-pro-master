@@ -147,6 +147,10 @@ export interface Product {
   clothingType?: string; // Type: Oversized Hoodies, Extra Oversized Hoodies, etc.
   material?: string; // Fabric material
   brand?: string; // Product brand
+  // Inventory fields
+  stockQuantity?: number; // Available stock quantity
+  lowStockThreshold?: number; // Alert when stock falls below this
+  trackInventory?: boolean; // Whether to track inventory for this product
 }
 
 export interface HomepageSection {

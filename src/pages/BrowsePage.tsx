@@ -292,9 +292,13 @@ const BrowsePage: React.FC = () => {
 
             {/* Center - Header Content */}
             <div className="text-center">
-              <h1 className="text-xl font-bold text-gray-800 mb-1">Art</h1>
+              <h1 className="text-xl font-bold text-gray-800 mb-1">
+                {filters.category ? `${filters.category.charAt(0).toUpperCase() + filters.category.slice(1)} Art` : 'Art'}
+              </h1>
               <p className="text-xs text-gray-500">
-                Discover amazing digital art from all categories
+                {filters.category 
+                  ? `Showing ${filteredProducts.length} products in ${filters.category}` 
+                  : `Discover amazing digital art from all categories`}
               </p>
             </div>
 
@@ -321,6 +325,24 @@ const BrowsePage: React.FC = () => {
         </div>
 
 
+
+        {/* Active Filters Display */}
+        {filters.category && (
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-sm text-gray-600">Active filter:</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-pink-50 border border-pink-200 rounded-full text-sm text-pink-700">
+              <span>{filters.category.charAt(0).toUpperCase() + filters.category.slice(1)}</span>
+              <button
+                onClick={() => updateFilters({ category: undefined })}
+                className="hover:text-pink-900"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Products Grid */}
         <div className="flex-1">

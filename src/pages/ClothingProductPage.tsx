@@ -195,6 +195,28 @@ const ClothingProductPage: React.FC = () => {
                   </p>
                 )}
               </div>
+
+              {/* Stock Status */}
+              {product.trackInventory && (
+                <div className="mt-3">
+                  {product.stockQuantity === 0 ? (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
+                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                      <span className="text-sm font-semibold text-red-700">Out of Stock</span>
+                    </div>
+                  ) : product.stockQuantity && product.stockQuantity <= (product.lowStockThreshold || 10) ? (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg">
+                      <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                      <span className="text-sm font-semibold text-orange-700">Only {product.stockQuantity} left in stock!</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span className="text-sm font-semibold text-green-700">In Stock</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Description */}
@@ -392,18 +414,32 @@ const ClothingProductPage: React.FC = () => {
             <div className="flex gap-2">
               <button
                 onClick={handleAddToCart}
-                className="flex-1 py-2.5 px-3 bg-gray-100 text-gray-900 font-medium text-xs uppercase tracking-wide hover:bg-gray-200 transition-all rounded"
+                disabled={product.trackInventory && product.stockQuantity === 0}
+                className={`flex-1 py-2.5 px-3 font-medium text-xs uppercase tracking-wide transition-all rounded ${
+                  product.trackInventory && product.stockQuantity === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                }`}
               >
-                ADD TO CART
+                {product.trackInventory && product.stockQuantity === 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
               </button>
               <button
                 onClick={handleBuyNow}
-                className="flex-1 py-2.5 px-3 text-white font-medium text-xs uppercase tracking-wide transition-all rounded"
-                style={{ backgroundColor: '#ff6e00' }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e56300')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ff6e00')}
+                disabled={product.trackInventory && product.stockQuantity === 0}
+                className="flex-1 py-2.5 px-3 text-white font-medium text-xs uppercase tracking-wide transition-all rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: product.trackInventory && product.stockQuantity === 0 ? '#ccc' : '#ff6e00' }}
+                onMouseEnter={(e) => {
+                  if (!(product.trackInventory && product.stockQuantity === 0)) {
+                    e.currentTarget.style.backgroundColor = '#e56300';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!(product.trackInventory && product.stockQuantity === 0)) {
+                    e.currentTarget.style.backgroundColor = '#ff6e00';
+                  }
+                }}
               >
-                BUY NOW
+                {product.trackInventory && product.stockQuantity === 0 ? 'OUT OF STOCK' : 'BUY NOW'}
               </button>
             </div>
           </div>

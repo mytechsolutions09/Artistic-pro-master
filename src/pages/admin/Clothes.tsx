@@ -3,7 +3,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import ClothesSecondaryNav from '../../components/admin/ClothesSecondaryNav';
 import { useProducts } from '../../contexts/ProductContext';
 import { Product } from '../../types';
-import { Shirt, Plus, Package, TrendingUp, Upload, X, Edit, Trash2, Save } from 'lucide-react';
+import { Shirt, Plus, Package, TrendingUp, Upload, X, Edit, Trash2, Save, Copy } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
 import { ProductService } from '../../services/supabaseService';
 import { NotificationManager } from '../../components/Notification';
@@ -34,7 +34,10 @@ const Clothes: React.FC = () => {
     colors: [] as string[],
     clothingType: '',
     material: '',
-    brand: ''
+    brand: '',
+    // Inventory fields
+    stockQuantity: '100',
+    lowStockThreshold: '10'
   });
   const [images, setImages] = useState<string[]>([]);
   const [imageInput, setImageInput] = useState('');
@@ -184,6 +187,13 @@ const Clothes: React.FC = () => {
               <ProductCard product={product} />
               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
+                  onClick={() => handleDuplicateProduct(product)}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-green-50 transition-colors"
+                  title="Duplicate product"
+                >
+                  <Copy className="w-4 h-4 text-green-600" />
+                </button>
+                <button
                   onClick={() => handleEditProduct(product)}
                   className="p-2 bg-white rounded-full shadow-lg hover:bg-blue-50 transition-colors"
                   title="Edit product"
@@ -224,6 +234,13 @@ const Clothes: React.FC = () => {
             <div key={product.id} className="relative group">
               <ProductCard product={product} />
               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => handleDuplicateProduct(product)}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-green-50 transition-colors"
+                  title="Duplicate product"
+                >
+                  <Copy className="w-4 h-4 text-green-600" />
+                </button>
                 <button
                   onClick={() => handleEditProduct(product)}
                   className="p-2 bg-white rounded-full shadow-lg hover:bg-blue-50 transition-colors"
@@ -266,6 +283,13 @@ const Clothes: React.FC = () => {
               <ProductCard product={product} />
               <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
+                  onClick={() => handleDuplicateProduct(product)}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-green-50 transition-colors"
+                  title="Duplicate product"
+                >
+                  <Copy className="w-4 h-4 text-green-600" />
+                </button>
+                <button
                   onClick={() => handleEditProduct(product)}
                   className="p-2 bg-white rounded-full shadow-lg hover:bg-blue-50 transition-colors"
                   title="Edit product"
@@ -292,17 +316,24 @@ const Clothes: React.FC = () => {
     
     // Auto-calculate current price when original price or discount changes
     if (name === 'originalPrice' || name === 'discountPercentage') {
-      const originalPrice = name === 'originalPrice' ? parseFloat(value) : parseFloat(formData.originalPrice);
-      const discountPercentage = name === 'discountPercentage' ? parseFloat(value) : parseFloat(formData.discountPercentage);
+      const originalPriceValue = name === 'originalPrice' ? value : formData.originalPrice;
+      const discountPercentageValue = name === 'discountPercentage' ? value : formData.discountPercentage;
       
-      if (!isNaN(originalPrice) && originalPrice > 0 && !isNaN(discountPercentage) && discountPercentage >= 0) {
-        const discountedPrice = originalPrice - (originalPrice * discountPercentage / 100);
-        setFormData(prev => ({ 
-          ...prev, 
-          [name]: value,
-          price: Math.round(discountedPrice).toString()
-        }));
-        return;
+      // Only auto-calculate if BOTH fields have actual values (not empty strings)
+      if (originalPriceValue && originalPriceValue.trim() !== '' && 
+          discountPercentageValue && discountPercentageValue.trim() !== '') {
+        const originalPrice = parseFloat(originalPriceValue);
+        const discountPercentage = parseFloat(discountPercentageValue);
+        
+        if (!isNaN(originalPrice) && originalPrice > 0 && !isNaN(discountPercentage) && discountPercentage > 0) {
+          const discountedPrice = originalPrice - (originalPrice * discountPercentage / 100);
+          setFormData(prev => ({ 
+            ...prev, 
+            [name]: value,
+            price: Math.round(discountedPrice).toString()
+          }));
+          return;
+        }
       }
     }
     
@@ -461,8 +492,12 @@ const Clothes: React.FC = () => {
         clothingType: formData.clothingType,
         material: formData.material,
         brand: formData.brand,
-        ...(formData.originalPrice && { originalPrice: parseFloat(formData.originalPrice) }),
-        ...(formData.discountPercentage && { discountPercentage: parseFloat(formData.discountPercentage) })
+        // Inventory fields (always track inventory for clothing)
+        trackInventory: true,
+        stockQuantity: parseInt(formData.stockQuantity) || 100,
+        lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
+        ...(formData.originalPrice && formData.originalPrice.trim() !== '' && parseFloat(formData.originalPrice) > 0 && { originalPrice: parseFloat(formData.originalPrice) }),
+        ...(formData.discountPercentage && formData.discountPercentage.trim() !== '' && parseFloat(formData.discountPercentage) > 0 && { discountPercentage: parseFloat(formData.discountPercentage) })
       } as any;
 
       await ProductService.createProduct(newProduct as Product);
@@ -488,7 +523,9 @@ const Clothes: React.FC = () => {
         colors: [],
         clothingType: '',
         material: '',
-        brand: ''
+        brand: '',
+        stockQuantity: '100',
+        lowStockThreshold: '10'
       });
       setImages([]);
       
@@ -525,7 +562,9 @@ const Clothes: React.FC = () => {
       colors: product.tags?.filter(t => ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Navy', 'Brown', 'Pink', 'Purple', 'Beige'].includes(t)) || [],
       clothingType: product.clothingType || product.tags?.find(t => clothingTypes.map(ct => ct.toLowerCase()).includes(t.toLowerCase())) || '',
       material: product.material || '',
-      brand: product.brand || ''
+      brand: product.brand || '',
+      stockQuantity: product.stockQuantity?.toString() || '100',
+      lowStockThreshold: product.lowStockThreshold?.toString() || '10'
     });
     
     setImages(product.images || []);
@@ -590,14 +629,18 @@ const Clothes: React.FC = () => {
         status: formData.status,
         tags: allTags,
         productId: formData.productId.trim(),
+        // Inventory fields
+        trackInventory: true,
+        stockQuantity: parseInt(formData.stockQuantity) || 100,
+        lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
         details: formData.details,
         washCare: formData.washCare,
         shipping: formData.shipping,
         clothingType: formData.clothingType,
         material: formData.material,
         brand: formData.brand,
-        ...(formData.originalPrice && { originalPrice: parseFloat(formData.originalPrice) }),
-        ...(formData.discountPercentage && { discountPercentage: parseFloat(formData.discountPercentage) })
+        ...(formData.originalPrice && formData.originalPrice.trim() !== '' && parseFloat(formData.originalPrice) > 0 && { originalPrice: parseFloat(formData.originalPrice) }),
+        ...(formData.discountPercentage && formData.discountPercentage.trim() !== '' && parseFloat(formData.discountPercentage) > 0 && { discountPercentage: parseFloat(formData.discountPercentage) })
       } as any;
 
       await ProductService.updateProduct(editingProduct.id, updatedProduct);
@@ -648,6 +691,48 @@ const Clothes: React.FC = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  // Duplicate Product
+  const handleDuplicateProduct = (product: Product) => {
+    // Generate new SKU with -COPY suffix
+    const baseSku = product.productId || product.title.toUpperCase().replace(/[^A-Z0-9]+/g, '-');
+    const newSku = `${baseSku}-COPY-${Date.now().toString().slice(-4)}`;
+    
+    // Pre-fill form with duplicated product data
+    setFormData({
+      productId: newSku,
+      title: `${product.title} (Copy)`,
+      description: product.description || '',
+      details: product.details || '',
+      washCare: product.washCare || '',
+      shipping: product.shipping || '',
+      price: product.price.toString(),
+      originalPrice: product.originalPrice?.toString() || '',
+      discountPercentage: product.discountPercentage?.toString() || '',
+      categories: product.gender ? [product.gender] : (product.categories || ['Men']),
+      productType: product.productType || 'poster',
+      status: 'active',
+      tags: product.tags || [],
+      sizes: product.tags?.filter(t => ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].includes(t)) || [],
+      colors: product.tags?.filter(t => ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Navy', 'Brown', 'Pink', 'Purple', 'Beige'].includes(t)) || [],
+      clothingType: product.clothingType || product.tags?.find(t => clothingTypes.map(ct => ct.toLowerCase()).includes(t.toLowerCase())) || '',
+      material: product.material || '',
+      brand: product.brand || '',
+      stockQuantity: product.stockQuantity?.toString() || '100',
+      lowStockThreshold: product.lowStockThreshold?.toString() || '10'
+    });
+    
+    // Copy images
+    setImages(product.images || []);
+    
+    // Switch to create tab
+    setActiveTab('create');
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    NotificationManager.success(`Product duplicated! Edit details and click Create to save.`);
   };
 
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
@@ -885,6 +970,55 @@ const Clothes: React.FC = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               placeholder="Brand name"
             />
+          </div>
+        </div>
+
+        {/* Inventory Management */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Package className="w-4 h-4 text-blue-600" />
+            Inventory Management
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Stock Quantity *</label>
+              <input
+                type="number"
+                name="stockQuantity"
+                value={formData.stockQuantity}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                placeholder="e.g. 100"
+                min="0"
+              />
+              <p className="text-xs text-gray-500 mt-1">Available stock quantity for this product</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Low Stock Threshold</label>
+              <input
+                type="number"
+                name="lowStockThreshold"
+                value={formData.lowStockThreshold}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                placeholder="e.g. 10"
+                min="0"
+              />
+              <p className="text-xs text-gray-500 mt-1">Alert when stock falls below this number</p>
+            </div>
+          </div>
+          <div className="mt-3 p-3 bg-white rounded border border-blue-200">
+            <p className="text-sm text-gray-700">
+              <span className="font-medium">📦 Stock Status:</span>{' '}
+              {parseInt(formData.stockQuantity) <= 0 ? (
+                <span className="text-red-600 font-semibold">Out of Stock</span>
+              ) : parseInt(formData.stockQuantity) <= parseInt(formData.lowStockThreshold) ? (
+                <span className="text-orange-600 font-semibold">Low Stock ({formData.stockQuantity} units)</span>
+              ) : (
+                <span className="text-green-600 font-semibold">In Stock ({formData.stockQuantity} units)</span>
+              )}
+            </p>
           </div>
         </div>
 
@@ -1133,7 +1267,32 @@ const Clothes: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {clothingProducts.filter(p => p.featured).map(product => (
-            <ProductCard key={product.id} product={product} />
+            <div key={product.id} className="relative group">
+              <ProductCard product={product} />
+              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => handleDuplicateProduct(product)}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-green-50 transition-colors"
+                  title="Duplicate product"
+                >
+                  <Copy className="w-4 h-4 text-green-600" />
+                </button>
+                <button
+                  onClick={() => handleEditProduct(product)}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-blue-50 transition-colors"
+                  title="Edit product"
+                >
+                  <Edit className="w-4 h-4 text-blue-600" />
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm(product.id)}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-red-50 transition-colors"
+                  title="Delete product"
+                >
+                  <Trash2 className="w-4 h-4 text-red-600" />
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -1425,6 +1584,55 @@ const Clothes: React.FC = () => {
                       {color}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Inventory Management */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Package className="w-4 h-4 text-blue-600" />
+                  Inventory Management
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Stock Quantity *</label>
+                    <input
+                      type="number"
+                      name="stockQuantity"
+                      value={formData.stockQuantity}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      placeholder="e.g. 100"
+                      min="0"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Available stock quantity for this product</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Low Stock Threshold</label>
+                    <input
+                      type="number"
+                      name="lowStockThreshold"
+                      value={formData.lowStockThreshold}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      placeholder="e.g. 10"
+                      min="0"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Alert when stock falls below this number</p>
+                  </div>
+                </div>
+                <div className="mt-3 p-3 bg-white rounded border border-blue-200">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">📦 Stock Status:</span>{' '}
+                    {parseInt(formData.stockQuantity) <= 0 ? (
+                      <span className="text-red-600 font-semibold">Out of Stock</span>
+                    ) : parseInt(formData.stockQuantity) <= parseInt(formData.lowStockThreshold) ? (
+                      <span className="text-orange-600 font-semibold">Low Stock ({formData.stockQuantity} units)</span>
+                    ) : (
+                      <span className="text-green-600 font-semibold">In Stock ({formData.stockQuantity} units)</span>
+                    )}
+                  </p>
                 </div>
               </div>
 

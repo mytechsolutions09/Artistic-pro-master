@@ -189,22 +189,31 @@ const Header: React.FC = () => {
 
             {/* Categories Dropdown */}
             {showCategoriesDropdown && categories.length > 0 && (
-              <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2 max-h-96 overflow-y-auto">
-                {categories
-                  .filter(category => {
-                    // Exclude clothing-related categories
-                    const lowerName = category.name.toLowerCase();
-                    return !['men', 'women', 'clothing'].some(keyword => lowerName.includes(keyword));
-                  })
-                  .map((category) => (
-                    <Link
-                      key={category.id}
-                      to={`/category/${category.slug}`}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
+              <div 
+                className="absolute top-full left-0 mt-1 w-[85vw] max-w-[1100px] max-h-[50vh] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3 overflow-y-auto"
+                onMouseEnter={() => setShowCategoriesDropdown(true)}
+                onMouseLeave={() => setShowCategoriesDropdown(false)}
+              >
+                <div className="grid grid-cols-5 gap-2">
+                  {categories
+                    .filter(category => {
+                      // Exclude clothing-related categories
+                      const lowerName = category.name.toLowerCase();
+                      return !['men', 'women', 'clothing'].some(keyword => lowerName.includes(keyword));
+                    })
+                    .map((category) => (
+                      <Link
+                        key={category.id}
+                        to={`/${category.slug}`}
+                        className="px-2.5 py-1.5 text-xs text-gray-700 hover:text-pink-600 rounded-md transition-all font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis"
+                        style={{ boxShadow: 'none' }}
+                        onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 0, 0, 0.15)'}
+                        onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                </div>
               </div>
             )}
           </div>
@@ -290,7 +299,7 @@ const Header: React.FC = () => {
             <Link to="/browse" className="text-gray-700 hover:text-pink-600 transition-colors">
               Art
             </Link>
-            <Link to="/men" className="text-gray-700 hover:text-pink-600 transition-colors">
+            <Link to="/men" className="text-gray-700 hover:text-[#ff6e00] transition-colors">
               Clothes
             </Link>
             {isAdmin(user?.email) && (
@@ -441,7 +450,7 @@ const Header: React.FC = () => {
               </Link>
               <Link
                 to="/men"
-                className="text-gray-700 hover:text-pink-600 transition-colors py-2"
+                className="text-gray-700 hover:text-[#ff6e00] transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Clothes

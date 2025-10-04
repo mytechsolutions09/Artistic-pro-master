@@ -38,11 +38,19 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
   const maxPrice = Math.max(...productPrices, 10000);
   const minPrice = Math.min(...productPrices, 0);
 
-  // Get unique tags from products
-  const allTags = Array.from(new Set(products.flatMap(p => p.tags || [])));
+  // Get unique tags from products (exclude clothing-related tags)
+  const allTags = Array.from(new Set(products.flatMap(p => p.tags || []))).filter(tag => {
+    const lowerTag = tag.toLowerCase();
+    return !['men', 'women', 'clothing', 'xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl'].some(keyword => 
+      lowerTag.includes(keyword) || lowerTag === keyword
+    );
+  });
 
-  // Get unique categories from products
-  const productCategories = Array.from(new Set(products.flatMap(p => p.categories || [])));
+  // Get unique categories from products (exclude clothing-related categories)
+  const productCategories = Array.from(new Set(products.flatMap(p => p.categories || []))).filter(cat => {
+    const lowerCat = cat.toLowerCase();
+    return !['men', 'women', 'clothing'].some(keyword => lowerCat.includes(keyword));
+  });
 
   useEffect(() => {
     setSelectedTags(filters.tags || []);

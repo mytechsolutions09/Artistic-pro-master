@@ -91,12 +91,12 @@ const BottomTabs: React.FC = () => {
           to="/men"
           className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/men') 
-              ? 'text-pink-600' 
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'text-[#ff6e00]' 
+              : 'text-gray-500 hover:text-[#ff6e00]'
           }`}
         >
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            isActiveTab('/men') ? 'bg-pink-100' : 'bg-gray-100'
+            isActiveTab('/men') ? 'bg-orange-100' : 'bg-gray-100'
           }`}>
             <Shirt className="w-4 h-4" />
           </div>
