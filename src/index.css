@@ -180,7 +180,7 @@
   background: #db2777;
 }
 
-/* Hidden scrollbar for thumbnail slider */
+/* Hidden scrollbar for thumbnail slider and sidebar */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* Internet Explorer 10+ */
   scrollbar-width: none;  /* Firefox */
@@ -188,6 +188,63 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Safari and Chrome */
+}
+
+/* Invisible scrollbar for admin sidebar - functional but invisible */
+.scrollbar-invisible {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+  scrollbar-color: transparent transparent;  /* Firefox */
+}
+
+.scrollbar-invisible::-webkit-scrollbar {
+  width: 0px;  /* Safari and Chrome - make it invisible */
+  background: transparent;
+}
+
+.scrollbar-invisible::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.scrollbar-invisible::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Smooth scrolling for sidebar */
+.sidebar-scroll {
+  scroll-behavior: smooth;
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* Scroll fade effect for sidebar */
+.sidebar-scroll::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+  pointer-events: none;
+  z-index: 10;
+}
+
+.sidebar-scroll::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+  pointer-events: none;
+  z-index: 10;
 }
 
 /* Smooth transitions */

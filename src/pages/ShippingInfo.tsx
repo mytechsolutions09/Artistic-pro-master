@@ -87,33 +87,30 @@ const ShippingInfo: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 bg-blue-100 rounded-full">
-              <Truck className="w-12 h-12 text-blue-600" />
-            </div>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Shipping Information</h1>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Shipping Information</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Everything you need to know about our shipping options, delivery times, and international shipping.
-          </p>
         </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Shipping Options */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {shippingOptions.map((option, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-shadow">
-              <div className="text-blue-600 mb-4">{option.icon}</div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{option.name}</h3>
-              <p className="text-blue-600 font-semibold mb-2">{option.time}</p>
-              <p className="text-gray-900 font-medium mb-3">{option.cost}</p>
-              <p className="text-gray-600 mb-4">{option.description}</p>
-              <ul className="space-y-2">
+            <div key={index} className="bg-white rounded-md shadow-sm p-4 hover:shadow-lg transition-shadow">
+              <div className="text-blue-600 mb-3">{option.icon}</div>
+              <h3 className="text-base font-bold text-gray-900 mb-2">{option.name}</h3>
+              <p className="text-blue-600 font-semibold mb-1 text-sm">{option.time}</p>
+              <p className="text-gray-900 font-medium mb-2 text-sm">{option.cost}</p>
+              <p className="text-gray-600 mb-3 text-sm">{option.description}</p>
+              <ul className="space-y-1">
                 {option.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                  <li key={featureIndex} className="flex items-center text-xs text-gray-600">
+                    <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
                     {feature}
                   </li>
                 ))}
@@ -123,25 +120,25 @@ const ShippingInfo: React.FC = () => {
         </div>
 
         {/* Shipping Zones */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Shipping Zones & Rates</h2>
+        <div className="bg-white rounded-md shadow-sm p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Shipping Zones & Rates</h2>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Zone</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Location</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Delivery Time</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900">Cost</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900">Zone</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900">Location</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900">Delivery Time</th>
+                  <th className="text-left py-2 px-3 font-semibold text-gray-900">Cost</th>
                 </tr>
               </thead>
               <tbody>
                 {shippingZones.map((zone, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-900">{zone.zone}</td>
-                    <td className="py-3 px-4 text-gray-600">{zone.states}</td>
-                    <td className="py-3 px-4 text-gray-600">{zone.time}</td>
-                    <td className="py-3 px-4 text-gray-600">{zone.cost}</td>
+                    <td className="py-2 px-3 font-medium text-gray-900 text-xs">{zone.zone}</td>
+                    <td className="py-2 px-3 text-gray-600 text-xs">{zone.states}</td>
+                    <td className="py-2 px-3 text-gray-600 text-xs">{zone.time}</td>
+                    <td className="py-2 px-3 text-gray-600 text-xs">{zone.cost}</td>
                   </tr>
                 ))}
               </tbody>
@@ -150,16 +147,16 @@ const ShippingInfo: React.FC = () => {
         </div>
 
         {/* Important Notes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {importantNotes.map((note, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 p-3 bg-blue-100 rounded-lg">
+            <div key={index} className="bg-white rounded-md shadow-sm p-4">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 p-2 bg-blue-100 rounded">
                   <div className="text-blue-600">{note.icon}</div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{note.title}</h3>
-                  <p className="text-gray-600">{note.description}</p>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-1">{note.title}</h3>
+                  <p className="text-sm text-gray-600">{note.description}</p>
                 </div>
               </div>
             </div>
@@ -167,44 +164,44 @@ const ShippingInfo: React.FC = () => {
         </div>
 
         {/* FAQ Section */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Shipping FAQ</h2>
-          <div className="space-y-6">
+        <div className="bg-white rounded-md shadow-sm p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Shipping FAQ</h2>
+          <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">When will my order ship?</h3>
-              <p className="text-gray-600">Orders are typically processed within 1-2 business days and shipped the same day they're processed. You'll receive a shipping confirmation email with tracking information.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">When will my order ship?</h3>
+              <p className="text-sm text-gray-600">Orders are typically processed within 1-2 business days and shipped the same day they're processed. You'll receive a shipping confirmation email with tracking information.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Can I change my shipping address?</h3>
-              <p className="text-gray-600">You can change your shipping address within 1 hour of placing your order by contacting our support team. After that, changes may not be possible if the order is already in processing.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Can I change my shipping address?</h3>
+              <p className="text-sm text-gray-600">You can change your shipping address within 1 hour of placing your order by contacting our support team. After that, changes may not be possible if the order is already in processing.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">What if my package is lost or damaged?</h3>
-              <p className="text-gray-600">All packages are insured. If your package is lost or damaged during transit, contact us immediately and we'll work with the shipping carrier to resolve the issue or send a replacement.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">What if my package is lost or damaged?</h3>
+              <p className="text-sm text-gray-600">All packages are insured. If your package is lost or damaged during transit, contact us immediately and we'll work with the shipping carrier to resolve the issue or send a replacement.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Do you ship to PO Boxes?</h3>
-              <p className="text-gray-600">Yes, we ship to PO Boxes for domestic orders. However, some express shipping options may not be available for PO Box addresses.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Do you ship to PO Boxes?</h3>
+              <p className="text-sm text-gray-600">Yes, we ship to PO Boxes for domestic orders. However, some express shipping options may not be available for PO Box addresses.</p>
             </div>
           </div>
         </div>
 
         {/* Contact Support */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-8 text-white text-center">
-          <h2 className="text-2xl font-bold mb-4">Need Help with Shipping?</h2>
-          <p className="text-blue-100 mb-6">
+        <div className="bg-gradient-to-r from-pink-600 to-pink-700 rounded-md p-6 text-white text-center">
+          <h2 className="text-lg font-bold mb-3">Need Help with Shipping?</h2>
+          <p className="text-pink-100 mb-4 text-sm">
             Have questions about your order or shipping options? Our support team is here to help.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="/contact-us"
-              className="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-white text-pink-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
               Contact Support
             </a>
             <a
               href="/help-center"
-              className="inline-flex items-center px-6 py-3 bg-blue-800 text-white font-medium rounded-lg hover:bg-blue-900 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-pink-800 text-white font-medium rounded-md hover:bg-pink-900 transition-colors text-sm"
             >
               Help Center
             </a>

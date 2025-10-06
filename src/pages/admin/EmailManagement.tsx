@@ -151,6 +151,25 @@ const EmailManagement: React.FC = () => {
     }
   };
 
+  // Test Hostinger-specific functionality
+  const handleTestHostinger = async () => {
+    setIsTesting(true);
+    setTestResults(null);
+    
+    try {
+      const results = await EmailTestUtils.runHostingerTests();
+      setTestResults(results.results);
+    } catch (error) {
+      console.error('Hostinger testing failed:', error);
+      setTestResults([{
+        test: 'Hostinger Test Suite',
+        result: { success: false, message: 'Hostinger testing failed' }
+      }]);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   // Test email configuration
   const handleTestConfiguration = () => {
     const configTest = EmailTestUtils.testEmailConfiguration();
@@ -660,6 +679,14 @@ const EmailManagement: React.FC = () => {
             <TestTube className="w-4 h-4" />
             <span>{isTesting ? 'Testing...' : 'Test All'}</span>
           </button>
+          <button
+            onClick={handleTestHostinger}
+            disabled={isTesting}
+            className="flex items-center space-x-2 px-4 py-2 border border-green-200 text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+          >
+            <CheckCircle className="w-4 h-4" />
+            <span>{isTesting ? 'Testing...' : 'Test Hostinger'}</span>
+          </button>
         </div>
         
         {testResults && (
@@ -695,29 +722,137 @@ const EmailManagement: React.FC = () => {
     <div className="space-y-4">
       <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Email Settings</h2>
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium text-gray-800 mb-2">SMTP Configuration</h3>
-            <p className="text-sm text-gray-600">Configure your Hostinger SMTP settings</p>
-            <button
-              onClick={handleTestConfiguration}
-              className="mt-2 px-3 py-1 bg-pink-100 text-pink-700 rounded text-sm hover:bg-pink-200 transition-colors"
-            >
-              Test Configuration
-            </button>
-                </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium text-gray-800 mb-2">Rate Limits</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="space-y-6">
+          {/* Hostinger SMTP Configuration */}
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center space-x-2 mb-3">
+              <Send className="w-5 h-5 text-blue-600" />
+              <h3 className="font-medium text-gray-800">SMTP Configuration (Outgoing)</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-600">Hourly Limit:</span>
-                <span className="ml-2 font-medium">{emailStats.rateLimitRemaining.hourly}/100</span>
+                <span className="text-gray-600 font-medium">Host:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">smtp.hostinger.com</span>
               </div>
               <div>
-                <span className="text-gray-600">Daily Limit:</span>
-                <span className="ml-2 font-medium">{emailStats.rateLimitRemaining.daily}/1000</span>
+                <span className="text-gray-600 font-medium">Port:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">465</span>
+              </div>
+              <div>
+                <span className="text-gray-600 font-medium">Security:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">SSL/TLS</span>
+              </div>
+              <div>
+                <span className="text-gray-600 font-medium">Authentication:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">Required</span>
               </div>
             </div>
+            <button
+              onClick={handleTestConfiguration}
+              className="mt-3 px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+            >
+              Test SMTP Connection
+            </button>
+          </div>
+
+          {/* Hostinger IMAP Configuration */}
+          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center space-x-2 mb-3">
+              <Mail className="w-5 h-5 text-green-600" />
+              <h3 className="font-medium text-gray-800">IMAP Configuration (Incoming)</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600 font-medium">Host:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">imap.hostinger.com</span>
+              </div>
+              <div>
+                <span className="text-gray-600 font-medium">Port:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">993</span>
+              </div>
+              <div>
+                <span className="text-gray-600 font-medium">Security:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">SSL/TLS</span>
+              </div>
+              <div>
+                <span className="text-gray-600 font-medium">Authentication:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">Required</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">IMAP allows you to read emails from your server</p>
+          </div>
+
+          {/* Hostinger POP Configuration */}
+          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center space-x-2 mb-3">
+              <Download className="w-5 h-5 text-purple-600" />
+              <h3 className="font-medium text-gray-800">POP Configuration (Incoming)</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600 font-medium">Host:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">pop.hostinger.com</span>
+              </div>
+              <div>
+                <span className="text-gray-600 font-medium">Port:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">995</span>
+              </div>
+              <div>
+                <span className="text-gray-600 font-medium">Security:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">SSL/TLS</span>
+              </div>
+              <div>
+                <span className="text-gray-600 font-medium">Authentication:</span>
+                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">Required</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">POP downloads emails to your local device</p>
+          </div>
+
+          {/* Rate Limits */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-medium text-gray-800 mb-3">Rate Limits</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Hourly Limit:</span>
+                <span className="font-medium text-gray-800">{emailStats.rateLimitRemaining.hourly}/100</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Daily Limit:</span>
+                <span className="font-medium text-gray-800">{emailStats.rateLimitRemaining.daily}/1000</span>
+              </div>
+            </div>
+            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <p className="text-xs text-yellow-800">
+                <strong>Note:</strong> These limits help prevent spam and ensure reliable email delivery. 
+                Contact Hostinger support if you need higher limits.
+              </p>
+            </div>
+          </div>
+
+          {/* Environment Variables */}
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-medium text-gray-800 mb-3">Environment Variables</h3>
+            <div className="space-y-2 text-xs">
+              <div className="font-mono bg-white p-2 rounded border">
+                VITE_SMTP_HOST=smtp.hostinger.com
+              </div>
+              <div className="font-mono bg-white p-2 rounded border">
+                VITE_SMTP_PORT=465
+              </div>
+              <div className="font-mono bg-white p-2 rounded border">
+                VITE_SMTP_SECURE=true
+              </div>
+              <div className="font-mono bg-white p-2 rounded border">
+                VITE_IMAP_HOST=imap.hostinger.com
+              </div>
+              <div className="font-mono bg-white p-2 rounded border">
+                VITE_POP_HOST=pop.hostinger.com
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Add these to your .env file for proper configuration
+            </p>
           </div>
         </div>
       </div>

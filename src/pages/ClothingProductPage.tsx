@@ -5,6 +5,7 @@ import { useProducts } from '../contexts/ProductContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import { CartManager } from '../services/orderService';
+import ClothingProductPageSkeleton from '../components/ClothingProductPageSkeleton';
 
 const ClothingProductPage: React.FC = () => {
   const { productSlug } = useParams<{ productSlug: string }>();
@@ -91,11 +92,7 @@ const ClothingProductPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      </div>
-    );
+    return <ClothingProductPageSkeleton />;
   }
 
   if (!product) {

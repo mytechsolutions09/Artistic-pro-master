@@ -44,6 +44,7 @@ import Products from './pages/admin/Products';
 import Categories from './pages/admin/Categories';
 import Orders from './pages/admin/Orders';
 import Users from './pages/admin/Users';
+import CustomerCare from './pages/admin/CustomerCare';
 import EmailManagement from './pages/admin/EmailManagement';
 import Analytics from './pages/admin/Analytics';
 import Tasks from './pages/admin/Tasks';
@@ -122,6 +123,7 @@ function AppContent() {
                   <Route path="/admin/shipping" element={<AdminProtectedRoute><Shipping /></AdminProtectedRoute>} />
                   <Route path="/admin/categories" element={<AdminProtectedRoute><Categories /></AdminProtectedRoute>} />
                   <Route path="/admin/users" element={<AdminProtectedRoute><Users /></AdminProtectedRoute>} />
+                  <Route path="/admin/customer-care" element={<AdminProtectedRoute><CustomerCare /></AdminProtectedRoute>} />
                   <Route path="/admin/email" element={<AdminProtectedRoute><EmailManagement /></AdminProtectedRoute>} />
                   <Route path="/admin/analytics" element={<AdminProtectedRoute><Analytics /></AdminProtectedRoute>} />
                   <Route path="/admin/homepage" element={<AdminProtectedRoute><HomepageManagement /></AdminProtectedRoute>} />

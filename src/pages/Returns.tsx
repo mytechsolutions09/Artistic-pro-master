@@ -137,36 +137,36 @@ const Returns: React.FC = () => {
         </div>
 
         {/* How to Return */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">How to Return an Item</h2>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <div className="bg-white rounded-md shadow-sm p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">How to Return an Item</h2>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {returnSteps.map((step, index) => (
               <div key={index} className="text-center">
-                <div className="flex justify-center mb-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <div className="flex justify-center mb-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                     <div className="text-green-600">{step.icon}</div>
                   </div>
                 </div>
-                <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">
+                <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-xs font-bold">
                   {step.step}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-gray-600 text-sm">{step.description}</p>
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">{step.title}</h3>
+                <p className="text-gray-600 text-xs">{step.description}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Return Conditions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
           {returnConditions.map((condition, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">{condition.category}</h3>
-              <ul className="space-y-3">
+            <div key={index} className="bg-white rounded-md shadow-sm p-4">
+              <h3 className="text-base font-bold text-gray-900 mb-3">{condition.category}</h3>
+              <ul className="space-y-2">
                 {condition.conditions.map((item, itemIndex) => (
                   <li key={itemIndex} className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-600">{item}</span>
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-gray-600">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -175,62 +175,62 @@ const Returns: React.FC = () => {
         </div>
 
         {/* Refund Information */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Refund Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-md shadow-sm p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Refund Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {refundInfo.map((info, index) => (
-              <div key={index} className="text-center p-6 bg-gray-50 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{info.method}</h3>
-                <p className="text-green-600 font-medium mb-2">{info.time}</p>
-                <p className="text-gray-600 text-sm">{info.description}</p>
+              <div key={index} className="text-center p-4 bg-gray-50 rounded">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">{info.method}</h3>
+                <p className="text-green-600 font-medium mb-1 text-sm">{info.time}</p>
+                <p className="text-gray-600 text-xs">{info.description}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* FAQ Section */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Returns FAQ</h2>
-          <div className="space-y-6">
+        <div className="bg-white rounded-md shadow-sm p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Returns FAQ</h2>
+          <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">How long do I have to return an item?</h3>
-              <p className="text-gray-600">You have 30 days from the delivery date to initiate a return for most physical items. Digital downloads are final sale.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">How long do I have to return an item?</h3>
+              <p className="text-sm text-gray-600">You have 30 days from the delivery date to initiate a return for most physical items. Digital downloads are final sale.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Do I have to pay for return shipping?</h3>
-              <p className="text-gray-600">We provide free return shipping for domestic returns on qualifying items. You'll receive a prepaid return label.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Do I have to pay for return shipping?</h3>
+              <p className="text-sm text-gray-600">We provide free return shipping for domestic returns on qualifying items. You'll receive a prepaid return label.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">How long does it take to process my refund?</h3>
-              <p className="text-gray-600">Once we receive your return, refunds are processed within 3-5 business days and appear on your original payment method within 7-10 business days.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">How long does it take to process my refund?</h3>
+              <p className="text-sm text-gray-600">Once we receive your return, refunds are processed within 3-5 business days and appear on your original payment method within 7-10 business days.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Can I exchange an item instead of returning it?</h3>
-              <p className="text-gray-600">Yes! You can request an exchange for a different size or color. The process is similar to returns, but we'll send the new item once we receive your return.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Can I exchange an item instead of returning it?</h3>
+              <p className="text-sm text-gray-600">Yes! You can request an exchange for a different size or color. The process is similar to returns, but we'll send the new item once we receive your return.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">What if my item arrives damaged?</h3>
-              <p className="text-gray-600">If your item arrives damaged, contact us immediately with photos. We'll arrange for a replacement or full refund at no cost to you.</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">What if my item arrives damaged?</h3>
+              <p className="text-sm text-gray-600">If your item arrives damaged, contact us immediately with photos. We'll arrange for a replacement or full refund at no cost to you.</p>
             </div>
           </div>
         </div>
 
         {/* Contact Support */}
-        <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-8 text-white text-center">
-          <h2 className="text-2xl font-bold mb-4">Need Help with Returns?</h2>
-          <p className="text-green-100 mb-6">
+        <div className="bg-gradient-to-r from-pink-600 to-pink-700 rounded-md p-6 text-white text-center">
+          <h2 className="text-lg font-bold mb-3">Need Help with Returns?</h2>
+          <p className="text-pink-100 mb-4 text-sm">
             Have questions about returning an item or need assistance with the return process?
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="/contact-us"
-              className="inline-flex items-center px-6 py-3 bg-white text-green-600 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-white text-pink-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
               Contact Support
             </a>
             <a
               href="/help-center"
-              className="inline-flex items-center px-6 py-3 bg-green-800 text-white font-medium rounded-lg hover:bg-green-900 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-pink-800 text-white font-medium rounded-md hover:bg-pink-900 transition-colors text-sm"
             >
               Help Center
             </a>

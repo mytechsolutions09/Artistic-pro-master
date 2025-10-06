@@ -3,11 +3,33 @@ export const emailConfig = {
   // Hostinger SMTP settings
   smtp: {
     host: import.meta.env.VITE_SMTP_HOST || 'smtp.hostinger.com',
-    port: parseInt(import.meta.env.VITE_SMTP_PORT || '587'),
-    secure: import.meta.env.VITE_SMTP_SECURE === 'true' || false, // true for 465, false for other ports
+    port: parseInt(import.meta.env.VITE_SMTP_PORT || '465'),
+    secure: import.meta.env.VITE_SMTP_SECURE === 'true' || true, // true for 465, false for other ports
     auth: {
       user: import.meta.env.VITE_SMTP_USER || '',
       pass: import.meta.env.VITE_SMTP_PASS || ''
+    }
+  },
+  
+  // Hostinger IMAP settings
+  imap: {
+    host: import.meta.env.VITE_IMAP_HOST || 'imap.hostinger.com',
+    port: parseInt(import.meta.env.VITE_IMAP_PORT || '993'),
+    secure: true, // IMAP over SSL
+    auth: {
+      user: import.meta.env.VITE_IMAP_USER || '',
+      pass: import.meta.env.VITE_IMAP_PASS || ''
+    }
+  },
+  
+  // Hostinger POP settings
+  pop: {
+    host: import.meta.env.VITE_POP_HOST || 'pop.hostinger.com',
+    port: parseInt(import.meta.env.VITE_POP_PORT || '995'),
+    secure: true, // POP over SSL
+    auth: {
+      user: import.meta.env.VITE_POP_USER || '',
+      pass: import.meta.env.VITE_POP_PASS || ''
     }
   },
   

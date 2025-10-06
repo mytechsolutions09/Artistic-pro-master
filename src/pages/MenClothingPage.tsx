@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 import ProductCard from '../components/ProductCard';
-import ProductCardSkeleton from '../components/ProductCardSkeleton';
+import ClothingPageSkeleton from '../components/ClothingPageSkeleton';
 import { Product } from '../types';
 import { ChevronDown } from 'lucide-react';
 
@@ -97,6 +97,10 @@ const MenClothingPage: React.FC = () => {
     
     setFilteredProducts(sorted);
   }, [adminProducts, selectedCategory, selectedSize, sortBy]);
+
+  if (loading) {
+    return <ClothingPageSkeleton />;
+  }
 
   if (error) {
     return (
@@ -194,13 +198,7 @@ const MenClothingPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Products Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <ProductCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : filteredProducts.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="text-center py-20">
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No products found</h3>
             <p className="text-gray-500">Check back soon for new arrivals</p>

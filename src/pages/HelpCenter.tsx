@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { HelpCircle, Mail, MessageSquare, Phone, Search, BookOpen, FileText, Users } from 'lucide-react';
+import { Mail, MessageSquare, Search, BookOpen, FileText, Users } from 'lucide-react';
 
 const HelpCenter: React.FC = () => {
   const helpCategories = [
@@ -55,48 +55,45 @@ const HelpCenter: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 bg-pink-100 rounded-full">
-              <HelpCircle className="w-12 h-12 text-pink-600" />
-            </div>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Help Center</h1>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Help Center</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Find answers to your questions and get the support you need. We're here to help!
-          </p>
         </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-12">
+        <div className="max-w-2xl mx-auto mb-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search for help topics, questions, or issues..."
-              className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-lg"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
             />
           </div>
         </div>
 
         {/* Help Categories */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {helpCategories.map((category, index) => (
             <Link
               key={index}
               to={`/help/${category.title.toLowerCase().replace(/\s+/g, '-')}`}
-              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 group"
+              className="bg-white rounded-md p-4 shadow-sm hover:shadow-lg transition-all duration-300 group"
             >
-              <div className="text-pink-600 mb-4 group-hover:scale-110 transition-transform duration-300">
+              <div className="text-pink-600 mb-3 group-hover:scale-110 transition-transform duration-300">
                 {category.icon}
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">{category.title}</h3>
-              <p className="text-gray-600 mb-4">{category.description}</p>
+              <h3 className="text-base font-semibold text-gray-900 mb-2">{category.title}</h3>
+              <p className="text-sm text-gray-600 mb-3">{category.description}</p>
               <ul className="space-y-1">
                 {category.topics.map((topic, topicIndex) => (
-                  <li key={topicIndex} className="text-sm text-gray-500">• {topic}</li>
+                  <li key={topicIndex} className="text-xs text-gray-500">• {topic}</li>
                 ))}
               </ul>
             </Link>
@@ -104,16 +101,16 @@ const HelpCenter: React.FC = () => {
         </div>
 
         {/* Popular Questions */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Popular Questions</h2>
-          <div className="space-y-6">
+        <div className="bg-white rounded-md shadow-sm p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Popular Questions</h2>
+          <div className="space-y-4">
             {popularQuestions.map((item, index) => (
-              <div key={index} className="border-b border-gray-200 pb-6 last:border-b-0">
+              <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.question}</h3>
-                    <p className="text-gray-600 mb-2">{item.answer}</p>
-                    <span className="inline-block px-3 py-1 bg-pink-100 text-pink-800 text-xs font-medium rounded-full">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">{item.question}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{item.answer}</p>
+                    <span className="inline-block px-2 py-1 bg-pink-100 text-pink-800 text-xs font-medium rounded">
                       {item.category}
                     </span>
                   </div>
@@ -124,24 +121,24 @@ const HelpCenter: React.FC = () => {
         </div>
 
         {/* Contact Support */}
-        <div className="bg-gradient-to-r from-pink-600 to-pink-700 rounded-xl p-8 text-white text-center">
-          <h2 className="text-2xl font-bold mb-4">Still Need Help?</h2>
-          <p className="text-pink-100 mb-6">
+        <div className="bg-gradient-to-r from-pink-600 to-pink-700 rounded-md p-6 text-white text-center">
+          <h2 className="text-lg font-bold mb-3">Still Need Help?</h2>
+          <p className="text-pink-100 mb-4 text-sm">
             Can't find what you're looking for? Our support team is ready to assist you.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/contact-us"
-              className="inline-flex items-center px-6 py-3 bg-white text-pink-600 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-white text-pink-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
-              <Mail className="w-5 h-5 mr-2" />
+              <Mail className="w-4 h-4 mr-2" />
               Contact Support
             </Link>
             <Link
               to="/faq"
-              className="inline-flex items-center px-6 py-3 bg-pink-800 text-white font-medium rounded-lg hover:bg-pink-900 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-pink-800 text-white font-medium rounded-md hover:bg-pink-900 transition-colors text-sm"
             >
-              <MessageSquare className="w-5 h-5 mr-2" />
+              <MessageSquare className="w-4 h-4 mr-2" />
               View FAQ
             </Link>
           </div>

@@ -263,6 +263,227 @@ export class EmailTestUtils {
       };
     }
   }
+
+  /**
+   * Test Hostinger SMTP configuration specifically
+   */
+  static testHostingerSMTP(): { success: boolean; message: string; details: any } {
+    try {
+      const smtpConfig = {
+        host: import.meta.env.VITE_SMTP_HOST,
+        port: import.meta.env.VITE_SMTP_PORT,
+        secure: import.meta.env.VITE_SMTP_SECURE,
+        user: import.meta.env.VITE_SMTP_USER,
+        pass: import.meta.env.VITE_SMTP_PASS
+      };
+
+      // Check if Hostinger SMTP settings are configured
+      const isHostingerSMTP = smtpConfig.host === 'smtp.hostinger.com';
+      const isCorrectPort = smtpConfig.port === '465' || smtpConfig.port === '587';
+      const isSecure = smtpConfig.secure === 'true' || smtpConfig.secure === true;
+
+      const issues = [];
+      if (!isHostingerSMTP) {
+        issues.push('SMTP host should be smtp.hostinger.com');
+      }
+      if (!isCorrectPort) {
+        issues.push('SMTP port should be 465 (SSL) or 587 (TLS)');
+      }
+      if (!isSecure) {
+        issues.push('SMTP should be secure (SSL/TLS)');
+      }
+      if (!smtpConfig.user) {
+        issues.push('SMTP username is required');
+      }
+      if (!smtpConfig.pass) {
+        issues.push('SMTP password is required');
+      }
+
+      if (issues.length > 0) {
+        return {
+          success: false,
+          message: `Hostinger SMTP configuration issues: ${issues.join(', ')}`,
+          details: smtpConfig
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Hostinger SMTP configuration is correct!',
+        details: smtpConfig
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Hostinger SMTP test error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        details: {}
+      };
+    }
+  }
+
+  /**
+   * Test Hostinger IMAP configuration
+   */
+  static testHostingerIMAP(): { success: boolean; message: string; details: any } {
+    try {
+      const imapConfig = {
+        host: import.meta.env.VITE_IMAP_HOST,
+        port: import.meta.env.VITE_IMAP_PORT,
+        user: import.meta.env.VITE_IMAP_USER,
+        pass: import.meta.env.VITE_IMAP_PASS
+      };
+
+      const isHostingerIMAP = imapConfig.host === 'imap.hostinger.com';
+      const isCorrectPort = imapConfig.port === '993';
+
+      const issues = [];
+      if (!isHostingerIMAP) {
+        issues.push('IMAP host should be imap.hostinger.com');
+      }
+      if (!isCorrectPort) {
+        issues.push('IMAP port should be 993');
+      }
+      if (!imapConfig.user) {
+        issues.push('IMAP username is required');
+      }
+      if (!imapConfig.pass) {
+        issues.push('IMAP password is required');
+      }
+
+      if (issues.length > 0) {
+        return {
+          success: false,
+          message: `Hostinger IMAP configuration issues: ${issues.join(', ')}`,
+          details: imapConfig
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Hostinger IMAP configuration is correct!',
+        details: imapConfig
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Hostinger IMAP test error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        details: {}
+      };
+    }
+  }
+
+  /**
+   * Test Hostinger POP configuration
+   */
+  static testHostingerPOP(): { success: boolean; message: string; details: any } {
+    try {
+      const popConfig = {
+        host: import.meta.env.VITE_POP_HOST,
+        port: import.meta.env.VITE_POP_PORT,
+        user: import.meta.env.VITE_POP_USER,
+        pass: import.meta.env.VITE_POP_PASS
+      };
+
+      const isHostingerPOP = popConfig.host === 'pop.hostinger.com';
+      const isCorrectPort = popConfig.port === '995';
+
+      const issues = [];
+      if (!isHostingerPOP) {
+        issues.push('POP host should be pop.hostinger.com');
+      }
+      if (!isCorrectPort) {
+        issues.push('POP port should be 995');
+      }
+      if (!popConfig.user) {
+        issues.push('POP username is required');
+      }
+      if (!popConfig.pass) {
+        issues.push('POP password is required');
+      }
+
+      if (issues.length > 0) {
+        return {
+          success: false,
+          message: `Hostinger POP configuration issues: ${issues.join(', ')}`,
+          details: popConfig
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Hostinger POP configuration is correct!',
+        details: popConfig
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Hostinger POP test error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        details: {}
+      };
+    }
+  }
+
+  /**
+   * Test Hostinger email server connectivity
+   */
+  static async testHostingerConnectivity(): Promise<{ success: boolean; message: string }> {
+    try {
+      // Test SMTP connection by attempting to send a test email
+      const result = await EmailService.sendEmail({
+        to: { email: 'test@example.com', name: 'Test User' },
+        subject: 'Hostinger Connectivity Test',
+        html: '<h1>Hostinger Test</h1><p>Testing Hostinger SMTP connectivity.</p>',
+        text: 'Hostinger Test - Testing Hostinger SMTP connectivity.'
+      });
+
+      if (result.success) {
+        return { success: true, message: 'Hostinger SMTP connectivity test passed!' };
+      } else {
+        return { success: false, message: `Hostinger SMTP connectivity test failed: ${result.error}` };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: `Hostinger connectivity test error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  /**
+   * Run all Hostinger-specific tests
+   */
+  static async runHostingerTests(): Promise<{ success: boolean; results: Array<{ test: string; result: { success: boolean; message: string } }> }> {
+    const tests = [
+      { name: 'Hostinger SMTP Config', test: () => this.testHostingerSMTP() },
+      { name: 'Hostinger IMAP Config', test: () => this.testHostingerIMAP() },
+      { name: 'Hostinger POP Config', test: () => this.testHostingerPOP() },
+      { name: 'Hostinger Connectivity', test: () => this.testHostingerConnectivity() }
+    ];
+
+    const results = [];
+    let allPassed = true;
+
+    for (const { name, test } of tests) {
+      try {
+        const result = await test.call(this);
+        results.push({ test: name, result });
+        if (!result.success) {
+          allPassed = false;
+        }
+      } catch (error) {
+        results.push({
+          test: name,
+          result: {
+            success: false,
+            message: `Test error: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }
+        });
+        allPassed = false;
+      }
+    }
+
+    return { success: allPassed, results };
+  }
 }
 
 export default EmailTestUtils;

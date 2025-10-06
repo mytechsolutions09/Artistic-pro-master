@@ -152,39 +152,36 @@ const FAQ: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 bg-pink-100 rounded-full">
-              <HelpCircle className="w-12 h-12 text-pink-600" />
-            </div>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">FAQ</h1>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Find answers to the most common questions about our platform, products, and services.
-          </p>
         </div>
+      </div>
+      
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-12">
+        <div className="max-w-2xl mx-auto mb-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search FAQ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-lg"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
             />
           </div>
         </div>
 
         {/* FAQ Categories */}
-        <div className="space-y-8">
+        <div className="space-y-4">
           {filteredCategories.map((category, categoryIndex) => (
-            <div key={categoryIndex} className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <h2 className="text-2xl font-bold text-gray-900 p-6 bg-gray-50 border-b">
+            <div key={categoryIndex} className="bg-white rounded-md shadow-sm overflow-hidden">
+              <h2 className="text-lg font-bold text-gray-900 p-4 bg-gray-50 border-b">
                 {category.title}
               </h2>
               <div className="divide-y divide-gray-200">
@@ -193,22 +190,22 @@ const FAQ: React.FC = () => {
                   const isOpen = openItems.includes(globalIndex);
                   
                   return (
-                    <div key={itemIndex} className="p-6">
+                    <div key={itemIndex} className="p-4">
                       <button
                         onClick={() => toggleItem(globalIndex)}
                         className="w-full flex items-center justify-between text-left group"
                       >
-                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-pink-600 transition-colors">
+                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-pink-600 transition-colors">
                           {item.question}
                         </h3>
                         {isOpen ? (
-                          <ChevronUp className="w-5 h-5 text-gray-500 flex-shrink-0 ml-4" />
+                          <ChevronUp className="w-4 h-4 text-gray-500 flex-shrink-0 ml-3" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0 ml-4" />
+                          <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0 ml-3" />
                         )}
                       </button>
                       {isOpen && (
-                        <div className="mt-4 text-gray-600 leading-relaxed">
+                        <div className="mt-3 text-sm text-gray-600 leading-relaxed">
                           {item.answer}
                         </div>
                       )}

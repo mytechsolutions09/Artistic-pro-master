@@ -21,12 +21,24 @@ This guide will help you configure your Artistic Pro application to use Hostinge
 Create a `.env` file in your project root with the following variables:
 
 ```env
-# Hostinger SMTP Configuration
+# Hostinger SMTP Configuration (Outgoing)
 VITE_SMTP_HOST=smtp.hostinger.com
-VITE_SMTP_PORT=587
-VITE_SMTP_SECURE=false
+VITE_SMTP_PORT=465
+VITE_SMTP_SECURE=true
 VITE_SMTP_USER=your-email@yourdomain.com
 VITE_SMTP_PASS=your-email-password
+
+# Hostinger IMAP Configuration (Incoming)
+VITE_IMAP_HOST=imap.hostinger.com
+VITE_IMAP_PORT=993
+VITE_IMAP_USER=your-email@yourdomain.com
+VITE_IMAP_PASS=your-email-password
+
+# Hostinger POP Configuration (Incoming)
+VITE_POP_HOST=pop.hostinger.com
+VITE_POP_PORT=995
+VITE_POP_USER=your-email@yourdomain.com
+VITE_POP_PASS=your-email-password
 
 # Email Settings
 VITE_EMAIL_FROM_NAME=Artistic Pro
@@ -35,19 +47,35 @@ VITE_EMAIL_REPLY_NAME=Artistic Pro Support
 VITE_EMAIL_REPLY_EMAIL=support@yourdomain.com
 ```
 
-## Step 3: Hostinger SMTP Settings
+## Step 3: Hostinger Email Server Settings
 
-### SMTP Configuration Details:
+### SMTP Configuration (Outgoing Emails):
 - **Host**: `smtp.hostinger.com`
-- **Port**: `587` (TLS) or `465` (SSL)
-- **Security**: TLS (recommended) or SSL
+- **Port**: `465` (SSL) - **Recommended**
+- **Security**: SSL/TLS
 - **Authentication**: Required
 - **Username**: Your full email address
 - **Password**: Your email account password
 
-### Alternative Ports:
-- Port `587` with TLS (recommended)
-- Port `465` with SSL
+### IMAP Configuration (Incoming Emails):
+- **Host**: `imap.hostinger.com`
+- **Port**: `993`
+- **Security**: SSL/TLS
+- **Authentication**: Required
+- **Username**: Your full email address
+- **Password**: Your email account password
+
+### POP Configuration (Incoming Emails):
+- **Host**: `pop.hostinger.com`
+- **Port**: `995`
+- **Security**: SSL/TLS
+- **Authentication**: Required
+- **Username**: Your full email address
+- **Password**: Your email account password
+
+### Alternative SMTP Ports:
+- Port `465` with SSL (recommended)
+- Port `587` with TLS (alternative)
 - Port `25` (not recommended for production)
 
 ## Step 4: Test Email Configuration
