@@ -148,7 +148,8 @@ const MenClothingPage: React.FC = () => {
                     outline: 'none',
                     boxShadow: 'none',
                     border: 'none',
-                    accentColor: '#9ca3af'
+                    accentColor: '#9ca3af',
+                    backgroundImage: 'none'
                   }}
                 >
                   <option value="all">SIZE</option>
@@ -173,7 +174,8 @@ const MenClothingPage: React.FC = () => {
                     outline: 'none',
                     boxShadow: 'none',
                     border: 'none',
-                    accentColor: '#9ca3af'
+                    accentColor: '#9ca3af',
+                    backgroundImage: 'none'
                   }}
                 >
                   <option value="featured">FEATURED</option>

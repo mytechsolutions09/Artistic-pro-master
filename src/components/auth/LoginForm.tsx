@@ -17,7 +17,27 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [customLogo, setCustomLogo] = useState<string | null>(null);
   const { settings, loading: appearanceLoading } = useAppearance();
+
+  // Load custom logo on component mount
+  useEffect(() => {
+    const savedLogo = localStorage.getItem('customLogo');
+    if (savedLogo) {
+      setCustomLogo(savedLogo);
+    }
+    
+    // Listen for logo updates
+    const handleLogoUpdate = (event: CustomEvent) => {
+      setCustomLogo(event.detail.logoUrl);
+    };
+    
+    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
+    };
+  }, []);
 
   // Function to clear remembered credentials
   const clearRememberedCredentials = () => {
@@ -93,7 +113,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   // Show loading state without white container
   if (appearanceLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-teal-800">
         <ArtLoader />
       </div>
     );
@@ -101,15 +121,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
 
   return (
     <div 
-      className="min-h-screen p-4 sm:p-6 lg:flex lg:items-center lg:justify-center"
-      style={{ 
-        background: `linear-gradient(to bottom right, ${settings.themeColors.lightPink}, ${settings.themeColors.pink}, ${settings.themeColors.darkPink})` 
-      }}
+      className="min-h-screen p-4 sm:p-6 lg:flex lg:items-center lg:justify-center bg-teal-800"
     >
-      <div className="w-full max-w-4xl lg:max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="flex flex-col lg:flex-row min-h-[600px] lg:min-h-[500px]">
+      <div className="w-full max-w-3xl lg:max-w-4xl bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="flex flex-col lg:flex-row min-h-[500px] lg:min-h-[400px]">
           {/* Left Side - Illustration Section */}
-          <div className="lg:w-1/2 bg-white flex flex-col justify-center h-[200px] sm:h-[250px] md:h-[300px] lg:h-auto">
+          <div className="lg:w-1/2 bg-white flex flex-col justify-center h-[150px] sm:h-[180px] md:h-[200px] lg:h-auto">
             {/* Illustration */}
             <div className="w-full h-full">
               <AuthIllustration />
@@ -117,32 +134,44 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
           </div>
 
           {/* Right Side - Login Form */}
-          <div className="lg:w-1/2 bg-white p-6 sm:p-8 lg:p-10 xl:p-12 flex flex-col justify-center">
+          <div className="lg:w-1/2 bg-white p-4 sm:p-6 lg:p-8 flex flex-col justify-center">
             <div className="max-w-sm mx-auto w-full">
               {/* Logo */}
-              <div className="flex items-center justify-center mb-4">
+              <div className="flex items-center justify-center mb-3">
                 <Link 
                   to="/"
                   className="hover:scale-110 transition-transform duration-200 cursor-pointer"
                 >
-                  <img 
-                    src="/arvexa-logo.svg" 
-                    alt="ARVEXA" 
-                    className="h-8 w-auto"
-                  />
+                  {customLogo ? (
+                    <img 
+                      src={customLogo} 
+                      alt="Lurevi" 
+                      className="h-12 w-auto"
+                      onError={(e) => {
+                        console.error('Error loading custom logo:', e);
+                        e.currentTarget.src = '/lurevi-logo.svg';
+                      }}
+                    />
+                  ) : (
+                    <img 
+                      src="/lurevi-logo.svg" 
+                      alt="Lurevi" 
+                      className="h-12 w-auto"
+                    />
+                  )}
                 </Link>
               </div>
 
               {/* Welcome Message */}
-              <div className="mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Welcome</h1>
-                <p className="text-gray-600 text-sm sm:text-base">Sign in to your account</p>
+              <div className="mb-4">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Welcome</h1>
+                <p className="text-gray-600 text-xs sm:text-sm">Sign in to your account</p>
               </div>
 
               {/* Login Form */}
-              <form className="space-y-4 sm:space-y-5" onSubmit={handleLogin}>
+              <form className="space-y-3" onSubmit={handleLogin}>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">
                     Email
                   </label>
                   <input
@@ -153,13 +182,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full px-3 py-3 sm:py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm sm:text-base"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm"
                     placeholder="Enter your email"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="password" className="block text-xs font-medium text-gray-700 mb-1">
                     Password
                   </label>
                   <div className="relative">
@@ -171,7 +200,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full px-3 py-3 sm:py-3.5 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm sm:text-base"
+                      className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm"
                       placeholder="Enter your password"
                     />
                     <button
@@ -202,7 +231,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                         clearRememberedCredentials();
                       }
                     }}
-                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                     Remember me
@@ -237,33 +266,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 sm:py-3.5 px-4 border border-transparent rounded-md shadow-sm text-sm sm:text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                  style={{ 
-                    background: `linear-gradient(to right, ${settings.themeColors.pink}, ${settings.themeColors.darkPink})`,
-                    '--tw-ring-color': settings.themeColors.pink
-                  } as React.CSSProperties}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
               </form>
 
               {/* Links Side by Side */}
-              <div className="mt-4 sm:mt-5 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+              <div className="mt-3 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors text-center sm:text-left"
+                  className="text-xs text-teal-600 hover:text-teal-700 transition-colors text-center sm:text-left"
                 >
                   Forgot Password?
                 </Link>
-                <p className="text-sm text-gray-500 text-center sm:text-right">
+                <p className="text-xs text-gray-500 text-center sm:text-right">
                   Not a user?{' '}
                   <Link
                     to="/sign-up"
-                    className="font-medium transition-colors"
-                    style={{ 
-                      color: settings.themeColors.pink,
-                      '--tw-text-opacity': '1'
-                    } as React.CSSProperties}
+                    className="font-medium text-teal-600 hover:text-teal-700 transition-colors"
                   >
                     Sign up
                   </Link>

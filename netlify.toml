@@ -5,7 +5,7 @@
 # Redirect subdomain to Men's clothing page
 [[redirects]]
   from = "/"
-  to = "/men"
+  to = "/clothes"
   status = 301
   force = true
   conditions = {Host = ["necessary.arvex.in"]}

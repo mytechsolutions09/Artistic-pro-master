@@ -88,25 +88,25 @@ const BottomTabs: React.FC = () => {
 
         {/* Clothes Tab */}
         <Link
-          to="/men"
+          to="/clothes"
           className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-lg transition-all duration-200 ${
-            isActiveTab('/men') 
+            isActiveTab('/clothes') 
               ? 'text-[#ff6e00]' 
               : 'text-gray-500 hover:text-[#ff6e00]'
           }`}
         >
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            isActiveTab('/men') ? 'bg-orange-100' : 'bg-gray-100'
+            isActiveTab('/clothes') ? 'bg-orange-100' : 'bg-gray-100'
           }`}>
             <Shirt className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium">Clothes</span>
         </Link>
 
-        {/* Favorites Tab */}
+        {/* Favorites Tab - Hidden on mobile, visible on md+ screens */}
         <Link
           to="/favorites"
-          className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
+          className={`hidden md:flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/favorites') 
               ? 'text-pink-600' 
               : 'text-gray-500 hover:text-gray-700'

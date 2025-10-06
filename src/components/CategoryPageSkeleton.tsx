@@ -14,28 +14,9 @@ const CategoryPageSkeleton: React.FC<CategoryPageSkeletonProps> = ({
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
-        {/* Header Card with Controls Skeleton */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 animate-pulse">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            {/* Left Side - Filters Button Skeleton */}
-            <div className="flex justify-center lg:justify-start">
-              <div className="h-8 bg-gray-200 rounded w-20"></div>
-            </div>
-
-            {/* Center - Header Content Skeleton */}
-            <div className="text-center">
-              <div className="h-6 bg-gray-200 rounded w-32 mx-auto mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-48 mx-auto"></div>
-            </div>
-
-            {/* Right Side - Sort Skeleton */}
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="h-4 bg-gray-200 rounded w-12"></div>
-                <div className="h-8 bg-gray-200 rounded w-24"></div>
-              </div>
-            </div>
-          </div>
+        {/* All Filters Button Skeleton */}
+        <div className="mb-4 animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-24"></div>
         </div>
 
         {/* Products Grid Skeleton */}

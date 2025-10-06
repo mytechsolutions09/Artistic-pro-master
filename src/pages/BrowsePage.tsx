@@ -274,54 +274,17 @@ const BrowsePage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header Card with Controls in Same Row */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            {/* Left Side - Filters Button */}
-            <div className="flex justify-center lg:justify-start">
-              <button 
-                onClick={() => setShowFilters(!showFilters)}
-                className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2 text-sm"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                <span>All Filters</span>
-              </button>
-            </div>
-
-            {/* Center - Header Content */}
-            <div className="text-center">
-              <h1 className="text-xl font-bold text-gray-800 mb-1">
-                {filters.category ? `${filters.category.charAt(0).toUpperCase() + filters.category.slice(1)} Art` : 'Art'}
-              </h1>
-              <p className="text-xs text-gray-500">
-                {filters.category 
-                  ? `Showing ${filteredProducts.length} products in ${filters.category}` 
-                  : `Discover amazing digital art from all categories`}
-              </p>
-            </div>
-
-            {/* Right Side - Sort */}
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              {/* Sort Options */}
-              <div className="flex items-center space-x-2">
-                <label className="text-sm text-gray-700">Sort by:</label>
-                <select
-                  value={filters.sortBy}
-                  onChange={(e) => updateFilters({ sortBy: e.target.value })}
-                  className="sort-dropdown"
-                >
-                  <option value="relevance">Relevance</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="downloads">Most Popular</option>
-                  <option value="newest">Newest First</option>
-                </select>
-              </div>
-            </div>
-          </div>
+        {/* All Filters Button */}
+        <div className="mb-4">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center space-x-2 text-sm"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>All Filters</span>
+          </button>
         </div>
 
 

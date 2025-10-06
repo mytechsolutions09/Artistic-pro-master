@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Globe, Shield, Bell, Palette, DollarSign, Users, 
   Database, Mail, Lock, Zap, Monitor,
-  Settings as SettingsIcon, Sliders, MessageSquare, Tag
+  Settings as SettingsIcon, Sliders, MessageSquare, Tag, Image
 } from 'lucide-react';
 
 export interface SettingsTab {
@@ -55,6 +55,12 @@ export const SETTINGS_TABS: SettingsTab[] = [
     label: 'Appearance',
     icon: <Palette className="w-5 h-5" />,
     description: 'Theme, branding, and visual customization'
+  },
+  {
+    id: 'logo',
+    label: 'Logo',
+    icon: <Image className="w-5 h-5" />,
+    description: 'Logo customization and branding'
   },
   {
     id: 'users',

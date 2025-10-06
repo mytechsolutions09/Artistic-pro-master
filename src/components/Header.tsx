@@ -16,6 +16,7 @@ const Header: React.FC = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
+  const [customLogo, setCustomLogo] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -43,7 +44,23 @@ const Header: React.FC = () => {
       }
     }
     
-    return unsubscribe;
+    // Load custom logo from localStorage
+    const savedLogo = localStorage.getItem('customLogo');
+    if (savedLogo) {
+      setCustomLogo(savedLogo);
+    }
+    
+    // Listen for logo updates
+    const handleLogoUpdate = (event: CustomEvent) => {
+      setCustomLogo(event.detail.logoUrl);
+    };
+    
+    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
+    
+    return () => {
+      unsubscribe();
+      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
+    };
   }, []);
 
   // Close search suggestions when clicking outside
@@ -160,16 +177,28 @@ const Header: React.FC = () => {
   }
 
   return (
-    <header className="bg-gray-50 sticky top-0 z-50">
+    <header className="bg-teal-800 sticky top-0 z-50 shadow-lg border-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img 
-              src="/arvexa-logo.svg" 
-              alt="ARVEXA" 
-              className="h-10 w-auto"
-            />
+            {customLogo ? (
+              <img 
+                src={customLogo} 
+                alt="Lurevi" 
+                className="h-12 w-auto"
+                onError={(e) => {
+                  console.error('Error loading custom logo:', e);
+                  e.currentTarget.src = '/lurevi-logo.svg';
+                }}
+              />
+            ) : (
+              <img 
+                src="/lurevi-logo.svg" 
+                alt="Lurevi" 
+                className="h-12 w-auto"
+              />
+            )}
           </Link>
 
           {/* Categories - Desktop with Dropdown */}
@@ -181,7 +210,7 @@ const Header: React.FC = () => {
           >
             <Link 
               to="/categories" 
-              className="flex items-center gap-1 text-gray-700 hover:text-pink-600 transition-colors py-2"
+              className="flex items-center gap-1 text-gray-200 hover:text-pink-300 transition-colors py-2"
             >
               <span>Categories</span>
               <ChevronDown className="w-4 h-4" />
@@ -190,7 +219,7 @@ const Header: React.FC = () => {
             {/* Categories Dropdown */}
             {showCategoriesDropdown && categories.length > 0 && (
               <div 
-                className="absolute top-full left-0 mt-1 w-[85vw] max-w-[1100px] max-h-[50vh] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-3 overflow-y-auto"
+                className="absolute top-full left-0 mt-1 w-[85vw] max-w-[1100px] max-h-[50vh] bg-teal-800 rounded-xl shadow-2xl z-50 p-3 overflow-y-auto"
                 onMouseEnter={() => setShowCategoriesDropdown(true)}
                 onMouseLeave={() => setShowCategoriesDropdown(false)}
               >
@@ -205,7 +234,7 @@ const Header: React.FC = () => {
                       <Link
                         key={category.id}
                         to={`/${category.slug}`}
-                        className="px-2.5 py-1.5 text-xs text-gray-700 hover:text-pink-600 rounded-md transition-all font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis"
+                        className="px-2.5 py-1.5 text-xs text-gray-200 hover:text-pink-300 rounded-md transition-all font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis"
                         style={{ boxShadow: 'none' }}
                         onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 0, 0, 0.15)'}
                         onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
@@ -293,21 +322,21 @@ const Header: React.FC = () => {
 
           {/* Navigation - Desktop Only (lg+) */}
           <nav className="hidden lg:flex items-center space-x-4">
-            <Link to="/favorites" className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
+            <Link to="/favorites" className="p-2 text-gray-200 hover:text-pink-300 transition-colors">
               <Heart className="w-6 h-6" />
             </Link>
-            <Link to="/browse" className="text-gray-700 hover:text-pink-600 transition-colors">
+            <Link to="/browse" className="text-gray-200 hover:text-pink-300 transition-colors">
               Art
             </Link>
-            <Link to="/men" className="text-gray-700 hover:text-[#ff6e00] transition-colors">
+            <Link to="/clothes" className="text-gray-200 hover:text-pink-300 transition-colors">
               Clothes
             </Link>
             {isAdmin(user?.email) && (
-              <Link to="/admin" className="text-gray-700 hover:text-pink-600 transition-colors">
+              <Link to="/admin" className="text-gray-200 hover:text-pink-300 transition-colors">
                 Admin
               </Link>
             )}
-            <Link to="/cart" className="relative p-2 text-gray-700 hover:text-pink-600 transition-colors">
+            <Link to="/cart" className="relative p-2 text-gray-200 hover:text-pink-300 transition-colors">
               <ShoppingCart className="w-6 h-6" />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -345,7 +374,7 @@ const Header: React.FC = () => {
           {/* Mobile & Tablet Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 text-gray-700 hover:text-pink-600 transition-colors"
+            className="lg:hidden p-2 text-gray-200 hover:text-pink-300 transition-colors"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -353,7 +382,7 @@ const Header: React.FC = () => {
 
         {/* Mobile & Tablet Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-gray-200">
+          <div className="lg:hidden py-4 border-t border-teal-700 bg-teal-800">
             <div className="mb-4">
               <div className="relative" ref={searchRef}>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -428,7 +457,7 @@ const Header: React.FC = () => {
             <nav className="flex flex-col space-y-3">
               <Link
                 to="/favorites"
-                className="flex items-center text-gray-700 hover:text-pink-600 transition-colors py-2"
+                className="flex items-center text-gray-200 hover:text-pink-300 transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Heart className="w-5 h-5 mr-2" />
@@ -436,21 +465,21 @@ const Header: React.FC = () => {
               </Link>
               <Link
                 to="/categories"
-                className="text-gray-700 hover:text-pink-600 transition-colors py-2"
+                className="text-gray-200 hover:text-pink-300 transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Categories
               </Link>
               <Link
                 to="/browse"
-                className="text-gray-700 hover:text-pink-600 transition-colors py-2"
+                className="text-gray-200 hover:text-pink-300 transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Art
               </Link>
               <Link
-                to="/men"
-                className="text-gray-700 hover:text-[#ff6e00] transition-colors py-2"
+                to="/clothes"
+                className="text-gray-200 hover:text-pink-300 transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Clothes
@@ -458,7 +487,7 @@ const Header: React.FC = () => {
               {isAdmin(user?.email) && (
                 <Link
                   to="/admin"
-                  className="text-gray-700 hover:text-pink-600 transition-colors py-2"
+                  className="text-gray-200 hover:text-pink-300 transition-colors py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Admin
@@ -467,7 +496,7 @@ const Header: React.FC = () => {
               <div className="flex items-center space-x-3 pt-2">
                 <Link 
                   to="/cart"
-                  className="flex items-center text-gray-700 hover:text-pink-600 transition-colors"
+                  className="flex items-center text-gray-200 hover:text-pink-300 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <ShoppingCart className="w-6 h-6 mr-2" />
@@ -475,7 +504,7 @@ const Header: React.FC = () => {
                 </Link>
                 <Link
                   to={user ? "/dashboard" : "/sign-in"}
-                  className="flex items-center text-gray-700 hover:text-pink-600 transition-colors"
+                  className="flex items-center text-gray-200 hover:text-pink-300 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <User className="w-6 h-6 mr-2" />

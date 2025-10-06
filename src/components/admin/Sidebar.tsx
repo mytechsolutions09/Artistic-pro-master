@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   BarChart3,
@@ -15,7 +15,8 @@ import {
   CheckSquare,
   Activity,
   Database,
-  Table
+  Table,
+  Truck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,6 +29,26 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick, onExpand, onLogout }) => {
   const location = useLocation();
+  const [customLogo, setCustomLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load custom logo from localStorage
+    const savedLogo = localStorage.getItem('customLogo');
+    if (savedLogo) {
+      setCustomLogo(savedLogo);
+    }
+    
+    // Listen for logo updates
+    const handleLogoUpdate = (event: CustomEvent) => {
+      setCustomLogo(event.detail.logoUrl);
+    };
+    
+    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
+    };
+  }, []);
   
   const menuItems = [
     { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/admin/tasks' },
@@ -36,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'orders', label: 'Orders', icon: ShoppingBag, path: '/admin/orders' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'clothes', label: 'Clothes', icon: Table, path: '/admin/clothes' },
+    { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },
     { id: 'categories', label: 'Categories', icon: Palette, path: '/admin/categories' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
     { id: 'email', label: 'Email Management', icon: Mail, path: '/admin/email' },
@@ -51,11 +73,23 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
       {/* Logo */}
       <div className="p-4 border-b border-pink-100">
         <Link to="/" className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'}`}>
-          <img 
-            src="/arvexa-logo.svg" 
-            alt="ARVEXA" 
-            className={`${collapsed ? 'h-8 w-auto' : 'h-10 w-auto'}`}
-          />
+          {customLogo ? (
+            <img 
+              src={customLogo} 
+              alt="Lurevi" 
+              className={`${collapsed ? 'h-8 w-auto' : 'h-10 w-auto'}`}
+              onError={(e) => {
+                console.error('Error loading custom logo:', e);
+                e.currentTarget.src = '/lurevi-logo.svg';
+              }}
+            />
+          ) : (
+            <img 
+              src="/lurevi-logo.svg" 
+              alt="Lurevi" 
+              className={`${collapsed ? 'h-8 w-auto' : 'h-10 w-auto'}`}
+            />
+          )}
           {!collapsed && (
             <div>
               <p className="text-sm text-gray-500">Admin Panel</p>

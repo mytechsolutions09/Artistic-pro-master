@@ -401,7 +401,7 @@ export class CompleteOrderService {
         </div>
 
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-          <p style="color: #666; margin: 0;">Thank you for choosing ARVEXA!</p>
+          <p style="color: #666; margin: 0;">Thank you for choosing Lurevi!</p>
           <p style="color: #666; margin: 5px 0 0 0;">If you have any questions, please contact our support team.</p>
         </div>
       </body>

@@ -197,6 +197,12 @@
   transition-duration: 150ms;
 }
 
+/* Remove any default borders from header */
+header {
+  border: none !important;
+  border-top: none !important;
+}
+
 /* Focus styles */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent;

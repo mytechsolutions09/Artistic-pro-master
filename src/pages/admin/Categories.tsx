@@ -137,7 +137,7 @@ const Categories: React.FC = () => {
         <div className="flex items-center justify-between">
             <div>
             <h2 className="text-xl font-bold text-gray-800">Category Management</h2>
-            <p className="text-sm text-gray-600">Organize your ARVEXA categories</p>
+            <p className="text-sm text-gray-600">Organize your Lurevi categories</p>
               </div>
           <div className="flex items-center space-x-2">
               <button

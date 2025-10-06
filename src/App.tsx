@@ -10,6 +10,7 @@ import { useScrollRestoration } from './hooks/useScrollToTop';
 import { checkEnvironmentVariables, getLocalhostConfig, isLocalhost } from './utils/envCheck';
 import './utils/testEnv'; // Auto-run environment test in development
 import Header from './components/Header';
+import Footer from './components/Footer';
 import BottomTabs from './components/BottomTabs';
 import NotificationContainer from './components/Notification';
 import Homepage from './pages/Homepage';
@@ -27,6 +28,11 @@ import DownloadPage from './pages/DownloadPage';
 import SearchResults from './pages/SearchResults';
 import FavoritesPage from './pages/FavoritesPage';
 import MenClothingPage from './pages/MenClothingPage';
+import HelpCenter from './pages/HelpCenter';
+import ContactUs from './pages/ContactUs';
+import FAQ from './pages/FAQ';
+import ShippingInfo from './pages/ShippingInfo';
+import Returns from './pages/Returns';
 import LoginForm from './components/auth/LoginForm';
 import SignUpForm from './components/auth/SignUpForm';
 import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
@@ -47,6 +53,7 @@ import HomepageManagement from './pages/admin/HomepageManagement';
 import Reviews from './pages/admin/Reviews';
 import DatabaseManagement from './pages/admin/Database';
 import Clothes from './pages/admin/Clothes';
+import Shipping from './pages/admin/Shipping';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import EnvTest from './components/EnvTest';
 import SkeletonTest from './pages/SkeletonTest';
@@ -55,6 +62,12 @@ function AppContent() {
   const location = useLocation();
   const hideHeaderPaths = ['/sign-in', '/sign-up', '/forgot-password', '/reset-password'];
   const shouldHideHeader = hideHeaderPaths.includes(location.pathname);
+  const shouldHideFooter = location.pathname.startsWith('/admin') || 
+                          location.pathname === '/dashboard' || 
+                          location.pathname === '/sign-in' || 
+                          location.pathname === '/sign-up' || 
+                          location.pathname === '/forgot-password' || 
+                          location.pathname === '/reset-password';
   
   // Default browser scroll behavior (no custom scroll handling)
   useScrollRestoration();
@@ -69,7 +82,7 @@ function AppContent() {
                   <Route path="/" element={<Homepage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/browse" element={<BrowsePage />} />
-                  <Route path="/men" element={<MenClothingPage />} />
+                  <Route path="/clothes" element={<MenClothingPage />} />
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/favorites" element={<FavoritesPage />} />
                   <Route path="/dashboard" element={<UserDashboard />} />
@@ -82,12 +95,20 @@ function AppContent() {
                   <Route path="/sign-up" element={<SignUpForm />} />
                   <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                   <Route path="/reset-password" element={<ResetPasswordForm />} />
+                  
+                  {/* Support Pages */}
+                  <Route path="/help-center" element={<HelpCenter />} />
+                  <Route path="/contact-us" element={<ContactUs />} />
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route path="/shipping-info" element={<ShippingInfo />} />
+                  <Route path="/returns" element={<Returns />} />
+                  
                   <Route path="/env-test" element={<EnvTest />} />
                   <Route path="/skeleton-test" element={<SkeletonTest />} />
                   
                   {/* Category and Product Routes - Order matters! */}
                   {/* Clothing Product Route (must come before generic routes) */}
-                  <Route path="/men/:productSlug" element={<ClothingProductPage />} />
+                  <Route path="/clothes/:productSlug" element={<ClothingProductPage />} />
                   <Route path="/:categorySlug" element={<CategoryDetailPage />} />
                   <Route path="/:categorySlug/:productSlug" element={<ProductPage />} />
                   
@@ -98,6 +119,7 @@ function AppContent() {
                   <Route path="/admin/orders" element={<AdminProtectedRoute><Orders /></AdminProtectedRoute>} />
                   <Route path="/admin/products" element={<AdminProtectedRoute><Products /></AdminProtectedRoute>} />
                   <Route path="/admin/clothes" element={<AdminProtectedRoute><Clothes /></AdminProtectedRoute>} />
+                  <Route path="/admin/shipping" element={<AdminProtectedRoute><Shipping /></AdminProtectedRoute>} />
                   <Route path="/admin/categories" element={<AdminProtectedRoute><Categories /></AdminProtectedRoute>} />
                   <Route path="/admin/users" element={<AdminProtectedRoute><Users /></AdminProtectedRoute>} />
                   <Route path="/admin/email" element={<AdminProtectedRoute><EmailManagement /></AdminProtectedRoute>} />
@@ -107,6 +129,7 @@ function AppContent() {
                   <Route path="/admin/database" element={<AdminProtectedRoute><DatabaseManagement /></AdminProtectedRoute>} />
                   <Route path="/admin/settings" element={<AdminProtectedRoute><Settings /></AdminProtectedRoute>} />
       </Routes>
+      {!shouldHideFooter && <Footer />}
     </div>
   );
 }

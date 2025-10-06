@@ -9,6 +9,7 @@ import NotificationSettings from '../../components/admin/settings/NotificationSe
 import PlaceholderSettings from '../../components/admin/settings/PlaceholderSettings';
 import CouponSettings from '../../components/admin/settings/CouponSettings';
 import AppearanceSettings from '../../components/admin/settings/AppearanceSettings';
+import LogoSettings from '../../components/admin/settings/LogoSettings';
 import { StorageTest } from '../../components/admin/StorageTest';
 import Reviews from './Reviews';
 
@@ -27,6 +28,8 @@ const Settings: React.FC = () => {
         return <NotificationSettings />;
       case 'appearance':
         return <AppearanceSettings />;
+      case 'logo':
+        return <LogoSettings />;
       case 'users':
         return (
           <PlaceholderSettings
