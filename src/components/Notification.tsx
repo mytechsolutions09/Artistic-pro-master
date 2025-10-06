@@ -16,6 +16,7 @@ interface NotificationProps {
 const NotificationItem: React.FC<NotificationProps> = ({ notification, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
+      console.log('Auto-closing notification:', notification.id);
       onClose(notification.id);
     }, notification.duration || 3000);
 
@@ -48,15 +49,43 @@ const NotificationItem: React.FC<NotificationProps> = ({ notification, onClose }
     }
   };
 
+  const handleClose = (e?: React.MouseEvent) => {
+    console.log('Manual close triggered for:', notification.id);
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    onClose(notification.id);
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    console.log('Backdrop clicked for:', notification.id);
+    if (e.target === e.currentTarget) {
+      handleClose(e);
+    }
+  };
+
   return (
-    <div className={`${getBgColor()} border rounded-lg p-4 shadow-lg flex items-center justify-between mb-3 animate-slide-in`}>
-      <div className="flex items-center space-x-3">
+    <div 
+      className={`${getBgColor()} border rounded-lg p-4 shadow-lg flex items-center justify-between mb-3 animate-slide-in cursor-pointer hover:shadow-xl transition-all relative`}
+      onClick={handleBackdropClick}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <div className="flex items-center space-x-3 flex-1">
         {getIcon()}
         <p className="text-gray-800 font-medium">{notification.message}</p>
       </div>
       <button
-        onClick={() => onClose(notification.id)}
-        className="text-gray-400 hover:text-gray-600 transition-colors"
+        onClick={(e) => {
+          console.log('X button clicked for:', notification.id);
+          e.stopPropagation();
+          e.preventDefault();
+          handleClose(e);
+        }}
+        className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 ml-2 p-1 rounded hover:bg-gray-100"
+        type="button"
+        aria-label="Close notification"
+        style={{ pointerEvents: 'auto' }}
       >
         <X className="w-4 h-4" />
       </button>
@@ -88,7 +117,10 @@ export class NotificationManager {
   }
 
   static remove(id: string): void {
+    console.log('NotificationManager.remove called with id:', id);
+    console.log('Current notifications:', this.notifications.map(n => n.id));
     this.notifications = this.notifications.filter(n => n.id !== id);
+    console.log('Notifications after removal:', this.notifications.map(n => n.id));
     this.notifyListeners();
   }
 
@@ -117,10 +149,25 @@ const NotificationContainer: React.FC = () => {
     return unsubscribe;
   }, []);
 
+  // Debug: Add test button in development
+  const handleTestNotification = () => {
+    NotificationManager.success('Test notification - click to close!', 10000);
+  };
+
   if (notifications.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 max-w-md">
+    <div className="fixed top-4 right-4 z-[9999] max-w-md">
+      {/* Debug test button - remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          onClick={handleTestNotification}
+          className="mb-2 px-2 py-1 bg-blue-500 text-white text-xs rounded"
+        >
+          Test Notification
+        </button>
+      )}
+      
       {notifications.map(notification => (
         <NotificationItem
           key={notification.id}

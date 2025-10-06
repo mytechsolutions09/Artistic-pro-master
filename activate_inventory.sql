@@ -5,6 +5,17 @@
 -- inventory management for all products
 -- =====================================================
 
+-- =====================================================
+-- AVAILABLE COLORS FOR CLOTHING PRODUCTS
+-- =====================================================
+-- These colors are available as tags in the products table:
+-- Black, White, Blue, Red, Green, Gray, Grey, Navy, Brown, 
+-- Pink, Violet, Beige, Yellow, Orange, Mauve, Slate Blue, 
+-- Olive Green, Ivory Cream
+-- 
+-- Colors are stored in the 'tags' JSONB array column
+-- =====================================================
+
 -- Add inventory tracking columns to products table
 ALTER TABLE products 
 ADD COLUMN IF NOT EXISTS stock_quantity INTEGER DEFAULT NULL,

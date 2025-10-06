@@ -158,11 +158,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   // Determine if this is a clothing product
-  const isClothing = product.categories?.some(cat => 
-    cat.toLowerCase().includes('men') || 
-    cat.toLowerCase().includes('women') || 
-    cat.toLowerCase().includes('clothing')
-  );
+  const isClothing = 
+    // Check gender field (new approach)
+    ((product as any).gender === 'Men' || (product as any).gender === 'Women' || (product as any).gender === 'Unisex') ||
+    // Check categories field (backward compatibility)
+    product.categories?.some(cat => 
+      cat.toLowerCase().includes('men') || 
+      cat.toLowerCase().includes('women') || 
+      cat.toLowerCase().includes('unisex') ||
+      cat.toLowerCase().includes('clothing')
+    );
 
   // Generate appropriate URL
   const productUrl = isClothing 

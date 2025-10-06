@@ -83,7 +83,7 @@ const availableSizes = product?.tags?.filter(tag =>
 ```typescript
 // Extract available colors from product tags
 const availableColors = product?.tags?.filter(tag => 
-  ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Grey', 'Navy', 'Brown', 'Pink', 'Purple', 'Beige', 'Yellow', 'Orange'].includes(tag)
+  ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Grey', 'Navy', 'Brown', 'Pink', 'Violet', 'Beige', 'Yellow', 'Orange'].includes(tag)
 ) || [];
 
 // Color hex map
@@ -97,7 +97,7 @@ const colorHexMap: Record<string, string> = {
   'Navy': '#1E3A8A',
   'Brown': '#92400E',
   'Pink': '#EC4899',
-  'Purple': '#A855F7',
+  'Violet': '#8B5CF6',
   'Beige': '#F5F5DC',
   'Yellow': '#FBBF24',
   'Orange': '#ff6e00'

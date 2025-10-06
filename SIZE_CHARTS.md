@@ -102,7 +102,7 @@ Standard fit sweatshirts with classic measurements.
 7. Navy
 8. Brown
 9. Pink
-10. Purple
+10. Violet
 11. Beige
 
 ---

@@ -65,6 +65,7 @@ const Clothes: React.FC = () => {
         cat.toLowerCase().includes('clothing') ||
         cat.toLowerCase().includes('men') ||
         cat.toLowerCase().includes('women') ||
+        cat.toLowerCase().includes('unisex') ||
         cat.toLowerCase().includes('apparel')
       )) {
         return true;
@@ -544,6 +545,20 @@ const Clothes: React.FC = () => {
     setEditingProduct(product);
     
     // Pre-fill form with existing product data
+    // Extract sizes and colors separately, and remove them from the tags array to avoid duplication
+    const extractedSizes = product.tags?.filter(t => availableSizes.includes(t)) || [];
+    const extractedColors = product.tags?.filter(t => availableColors.includes(t)) || [];
+    const extractedClothingType = product.clothingType || product.tags?.find(t => clothingTypes.map(ct => ct.toLowerCase()).includes(t.toLowerCase())) || '';
+    
+    // Keep only tags that are not sizes, colors, clothingType, material, or brand
+    const filteredTags = product.tags?.filter(t => 
+      !availableSizes.includes(t) && 
+      !availableColors.includes(t) &&
+      t !== extractedClothingType &&
+      t !== product.material &&
+      t !== product.brand
+    ) || [];
+    
     setFormData({
       productId: product.productId || '',
       title: product.title,
@@ -557,10 +572,10 @@ const Clothes: React.FC = () => {
       categories: product.gender ? [product.gender] : (product.categories || ['Men']),
       productType: product.productType || 'poster',
       status: product.status || 'active',
-      tags: product.tags || [],
-      sizes: product.tags?.filter(t => ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].includes(t)) || [],
-      colors: product.tags?.filter(t => ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Navy', 'Brown', 'Pink', 'Purple', 'Beige'].includes(t)) || [],
-      clothingType: product.clothingType || product.tags?.find(t => clothingTypes.map(ct => ct.toLowerCase()).includes(t.toLowerCase())) || '',
+      tags: filteredTags,
+      sizes: extractedSizes,
+      colors: extractedColors,
+      clothingType: extractedClothingType,
       material: product.material || '',
       brand: product.brand || '',
       stockQuantity: product.stockQuantity?.toString() || '100',
@@ -699,6 +714,20 @@ const Clothes: React.FC = () => {
     const baseSku = product.productId || product.title.toUpperCase().replace(/[^A-Z0-9]+/g, '-');
     const newSku = `${baseSku}-COPY-${Date.now().toString().slice(-4)}`;
     
+    // Extract sizes and colors separately, and remove them from the tags array to avoid duplication
+    const extractedSizes = product.tags?.filter(t => availableSizes.includes(t)) || [];
+    const extractedColors = product.tags?.filter(t => availableColors.includes(t)) || [];
+    const extractedClothingType = product.clothingType || product.tags?.find(t => clothingTypes.map(ct => ct.toLowerCase()).includes(t.toLowerCase())) || '';
+    
+    // Keep only tags that are not sizes, colors, clothingType, material, or brand
+    const filteredTags = product.tags?.filter(t => 
+      !availableSizes.includes(t) && 
+      !availableColors.includes(t) &&
+      t !== extractedClothingType &&
+      t !== product.material &&
+      t !== product.brand
+    ) || [];
+    
     // Pre-fill form with duplicated product data
     setFormData({
       productId: newSku,
@@ -713,10 +742,10 @@ const Clothes: React.FC = () => {
       categories: product.gender ? [product.gender] : (product.categories || ['Men']),
       productType: product.productType || 'poster',
       status: 'active',
-      tags: product.tags || [],
-      sizes: product.tags?.filter(t => ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'].includes(t)) || [],
-      colors: product.tags?.filter(t => ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Navy', 'Brown', 'Pink', 'Purple', 'Beige'].includes(t)) || [],
-      clothingType: product.clothingType || product.tags?.find(t => clothingTypes.map(ct => ct.toLowerCase()).includes(t.toLowerCase())) || '',
+      tags: filteredTags,
+      sizes: extractedSizes,
+      colors: extractedColors,
+      clothingType: extractedClothingType,
       material: product.material || '',
       brand: product.brand || '',
       stockQuantity: product.stockQuantity?.toString() || '100',
@@ -736,7 +765,7 @@ const Clothes: React.FC = () => {
   };
 
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
-  const availableColors = ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Navy', 'Brown', 'Pink', 'Purple', 'Beige'];
+  const availableColors = ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Grey', 'Navy', 'Brown', 'Pink', 'Violet', 'Beige', 'Yellow', 'Orange', 'Mauve', 'Slate Blue', 'Olive Green', 'Ivory Cream'];
   const clothingTypes = ['Oversized Hoodies', 'Extra Oversized Hoodies', 'Oversized T-Shirt', 'Regular Sized Sweatshirt'];
 
   const renderCreateProduct = () => (
@@ -910,26 +939,26 @@ const Clothes: React.FC = () => {
           />
         </div>
 
-        {/* Gender */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-          <div className="flex flex-wrap gap-2">
-            {['Men', 'Women'].map(category => (
-              <button
-                key={category}
-                onClick={() => handleCategoryToggle(category)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  formData.categories.includes(category)
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                style={formData.categories.includes(category) ? { backgroundColor: '#ff6e00' } : {}}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
+         {/* Gender */}
+         <div>
+           <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+           <div className="flex flex-wrap gap-2">
+             {['Men', 'Women', 'Unisex'].map(category => (
+               <button
+                 key={category}
+                 onClick={() => handleCategoryToggle(category)}
+                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                   formData.categories.includes(category)
+                     ? 'bg-orange-500 text-white'
+                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                 }`}
+                 style={formData.categories.includes(category) ? { backgroundColor: '#ff6e00' } : {}}
+               >
+                 {category}
+               </button>
+             ))}
+           </div>
+         </div>
 
         {/* Clothing Type */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1527,23 +1556,65 @@ const Clothes: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-                <div className="flex flex-wrap gap-2">
-                  {['Men', 'Women'].map(category => (
-                    <button
-                      key={category}
-                      onClick={() => handleCategoryToggle(category)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        formData.categories.includes(category)
-                          ? 'text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      style={formData.categories.includes(category) ? { backgroundColor: '#ff6e00' } : {}}
-                    >
-                      {category}
-                    </button>
-                  ))}
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                 <div className="flex flex-wrap gap-2">
+                   {['Men', 'Women', 'Unisex'].map(category => (
+                     <button
+                       key={category}
+                       onClick={() => handleCategoryToggle(category)}
+                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                         formData.categories.includes(category)
+                           ? 'text-white'
+                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                       }`}
+                       style={formData.categories.includes(category) ? { backgroundColor: '#ff6e00' } : {}}
+                     >
+                       {category}
+                     </button>
+                   ))}
+                 </div>
+               </div>
+
+              {/* Clothing Type, Material, Brand */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Clothing Type</label>
+                  <select
+                    name="clothingType"
+                    value={formData.clothingType}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    <option value="">Select type...</option>
+                    {clothingTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                  <input
+                    type="text"
+                    name="material"
+                    value={formData.material}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="e.g. Cotton, Polyester"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                  <input
+                    type="text"
+                    name="brand"
+                    value={formData.brand}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Brand name"
+                  />
                 </div>
               </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Ruler } from 'lucide-react';
+import { Ruler } from 'lucide-react';
 import { useProducts } from '../contexts/ProductContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,10 +27,11 @@ const ClothingProductPage: React.FC = () => {
     
     // Check both gender (new field) and categories (for backward compatibility)
     const productData = p as any;
-    const hasGender = productData.gender === 'Men' || productData.gender === 'Women';
+    const hasGender = productData.gender === 'Men' || productData.gender === 'Women' || productData.gender === 'Unisex';
     const hasClothingCategory = productData.categories?.some((cat: string) => 
       cat.toLowerCase().includes('men') || 
       cat.toLowerCase().includes('women') || 
+      cat.toLowerCase().includes('unisex') ||
       cat.toLowerCase().includes('clothing')
     );
     
@@ -119,12 +120,12 @@ const ClothingProductPage: React.FC = () => {
   )] as string[];
   availableSizes.sort((a, b) => sizeOrder.indexOf(a) - sizeOrder.indexOf(b));
 
-  // Extract available colors from product tags (remove duplicates)
-  const availableColors = [...new Set(
-    product?.tags?.filter((tag: string) => 
-      ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Grey', 'Navy', 'Brown', 'Pink', 'Purple', 'Beige', 'Yellow', 'Orange'].includes(tag)
-    ) || []
-  )];
+      // Extract available colors from product tags (remove duplicates)
+      const availableColors = [...new Set(
+        product?.tags?.filter((tag: string) => 
+          ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Grey', 'Navy', 'Brown', 'Pink', 'Violet', 'Beige', 'Yellow', 'Orange', 'Mauve', 'Slate Blue', 'Olive Green', 'Ivory Cream'].includes(tag)
+        ) || []
+      )];
 
   // Color hex map
   const colorHexMap: Record<string, string> = {
@@ -138,131 +139,22 @@ const ClothingProductPage: React.FC = () => {
     'Navy': '#1E3A8A',
     'Brown': '#92400E',
     'Pink': '#EC4899',
-    'Purple': '#A855F7',
+    'Violet': '#8B5CF6',
     'Beige': '#F5F5DC',
     'Yellow': '#FBBF24',
-    'Orange': '#ff6e00'
+    'Orange': '#ff6e00',
+    'Mauve': '#E0B0FF',
+    'Slate Blue': '#6A5ACD',
+    'Olive Green': '#808000',
+    'Ivory Cream': '#FFF8DC'
   };
 
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-          {/* Left Column - Product Info */}
-          <div className="space-y-8">
-            {/* Breadcrumb */}
-            <div className="flex items-center space-x-2 text-sm">
-              <Link to="/" className="hover:underline">HOME</Link>
-              <ChevronRight className="w-4 h-4" />
-              <Link to="/men" className="hover:underline">ALL PRODUCTS</Link>
-              <ChevronRight className="w-4 h-4" />
-              <span className="uppercase">{product.title}</span>
-            </div>
-
-            {/* Product Title and Price */}
-            <div>
-              <h1 className="text-xl font-bold uppercase tracking-tight mb-2">
-                {product.title}
-              </h1>
-              
-              {/* Gender Badge */}
-              {product.gender && (
-                <div className="mb-3">
-                  <span className="inline-block px-3 py-1 text-xs font-bold uppercase tracking-wide border border-gray-300 rounded">
-                    {product.gender}
-                  </span>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-3">
-                {product.originalPrice && product.originalPrice > product.price ? (
-                  <>
-                    <p className="text-lg text-gray-500 line-through">
-                      {formatUIPrice(product.originalPrice)}
-                    </p>
-                    <p className="text-xl font-bold" style={{ color: '#ff6e00' }}>
-                      {formatUIPrice(product.price)}
-                    </p>
-                    {product.discountPercentage && (
-                      <span className="px-2 py-1 text-sm font-bold text-white rounded" style={{ backgroundColor: '#ff6e00' }}>
-                        {product.discountPercentage}% OFF
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-xl font-semibold">
-                    {formatUIPrice(product.price)}
-                  </p>
-                )}
-              </div>
-
-              {/* Stock Status */}
-              {product.trackInventory && (
-                <div className="mt-3">
-                  {product.stockQuantity === 0 ? (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
-                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                      <span className="text-sm font-semibold text-red-700">Out of Stock</span>
-                    </div>
-                  ) : product.stockQuantity && product.stockQuantity <= (product.lowStockThreshold || 10) ? (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg">
-                      <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                      <span className="text-sm font-semibold text-orange-700">Only {product.stockQuantity} left in stock!</span>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="text-sm font-semibold text-green-700">In Stock</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Description */}
-            {product.description && (
-              <div>
-                <h2 className="text-sm font-bold uppercase tracking-wide mb-4">DESCRIPTION</h2>
-                <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
-                  {product.description}
-                </div>
-              </div>
-            )}
-
-            {/* Details */}
-            {product.details && (
-              <div>
-                <h2 className="text-sm font-bold uppercase tracking-wide mb-4">DETAILS</h2>
-                <div className="text-sm text-gray-700 whitespace-pre-line">
-                  {product.details}
-                </div>
-              </div>
-            )}
-
-            {/* Wash Care */}
-            {product.washCare && (
-              <div>
-                <h2 className="text-sm font-bold uppercase tracking-wide mb-4">WASH CARE</h2>
-                <div className="text-sm text-gray-700 whitespace-pre-line">
-                  {product.washCare}
-                </div>
-              </div>
-            )}
-
-            {/* Shipping */}
-            {product.shipping && (
-              <div>
-                <h2 className="text-sm font-bold uppercase tracking-wide mb-4">SHIPPING</h2>
-                <div className="text-sm text-gray-700 whitespace-pre-line">
-                  {product.shipping}
-                </div>
-              </div>
-            )}
-
-          </div>
-
-          {/* Right Column - Image and Purchase Options */}
-          <div className="space-y-3">
+        {/* Image Section - Shows first on mobile */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-16">
+          <div className="order-1 lg:order-2">
             {/* Product Image with Side Thumbnails */}
             <div className="flex gap-4">
               {/* Main Product Image */}
@@ -313,7 +205,7 @@ const ClothingProductPage: React.FC = () => {
 
             {/* Mobile Thumbnail Images (Horizontal) */}
             {product.images && product.images.length > 1 && (
-              <div className="flex md:hidden gap-2 overflow-x-auto pb-2">
+              <div className="flex md:hidden gap-2 overflow-x-auto pb-2 mt-3">
                 {product.images.map((image: string, index: number) => (
                   <button
                     key={index}
@@ -331,6 +223,93 @@ const ClothingProductPage: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Product Title and Price - Shows second on mobile, left side on desktop */}
+          <div className="order-2 lg:order-1 mt-6 lg:mt-0 space-y-6 lg:space-y-8">
+            <div>
+              <h1 className="text-xl font-bold uppercase tracking-tight mb-2">
+                {product.title}
+              </h1>
+              
+              {/* Product Info Badges */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {/* Gender Badge */}
+                {product.gender && (
+                  <span className="inline-block px-3 py-1 text-xs font-bold uppercase tracking-wide border border-gray-300 rounded">
+                    {product.gender}
+                  </span>
+                )}
+                
+                {/* Clothing Type */}
+                {product.clothingType && (
+                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide bg-gray-100 text-gray-700 rounded">
+                    {product.clothingType}
+                  </span>
+                )}
+                
+                {/* Material */}
+                {product.material && (
+                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 rounded">
+                    {product.material}
+                  </span>
+                )}
+                
+                {/* Brand */}
+                {product.brand && (
+                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded" style={{ backgroundColor: '#F5F5DC', color: '#ff6e00' }}>
+                    {product.brand}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {product.originalPrice && product.originalPrice > product.price ? (
+                  <>
+                    <p className="text-lg text-gray-500 line-through">
+                      {formatUIPrice(product.originalPrice)}
+                    </p>
+                    <p className="text-xl font-bold" style={{ color: '#ff6e00' }}>
+                      {formatUIPrice(product.price)}
+                    </p>
+                    {product.discountPercentage && (
+                      <span className="px-2 py-1 text-sm font-bold text-white rounded" style={{ backgroundColor: '#ff6e00' }}>
+                        {product.discountPercentage}% OFF
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xl font-semibold">
+                    {formatUIPrice(product.price)}
+                  </p>
+                )}
+              </div>
+
+              {/* Stock Status */}
+              {product.trackInventory && (
+                <div className="mt-3">
+                  {product.stockQuantity === 0 ? (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
+                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                      <span className="text-sm font-semibold text-red-700">Out of Stock</span>
+                    </div>
+                  ) : product.stockQuantity && product.stockQuantity <= (product.lowStockThreshold || 10) ? (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg">
+                      <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                      <span className="text-sm font-semibold text-orange-700">Only {product.stockQuantity} left in stock!</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span className="text-sm font-semibold text-green-700">In Stock</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Color, Size and Action Buttons - Shows third on mobile, in left column on desktop */}
+            <div className="space-y-3">
 
             {/* Color Selection */}
             {availableColors.length > 0 && (
@@ -442,7 +421,51 @@ const ClothingProductPage: React.FC = () => {
                 {product.trackInventory && product.stockQuantity === 0 ? 'OUT OF STOCK' : 'BUY NOW'}
               </button>
             </div>
+            </div>
           </div>
+        </div>
+
+        {/* Description Sections - Shows after all content on mobile and desktop */}
+        <div className="space-y-8 mt-8">
+          {/* Description */}
+          {product.description && (
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wide mb-4">DESCRIPTION</h2>
+              <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
+                {product.description}
+              </div>
+            </div>
+          )}
+
+          {/* Details */}
+          {product.details && (
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wide mb-4">DETAILS</h2>
+              <div className="text-sm text-gray-700 whitespace-pre-line">
+                {product.details}
+              </div>
+            </div>
+          )}
+
+          {/* Wash Care */}
+          {product.washCare && (
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wide mb-4">WASH CARE</h2>
+              <div className="text-sm text-gray-700 whitespace-pre-line">
+                {product.washCare}
+              </div>
+            </div>
+          )}
+
+          {/* Shipping */}
+          {product.shipping && (
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wide mb-4">SHIPPING</h2>
+              <div className="text-sm text-gray-700 whitespace-pre-line">
+                {product.shipping}
+              </div>
+            </div>
+          )}
         </div>
 
       {/* Size Chart Modal */}

@@ -12,13 +12,13 @@ const MenClothingPage: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('featured');
 
-  // Clothing categories
+  // Clothing categories - Match exactly with admin clothingTypes
   const categories = [
     { id: 'all', label: 'VIEW ALL' },
-    { id: 't-shirts', label: 'T-SHIRTS' },
-    { id: 'hoodies', label: 'HOODIES' },
-    { id: 'sweatshirts', label: 'SWEATSHIRTS' },
-    { id: 'oversized', label: 'OVERSIZED' },
+    { id: 'oversized-hoodies', label: 'OVERSIZED HOODIES' },
+    { id: 'extra-oversized-hoodies', label: 'EXTRA OVERSIZED HOODIES' },
+    { id: 'oversized-t-shirt', label: 'OVERSIZED T-SHIRT' },
+    { id: 'regular-sized-sweatshirt', label: 'REGULAR SIZED SWEATSHIRT' },
   ];
 
   // Scroll to top when component mounts
@@ -48,13 +48,26 @@ const MenClothingPage: React.FC = () => {
     if (selectedCategory !== 'all') {
       clothingProducts = clothingProducts.filter(product => {
         const productType = product.clothingType?.toLowerCase() || '';
-        const productTags = product.tags?.map(t => t.toLowerCase()).join(' ') || '';
         const productTitle = product.title.toLowerCase();
         
-        // Match category with product type, tags, or title
-        return productType.includes(selectedCategory) || 
-               productTags.includes(selectedCategory) || 
-               productTitle.includes(selectedCategory);
+        // Match category with exact clothing types
+        switch (selectedCategory) {
+          case 'oversized-hoodies':
+            return productType === 'oversized hoodies' || 
+                   productType.includes('oversized hoodie') ||
+                   (productTitle.includes('oversized') && productTitle.includes('hoodie'));
+          case 'extra-oversized-hoodies':
+            return productType === 'extra oversized hoodies' || 
+                   productType.includes('extra oversized hoodie');
+          case 'oversized-t-shirt':
+            return productType === 'oversized t-shirt' || 
+                   productType.includes('oversized t-shirt');
+          case 'regular-sized-sweatshirt':
+            return productType === 'regular sized sweatshirt' || 
+                   productType.includes('regular sized sweatshirt');
+          default:
+            return true;
+        }
       });
     }
 
