@@ -5,6 +5,7 @@ import { CartManager } from '../services/orderService';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../utils/adminUtils';
 import { useCategories } from '../contexts/CategoryContext';
+import { useLogo } from '../hooks/useLogo';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,7 +17,6 @@ const Header: React.FC = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
-  const [customLogo, setCustomLogo] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -24,6 +24,7 @@ const Header: React.FC = () => {
   const isAdminPage = location.pathname.startsWith('/admin');
   const { user } = useAuth();
   const { categories } = useCategories();
+  const { logoUrl, isLoading: logoLoading } = useLogo();
   
   useEffect(() => {
     // Initialize cart count
@@ -44,22 +45,8 @@ const Header: React.FC = () => {
       }
     }
     
-    // Load custom logo from localStorage
-    const savedLogo = localStorage.getItem('customLogo');
-    if (savedLogo) {
-      setCustomLogo(savedLogo);
-    }
-    
-    // Listen for logo updates
-    const handleLogoUpdate = (event: CustomEvent) => {
-      setCustomLogo(event.detail.logoUrl);
-    };
-    
-    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    
     return () => {
       unsubscribe();
-      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
     };
   }, []);
 
@@ -182,22 +169,19 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            {customLogo ? (
+            {!logoLoading && (
               <img 
-                src={customLogo} 
+                src={logoUrl} 
                 alt="Lurevi" 
                 className="h-12 w-auto"
                 onError={(e) => {
-                  console.error('Error loading custom logo:', e);
+                  console.error('Error loading logo:', e);
                   e.currentTarget.src = '/lurevi-logo.svg';
                 }}
               />
-            ) : (
-              <img 
-                src="/lurevi-logo.svg" 
-                alt="Lurevi" 
-                className="h-12 w-auto"
-              />
+            )}
+            {logoLoading && (
+              <div className="h-12 w-24 bg-gray-200 rounded animate-pulse"></div>
             )}
           </Link>
 

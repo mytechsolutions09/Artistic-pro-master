@@ -1,186 +1,166 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Save, Upload, Image, Trash2, Eye, Download } from 'lucide-react';
+import { Save, Upload, Trash2, Eye, Loader2 } from 'lucide-react';
+import { LogoService, LogoSettings as LogoSettingsType } from '../../../services/logoService';
 
 const LogoSettings: React.FC = () => {
   const [logoSettings, setLogoSettings] = useState({
     currentLogo: '/lurevi-logo.svg',
     logoText: 'Lurevi',
     logoColor: '#F0B0B0',
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
     showUnderline: true,
     underlineColor: '#F0B0B0',
-    fontSize: 48,
+    fontSize: 42,
     fontFamily: 'Brush Script MT'
   });
 
   const [isUploading, setIsUploading] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load settings from localStorage on component mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('logoSettings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setLogoSettings(parsed);
-      } catch (error) {
-        console.error('Error loading logo settings:', error);
-      }
-    }
+    loadLogoSettings();
   }, []);
+
+  const loadLogoSettings = async () => {
+    try {
+      setIsLoading(true);
+      const settings = await LogoService.getActiveLogoSettings();
+      if (settings) {
+        setLogoSettings({
+          currentLogo: settings.logo_url,
+          logoText: settings.logo_text,
+          logoColor: settings.logo_color,
+          backgroundColor: settings.background_color,
+          showUnderline: settings.show_underline,
+          underlineColor: settings.underline_color,
+          fontSize: settings.font_size,
+          fontFamily: settings.font_family
+        });
+      }
+    } catch (error) {
+      console.error('Error loading logo settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
+      setIsUploading(true);
       console.log('Saving logo settings:', logoSettings);
       
-      // Update the logo file if it's a custom upload
-      if (logoSettings.currentLogo.startsWith('data:')) {
-        await updateLogoFile();
-      } else if (logoSettings.logoText !== 'Lurevi') {
-        await updateLogoFile();
+      let logoUrl = logoSettings.currentLogo;
+      
+      if (uploadedFile) {
+        console.log('Uploading file to Supabase storage...');
+        const uploadedUrl = await LogoService.uploadLogoFile(uploadedFile, uploadedFile.name);
+        if (uploadedUrl) {
+          logoUrl = uploadedUrl;
+          console.log('File uploaded successfully:', uploadedUrl);
+        } else {
+          throw new Error('Failed to upload logo file');
+        }
+      } else if (logoSettings.currentLogo.startsWith('data:')) {
+        console.log('Converting data URL to file and uploading...');
+        const file = dataURLtoFile(logoSettings.currentLogo, 'custom-logo.png');
+        const uploadedUrl = await LogoService.uploadLogoFile(file, 'custom-logo.png');
+        if (uploadedUrl) {
+          logoUrl = uploadedUrl;
+          console.log('Data URL uploaded successfully:', uploadedUrl);
+        } else {
+          throw new Error('Failed to upload logo from data URL');
+        }
+      } else if (logoSettings.logoText !== 'Lurevi' || logoSettings.logoColor !== '#F0B0B0') {
+        console.log('Generating and uploading SVG...');
+        const svgSettings: LogoSettingsType = {
+          logo_url: '',
+          logo_text: logoSettings.logoText,
+          logo_color: logoSettings.logoColor,
+          background_color: logoSettings.backgroundColor,
+          show_underline: logoSettings.showUnderline,
+          underline_color: logoSettings.underlineColor,
+          font_size: logoSettings.fontSize,
+          font_family: logoSettings.fontFamily,
+          is_active: true
+        };
+        
+        const uploadedUrl = await LogoService.uploadGeneratedSVG(svgSettings);
+        if (uploadedUrl) {
+          logoUrl = uploadedUrl;
+          console.log('SVG uploaded successfully:', uploadedUrl);
+        } else {
+          throw new Error('Failed to upload generated SVG');
+        }
       }
       
-      // Save settings to localStorage for persistence
-      localStorage.setItem('logoSettings', JSON.stringify(logoSettings));
+      console.log('Saving settings to database with URL:', logoUrl);
+      const success = await LogoService.updateLogoSettings({
+        logo_url: logoUrl,
+        logo_text: logoSettings.logoText,
+        logo_color: logoSettings.logoColor,
+        background_color: logoSettings.backgroundColor,
+        show_underline: logoSettings.showUnderline,
+        underline_color: logoSettings.underlineColor,
+        font_size: logoSettings.fontSize,
+        font_family: logoSettings.fontFamily,
+        is_active: true
+      });
       
-      // Update the actual logo files used in the app
-      await updateAppLogo();
-      
-      alert('Logo settings saved successfully! The changes will be visible after page refresh.');
+      if (success) {
+        alert('Logo settings saved successfully! The changes will be visible after page refresh.');
+        setLogoSettings(prev => ({ ...prev, currentLogo: logoUrl }));
+        setUploadedFile(null);
+        window.dispatchEvent(new CustomEvent('logoUpdated', { detail: { logoUrl: logoUrl } }));
+        await loadLogoSettings();
+      } else {
+        throw new Error('Failed to save logo settings to database');
+      }
     } catch (error) {
       console.error('Error saving logo settings:', error);
-      alert('Failed to save logo settings. Please try again.');
+      alert(`Failed to save logo settings: ${(error as Error).message}`);
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const updateLogoFile = async () => {
-    const svgContent = generateLogoSVG();
-    
-    // In a real application, you would upload this to your server
-    // For now, we'll create a blob and download it
-    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create a temporary link to download the new logo
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'lurevi-logo.svg';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const updateAppLogo = async () => {
-    try {
-      // If it's a custom uploaded image, we need to handle it differently
-      if (logoSettings.currentLogo.startsWith('data:')) {
-        // For uploaded images, we'll store them in localStorage and update the components
-        localStorage.setItem('customLogo', logoSettings.currentLogo);
-        
-        // Dispatch a custom event to notify other components
-        window.dispatchEvent(new CustomEvent('logoUpdated', { 
-          detail: { logoUrl: logoSettings.currentLogo } 
-        }));
-      } else {
-        // For text-based logos, generate and update the SVG
-        const svgContent = generateLogoSVG();
-        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        
-        // Store the generated logo URL
-        localStorage.setItem('customLogo', url);
-        
-        // Dispatch a custom event to notify other components
-        window.dispatchEvent(new CustomEvent('logoUpdated', { 
-          detail: { logoUrl: url } 
-        }));
-      }
-    } catch (error) {
-      console.error('Error updating app logo:', error);
-      throw error;
+  const dataURLtoFile = (dataurl: string, filename: string): File => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
     }
+    return new File([u8arr], filename, { type: mime });
   };
 
   const generateLogoSVG = () => {
-    const backgroundRect = logoSettings.backgroundColor !== 'transparent' 
-      ? `<rect width="200" height="80" fill="${logoSettings.backgroundColor}"/>`
-      : '';
-    
-    return `<svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <style>
-      .logo-text {
-        font-family: '${logoSettings.fontFamily}', 'Lucida Handwriting', 'Comic Sans MS', cursive, sans-serif;
-        font-size: ${logoSettings.fontSize}px;
-        font-weight: 400;
-        fill: ${logoSettings.logoColor};
-        stroke: none;
-      }
-      .logo-underline {
-        fill: none;
-        stroke: ${logoSettings.underlineColor};
-        stroke-width: 1.2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-    </style>
-  </defs>
-  
-  ${backgroundRect}
-  
-  <!-- Logo Text -->
-  <text x="100" y="50" text-anchor="middle" class="logo-text">${logoSettings.logoText}</text>
-  
-  <!-- Wavy Underline -->
-  ${logoSettings.showUnderline ? '<path d="M 60 58 Q 80 61 100 58 T 140 58" class="logo-underline"/>' : ''}
-</svg>`;
+    return `<svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg"><defs><style>.logo-text{font-family:'${logoSettings.fontFamily}','Lucida Handwriting','Comic Sans MS',cursive,sans-serif;font-size:${logoSettings.fontSize}px;font-weight:400;fill:${logoSettings.logoColor};stroke:none;}.logo-underline{fill:none;stroke:${logoSettings.underlineColor};stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;}</style></defs><rect width="200" height="80" fill="${logoSettings.backgroundColor}"/><text x="100" y="50" text-anchor="middle" class="logo-text">${logoSettings.logoText}</text>${logoSettings.showUnderline ? '<path d="M 60 58 Q 80 61 100 58 T 140 58" class="logo-underline"/>' : ''}</svg>`;
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file (PNG, JPG, SVG, etc.).');
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, WebP, SVG, or GIF)');
       return;
     }
-
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size too large. Please select a file smaller than 5MB.');
+      alert('File size must be less than 5MB');
       return;
     }
-
-    setIsUploading(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        console.log('File uploaded successfully:', file.name, file.type, file.size);
-        setLogoSettings(prev => ({
-          ...prev,
-          currentLogo: result
-        }));
-        setIsUploading(false);
-        // Clear the file input
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      };
-      reader.onerror = (error) => {
-        console.error('Error reading file:', error);
-        alert('Error reading the file. Please try again.');
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      alert('Error uploading file. Please try again.');
-      setIsUploading(false);
-    }
+    setUploadedFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setLogoSettings(prev => ({ ...prev, currentLogo: result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const resetToDefault = () => {
@@ -188,361 +168,79 @@ const LogoSettings: React.FC = () => {
       currentLogo: '/lurevi-logo.svg',
       logoText: 'Lurevi',
       logoColor: '#F0B0B0',
-      backgroundColor: 'transparent',
+      backgroundColor: '#FFFFFF',
       showUnderline: true,
       underlineColor: '#F0B0B0',
-      fontSize: 48,
+      fontSize: 42,
       fontFamily: 'Brush Script MT'
     });
+    setUploadedFile(null);
   };
 
+  if (isLoading) {
+    return (<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"><div className="animate-pulse"><div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div><div className="h-32 bg-gray-200 rounded mb-4"></div><div className="h-4 bg-gray-200 rounded w-1/2"></div></div></div>);
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Logo Settings</h2>
           <p className="text-sm text-gray-600">Customize your site's logo and branding</p>
         </div>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setPreviewMode(!previewMode)}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded transition-colors text-xs"
-          >
-            <Eye className="w-3 h-3" />
-            <span>{previewMode ? 'Hide Preview' : 'Show Preview'}</span>
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-pink-600 text-white rounded hover:bg-pink-700 transition-colors text-xs"
-          >
-            <Save className="w-3 h-3" />
-            <span>Save Changes</span>
-          </button>
+          <button onClick={() => setPreviewMode(!previewMode)} className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs"><Eye className="w-4 h-4" /><span>{previewMode ? 'Hide Preview' : 'Show Preview'}</span></button>
+          <button onClick={handleSave} disabled={isUploading} className="flex items-center space-x-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">{isUploading ? (<><Loader2 className="w-4 h-4 animate-spin" /><span>Saving...</span></>) : (<><Save className="w-4 h-4" /><span>Save Settings</span></>)}</button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Logo Configuration */}
-        <div className="space-y-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 mb-4">Logo Configuration</h3>
-            
-            {/* Logo Text */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-700">Logo Text</label>
-              <input
-                type="text"
-                value={logoSettings.logoText}
-                onChange={(e) => setLogoSettings(prev => ({ ...prev, logoText: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                placeholder="Enter logo text"
-              />
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700">Logo Upload</label>
+            <div className="flex items-center space-x-3">
+              <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+              <button onClick={() => fileInputRef.current?.click()} className="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"><Upload className="w-4 h-4" /><span>Upload Logo</span></button>
+              <button onClick={resetToDefault} className="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"><Trash2 className="w-4 h-4" /><span>Reset to Default</span></button>
             </div>
-
-            {/* Font Family */}
+            {uploadedFile && (<p className="text-xs text-green-600">File selected: {uploadedFile.name}</p>)}
+          </div>
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700">Logo Text</label>
+            <div><input type="text" value={logoSettings.logoText} onChange={(e) => setLogoSettings(prev => ({ ...prev, logoText: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Enter logo text" /></div>
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700">Font Family</label>
-              <select
-                value={logoSettings.fontFamily}
-                onChange={(e) => setLogoSettings(prev => ({ ...prev, fontFamily: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-              >
-                <option value="Brush Script MT">Brush Script MT</option>
-                <option value="Dancing Script">Dancing Script</option>
-                <option value="Lucida Handwriting">Lucida Handwriting</option>
-                <option value="Comic Sans MS">Comic Sans MS</option>
-                <option value="cursive">Cursive</option>
-              </select>
+              <select value={logoSettings.fontFamily} onChange={(e) => setLogoSettings(prev => ({ ...prev, fontFamily: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"><option value="Brush Script MT">Brush Script MT</option><option value="Dancing Script">Dancing Script</option><option value="Pacifico">Pacifico</option><option value="Satisfy">Satisfy</option><option value="Kalam">Kalam</option></select>
             </div>
-
-            {/* Font Size */}
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700">Font Size (px)</label>
-              <input
-                type="number"
-                value={logoSettings.fontSize}
-                onChange={(e) => setLogoSettings(prev => ({ ...prev, fontSize: parseInt(e.target.value) || 42 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                min="20"
-                max="80"
-              />
+              <input type="number" value={logoSettings.fontSize} onChange={(e) => setLogoSettings(prev => ({ ...prev, fontSize: parseInt(e.target.value) || 42 }))} className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" min="20" max="80" />
             </div>
-
-            {/* Logo Color */}
+          </div>
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700">Logo Color</label>
               <div className="flex items-center space-x-2">
-                <input
-                  type="color"
-                  value={logoSettings.logoColor}
-                  onChange={(e) => setLogoSettings(prev => ({ ...prev, logoColor: e.target.value }))}
-                  className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={logoSettings.logoColor}
-                  onChange={(e) => setLogoSettings(prev => ({ ...prev, logoColor: e.target.value }))}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                />
+                <input type="color" value={logoSettings.logoColor} onChange={(e) => setLogoSettings(prev => ({ ...prev, logoColor: e.target.value }))} className="w-10 h-8 border border-gray-300 rounded cursor-pointer" />
+                <input type="text" value={logoSettings.logoColor} onChange={(e) => setLogoSettings(prev => ({ ...prev, logoColor: e.target.value }))} className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
               </div>
             </div>
-
-            {/* Background Color */}
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700">Background Color</label>
               <div className="flex items-center space-x-2">
-                <input
-                  type="color"
-                  value={logoSettings.backgroundColor}
-                  onChange={(e) => setLogoSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
-                  className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={logoSettings.backgroundColor}
-                  onChange={(e) => setLogoSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                />
+                <input type="color" value={logoSettings.backgroundColor} onChange={(e) => setLogoSettings(prev => ({ ...prev, backgroundColor: e.target.value }))} className="w-10 h-8 border border-gray-300 rounded cursor-pointer" />
+                <input type="text" value={logoSettings.backgroundColor} onChange={(e) => setLogoSettings(prev => ({ ...prev, backgroundColor: e.target.value }))} className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
               </div>
             </div>
-
-            {/* Underline Settings */}
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="showUnderline"
-                  checked={logoSettings.showUnderline}
-                  onChange={(e) => setLogoSettings(prev => ({ ...prev, showUnderline: e.target.checked }))}
-                  className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                />
-                <label htmlFor="showUnderline" className="text-xs font-medium text-gray-700">
-                  Show Underline
-                </label>
+                <input type="checkbox" id="showUnderline" checked={logoSettings.showUnderline} onChange={(e) => setLogoSettings(prev => ({ ...prev, showUnderline: e.target.checked }))} className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500" />
+                <label htmlFor="showUnderline" className="text-xs font-medium text-gray-700">Show Underline</label>
               </div>
-              
-              {logoSettings.showUnderline && (
-                <div className="ml-6 space-y-2">
-                  <label className="text-xs font-medium text-gray-700">Underline Color</label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      value={logoSettings.underlineColor}
-                      onChange={(e) => setLogoSettings(prev => ({ ...prev, underlineColor: e.target.value }))}
-                      className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={logoSettings.underlineColor}
-                      onChange={(e) => setLogoSettings(prev => ({ ...prev, underlineColor: e.target.value }))}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                    />
-                  </div>
-                </div>
-              )}
+              {logoSettings.showUnderline && (<div className="ml-6 space-y-2"><label className="text-xs font-medium text-gray-700">Underline Color</label><div className="flex items-center space-x-2"><input type="color" value={logoSettings.underlineColor} onChange={(e) => setLogoSettings(prev => ({ ...prev, underlineColor: e.target.value }))} className="w-10 h-8 border border-gray-300 rounded cursor-pointer" /><input type="text" value={logoSettings.underlineColor} onChange={(e) => setLogoSettings(prev => ({ ...prev, underlineColor: e.target.value }))} className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" /></div></div>)}
             </div>
           </div>
-
-          {/* File Upload */}
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 mb-4">Upload Custom Logo</h3>
-            <div className="space-y-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.add('border-pink-400', 'bg-pink-50');
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.remove('border-pink-400', 'bg-pink-50');
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.remove('border-pink-400', 'bg-pink-50');
-                  const files = e.dataTransfer.files;
-                  if (files.length > 0) {
-                    const file = files[0];
-                    const event = {
-                      target: { files: [file] }
-                    } as React.ChangeEvent<HTMLInputElement>;
-                    handleFileUpload(event);
-                  }
-                }}
-                className={`w-full flex flex-col items-center justify-center space-y-2 px-4 py-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-pink-400 hover:bg-pink-50 transition-colors cursor-pointer ${
-                  isUploading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                <Upload className="w-8 h-8 text-gray-400" />
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 font-medium">
-                    {isUploading ? 'Uploading...' : 'Click to upload or drag & drop'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    PNG, JPG, SVG formats • Max 5MB • Recommended: 200x80px
-                  </p>
-                </div>
-              </div>
-              
-              {/* Upload Status */}
-              {isUploading && (
-                <div className="flex items-center justify-center space-x-2 text-sm text-pink-600">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-pink-600 border-t-transparent"></div>
-                  <span>Processing your logo...</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={resetToDefault}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-xs"
-            >
-              <Trash2 className="w-3 h-3" />
-              <span>Reset to Default</span>
-            </button>
-            <button
-              onClick={() => {
-                const svgContent = generateLogoSVG();
-                const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'lurevi-logo.svg';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-              }}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-700 rounded hover:bg-gray-50 transition-colors text-xs"
-            >
-              <Download className="w-3 h-3" />
-              <span>Download SVG</span>
-            </button>
-          </div>
         </div>
-
-        {/* Preview */}
-        <div className="space-y-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 mb-4">Preview</h3>
-            {previewMode ? (
-              <div className="space-y-4">
-                {/* Current Logo Display */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-700">Current Logo</h4>
-                  <div className="bg-gray-50 p-4 rounded border-2 border-dashed border-gray-200 flex items-center justify-center">
-                    {logoSettings.currentLogo.startsWith('data:') ? (
-                      <img 
-                        src={logoSettings.currentLogo} 
-                        alt="Current Logo" 
-                        className="max-h-16 max-w-full object-contain"
-                      />
-                    ) : (
-                      <img 
-                        src={logoSettings.currentLogo} 
-                        alt="Current Logo" 
-                        className="max-h-16 max-w-full object-contain"
-                        onError={(e) => {
-                          console.error('Error loading logo:', e);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Header Preview */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-700">Header Preview</h4>
-                  <div className="bg-teal-800 p-4 rounded">
-                    <div className="flex items-center">
-                      {logoSettings.currentLogo.startsWith('data:') ? (
-                        <img 
-                          src={logoSettings.currentLogo} 
-                          alt="Logo Preview" 
-                          className="h-12 w-auto"
-                        />
-                      ) : (
-                        <div 
-                          className="text-3xl font-handwriting relative transform -translate-y-1"
-                          style={{
-                            fontFamily: logoSettings.fontFamily,
-                            fontSize: `${logoSettings.fontSize}px`,
-                            color: logoSettings.logoColor
-                          }}
-                        >
-                          {logoSettings.logoText}
-                          {logoSettings.showUnderline && (
-                            <div 
-                              className="absolute bottom-0 left-0 right-0 h-0.5 transform translate-y-1"
-                              style={{
-                                background: `linear-gradient(to right, ${logoSettings.underlineColor} 0%, ${logoSettings.underlineColor} 100%)`,
-                                clipPath: 'polygon(0 0, 100% 0, 95% 100%, 5% 100%)'
-                              }}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Standalone Preview */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-700">Standalone Preview</h4>
-                  <div 
-                    className="p-4 rounded flex items-center justify-center"
-                    style={{ backgroundColor: logoSettings.backgroundColor }}
-                  >
-                    {logoSettings.currentLogo.startsWith('data:') ? (
-                      <img 
-                        src={logoSettings.currentLogo} 
-                        alt="Logo Preview" 
-                        className="h-16 w-auto"
-                      />
-                    ) : (
-                      <div 
-                        className="text-3xl font-handwriting relative transform -translate-y-1"
-                        style={{
-                          fontFamily: logoSettings.fontFamily,
-                          fontSize: `${logoSettings.fontSize}px`,
-                          color: logoSettings.logoColor
-                        }}
-                      >
-                        {logoSettings.logoText}
-                        {logoSettings.showUnderline && (
-                          <div 
-                            className="absolute bottom-0 left-0 right-0 h-0.5 transform translate-y-1"
-                            style={{
-                              background: `linear-gradient(to right, ${logoSettings.underlineColor} 0%, ${logoSettings.underlineColor} 100%)`,
-                              clipPath: 'polygon(0 0, 100% 0, 95% 100%, 5% 100%)'
-                            }}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Image className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm">Click "Show Preview" to see your logo</p>
-              </div>
-            )}
-          </div>
-        </div>
+        {previewMode && (<div className="space-y-4"><h3 className="text-sm font-medium text-gray-700">Logo Preview</h3><div className="bg-gray-50 rounded-lg p-6 border-2 border-dashed border-gray-300"><div className="flex justify-center">{logoSettings.currentLogo.startsWith('data:') || logoSettings.currentLogo.startsWith('http') ? (<img src={logoSettings.currentLogo} alt="Logo Preview" className="max-w-full max-h-32 object-contain" />) : (<div dangerouslySetInnerHTML={{ __html: generateLogoSVG() }} className="max-w-full" />)}</div></div><div className="text-xs text-gray-500 space-y-1"><p><strong>Current Logo:</strong> {logoSettings.currentLogo.includes('http') ? 'Uploaded File' : logoSettings.currentLogo.includes('data:') ? 'Custom Upload' : 'Default'}</p><p><strong>Text:</strong> {logoSettings.logoText}</p><p><strong>Font:</strong> {logoSettings.fontFamily} ({logoSettings.fontSize}px)</p><p><strong>Colors:</strong> {logoSettings.logoColor} on {logoSettings.backgroundColor}</p>{uploadedFile && <p className="text-green-600"><strong>Ready to upload:</strong> {uploadedFile.name}</p>}</div></div>)}
       </div>
     </div>
   );
