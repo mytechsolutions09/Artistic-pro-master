@@ -6,7 +6,7 @@ const LogoSettings: React.FC = () => {
     currentLogo: '/lurevi-logo.svg',
     logoText: 'Lurevi',
     logoColor: '#F0B0B0',
-    backgroundColor: '#000000',
+    backgroundColor: 'transparent',
     showUnderline: true,
     underlineColor: '#F0B0B0',
     fontSize: 48,
@@ -104,6 +104,10 @@ const LogoSettings: React.FC = () => {
   };
 
   const generateLogoSVG = () => {
+    const backgroundRect = logoSettings.backgroundColor !== 'transparent' 
+      ? `<rect width="200" height="80" fill="${logoSettings.backgroundColor}"/>`
+      : '';
+    
     return `<svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <style>
@@ -124,8 +128,7 @@ const LogoSettings: React.FC = () => {
     </style>
   </defs>
   
-  <!-- Background -->
-  <rect width="200" height="80" fill="${logoSettings.backgroundColor}"/>
+  ${backgroundRect}
   
   <!-- Logo Text -->
   <text x="100" y="50" text-anchor="middle" class="logo-text">${logoSettings.logoText}</text>
@@ -185,7 +188,7 @@ const LogoSettings: React.FC = () => {
       currentLogo: '/lurevi-logo.svg',
       logoText: 'Lurevi',
       logoColor: '#F0B0B0',
-      backgroundColor: '#000000',
+      backgroundColor: 'transparent',
       showUnderline: true,
       underlineColor: '#F0B0B0',
       fontSize: 48,
