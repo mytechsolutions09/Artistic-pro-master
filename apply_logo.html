@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Apply Logo Settings</title>
+</head>
+<body>
+    <h1>Applying Logo Settings...</h1>
+    <p>This will set the correct logo settings in localStorage.</p>
+    
+    <script>
+        // Apply logo settings
+        const logoSettings = {
+  "currentLogo": "/lurevi-logo.svg",
+  "logoText": "Lurevi",
+  "logoColor": "#F0B0B0",
+  "backgroundColor": "#000000",
+  "showUnderline": true,
+  "underlineColor": "#F0B0B0",
+  "fontSize": 48,
+  "fontFamily": "Brush Script MT"
+};
+        
+        // Generate and store the logo SVG
+        const svgContent = `<svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .logo-text {
+        font-family: '${logoSettings.fontFamily}', 'Lucida Handwriting', 'Comic Sans MS', cursive, sans-serif;
+        font-size: ${logoSettings.fontSize}px;
+        font-weight: 400;
+        fill: ${logoSettings.logoColor};
+        stroke: none;
+      }
+      .logo-underline {
+        fill: none;
+        stroke: ${logoSettings.underlineColor};
+        stroke-width: 1.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="200" height="80" fill="${logoSettings.backgroundColor}"/>
+  
+  <!-- Logo Text -->
+  <text x="100" y="50" text-anchor="middle" class="logo-text">${logoSettings.logoText}</text>
+  
+  <!-- Wavy Underline -->
+  ${logoSettings.showUnderline ? '<path d="M 60 58 Q 80 61 100 58 T 140 58" class="logo-underline"/>' : ''}
+</svg>`;
+        
+        // Create blob URL for the logo
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const logoUrl = URL.createObjectURL(blob);
+        
+        // Save to localStorage
+        localStorage.setItem('logoSettings', JSON.stringify(logoSettings));
+        localStorage.setItem('customLogo', logoUrl);
+        
+        // Dispatch event to update logo
+        window.dispatchEvent(new CustomEvent('logoUpdated', { 
+          detail: { logoUrl: logoUrl } 
+        }));
+        
+        document.body.innerHTML += '<p style="color: green;">✅ Logo settings applied successfully!</p>';
+        document.body.innerHTML += '<p>You can now close this tab and refresh your main application.</p>';
+    </script>
+</body>
+</html>

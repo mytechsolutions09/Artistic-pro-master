@@ -6,10 +6,10 @@ const LogoSettings: React.FC = () => {
     currentLogo: '/lurevi-logo.svg',
     logoText: 'Lurevi',
     logoColor: '#F0B0B0',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#000000',
     showUnderline: true,
     underlineColor: '#F0B0B0',
-    fontSize: 42,
+    fontSize: 48,
     fontFamily: 'Brush Script MT'
   });
 
@@ -185,10 +185,10 @@ const LogoSettings: React.FC = () => {
       currentLogo: '/lurevi-logo.svg',
       logoText: 'Lurevi',
       logoColor: '#F0B0B0',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: '#000000',
       showUnderline: true,
       underlineColor: '#F0B0B0',
-      fontSize: 42,
+      fontSize: 48,
       fontFamily: 'Brush Script MT'
     });
   };

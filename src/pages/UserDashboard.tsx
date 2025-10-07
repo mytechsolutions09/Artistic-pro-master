@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, Settings, ShoppingBag, Heart, Download, Save, X, Eye, Star,
+  User, Settings, ShoppingBag, Heart, Download, X, Eye, Star,
   FileDown, TrendingUp, Calendar, LogOut,
   Package, Zap, Sparkles, Activity, Truck, MapPin, Clock, CheckCircle, RotateCcw,
-  Search, ChevronDown, ChevronUp
+  Search, ChevronDown, ChevronUp, Edit, Shield, Key
 } from 'lucide-react';
 import { CompleteOrderService } from '../services/completeOrderService';
 import { Order } from '../types';
@@ -18,6 +18,7 @@ import ReviewInput from '../components/ReviewInput';
 import FilterSidebar from '../components/FilterSidebar';
 import ReturnRequestForm from '../components/ReturnRequestForm';
 import ReturnRequestsList from '../components/ReturnRequestsList';
+import AddressManagement from '../components/AddressManagement';
 import { delhiveryService } from '../services/DelhiveryService';
 import { ReturnService } from '../services/returnService';
 
@@ -26,7 +27,7 @@ const UserDashboard: React.FC = () => {
   const { featuredArtworks } = useProducts();
   const { formatUIPrice } = useCurrency();
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('settings');
   const [isEditing, setIsEditing] = useState(false);
   const [userProfile, setUserProfile] = useState({
     name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
@@ -54,11 +55,6 @@ const UserDashboard: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   
-  // Notification preferences state
-  const [notificationPrefs, setNotificationPrefs] = useState({
-    emailNotifications: true,
-    orderUpdates: true
-  });
 
   // Return request state
   const [showReturnForm, setShowReturnForm] = useState(false);
@@ -78,12 +74,6 @@ const UserDashboard: React.FC = () => {
   const [trackingLoading, setTrackingLoading] = useState<Record<string, boolean>>({});
   const [trackingErrors, setTrackingErrors] = useState<Record<string, string>>({});
 
-  // Load saved notification preferences
-  useEffect(() => {
-    if (user?.user_metadata?.notification_preferences) {
-      setNotificationPrefs(user.user_metadata.notification_preferences);
-    }
-  }, [user]);
   
   // Review state
   const [showReviewInput, setShowReviewInput] = useState(false);
@@ -566,12 +556,11 @@ const UserDashboard: React.FC = () => {
   const nextMemberLevel = memberProgress.nextLevel;
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: User },
+    { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'orders', label: 'My Orders', icon: ShoppingBag },
     { id: 'returns', label: 'Returns', icon: RotateCcw },
     { id: 'favorites', label: 'Favorites', icon: Heart },
-    { id: 'downloads', label: 'Downloads', icon: Download },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'downloads', label: 'Downloads', icon: Download }
   ];
 
   const renderOverview = () => {
@@ -824,156 +813,171 @@ const UserDashboard: React.FC = () => {
 
     return (
       <div className="space-y-4">
-
-        {/* Order List */}
-        <div className="rounded-lg">
-          <div className="p-3 bg-white rounded-lg shadow-sm shadow-teal-100 mb-3 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <h3 className="text-sm font-bold text-gray-900">Order History</h3>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-600">
-                    {filteredOrders.length === userOrders.length 
-                      ? `${totalOrders} orders`
-                      : `${filteredOrders.length} of ${userOrders.length} orders`
-                    }
-                  </span>
-                  {pendingOrders > 0 && (
-                    <span className="px-2 py-1 bg-white text-gray-800 text-xs rounded-full">
-                      {pendingOrders} pending
-                    </span>
-                  )}
-                </div>
-              </div>
+        {/* Orders Section */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <Package className="w-5 h-5 text-teal-600" />
+              <h3 className="text-lg font-bold text-gray-800">Order History</h3>
             </div>
+            <button
+              onClick={() => navigate('/browse')}
+              className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>Browse More</span>
+            </button>
+          </div>
 
-            {/* Search Bar */}
-            <div className="mb-3 relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by order ID, product name, or status..."
-                value={orderSearchQuery}
-                onChange={(e) => setOrderSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-8 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-              />
-              {orderSearchQuery && (
-                <button
-                  onClick={() => setOrderSearchQuery('')}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Return Notification */}
-            {returnNotification.show && (
-              <div className={`mb-3 p-3 rounded-lg border flex items-center justify-between ${
-                returnNotification.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
-                returnNotification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
-                'bg-blue-50 border-blue-200 text-blue-800'
-              }`}>
-                <div className="flex items-center space-x-2">
-                  {returnNotification.type === 'error' && <X className="w-4 h-4" />}
-                  {returnNotification.type === 'success' && <CheckCircle className="w-4 h-4" />}
-                  {returnNotification.type === 'info' && <Clock className="w-4 h-4" />}
-                  <span className="text-sm font-medium">{returnNotification.message}</span>
-                </div>
-                <button
-                  onClick={() => setReturnNotification({ show: false, message: '', type: 'info' })}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Total Orders</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {filteredOrders.length === userOrders.length 
+                    ? `${totalOrders} orders`
+                    : `${filteredOrders.length} of ${userOrders.length} orders`
+                  }
+                  {pendingOrders > 0 && ` • ${pendingOrders} pending`}
+                </p>
               </div>
-            )}
-              
-            {/* Date Filter */}
-            <div className="flex items-center space-x-2 flex-wrap">
-                <div className="flex items-center space-x-1">
-                  <input
-                    type="checkbox"
-                    id="showAllOrders"
-                    checked={dateFilter.showAll}
-                    onChange={(e) => setDateFilter({
-                      ...dateFilter,
-                      showAll: e.target.checked,
-                      startDate: e.target.checked ? '' : dateFilter.startDate,
-                      endDate: e.target.checked ? '' : dateFilter.endDate
-                    })}
-                    className="rounded text-gray-600 focus:ring-gray-500"
-                  />
-                  <label htmlFor="showAllOrders" className="text-xs font-medium text-gray-600">Show all</label>
+              <div className="flex items-center space-x-2">
+                <div className="p-2 bg-teal-100 rounded-lg">
+                  <ShoppingBag className="w-5 h-5 text-teal-600" />
                 </div>
-                
-                {!dateFilter.showAll && (
-                  <>
-                    <div className="flex items-center space-x-1">
-                      <label className="text-xs font-medium text-gray-600">From</label>
-                      <input
-                        type="date"
-                        value={dateFilter.startDate}
-                        onChange={(e) => setDateFilter({ ...dateFilter, startDate: e.target.value })}
-                        className="px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-gray-500"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <label className="text-xs font-medium text-gray-600">To</label>
-                      <input
-                        type="date"
-                        value={dateFilter.endDate}
-                        onChange={(e) => setDateFilter({ ...dateFilter, endDate: e.target.value })}
-                        className="px-2 py-1 border rounded text-xs focus:outline-none focus:ring-1 focus:ring-gray-500"
-                      />
-                    </div>
-                    <button
-                      onClick={() => setDateFilter({ startDate: '', endDate: '', showAll: true })}
-                      className="px-2 py-1 text-xs text-gray-600 hover:text-gray-900 rounded transition-colors"
-                    >
-                      Clear
-                    </button>
-                  </>
-                )}
+                <span className="text-2xl font-bold text-gray-900">{totalOrders}</span>
               </div>
             </div>
           </div>
-          <div>
-            {ordersLoading ? (
-              <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400 mx-auto mb-2"></div>
-                <p className="text-gray-900 text-xs">Loading your orders...</p>
+
+          {/* Search Bar */}
+          <div className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by order ID, product name, or status..."
+              value={orderSearchQuery}
+              onChange={(e) => setOrderSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+            />
+            {orderSearchQuery && (
+              <button
+                onClick={() => setOrderSearchQuery('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Return Notification */}
+          {returnNotification.show && (
+            <div className={`mb-4 p-4 rounded-lg border flex items-center justify-between ${
+              returnNotification.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+              returnNotification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
+              'bg-blue-50 border-blue-200 text-blue-800'
+            }`}>
+              <div className="flex items-center space-x-2">
+                {returnNotification.type === 'error' && <X className="w-5 h-5" />}
+                {returnNotification.type === 'success' && <CheckCircle className="w-5 h-5" />}
+                {returnNotification.type === 'info' && <Clock className="w-5 h-5" />}
+                <span className="text-sm font-medium">{returnNotification.message}</span>
               </div>
-            ) : filteredOrders.length === 0 ? (
-              <div className="text-center py-6">
-                <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <h4 className="text-sm font-semibold text-gray-900 mb-1">
-                  {dateFilter.showAll ? 'No Orders Yet' : 'No Orders Found'}
-                </h4>
-                <p className="text-gray-600 mb-3 text-xs">
-                  {dateFilter.showAll 
-                    ? 'Start shopping to see your order history here.'
-                    : 'No orders found for the selected date range. Try adjusting your filter.'
-                  }
-                </p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate('/browse');
-                  }}
-                  className="inline-flex items-center space-x-2 bg-white text-gray-900 px-3 py-2 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200 text-xs"
-                >
-                  <ShoppingBag className="w-3 h-3" />
-                  <span>Browse Artwork</span>
-                </button>
+              <button
+                onClick={() => setReturnNotification({ show: false, message: '', type: 'info' })}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+            
+          {/* Date Filter */}
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center space-x-3 flex-wrap gap-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="showAllOrders"
+                  checked={dateFilter.showAll}
+                  onChange={(e) => setDateFilter({
+                    ...dateFilter,
+                    showAll: e.target.checked,
+                    startDate: e.target.checked ? '' : dateFilter.startDate,
+                    endDate: e.target.checked ? '' : dateFilter.endDate
+                  })}
+                  className="rounded text-teal-600 focus:ring-teal-500"
+                />
+                <label htmlFor="showAllOrders" className="text-sm font-medium text-gray-700">Show all orders</label>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {filteredOrders.map((order) => {
-                  const isExpanded = expandedOrders[order.id];
-                  return (
-                    <div key={order.id} className="rounded-lg bg-white shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200 overflow-hidden h-fit">
+              
+              {!dateFilter.showAll && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm font-medium text-gray-700">From</label>
+                    <input
+                      type="date"
+                      value={dateFilter.startDate}
+                      onChange={(e) => setDateFilter({ ...dateFilter, startDate: e.target.value })}
+                      className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm font-medium text-gray-700">To</label>
+                    <input
+                      type="date"
+                      value={dateFilter.endDate}
+                      onChange={(e) => setDateFilter({ ...dateFilter, endDate: e.target.value })}
+                      className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setDateFilter({ startDate: '', endDate: '', showAll: true })}
+                    className="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-white transition-colors"
+                  >
+                    Clear Filter
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          {ordersLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+              <p className="text-gray-700 text-sm">Loading your orders...</p>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <Package className="w-10 h-10 text-gray-400" />
+              </div>
+              <h4 className="text-base font-semibold text-gray-900 mb-2">
+                {dateFilter.showAll ? 'No Orders Yet' : 'No Orders Found'}
+              </h4>
+              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">
+                {dateFilter.showAll 
+                  ? 'Start shopping to see your order history here. Browse our collection and place your first order!'
+                  : 'No orders found for the selected date range. Try adjusting your filter or search query.'
+                }
+              </p>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/browse');
+                }}
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Browse Artwork</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredOrders.map((order) => {
+                const isExpanded = expandedOrders[order.id];
+                return (
+                  <div key={order.id} className="rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors overflow-hidden h-fit">
                       {/* Accordion Header */}
                       <button
                         onClick={() => toggleOrderAccordion(order.id)}
@@ -1238,148 +1242,154 @@ const UserDashboard: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        {/* Favorites Stats */}
-        <div className="bg-white p-3 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-gray-900">My Favorites</h3>
-              <p className="text-xs text-gray-600">{filteredFavorites.length} of {userFavorites.length} items</p>
+        {/* Favorites Section */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <Heart className="w-5 h-5 text-teal-600" />
+              <h3 className="text-lg font-bold text-gray-800">My Favorites</h3>
             </div>
             <div className="flex items-center space-x-2">
-              <Heart className="w-5 h-5 text-gray-700" />
-              <span className="text-lg font-bold text-gray-900">{userFavorites.length}</span>
+              <button
+                onClick={() => setShowFavoriteFilters(!showFavoriteFilters)}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span>Filters</span>
+              </button>
+              <button
+                onClick={() => navigate('/browse')}
+                className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Browse More</span>
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Favorites Grid */}
-        <div className="bg-white rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-          <div className="p-3">
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-gray-900">Saved Artwork</h3>
+              <div>
+                <p className="text-sm font-medium text-gray-700">Saved Items</p>
+                <p className="text-xs text-gray-500 mt-1">{filteredFavorites.length} of {userFavorites.length} favorites</p>
+              </div>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setShowFavoriteFilters(!showFavoriteFilters)}
-                  className="px-2 py-1 bg-white rounded text-gray-600 transition-colors duration-200 flex items-center space-x-1 text-xs"
-                >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                  <span>Filters</span>
-                </button>
-                <button
-                  onClick={() => navigate('/browse')}
-                  className="text-xs text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Browse More →
-                </button>
+                <div className="p-2 bg-teal-100 rounded-lg">
+                  <Heart className="w-5 h-5 text-teal-600" />
+                </div>
+                <span className="text-2xl font-bold text-gray-900">{userFavorites.length}</span>
               </div>
             </div>
           </div>
-          <div className="p-3">
-            {userFavorites.length === 0 ? (
-              <div className="text-center py-8">
-                <Heart className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                <h4 className="text-sm font-semibold text-gray-900 mb-1">No Favorites Yet</h4>
-                <p className="text-gray-600 mb-4 text-xs">Save artwork you love to see them here.</p>
-                <button
-                  onClick={() => navigate('/browse')}
-                  className="inline-flex items-center space-x-2 bg-white text-gray-900 px-4 py-2 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
-                >
-                  <Heart className="w-4 h-4" />
-                  <span className="text-xs">Browse Artwork</span>
-                </button>
+          {userFavorites.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <Heart className="w-10 h-10 text-gray-400" />
               </div>
-            ) : filteredFavorites.length === 0 ? (
-              <div className="text-center py-8">
-                <Heart className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                <h4 className="text-sm font-semibold text-gray-900 mb-1">No Favorites Match Your Filters</h4>
-                <p className="text-gray-600 mb-4 text-xs">Try adjusting your filters to see more results.</p>
-                <button
-                  onClick={() => setFavoriteFilters({
-                    priceRange: [0, 10000] as [number, number],
-                    rating: 0,
-                    featured: false,
-                    sortBy: 'relevance',
-                    category: undefined,
-                    productType: 'all',
-                    tags: [],
-                    status: 'all'
-                  })}
-                  className="text-xs text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Clear all filters
-                </button>
+              <h4 className="text-base font-semibold text-gray-900 mb-2">No Favorites Yet</h4>
+              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">Save artwork you love to see them here. Click the heart icon on any product to add it to your favorites.</p>
+              <button
+                onClick={() => navigate('/browse')}
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Browse Artwork</span>
+              </button>
+            </div>
+          ) : filteredFavorites.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <Heart className="w-10 h-10 text-gray-400" />
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredFavorites.map((artwork) => (
-                  <div key={artwork.id} className="group bg-white rounded-lg p-3 shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200 cursor-pointer" onClick={() => handleViewProduct(artwork)}>
-                    <div className="relative overflow-hidden rounded-lg mb-2">
-                      <img
-                        src={artwork.images?.[0] || '/api/placeholder/400/400'}
-                        alt={artwork.title}
-                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
-                        onClick={() => handleViewProduct(artwork)}
-                      />
-                      <div className="absolute top-2 right-2 flex space-x-1">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewProduct(artwork);
-                            }}
-                            className="p-1.5 bg-white/90 hover:bg-white rounded-full shadow-sm"
-                            title="View Product"
-                          >
-                          <Eye className="w-3 h-3 text-gray-700" />
-                        </button>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveFavorite(artwork.id);
-                            }}
-                            className="p-1.5 bg-white/90 hover:bg-white rounded-full shadow-sm"
-                            title="Remove from Favorites"
-                          >
-                          <Heart className="w-3 h-3 text-gray-700 fill-current" />
-                        </button>
-                      </div>
+              <h4 className="text-base font-semibold text-gray-900 mb-2">No Favorites Match Your Filters</h4>
+              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">Try adjusting your filters to see more results.</p>
+              <button
+                onClick={() => setFavoriteFilters({
+                  priceRange: [0, 10000] as [number, number],
+                  rating: 0,
+                  featured: false,
+                  sortBy: 'relevance',
+                  category: undefined,
+                  productType: 'all',
+                  tags: [],
+                  status: 'all'
+                })}
+                className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Clear all filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredFavorites.map((artwork) => (
+                <div key={artwork.id} className="group bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => handleViewProduct(artwork)}>
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={artwork.images?.[0] || '/api/placeholder/400/400'}
+                      alt={artwork.title}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute top-3 right-3 flex space-x-2">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewProduct(artwork);
+                        }}
+                        className="p-2 bg-white hover:bg-gray-50 rounded-lg shadow-md transition-colors"
+                        title="View Product"
+                      >
+                        <Eye className="w-4 h-4 text-gray-700" />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveFavorite(artwork.id);
+                        }}
+                        className="p-2 bg-white hover:bg-red-50 rounded-lg shadow-md transition-colors"
+                        title="Remove from Favorites"
+                      >
+                        <Heart className="w-4 h-4 text-red-500 fill-current" />
+                      </button>
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-1 cursor-pointer hover:text-gray-900 truncate text-xs" onClick={() => handleViewProduct(artwork)}>
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2 truncate text-sm">
                       {artwork.title}
                     </h4>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900 text-xs">{formatUIPrice(artwork.price, 'INR')}</span>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-bold text-gray-900 text-base">{formatUIPrice(artwork.price, 'INR')}</span>
                       <div className="flex items-center text-xs text-gray-600">
-                        <Star className="w-3 h-3 text-gray-400 mr-1" />
-                        {artwork.rating}
+                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
+                        <span className="font-medium">{artwork.rating}</span>
                       </div>
                     </div>
-                    <div className="mt-2 flex space-x-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewProduct(artwork);
-                          }}
-                          className="flex-1 bg-white text-gray-600 py-1.5 px-2 rounded text-xs shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
-                        >
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewProduct(artwork);
+                        }}
+                        className="flex-1 py-2 px-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-white transition-colors text-sm"
+                      >
                         View Details
                       </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/checkout?product=${artwork.id}`);
-                          }}
-                          className="flex-1 bg-white text-gray-900 py-1.5 px-2 rounded text-xs shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
-                        >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/checkout?product=${artwork.id}`);
+                        }}
+                        className="flex-1 py-2 px-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                      >
                         Buy Now
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Favorites Filter Sidebar */}
@@ -1425,112 +1435,82 @@ const UserDashboard: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        {/* Download Stats */}
-        <div className="bg-white p-3 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-gray-900">My Downloads</h3>
-              <p className="text-xs text-gray-600">{downloadableItems.length} digital files available</p>
-            </div>
+        {/* Downloads Section */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <Download className="w-5 h-5 text-gray-700" />
-              <span className="text-lg font-bold text-gray-900">{downloadableItems.length}</span>
+              <FileDown className="w-5 h-5 text-teal-600" />
+              <h3 className="text-lg font-bold text-gray-800">My Downloads</h3>
             </div>
+            {downloadableItems.length > 0 && (
+              <button
+                onClick={handleDownloadAll}
+                className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download All</span>
+              </button>
+            )}
           </div>
-        </div>
 
-        {/* Downloads List */}
-        <div className="bg-white rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-          <div className="p-3">
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-gray-900">Downloadable Files</h3>
+              <div>
+                <p className="text-sm font-medium text-gray-700">Available Downloads</p>
+                <p className="text-xs text-gray-500 mt-1">{downloadableItems.length} digital files ready</p>
+              </div>
               <div className="flex items-center space-x-2">
-                {downloadableItems.length > 0 && (
-                  <button
-                    onClick={handleDownloadAll}
-                    className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200 text-xs"
-                  >
-                    <Download className="w-3 h-3" />
-                    <span>Download All</span>
-                  </button>
-                )}
-                <span className="text-xs text-gray-600">{downloadableItems.length} items</span>
+                <div className="p-2 bg-teal-100 rounded-lg">
+                  <FileDown className="w-5 h-5 text-teal-600" />
+                </div>
+                <span className="text-2xl font-bold text-gray-900">{downloadableItems.length}</span>
               </div>
             </div>
           </div>
-        <div className="p-3">
           {downloadableItems.length === 0 ? (
-            <div className="text-center py-8">
-              <FileDown className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-              <h4 className="text-sm font-semibold text-gray-900 mb-1">No Digital Downloads Available</h4>
-              <p className="text-gray-600 mb-4 text-xs">Purchase digital products to access PDF files and high-resolution images for download.</p>
+            <div className="text-center py-12">
+              <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <FileDown className="w-10 h-10 text-gray-400" />
+              </div>
+              <h4 className="text-base font-semibold text-gray-900 mb-2">No Digital Downloads Available</h4>
+              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">Purchase digital products to access PDF files and high-resolution images for download.</p>
               <button
                 onClick={() => navigate('/browse')}
-                className="inline-flex items-center space-x-2 bg-white text-gray-900 px-4 py-2 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span className="text-xs">Browse Artwork</span>
+                <span>Browse Artwork</span>
               </button>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {downloadableItems.map((item) => (
-                <div key={`${item.orderId}-${item.id}`} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-                  <div className="flex items-center space-x-3">
-                    <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-12 h-12 rounded object-cover" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 text-xs">{item.title}</h4>
-                      <p className="text-xs text-gray-500">
-                        {item.productType === 'poster' && item.posterSize 
-                          ? `Poster Size: ${item.posterSize} • Poster Product`
-                          : 'Digital Product'
-                        }
-                      </p>
-                      <div className="flex items-center space-x-3 mt-1">
-                        <div className="flex items-center space-x-1">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-2 h-2 ${
-                                i < item.rating ? 'text-gray-400' : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                          <span className="text-xs text-gray-500 ml-1">({item.rating})</span>
+                <div key={`${item.orderId}-${item.id}`} className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors h-fit">
+                  <div className="flex flex-col space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm mb-1">{item.title}</h4>
+                        <p className="text-xs text-gray-500 mb-2">
+                          {item.productType === 'poster' && item.posterSize 
+                            ? `Poster Size: ${item.posterSize} • Poster Product`
+                            : 'Digital Product'
+                          }
+                        </p>
+                        <div className="flex items-center space-x-2 text-xs text-gray-500">
+                          <span>Purchased: {new Date(item.orderDate).toLocaleDateString()}</span>
                         </div>
-                        <span className="text-xs text-gray-500">
-                          Purchased: {new Date(item.orderDate).toLocaleDateString()}
-                        </span>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="text-right mr-3">
-                      <p className="text-xs font-semibold text-gray-900">{formatUIPrice(item.price, 'INR')}</p>
-                      <p className="text-xs text-gray-600">✓ Purchased</p>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => handleViewOrder(item.orderId)}
-                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                        title="View Order"
-                      >
-                        <Package className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => navigate(generateProductUrl(item.category, item.title))}
-                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                        title="View Product"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                      <span className="font-semibold text-gray-900 text-sm">{formatUIPrice(item.price, 'INR')}</span>
                       <button
                         onClick={() => handleDownload(item.downloadUrl || '', item.title)}
-                        className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
+                        className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
                         title="Download Files"
                       >
-                        <Download className="w-3 h-3" />
-                        <span className="hidden sm:inline text-xs">Download</span>
+                        <Download className="w-4 h-4" />
+                        <span className="text-sm">Download</span>
                       </button>
                     </div>
                   </div>
@@ -1538,7 +1518,6 @@ const UserDashboard: React.FC = () => {
               ))}
             </div>
           )}
-          </div>
         </div>
       </div>
     );
@@ -1637,7 +1616,6 @@ const UserDashboard: React.FC = () => {
           orders: userOrders,
           favorites: userFavorites,
           downloads: userDownloads,
-          notificationPreferences: notificationPrefs,
           exportDate: new Date().toISOString()
         };
         
@@ -1693,207 +1671,163 @@ const UserDashboard: React.FC = () => {
     return (
       <div className="space-y-4">
         {/* Profile Settings */}
-        <div className="bg-white p-4 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-gray-900">Profile Information</h3>
-          <div className="flex space-x-2">
-            {isEditing ? (
-              <>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <User className="w-5 h-5 text-teal-600" />
+              <h3 className="text-lg font-bold text-gray-800">Profile Management</h3>
+            </div>
+            <div className="flex space-x-2">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleSaveProfile}
+                    disabled={isSaving}
+                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Profile'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setFormErrors({});
+                      // Reset to original values
+                      setUserProfile({
+                        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
+                        email: user?.email || '',
+                        location: user?.user_metadata?.location || '',
+                        bio: user?.user_metadata?.bio || 'Welcome to your dashboard!',
+                        joinDate: user?.created_at || new Date().toISOString(),
+                        avatar: user?.user_metadata?.avatar || null
+                      });
+                    }}
+                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded transition-colors text-xs"
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
                 >
-                  <Save className="w-3 h-3" />
-                  <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                  <Edit className="w-4 h-4" />
+                  <span>Edit Profile</span>
                 </button>
-                <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setFormErrors({});
-                    // Reset to original values
-                    setUserProfile({
-                      name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
-                      email: user?.email || '',
-                      location: user?.user_metadata?.location || '',
-                      bio: user?.user_metadata?.bio || 'Welcome to your dashboard!',
-                      joinDate: user?.created_at || new Date().toISOString(),
-                      avatar: user?.user_metadata?.avatar || null
-                    });
+              )}
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={userProfile.name}
+                  onChange={(e) => {
+                    setUserProfile({ ...userProfile, name: e.target.value });
+                    if (formErrors.name) setFormErrors({ ...formErrors, name: '' });
                   }}
-                  className="flex items-center space-x-1 px-3 py-1.5 text-gray-900 rounded transition-colors text-xs"
-                >
-                  <X className="w-3 h-3" />
-                  <span>Cancel</span>
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded transition-colors text-xs"
-              >
-                <Settings className="w-3 h-3" />
-                <span>Edit Profile</span>
-              </button>
-            )}
+                  disabled={!isEditing}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm ${
+                    formErrors.name 
+                      ? 'border-red-300 focus:ring-red-300' 
+                      : ''
+                  }`}
+                  required
+                />
+                {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={userProfile.email}
+                  onChange={(e) => {
+                    setUserProfile({ ...userProfile, email: e.target.value });
+                    if (formErrors.email) setFormErrors({ ...formErrors, email: '' });
+                  }}
+                  disabled={!isEditing}
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm ${
+                    formErrors.email 
+                      ? 'border-red-300 focus:ring-red-300' 
+                      : ''
+                  }`}
+                  required
+                />
+                {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <input
+                type="text"
+                value={userProfile.location}
+                onChange={(e) => setUserProfile({ ...userProfile, location: e.target.value })}
+                disabled={!isEditing}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+              <textarea
+                value={userProfile.bio}
+                onChange={(e) => setUserProfile({ ...userProfile, bio: e.target.value })}
+                disabled={!isEditing}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm"
+              />
+            </div>
           </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
-            <input
-              type="text"
-              value={userProfile.name}
-              onChange={(e) => {
-                setUserProfile({ ...userProfile, name: e.target.value });
-                if (formErrors.name) setFormErrors({ ...formErrors, name: '' });
-              }}
-              disabled={!isEditing}
-              className={`w-full px-3 py-2 rounded text-xs focus:outline-none focus:ring-1 border ${
-                formErrors.name 
-                  ? 'border-red-300 focus:ring-red-300' 
-                  : 'border-gray-300 focus:ring-gray-500'
-              }`}
-            />
-            {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
-            <input
-              type="email"
-              value={userProfile.email}
-              onChange={(e) => {
-                setUserProfile({ ...userProfile, email: e.target.value });
-                if (formErrors.email) setFormErrors({ ...formErrors, email: '' });
-              }}
-              disabled={!isEditing}
-              className={`w-full px-3 py-2 rounded text-xs focus:outline-none focus:ring-1 border ${
-                formErrors.email 
-                  ? 'border-red-300 focus:ring-red-300' 
-                  : 'border-gray-300 focus:ring-gray-500'
-              }`}
-            />
-            {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
-            <input
-              type="text"
-              value={userProfile.location}
-              onChange={(e) => setUserProfile({ ...userProfile, location: e.target.value })}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 rounded text-xs focus:outline-none focus:ring-1 border border-gray-300 focus:ring-gray-500"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Bio</label>
-            <textarea
-              value={userProfile.bio}
-              onChange={(e) => setUserProfile({ ...userProfile, bio: e.target.value })}
-              disabled={!isEditing}
-              rows={2}
-              className="w-full px-3 py-2 rounded text-xs focus:outline-none focus:ring-1 border border-gray-300 focus:ring-gray-500"
-            />
-          </div>
-        </div>
       </div>
 
-      {/* Notification Settings */}
-      <div className="bg-white p-4 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-gray-900">Notification Preferences</h3>
-          <button
-            onClick={async () => {
-              try {
-                const { supabase } = await import('../services/supabaseService');
-                const { error } = await supabase.auth.updateUser({
-                  data: {
-                    notification_preferences: notificationPrefs
-                  }
-                });
-                
-                if (error) throw error;
-                alert('Notification preferences saved successfully!');
-              } catch (error) {
-                console.error('Error saving notification preferences:', error);
-                alert('Failed to save notification preferences. Please try again.');
-              }
-            }}
-            className="px-3 py-1.5 bg-white text-gray-900 rounded transition-colors text-xs"
-          >
-            Save Preferences
-          </button>
+      {/* Address Management */}
+      {user && (
+        <div className="mt-6">
+          <AddressManagement userId={user.id} />
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900 text-xs">Email Notifications</h4>
-              <p className="text-xs text-gray-600">Receive updates about new artwork and promotions</p>
-            </div>
-            <label className="flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={notificationPrefs.emailNotifications}
-                onChange={(e) => setNotificationPrefs({
-                  ...notificationPrefs,
-                  emailNotifications: e.target.checked
-                })}
-                className="sr-only" 
-              />
-              <div className={`relative w-8 h-4 rounded-full transition-colors border ${
-                notificationPrefs.emailNotifications ? 'bg-white' : 'bg-white'
-              }`}>
-                <div className={`absolute top-0.5 w-3 h-3 bg-gray-400 rounded-full transition-transform ${
-                  notificationPrefs.emailNotifications ? 'right-0.5' : 'left-0.5'
-                }`} />
-              </div>
-            </label>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-gray-900 text-xs">Order Updates</h4>
-              <p className="text-xs text-gray-600">Get notified about order status changes</p>
-            </div>
-            <label className="flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={notificationPrefs.orderUpdates}
-                onChange={(e) => setNotificationPrefs({
-                  ...notificationPrefs,
-                  orderUpdates: e.target.checked
-                })}
-                className="sr-only" 
-              />
-              <div className={`relative w-8 h-4 rounded-full transition-colors border ${
-                notificationPrefs.orderUpdates ? 'bg-white' : 'bg-white'
-              }`}>
-                <div className={`absolute top-0.5 w-3 h-3 bg-gray-400 rounded-full transition-transform ${
-                  notificationPrefs.orderUpdates ? 'right-0.5' : 'left-0.5'
-                }`} />
-              </div>
-            </label>
-          </div>
-        </div>
-      </div>
+      )}
 
-        {/* Privacy Settings */}
-        <div className="bg-white p-4 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
-          <h3 className="text-sm font-bold text-gray-900 mb-4">Privacy & Security</h3>
-          <div className="space-y-2">
+
+        {/* Privacy & Security */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <Shield className="w-5 h-5 text-teal-600" />
+            <h3 className="text-lg font-bold text-gray-800">Privacy & Security</h3>
+          </div>
+          
+          <div className="space-y-4">
             <button 
               onClick={handleChangePassword}
-              className="w-full text-left p-3 bg-white rounded shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
+              className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
             >
-              <h4 className="font-medium text-gray-900 text-xs">Change Password</h4>
-              <p className="text-xs text-gray-600">Update your account password</p>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-teal-100 rounded-lg">
+                  <Key className="w-4 h-4 text-teal-600" />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-gray-900 text-sm">Change Password</h4>
+                  <p className="text-gray-600 text-xs">Update your account password</p>
+                </div>
+              </div>
             </button>
+            
             <button 
               onClick={handleDownloadData}
-              className="w-full text-left p-3 bg-white rounded shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
+              className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
             >
-              <h4 className="font-medium text-gray-900 text-xs">Download My Data</h4>
-              <p className="text-xs text-gray-600">Get a copy of your account data</p>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-teal-100 rounded-lg">
+                  <Download className="w-4 h-4 text-teal-600" />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-gray-900 text-sm">Download My Data</h4>
+                  <p className="text-gray-600 text-xs">Get a copy of your account data</p>
+                </div>
+              </div>
             </button>
           </div>
         </div>
@@ -1952,13 +1886,12 @@ const UserDashboard: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return renderOverview();
+      case 'settings': return renderSettings();
       case 'orders': return renderOrders();
       case 'returns': return renderReturns();
       case 'favorites': return renderFavorites();
       case 'downloads': return renderDownloads();
-      case 'settings': return renderSettings();
-      default: return renderOverview();
+      default: return renderSettings();
     }
   };
 
