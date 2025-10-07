@@ -31,9 +31,9 @@ const NotificationSettings: React.FC = () => {
       reportsDigest: 'weekly'
     },
     emailSettings: {
-      fromName: 'ARVEXA',
-      fromEmail: 'noreply@arvexa.com',
-      replyToEmail: 'support@arvexa.com'
+      fromName: 'Lurevi',
+      fromEmail: 'noreply@lurevi.com',
+      replyToEmail: 'support@lurevi.com'
     }
   });
 

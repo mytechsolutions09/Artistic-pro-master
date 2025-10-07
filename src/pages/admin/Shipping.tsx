@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ShippingSecondaryNav from '../../components/admin/ShippingSecondaryNav';
+import { NotificationManager } from '../../components/Notification';
 import { 
   Truck, 
   MapPin, 
@@ -16,7 +17,8 @@ import {
   AlertCircle,
   Filter,
   Download,
-  Upload
+  Upload,
+  X
 } from 'lucide-react';
 import { 
   delhiveryService, 
@@ -30,7 +32,6 @@ import {
   AdvancedCreateShipmentRequest,
   CustomQCItem
 } from '../../services/DelhiveryService';
-import { NotificationManager } from '../../components/Notification';
 
 interface Shipment {
   id: string;
@@ -62,6 +63,16 @@ const Shipping: React.FC = () => {
     loading: false
   });
 
+  // Search history
+  const [searchHistory, setSearchHistory] = useState<Array<{
+    pinCode: string;
+    result: DelhiveryPinCodeData;
+    timestamp: string;
+    city: string;
+    state: string;
+    serviceable: boolean;
+  }>>([]);
+
   // Shipping rate calculation
   const [rateCalculation, setRateCalculation] = useState({
     pickupPincode: '',
@@ -87,6 +98,26 @@ const Shipping: React.FC = () => {
     height: '',
     products_desc: ''
   });
+
+  // Import orders functionality
+  const [availableOrders, setAvailableOrders] = useState<Array<{
+    id: string;
+    customer_name: string;
+    customer_phone: string;
+    delivery_address: string;
+    delivery_pincode: string;
+    delivery_city: string;
+    delivery_state: string;
+    cod_amount: number;
+    weight: number;
+    products: Array<{
+      name: string;
+      quantity: number;
+      price: number;
+    }>;
+    created_at: string;
+  }>>([]);
+  const [showOrderImport, setShowOrderImport] = useState(false);
 
   // Waybill generation
   const [waybillGeneration, setWaybillGeneration] = useState({
@@ -146,7 +177,7 @@ const Shipping: React.FC = () => {
   // Advanced shipment creation
   const [advancedShipment, setAdvancedShipment] = useState({
     client: '',
-    return_name: 'ARVEX Store',
+    return_name: 'Lurevi Store',
     order: '',
     return_country: 'India',
     weight: '',
@@ -161,12 +192,12 @@ const Shipping: React.FC = () => {
     phone: '',
     add: '',
     payment_mode: 'Prepaid',
-    order_date: new Date().toLocaleDateString('en-GB').split('/').reverse().join('-'),
+    order_date: new Date().toLocaleDateString('en-IN').split('/').reverse().join('-'),
     seller_gst_tin: '',
     name: '',
     return_add: '123 Art Street, Mumbai',
     total_amount: '',
-    seller_name: 'ARVEX Store',
+    seller_name: 'Lurevi Store',
     return_city: 'Mumbai',
     country: 'India',
     return_pin: '400001',
@@ -180,6 +211,19 @@ const Shipping: React.FC = () => {
 
   useEffect(() => {
     loadShipments();
+    
+    // Check if Delhivery API is configured
+    const checkApiConfiguration = () => {
+      const token = import.meta.env.VITE_DELHIVERY_API_TOKEN;
+      if (!token || token === 'your-delhivery-api-token' || token === 'xxxxxxxxxxxxxxxx') {
+        NotificationManager.warning(
+          'Delhivery API not configured. Using mock data for testing. Please configure your API token in .env file.',
+          0 // Don't auto-close
+        );
+      }
+    };
+    
+    checkApiConfiguration();
   }, []);
 
   const loadShipments = async () => {
@@ -234,12 +278,183 @@ const Shipping: React.FC = () => {
     try {
       const result = await delhiveryService.checkPinCodeServiceability(pinCodeCheck.pinCode);
       setPinCodeCheck(prev => ({ ...prev, result }));
+      
+      // Add to search history
+      if (result.delivery_codes && result.delivery_codes.length > 0) {
+        const firstCode = result.delivery_codes[0];
+        const historyEntry = {
+          pinCode: pinCodeCheck.pinCode,
+          result: result,
+          timestamp: new Date().toLocaleString(),
+          city: firstCode.city,
+          state: firstCode.state,
+          serviceable: firstCode.serviceability === 'Serviceable'
+        };
+        
+        setSearchHistory(prev => {
+          // Remove if already exists (to move to top)
+          const filtered = prev.filter(item => item.pinCode !== pinCodeCheck.pinCode);
+          // Add to beginning and limit to 10 items
+          return [historyEntry, ...filtered].slice(0, 10);
+        });
+      }
+      
       NotificationManager.success('Pincode serviceability checked successfully');
     } catch (error) {
       NotificationManager.error('Failed to check pincode serviceability');
     } finally {
       setPinCodeCheck(prev => ({ ...prev, loading: false }));
     }
+  };
+
+  const handleHistorySearch = (pinCode: string) => {
+    setPinCodeCheck(prev => ({ ...prev, pinCode }));
+  };
+
+  const clearHistory = () => {
+    setSearchHistory([]);
+    NotificationManager.success('Search history cleared');
+  };
+
+  const removeHistoryItem = (pinCode: string) => {
+    setSearchHistory(prev => prev.filter(item => item.pinCode !== pinCode));
+    NotificationManager.success('Item removed from history');
+  };
+
+  const loadAvailableOrders = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch real orders from the database
+      const response = await fetch('/api/orders?status=pending&limit=50', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const data = await response.json();
+      
+      // Transform the orders to match our expected format
+      const transformedOrders = data.orders.map((order: any) => ({
+        id: order.id,
+        customer_name: order.customer_name || order.user?.name || 'Unknown Customer',
+        customer_phone: order.customer_phone || order.user?.phone || order.phone || '',
+        delivery_address: order.shipping_address?.address || order.delivery_address || '',
+        delivery_pincode: order.shipping_address?.pincode || order.delivery_pincode || '',
+        delivery_city: order.shipping_address?.city || order.delivery_city || '',
+        delivery_state: order.shipping_address?.state || order.delivery_state || '',
+        cod_amount: order.total_amount || order.amount || 0,
+        weight: order.total_weight || order.weight || 0,
+        products: order.items?.map((item: any) => ({
+          name: item.product?.name || item.name || 'Unknown Product',
+          quantity: item.quantity || 1,
+          price: item.price || item.unit_price || 0
+        })) || [],
+        created_at: order.created_at || order.order_date || new Date().toISOString()
+      }));
+
+      setAvailableOrders(transformedOrders);
+      NotificationManager.success(`Loaded ${transformedOrders.length} orders`);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      NotificationManager.error('Failed to load orders. Using fallback data.');
+      
+      // Fallback to mock data if API fails
+      const mockOrders = [
+        {
+          id: 'ORD001',
+          customer_name: 'John Doe',
+          customer_phone: '+91 9876543210',
+          delivery_address: '123 Main Street, Sector 15, Gurgaon',
+          delivery_pincode: '122001',
+          delivery_city: 'Gurgaon',
+          delivery_state: 'Haryana',
+          cod_amount: 2500,
+          weight: 1.2,
+          products: [
+            { name: 'Wireless Headphones', quantity: 1, price: 2500 }
+          ],
+          created_at: '2024-01-15T10:30:00Z'
+        },
+        {
+          id: 'ORD002',
+          customer_name: 'Jane Smith',
+          customer_phone: '+91 8765432109',
+          delivery_address: '456 Park Avenue, Andheri West',
+          delivery_pincode: '400058',
+          delivery_city: 'Mumbai',
+          delivery_state: 'Maharashtra',
+          cod_amount: 1800,
+          weight: 0.8,
+          products: [
+            { name: 'Smart Watch', quantity: 1, price: 1800 }
+          ],
+          created_at: '2024-01-14T14:20:00Z'
+        },
+        {
+          id: 'ORD003',
+          customer_name: 'Mike Johnson',
+          customer_phone: '+91 7654321098',
+          delivery_address: '789 Tech Park, Electronic City',
+          delivery_pincode: '560100',
+          delivery_city: 'Bangalore',
+          delivery_state: 'Karnataka',
+          cod_amount: 3200,
+          weight: 2.1,
+          products: [
+            { name: 'Laptop Stand', quantity: 1, price: 1200 },
+            { name: 'Wireless Mouse', quantity: 1, price: 2000 }
+          ],
+          created_at: '2024-01-13T09:15:00Z'
+        }
+      ];
+      setAvailableOrders(mockOrders);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const importOrderToForm = (order: any) => {
+    setNewShipment({
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone,
+      delivery_address: order.delivery_address,
+      delivery_pincode: order.delivery_pincode,
+      delivery_city: order.delivery_city,
+      delivery_state: order.delivery_state,
+      cod_amount: order.cod_amount.toString(),
+      weight: order.weight.toString(),
+      length: '30', // Default dimensions
+      width: '20',
+      height: '15',
+      products_desc: order.products.map((p: any) => `${p.name} (Qty: ${p.quantity})`).join(', ')
+    });
+    setShowOrderImport(false);
+    NotificationManager.success('Order imported successfully');
+  };
+
+  const clearShipmentForm = () => {
+    setNewShipment({
+      customer_name: '',
+      customer_phone: '',
+      delivery_address: '',
+      delivery_pincode: '',
+      delivery_city: '',
+      delivery_state: '',
+      cod_amount: '',
+      weight: '',
+      length: '',
+      width: '',
+      height: '',
+      products_desc: ''
+    });
+    NotificationManager.success('Form cleared successfully');
   };
 
   const handleRateCalculation = async () => {
@@ -288,7 +503,7 @@ const Shipping: React.FC = () => {
         city: newShipment.delivery_city,
         state: newShipment.delivery_state,
         country: 'India',
-        return_name: 'ARVEX Store',
+        return_name: 'Lurevi Store',
         return_add: '123 Art Street, Mumbai',
         return_phone: '+91 555 123 4567',
         return_pin: '400001',
@@ -554,16 +769,12 @@ const Shipping: React.FC = () => {
         onTabChange={setActiveTab}
       />
       <div className="ml-20 p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Shipping Management</h1>
-          <p className="text-gray-600">Manage shipments, check serviceability, and calculate rates with Delhivery</p>
-        </div>
 
       {/* Tab Content */}
       {activeTab === 'shipments' && (
         <div>
           {/* Filters */}
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="mb-4 flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -594,22 +805,22 @@ const Shipping: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Waybill
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Address
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       COD Amount
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -617,28 +828,28 @@ const Shipping: React.FC = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredShipments.map((shipment) => (
                     <tr key={shipment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-2 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{shipment.waybill}</div>
-                        <div className="text-sm text-gray-500">{shipment.created_at}</div>
+                        <div className="text-xs text-gray-500">{shipment.created_at}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-2 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{shipment.customer_name}</div>
-                        <div className="text-sm text-gray-500">{shipment.customer_phone}</div>
+                        <div className="text-xs text-gray-500">{shipment.customer_phone}</div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-2">
                         <div className="text-sm text-gray-900">{shipment.delivery_address}</div>
-                        <div className="text-sm text-gray-500">{shipment.delivery_pincode}</div>
+                        <div className="text-xs text-gray-500">{shipment.delivery_pincode}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(shipment.status)}`}>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(shipment.status)}`}>
                           {getStatusIcon(shipment.status)}
                           <span className="ml-1 capitalize">{shipment.status.replace('_', ' ')}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                         Rs {shipment.cod_amount}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium space-x-1">
                         <button
                           onClick={() => handleTrackShipment(shipment.waybill)}
                           className="text-blue-600 hover:text-blue-900"
@@ -664,25 +875,25 @@ const Shipping: React.FC = () => {
       )}
 
       {activeTab === 'pincheck' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Pin Code Serviceability Check</h2>
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Pin Code Serviceability Check</h2>
+          <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pin Code
               </label>
               <div className="flex space-x-2">
                 <input
                   type="text"
                   placeholder="Enter pin code"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="flex-1 px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={pinCodeCheck.pinCode}
                   onChange={(e) => setPinCodeCheck(prev => ({ ...prev, pinCode: e.target.value }))}
                 />
                 <button
                   onClick={handlePinCodeCheck}
                   disabled={pinCodeCheck.loading}
-                  className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+                  className="px-3 py-1.5 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
                 >
                   {pinCodeCheck.loading ? 'Checking...' : 'Check'}
                 </button>
@@ -691,10 +902,130 @@ const Shipping: React.FC = () => {
 
             {pinCodeCheck.result && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">Serviceability Result:</h3>
-                <pre className="text-sm text-gray-600 overflow-auto">
-                  {JSON.stringify(pinCodeCheck.result, null, 2)}
-                </pre>
+                <h3 className="font-medium text-gray-900 mb-4">Serviceability Result:</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pin Code</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Services</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hub</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zone</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {pinCodeCheck.result.delivery_codes.map((code, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {code.pin}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {code.city}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {code.state}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              code.serviceability === 'Serviceable' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {code.serviceability}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            <div className="flex flex-wrap gap-1">
+                              {code.pre_paid === 'Y' && (
+                                <span className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Pre-paid</span>
+                              )}
+                              {code.cod === 'Y' && (
+                                <span className="inline-flex px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">COD</span>
+                              )}
+                              {code.pickup === 'Y' && (
+                                <span className="inline-flex px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded">Pickup</span>
+                              )}
+                              {code.reverse === 'Y' && (
+                                <span className="inline-flex px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded">Reverse</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            <div>
+                              <div className="font-medium">{code.hub_name}</div>
+                              <div className="text-xs text-gray-500">{code.hub_code}</div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {code.zone}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Search History */}
+            {searchHistory.length > 0 && (
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-medium text-gray-900">Previous Searches</h3>
+                  <button
+                    onClick={clearHistory}
+                    className="text-sm text-red-600 hover:text-red-800 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {searchHistory.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-gray-900">{item.pinCode}</span>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              item.serviceable 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {item.serviceable ? 'Serviceable' : 'Not Serviceable'}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {item.city}, {item.state}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {item.timestamp}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleHistorySearch(item.pinCode)}
+                          className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
+                        >
+                          Search Again
+                        </button>
+                        <button
+                          onClick={() => removeHistoryItem(item.pinCode)}
+                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                          title="Remove from history"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -702,64 +1033,64 @@ const Shipping: React.FC = () => {
       )}
 
       {activeTab === 'rates' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Shipping Rate Calculator</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Shipping Rate Calculator</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pickup Pin Code
               </label>
               <input
                 type="text"
                 placeholder="400001"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={rateCalculation.pickupPincode}
                 onChange={(e) => setRateCalculation(prev => ({ ...prev, pickupPincode: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Delivery Pin Code
               </label>
               <input
                 type="text"
                 placeholder="110001"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={rateCalculation.deliveryPincode}
                 onChange={(e) => setRateCalculation(prev => ({ ...prev, deliveryPincode: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Weight (kg)
               </label>
               <input
                 type="number"
                 step="0.1"
                 placeholder="0.5"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={rateCalculation.weight}
                 onChange={(e) => setRateCalculation(prev => ({ ...prev, weight: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 COD Amount (Rs)
               </label>
               <input
                 type="number"
                 placeholder="1500"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={rateCalculation.codAmount}
                 onChange={(e) => setRateCalculation(prev => ({ ...prev, codAmount: e.target.value }))}
               />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <button
               onClick={handleRateCalculation}
               disabled={rateCalculation.loading}
-              className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
             >
               {rateCalculation.loading ? 'Calculating...' : 'Calculate Rates'}
             </button>
@@ -777,168 +1108,265 @@ const Shipping: React.FC = () => {
       )}
 
       {activeTab === 'create' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Create New Shipment</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-gray-900">Create New Shipment</h2>
+            <button
+              onClick={() => {
+                loadAvailableOrders();
+                setShowOrderImport(true);
+              }}
+              disabled={loading}
+              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center space-x-1.5"
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span>{loading ? 'Loading...' : 'Import Orders'}</span>
+            </button>
+          </div>
+
+          {/* Order Import Modal */}
+          {showOrderImport && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b">
+                  <h3 className="text-lg font-semibold text-gray-900">Select Order to Import</h3>
+                  <button
+                    onClick={() => setShowOrderImport(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <div className="p-4 overflow-y-auto max-h-[60vh]">
+                  {availableOrders.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No pending orders found</p>
+                      <p className="text-sm text-gray-400">Orders with "pending" status will appear here</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {availableOrders.map((order) => (
+                        <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <span className="font-semibold text-gray-900 text-sm">#{order.id}</span>
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                  {new Date(order.created_at).toLocaleDateString()}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(order.created_at).toLocaleTimeString()}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  <p className="font-medium text-gray-900">{order.customer_name}</p>
+                                  <p className="text-gray-600 text-xs">{order.customer_phone}</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-600 text-xs">{order.delivery_city}, {order.delivery_state}</p>
+                                  <p className="text-gray-600 text-xs">Pin: {order.delivery_pincode}</p>
+                                </div>
+                              </div>
+                              <div className="mt-2 space-y-1">
+                                <p className="text-xs text-gray-600">
+                                  <span className="font-medium">Products:</span> {order.products.map(p => `${p.name} (${p.quantity})`).join(', ')}
+                                </p>
+                                <div className="flex items-center space-x-4 text-xs">
+                                  <span className="text-gray-600">
+                                    <span className="font-medium">Amount:</span> ₹{order.cod_amount.toLocaleString()}
+                                  </span>
+                                  <span className="text-gray-600">
+                                    <span className="font-medium">Weight:</span> {order.weight}kg
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => importOrderToForm(order)}
+                              className="ml-4 px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors flex items-center space-x-1"
+                            >
+                              <Package className="w-3 h-3" />
+                              <span>Import</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Customer Name *
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.customer_name}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, customer_name: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Customer Phone *
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.customer_phone}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, customer_phone: e.target.value }))}
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="md:col-span-2 lg:col-span-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Delivery Address *
               </label>
               <textarea
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                rows={2}
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.delivery_address}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, delivery_address: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pin Code
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.delivery_pincode}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, delivery_pincode: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 City
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.delivery_city}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, delivery_city: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 State
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.delivery_state}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, delivery_state: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Weight (kg)
               </label>
               <input
                 type="number"
                 step="0.1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.weight}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, weight: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 COD Amount (Rs)
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.cod_amount}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, cod_amount: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Length (cm)
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.length}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, length: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Width (cm)
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.width}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, width: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Height (cm)
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.height}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, height: e.target.value }))}
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="md:col-span-2 lg:col-span-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Product Description
               </label>
               <textarea
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={newShipment.products_desc}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, products_desc: e.target.value }))}
               />
             </div>
           </div>
-          <div className="mt-6">
+          <div className="mt-4 flex space-x-3">
             <button
               onClick={handleCreateShipment}
               disabled={loading}
-              className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
             >
               {loading ? 'Creating...' : 'Create Shipment'}
+            </button>
+            <button
+              onClick={clearShipmentForm}
+              className="px-4 py-2 bg-gray-500 text-white text-sm rounded-md hover:bg-gray-600 transition-colors flex items-center space-x-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear Form</span>
             </button>
           </div>
         </div>
       )}
 
       {activeTab === 'waybills' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Generate Waybills</h2>
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Generate Waybills</h2>
+          <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Number of Waybills
               </label>
               <input
                 type="number"
                 min="1"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={waybillGeneration.count}
                 onChange={(e) => setWaybillGeneration(prev => ({ ...prev, count: e.target.value }))}
                 placeholder="Enter number of waybills to generate"
@@ -947,7 +1375,7 @@ const Shipping: React.FC = () => {
             <button
               onClick={handleGenerateWaybills}
               disabled={waybillGeneration.loading}
-              className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
             >
               {waybillGeneration.loading ? 'Generating...' : 'Generate Waybills'}
             </button>
@@ -969,39 +1397,39 @@ const Shipping: React.FC = () => {
       )}
 
       {activeTab === 'tat' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Expected TAT Calculator</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Expected TAT Calculator</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Origin Pin Code
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={expectedTAT.origin_pin}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, origin_pin: e.target.value }))}
                 placeholder="e.g., 122003"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Destination Pin Code
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={expectedTAT.destination_pin}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, destination_pin: e.target.value }))}
                 placeholder="e.g., 136118"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Mode of Transport
               </label>
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={expectedTAT.mot}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, mot: e.target.value }))}
               >
@@ -1011,11 +1439,11 @@ const Shipping: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Product Type
               </label>
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={expectedTAT.pdt}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, pdt: e.target.value }))}
               >
@@ -1024,22 +1452,22 @@ const Shipping: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Expected Pickup Date
               </label>
               <input
                 type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={expectedTAT.expected_pickup_date}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, expected_pickup_date: e.target.value }))}
               />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <button
               onClick={handleCalculateTAT}
               disabled={expectedTAT.loading}
-              className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
             >
               {expectedTAT.loading ? 'Calculating...' : 'Calculate TAT'}
             </button>
@@ -1057,61 +1485,61 @@ const Shipping: React.FC = () => {
       )}
 
       {activeTab === 'pickup' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Request Pickup</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Request Pickup</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pickup Location *
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={pickupRequest.pickup_location}
                 onChange={(e) => setPickupRequest(prev => ({ ...prev, pickup_location: e.target.value }))}
                 placeholder="warehouse_name"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pickup Date *
               </label>
               <input
                 type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={pickupRequest.pickup_date}
                 onChange={(e) => setPickupRequest(prev => ({ ...prev, pickup_date: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pickup Time
               </label>
               <input
                 type="time"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={pickupRequest.pickup_time}
                 onChange={(e) => setPickupRequest(prev => ({ ...prev, pickup_time: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Expected Package Count
               </label>
               <input
                 type="number"
                 min="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={pickupRequest.expected_package_count}
                 onChange={(e) => setPickupRequest(prev => ({ ...prev, expected_package_count: parseInt(e.target.value) }))}
               />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <button
               onClick={handleRequestPickup}
               disabled={pickupRequest.loading}
-              className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
             >
               {pickupRequest.loading ? 'Requesting...' : 'Request Pickup'}
             </button>
@@ -1129,161 +1557,161 @@ const Shipping: React.FC = () => {
       )}
 
       {activeTab === 'warehouse' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Create Warehouse */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Create Warehouse</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Create Warehouse</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Warehouse Name *
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.name}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Enter warehouse name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Phone *
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.phone}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="9999999999"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Email *
                 </label>
                 <input
                   type="email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.email}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="abc@gmail.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   City *
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.city}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, city: e.target.value }))}
                   placeholder="Kota"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Pin Code *
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.pin}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, pin: e.target.value }))}
                   placeholder="110042"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Country
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.country}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, country: e.target.value }))}
                   placeholder="India"
                 />
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Address *
                 </label>
                 <textarea
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  rows={2}
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.address}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="Enter warehouse address"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Registered Name
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.registered_name}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, registered_name: e.target.value }))}
                   placeholder="registered_account_name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Return Pin Code
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.return_pin}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, return_pin: e.target.value }))}
                   placeholder="110042"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Return City
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.return_city}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, return_city: e.target.value }))}
                   placeholder="Kota"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Return State
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.return_state}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, return_state: e.target.value }))}
                   placeholder="Delhi"
                 />
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="md:col-span-2 lg:col-span-3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Return Address
                 </label>
                 <textarea
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.return_address}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, return_address: e.target.value }))}
                   placeholder="return_address"
                 />
               </div>
             </div>
-            <div className="mt-6">
+            <div className="mt-4">
               <button
                 onClick={handleCreateWarehouse}
                 disabled={warehouseCreate.loading}
-                className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+                className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
               >
                 {warehouseCreate.loading ? 'Creating...' : 'Create Warehouse'}
               </button>
@@ -1363,135 +1791,135 @@ const Shipping: React.FC = () => {
       )}
 
       {activeTab === 'advanced' && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Advanced Shipment Creation</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Advanced Shipment Creation</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Client Name *
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.client}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, client: e.target.value }))}
                 placeholder="pass the registered client name"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Order Number
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.order}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, order: e.target.value }))}
                 placeholder="1234567890"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Customer Name *
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.name}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Jitendra Singh"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Customer Phone *
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.phone}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="1234567890"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Weight
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.weight}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, weight: e.target.value }))}
                 placeholder="150.0 gm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Quantity
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.quantity}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, quantity: parseInt(e.target.value) }))}
                 placeholder="1"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 City
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.city}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, city: e.target.value }))}
                 placeholder="Meerjapuram"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pin Code
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.pin}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, pin: e.target.value }))}
                 placeholder="521111"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 State
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.state}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, state: e.target.value }))}
                 placeholder="Andhra Pradesh"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Total Amount
               </label>
               <input
                 type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.total_amount}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, total_amount: e.target.value }))}
                 placeholder="749"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Shipping Mode
               </label>
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.shipping_mode}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, shipping_mode: e.target.value }))}
               >
@@ -1501,11 +1929,11 @@ const Shipping: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Payment Mode
               </label>
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.payment_mode}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, payment_mode: e.target.value }))}
               >
@@ -1514,48 +1942,48 @@ const Shipping: React.FC = () => {
                 <option value="COD">COD</option>
               </select>
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="md:col-span-2 lg:col-span-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Delivery Address
               </label>
               <textarea
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                rows={2}
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.add}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, add: e.target.value }))}
                 placeholder="7 106 abc road, 2020 building"
               />
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="md:col-span-2 lg:col-span-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Product Description
               </label>
               <textarea
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.products_desc}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, products_desc: e.target.value }))}
                 placeholder="NEW EI PIKOK (PURPAL-ORANGE)"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pickup Location Name
               </label>
               <input
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                 value={advancedShipment.pickup_location_name}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, pickup_location_name: e.target.value }))}
                 placeholder="pass the registered pickup WH name"
               />
             </div>
           </div>
-          <div className="mt-6">
+          <div className="mt-4">
             <button
               onClick={handleCreateAdvancedShipment}
               disabled={advancedShipment.loading}
-              className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
             >
               {advancedShipment.loading ? 'Creating...' : 'Create Advanced Shipment'}
             </button>

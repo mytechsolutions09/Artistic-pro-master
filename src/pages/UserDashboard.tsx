@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   User, Settings, ShoppingBag, Heart, Download, Save, X, Eye, Star,
   FileDown, TrendingUp, Calendar, LogOut,
-  Package, Zap, Sparkles, Activity
+  Package, Zap, Sparkles, Activity, Truck, MapPin, Clock, CheckCircle
 } from 'lucide-react';
 import { CompleteOrderService } from '../services/completeOrderService';
 import { Order } from '../types';
@@ -15,6 +15,7 @@ import { generateProductUrl } from '../utils/slugUtils';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewInput from '../components/ReviewInput';
 import FilterSidebar from '../components/FilterSidebar';
+import { delhiveryService } from '../services/DelhiveryService';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -53,6 +54,12 @@ const UserDashboard: React.FC = () => {
     endDate: '',
     showAll: true
   });
+
+  // Order tracking state
+  const [trackingData, setTrackingData] = useState<Record<string, any>>({});
+  const [expandedTracking, setExpandedTracking] = useState<Record<string, boolean>>({});
+  const [trackingLoading, setTrackingLoading] = useState<Record<string, boolean>>({});
+  const [trackingErrors, setTrackingErrors] = useState<Record<string, string>>({});
 
   // Load saved notification preferences
   useEffect(() => {
@@ -258,6 +265,190 @@ const UserDashboard: React.FC = () => {
 
     fetchUserOrders();
   }, [user]);
+
+  // Fetch real tracking data from Delhivery for orders
+  const fetchTrackingData = async (order: Order) => {
+    // Check if order has a waybill number (this would be stored in order metadata)
+    const waybill = order.metadata?.waybill || order.trackingNumber;
+    
+    if (!waybill) {
+      // If no waybill, generate fallback tracking data
+      return generateFallbackTrackingData(order);
+    }
+
+    try {
+      setTrackingLoading(prev => ({ ...prev, [order.id]: true }));
+      setTrackingErrors(prev => ({ ...prev, [order.id]: '' }));
+
+      const trackingResult = await delhiveryService.trackShipment(waybill);
+      
+      if (trackingResult && trackingResult.length > 0) {
+        const trackingInfo = trackingResult[0];
+        const steps = parseDelhiveryTrackingSteps(trackingInfo);
+        
+        const trackingData = {
+          status: mapDelhiveryStatus(trackingInfo.status),
+          trackingNumber: waybill,
+          carrier: 'Delhivery',
+          estimatedDelivery: trackingInfo.expected_delivery_date ? new Date(trackingInfo.expected_delivery_date) : null,
+          steps: steps,
+          rawData: trackingInfo
+        };
+        
+        setTrackingData(prev => ({ ...prev, [order.id]: trackingData }));
+      } else {
+        // If no tracking data found, use fallback
+        const fallbackData = generateFallbackTrackingData(order);
+        setTrackingData(prev => ({ ...prev, [order.id]: fallbackData }));
+      }
+    } catch (error) {
+      console.error('Error fetching tracking data for order:', order.id, error);
+      setTrackingErrors(prev => ({ 
+        ...prev, 
+        [order.id]: 'Unable to fetch tracking information. Please try again later.' 
+      }));
+      
+      // Use fallback data on error
+      const fallbackData = generateFallbackTrackingData(order);
+      setTrackingData(prev => ({ ...prev, [order.id]: fallbackData }));
+    } finally {
+      setTrackingLoading(prev => ({ ...prev, [order.id]: false }));
+    }
+  };
+
+  // Generate fallback tracking data when Delhivery data is not available
+  const generateFallbackTrackingData = (order: Order) => {
+    const orderDate = new Date(order.date);
+    const now = new Date();
+    const daysSinceOrder = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let trackingStatus = 'processing';
+    let trackingSteps = [];
+    
+    if (order.status === 'completed') {
+      trackingStatus = 'delivered';
+      trackingSteps = [
+        { status: 'completed', title: 'Order Placed', date: orderDate, description: 'Your order has been confirmed' },
+        { status: 'completed', title: 'Processing', date: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000), description: 'Your order is being prepared' },
+        { status: 'completed', title: 'Shipped', date: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000), description: 'Your order is on its way' },
+        { status: 'completed', title: 'Delivered', date: new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000), description: 'Your order has been delivered' }
+      ];
+    } else if (order.status === 'pending') {
+      if (daysSinceOrder >= 2) {
+        trackingStatus = 'shipped';
+        trackingSteps = [
+          { status: 'completed', title: 'Order Placed', date: orderDate, description: 'Your order has been confirmed' },
+          { status: 'completed', title: 'Processing', date: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000), description: 'Your order is being prepared' },
+          { status: 'current', title: 'Shipped', date: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000), description: 'Your order is on its way' },
+          { status: 'pending', title: 'Delivered', date: null, description: 'Your order will be delivered soon' }
+        ];
+      } else {
+        trackingStatus = 'processing';
+        trackingSteps = [
+          { status: 'completed', title: 'Order Placed', date: orderDate, description: 'Your order has been confirmed' },
+          { status: 'current', title: 'Processing', date: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000), description: 'Your order is being prepared' },
+          { status: 'pending', title: 'Shipped', date: null, description: 'Your order will be shipped soon' },
+          { status: 'pending', title: 'Delivered', date: null, description: 'Your order will be delivered soon' }
+        ];
+      }
+    }
+
+    return {
+      status: trackingStatus,
+      trackingNumber: order.metadata?.waybill || `TRK${order.id.slice(-8).toUpperCase()}`,
+      carrier: 'Lurevi Logistics',
+      estimatedDelivery: order.status === 'completed' 
+        ? new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000)
+        : new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000),
+      steps: trackingSteps,
+      isFallback: true
+    };
+  };
+
+  // Parse Delhivery tracking response into our step format
+  const parseDelhiveryTrackingSteps = (trackingInfo: any) => {
+    const steps = [];
+    const orderDate = new Date(trackingInfo.order_date || trackingInfo.created_at);
+    
+    // Order placed step
+    steps.push({
+      status: 'completed',
+      title: 'Order Placed',
+      date: orderDate,
+      description: 'Your order has been confirmed'
+    });
+
+    // Processing step
+    if (trackingInfo.status !== 'pending') {
+      steps.push({
+        status: 'completed',
+        title: 'Processing',
+        date: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000),
+        description: 'Your order is being prepared'
+      });
+    }
+
+    // Shipped step
+    if (trackingInfo.status === 'in_transit' || trackingInfo.status === 'delivered') {
+      steps.push({
+        status: trackingInfo.status === 'delivered' ? 'completed' : 'current',
+        title: 'Shipped',
+        date: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000),
+        description: 'Your order is on its way'
+      });
+    }
+
+    // Delivered step
+    if (trackingInfo.status === 'delivered') {
+      steps.push({
+        status: 'completed',
+        title: 'Delivered',
+        date: new Date(trackingInfo.delivery_date || orderDate.getTime() + 4 * 24 * 60 * 60 * 1000),
+        description: 'Your order has been delivered'
+      });
+    } else {
+      steps.push({
+        status: 'pending',
+        title: 'Delivered',
+        date: null,
+        description: 'Your order will be delivered soon'
+      });
+    }
+
+    return steps;
+  };
+
+  // Map Delhivery status to our status format
+  const mapDelhiveryStatus = (delhiveryStatus: string) => {
+    switch (delhiveryStatus) {
+      case 'delivered':
+        return 'delivered';
+      case 'in_transit':
+        return 'shipped';
+      case 'picked_up':
+        return 'shipped';
+      case 'pending':
+        return 'processing';
+      default:
+        return 'processing';
+    }
+  };
+
+  // Fetch tracking data for all orders when orders are loaded
+  useEffect(() => {
+    if (userOrders.length > 0) {
+      userOrders.forEach(order => {
+        fetchTrackingData(order);
+      });
+    }
+  }, [userOrders]);
+
+  const toggleTrackingExpansion = (orderId: string) => {
+    setExpandedTracking(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
   
   // Calculate downloadable items from completed orders (only digital products)
   const userDownloads = userOrders
@@ -698,6 +889,147 @@ const UserDashboard: React.FC = () => {
                     )}
                   </div>
                 ))}
+              </div>
+
+              {/* Order Tracking Section */}
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <Truck className="w-4 h-4 text-teal-600" />
+                    <span className="text-xs font-medium text-gray-900">Order Tracking</span>
+                    {trackingData[order.id] && (
+                      <span className="text-xs text-gray-500">#{trackingData[order.id].trackingNumber}</span>
+                    )}
+                    {trackingData[order.id]?.isFallback && (
+                      <span className="text-xs text-orange-500 bg-orange-100 px-1 rounded">Fallback</span>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {trackingLoading[order.id] && (
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-teal-600"></div>
+                    )}
+                    <button
+                      onClick={() => toggleTrackingExpansion(order.id)}
+                      className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                      disabled={trackingLoading[order.id]}
+                    >
+                      {expandedTracking[order.id] ? 'Hide Details' : 'Track Order'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error Message */}
+                {trackingErrors[order.id] && (
+                  <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
+                    {trackingErrors[order.id]}
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {trackingLoading[order.id] && !trackingData[order.id] && (
+                  <div className="space-y-2">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2 mt-1"></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tracking Details */}
+                {expandedTracking[order.id] && trackingData[order.id] && (
+                  <div className="space-y-3">
+                    {/* Tracking Status */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          trackingData[order.id].status === 'delivered' ? 'bg-green-500' :
+                          trackingData[order.id].status === 'shipped' ? 'bg-blue-500' :
+                          'bg-yellow-500'
+                        }`}></div>
+                        <span className="text-xs font-medium text-gray-900 capitalize">
+                          {trackingData[order.id].status === 'delivered' ? 'Delivered' :
+                           trackingData[order.id].status === 'shipped' ? 'Shipped' : 'Processing'}
+                        </span>
+                        {trackingData[order.id].isFallback && (
+                          <span className="text-xs text-orange-500">(Estimated)</span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">Carrier: {trackingData[order.id].carrier}</p>
+                        {trackingData[order.id].estimatedDelivery && (
+                          <p className="text-xs text-gray-500">
+                            Est. Delivery: {trackingData[order.id].estimatedDelivery.toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Refresh Button for Fallback Data */}
+                    {trackingData[order.id].isFallback && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => fetchTrackingData(order)}
+                          disabled={trackingLoading[order.id]}
+                          className="text-xs text-teal-600 hover:text-teal-700 font-medium px-2 py-1 border border-teal-200 rounded hover:bg-teal-50"
+                        >
+                          {trackingLoading[order.id] ? 'Refreshing...' : 'Refresh Tracking'}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Tracking Steps */}
+                    <div className="space-y-2">
+                      {trackingData[order.id].steps.map((step: any, stepIndex: number) => (
+                        <div key={stepIndex} className="flex items-start space-x-3">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                            step.status === 'completed' ? 'bg-green-500' :
+                            step.status === 'current' ? 'bg-blue-500' :
+                            'bg-gray-300'
+                          }`}>
+                            {step.status === 'completed' ? (
+                              <CheckCircle className="w-3 h-3 text-white" />
+                            ) : step.status === 'current' ? (
+                              <Clock className="w-3 h-3 text-white" />
+                            ) : (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className={`text-xs font-medium ${
+                                step.status === 'completed' ? 'text-gray-900' :
+                                step.status === 'current' ? 'text-blue-600' :
+                                'text-gray-500'
+                              }`}>
+                                {step.title}
+                              </p>
+                              {step.date && (
+                                <p className="text-xs text-gray-500">
+                                  {step.date.toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-600 mt-0.5">{step.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Delhivery Tracking Link */}
+                    {trackingData[order.id].trackingNumber && !trackingData[order.id].isFallback && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <a
+                          href={`https://track.delhivery.com/${trackingData[order.id].trackingNumber}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                        >
+                          View on Delhivery →
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}

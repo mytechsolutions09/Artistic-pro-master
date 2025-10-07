@@ -208,7 +208,7 @@ const PaymentFailed: React.FC = () => {
               <div className="space-y-3 text-sm">
                 <div className="flex items-center space-x-2">
                   <Mail className="w-4 h-4 text-blue-500" />
-                  <span className="text-gray-700">support@arvexa.com</span>
+                  <span className="text-gray-700">support@lurevi.com</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Phone className="w-4 h-4 text-blue-500" />

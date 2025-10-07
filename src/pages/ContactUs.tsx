@@ -61,20 +61,20 @@ const ContactUs: React.FC = () => {
     {
       icon: <Mail className="w-6 h-6" />,
       title: "Email Us",
-      details: "support@arvex.com",
+      details: "support@lurevi.com",
       description: "Send us an email anytime"
     },
     {
       icon: <Phone className="w-6 h-6" />,
       title: "Call Us",
-      details: "+91 (555) 123-4567",
+      details: "+91 999912873",
       description: "Mon-Fri 9AM-6PM IST"
     },
     {
       icon: <MapPin className="w-6 h-6" />,
       title: "Visit Us",
-      details: "123 Art Street, Mumbai",
-      description: "MH 400001, India"
+      details: "WZ 14 Janakpuri New Delhi",
+      description: "110058, India"
     },
     {
       icon: <Clock className="w-6 h-6" />,

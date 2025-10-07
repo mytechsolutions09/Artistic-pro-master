@@ -8,7 +8,7 @@
   to = "/clothes"
   status = 301
   force = true
-  conditions = {Host = ["necessary.arvex.in"]}
+  conditions = {Host = ["necessary.lurevi.in"]}
 
 # SPA fallback
 [[redirects]]

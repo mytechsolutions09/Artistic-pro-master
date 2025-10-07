@@ -73,8 +73,8 @@ const Footer: React.FC = () => {
             <h3 className="text-base font-semibold mb-3">Quick Links</h3>
             <ul className="space-y-1">
               <li>
-                <Link to="/" className="text-gray-400 hover:text-white transition-colors text-sm">
-                  Home
+                <Link to="/about-us" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  About Us
                 </Link>
               </li>
               <li>
@@ -138,15 +138,15 @@ const Footer: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center">
                 <Mail className="w-3 h-3 text-pink-300 mr-2" />
-                <span className="text-gray-400 text-sm">support@arvex.com</span>
+                <span className="text-gray-400 text-sm">support@lurevi.com</span>
               </div>
               <div className="flex items-center">
                 <Phone className="w-3 h-3 text-pink-300 mr-2" />
-                <span className="text-gray-400 text-sm">+91 (555) 123-4567</span>
+                <span className="text-gray-400 text-sm">+91 999912873</span>
               </div>
               <div className="flex items-start">
                 <MapPin className="w-3 h-3 text-pink-300 mr-2 mt-1" />
-                <span className="text-gray-400 text-sm">123 Art Street<br />Mumbai, MH 400001</span>
+                <span className="text-gray-400 text-sm">WZ 14 Janakpuri New Delhi<br />110058, India</span>
               </div>
             </div>
           </div>

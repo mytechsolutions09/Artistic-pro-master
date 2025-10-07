@@ -199,7 +199,7 @@ export class CurrencyService {
     const currency = this.getCurrency(currencyCode);
     if (!currency) return `${amount.toFixed(decimals)}`;
     
-    const formattedAmount = amount.toLocaleString('en-US', {
+    const formattedAmount = amount.toLocaleString('en-IN', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals
     });

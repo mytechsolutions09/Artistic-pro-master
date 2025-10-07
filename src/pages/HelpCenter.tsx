@@ -38,7 +38,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: "What payment methods do you accept?",
-      answer: "We accept all major credit cards, PayPal, and digital wallets. All transactions are secure and encrypted.",
+      answer: "We accept Credit Card, UPI, and Debit Card. All transactions are secure and encrypted.",
       category: "Payment"
     },
     {
@@ -55,15 +55,6 @@ const HelpCenter: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Help Center</h1>
-          </div>
-        </div>
-      </div>
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Search Bar */}
@@ -73,7 +64,7 @@ const HelpCenter: React.FC = () => {
             <input
               type="text"
               placeholder="Search for help topics, questions, or issues..."
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
             />
           </div>
         </div>
@@ -81,12 +72,11 @@ const HelpCenter: React.FC = () => {
         {/* Help Categories */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {helpCategories.map((category, index) => (
-            <Link
+            <div
               key={index}
-              to={`/help/${category.title.toLowerCase().replace(/\s+/g, '-')}`}
-              className="bg-white rounded-md p-4 shadow-sm hover:shadow-lg transition-all duration-300 group"
+              className="bg-white rounded-md p-4 shadow-sm"
             >
-              <div className="text-pink-600 mb-3 group-hover:scale-110 transition-transform duration-300">
+              <div className="text-teal-600 mb-3">
                 {category.icon}
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">{category.title}</h3>
@@ -96,7 +86,7 @@ const HelpCenter: React.FC = () => {
                   <li key={topicIndex} className="text-xs text-gray-500">• {topic}</li>
                 ))}
               </ul>
-            </Link>
+            </div>
           ))}
         </div>
 
@@ -110,7 +100,7 @@ const HelpCenter: React.FC = () => {
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold text-gray-900 mb-2">{item.question}</h3>
                     <p className="text-sm text-gray-600 mb-2">{item.answer}</p>
-                    <span className="inline-block px-2 py-1 bg-pink-100 text-pink-800 text-xs font-medium rounded">
+                    <span className="inline-block px-2 py-1 bg-teal-100 text-teal-800 text-xs font-medium rounded">
                       {item.category}
                     </span>
                   </div>
@@ -121,22 +111,22 @@ const HelpCenter: React.FC = () => {
         </div>
 
         {/* Contact Support */}
-        <div className="bg-gradient-to-r from-pink-600 to-pink-700 rounded-md p-6 text-white text-center">
+        <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-md p-6 text-white text-center">
           <h2 className="text-lg font-bold mb-3">Still Need Help?</h2>
-          <p className="text-pink-100 mb-4 text-sm">
+          <p className="text-teal-100 mb-4 text-sm">
             Can't find what you're looking for? Our support team is ready to assist you.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/contact-us"
-              className="inline-flex items-center px-4 py-2 bg-white text-pink-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-white text-teal-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
               <Mail className="w-4 h-4 mr-2" />
               Contact Support
             </Link>
             <Link
               to="/faq"
-              className="inline-flex items-center px-4 py-2 bg-pink-800 text-white font-medium rounded-md hover:bg-pink-900 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-teal-800 text-white font-medium rounded-md hover:bg-teal-900 transition-colors text-sm"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               View FAQ

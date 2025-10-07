@@ -129,7 +129,7 @@ const Products: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-gray-800">Product Management</h2>
-            <p className="text-sm text-gray-600">Manage your ARVEXA products</p>
+            <p className="text-sm text-gray-600">Manage your Lurevi products</p>
           </div>
           <div className="flex items-center space-x-2">
             <button

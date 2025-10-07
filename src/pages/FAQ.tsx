@@ -18,8 +18,8 @@ const FAQ: React.FC = () => {
       title: "General Questions",
       questions: [
         {
-          question: "What is ARVEX?",
-          answer: "ARVEX is an online marketplace specializing in digital art and clothing. We offer a curated collection of artwork from talented artists and high-quality clothing items."
+          question: "What is Lurevi?",
+          answer: "Lurevi is an online marketplace specializing in digital art and clothing. We offer a curated collection of artwork from talented artists and high-quality clothing items."
         },
         {
           question: "How do I create an account?",
@@ -31,7 +31,7 @@ const FAQ: React.FC = () => {
         },
         {
           question: "Do you offer customer support?",
-          answer: "Absolutely! Our customer support team is available Monday through Friday, 9 AM to 6 PM EST. You can reach us via email, phone, or through our contact form."
+          answer: "Absolutely! Our customer support team is available Monday through Friday, 9 AM to 6 PM IST. You can reach us via email, phone, or through our contact form."
         }
       ]
     },
@@ -52,7 +52,7 @@ const FAQ: React.FC = () => {
         },
         {
           question: "What payment methods do you accept?",
-          answer: "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and digital wallets like Apple Pay and Google Pay. All transactions are processed securely."
+          answer: "We accept Credit Card, UPI, and Debit Card. All transactions are secure and encrypted."
         }
       ]
     },
@@ -152,15 +152,6 @@ const FAQ: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">FAQ</h1>
-          </div>
-        </div>
-      </div>
-      
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Search Bar */}
@@ -172,7 +163,7 @@ const FAQ: React.FC = () => {
               placeholder="Search FAQ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-700 focus:border-transparent text-sm"
             />
           </div>
         </div>
@@ -195,7 +186,7 @@ const FAQ: React.FC = () => {
                         onClick={() => toggleItem(globalIndex)}
                         className="w-full flex items-center justify-between text-left group"
                       >
-                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-pink-600 transition-colors">
+                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">
                           {item.question}
                         </h3>
                         {isOpen ? (
@@ -218,14 +209,14 @@ const FAQ: React.FC = () => {
         </div>
 
         {/* Still Have Questions */}
-        <div className="mt-12 bg-gradient-to-r from-pink-600 to-pink-700 rounded-xl p-8 text-white text-center">
+        <div className="mt-12 bg-gradient-to-r from-teal-700 to-teal-600 rounded-xl p-8 text-white text-center">
           <h2 className="text-2xl font-bold mb-4">Still Have Questions?</h2>
-          <p className="text-pink-100 mb-6">
+          <p className="text-teal-100 mb-6">
             Can't find the answer you're looking for? Our support team is here to help.
           </p>
           <a
             href="/contact-us"
-            className="inline-flex items-center px-6 py-3 bg-white text-pink-600 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-white text-teal-700 font-medium rounded-lg hover:bg-gray-100 transition-colors"
           >
             Contact Support
           </a>

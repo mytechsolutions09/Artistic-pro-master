@@ -2,12 +2,18 @@ import axios from 'axios';
 
 // Delhivery API Configuration
 const DELHIVERY_CONFIG = {
-  baseURL: 'https://staging-express.delhivery.com',
-  expressBaseURL: 'https://express-dev-test.delhivery.com',
-  trackBaseURL: 'https://track.delhivery.com',
-  // TODO: Replace with your actual Delhivery API token
-  token: 'xxxxxxxxxxxxxxxx',
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_DELHIVERY_BASE_URL || 'https://staging-express.delhivery.com',
+  expressBaseURL: import.meta.env.VITE_DELHIVERY_EXPRESS_URL || 'https://express-dev-test.delhivery.com',
+  trackBaseURL: import.meta.env.VITE_DELHIVERY_TRACK_URL || 'https://track.delhivery.com',
+  token: import.meta.env.VITE_DELHIVERY_API_TOKEN || 'xxxxxxxxxxxxxxxx',
+  timeout: parseInt(import.meta.env.VITE_DELHIVERY_TIMEOUT || '10000'),
+  retryAttempts: parseInt(import.meta.env.VITE_DELHIVERY_RETRY_ATTEMPTS || '3'),
+};
+
+// Check if API is properly configured
+const isApiConfigured = () => {
+  const token = import.meta.env.VITE_DELHIVERY_API_TOKEN;
+  return token && token !== 'your-delhivery-api-token' && token !== 'xxxxxxxxxxxxxxxx';
 };
 
 // Types for Delhivery API responses
@@ -306,28 +312,338 @@ class DelhiveryService {
    * Check if a pincode is serviceable
    */
   async checkPinCodeServiceability(pinCode: string): Promise<DelhiveryPinCodeData> {
+    // Check if API is properly configured
+    if (!isApiConfigured()) {
+      console.warn('Delhivery API not configured, returning mock data');
+      return this.getMockPinCodeData(pinCode);
+    }
+
     try {
       const response = await this.axiosInstance.get('/c/api/pin-codes/json/', {
         params: { filter_codes: pinCode }
       });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking pincode serviceability:', error);
-      throw new Error('Failed to check pincode serviceability');
+      
+      // If it's a network error or API is not accessible, return mock data
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        console.warn('Network error, returning mock data for pincode:', pinCode);
+        return this.getMockPinCodeData(pinCode);
+      }
+      
+      throw new Error(`Failed to check pincode serviceability: ${error.message}`);
     }
+  }
+
+  /**
+   * Get mock pincode data for testing/fallback
+   */
+  private getMockPinCodeData(pinCode: string): DelhiveryPinCodeData {
+    // Get location info based on pin code
+    const locationInfo = this.getLocationFromPinCode(pinCode);
+    
+    return {
+      delivery_codes: [{
+        pin: pinCode,
+        postcode: pinCode,
+        city: locationInfo.city,
+        state: locationInfo.state,
+        country: 'India',
+        delivery_status: locationInfo.serviceable ? 'Serviceable' : 'Not Serviceable',
+        pre_paid: locationInfo.serviceable ? 'Y' : 'N',
+        cod: locationInfo.serviceable ? 'Y' : 'N',
+        pickup: locationInfo.serviceable ? 'Y' : 'N',
+        reverse: locationInfo.serviceable ? 'Y' : 'N',
+        hub_code: locationInfo.hubCode,
+        hub_name: locationInfo.hubName,
+        zone: locationInfo.zone,
+        serviceability: locationInfo.serviceable ? 'Serviceable' : 'Not Serviceable'
+      }]
+    };
+  }
+
+  /**
+   * Get location information based on pin code
+   */
+  private getLocationFromPinCode(pinCode: string): {
+    city: string;
+    state: string;
+    serviceable: boolean;
+    hubCode: string;
+    hubName: string;
+    zone: string;
+  } {
+    const pin = parseInt(pinCode);
+    
+    // Delhi (110xxx)
+    if (pin >= 110000 && pin <= 110099) {
+      return {
+        city: 'New Delhi',
+        state: 'Delhi',
+        serviceable: true,
+        hubCode: 'DEL001',
+        hubName: 'Delhi Hub',
+        zone: 'Zone 1'
+      };
+    }
+    
+    // Mumbai (400xxx)
+    if (pin >= 400000 && pin <= 400099) {
+      return {
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        serviceable: true,
+        hubCode: 'MUM001',
+        hubName: 'Mumbai Hub',
+        zone: 'Zone 1'
+      };
+    }
+    
+    // Bangalore (560xxx)
+    if (pin >= 560000 && pin <= 560099) {
+      return {
+        city: 'Bangalore',
+        state: 'Karnataka',
+        serviceable: true,
+        hubCode: 'BLR001',
+        hubName: 'Bangalore Hub',
+        zone: 'Zone 2'
+      };
+    }
+    
+    // Chennai (600xxx)
+    if (pin >= 600000 && pin <= 600099) {
+      return {
+        city: 'Chennai',
+        state: 'Tamil Nadu',
+        serviceable: true,
+        hubCode: 'CHN001',
+        hubName: 'Chennai Hub',
+        zone: 'Zone 2'
+      };
+    }
+    
+    // Kolkata (700xxx)
+    if (pin >= 700000 && pin <= 700099) {
+      return {
+        city: 'Kolkata',
+        state: 'West Bengal',
+        serviceable: true,
+        hubCode: 'KOL001',
+        hubName: 'Kolkata Hub',
+        zone: 'Zone 3'
+      };
+    }
+    
+    // Hyderabad (500xxx)
+    if (pin >= 500000 && pin <= 500099) {
+      return {
+        city: 'Hyderabad',
+        state: 'Telangana',
+        serviceable: true,
+        hubCode: 'HYD001',
+        hubName: 'Hyderabad Hub',
+        zone: 'Zone 2'
+      };
+    }
+    
+    // Pune (411xxx)
+    if (pin >= 411000 && pin <= 411099) {
+      return {
+        city: 'Pune',
+        state: 'Maharashtra',
+        serviceable: true,
+        hubCode: 'PUN001',
+        hubName: 'Pune Hub',
+        zone: 'Zone 1'
+      };
+    }
+    
+    // Ahmedabad (380xxx)
+    if (pin >= 380000 && pin <= 380099) {
+      return {
+        city: 'Ahmedabad',
+        state: 'Gujarat',
+        serviceable: true,
+        hubCode: 'AMD001',
+        hubName: 'Ahmedabad Hub',
+        zone: 'Zone 1'
+      };
+    }
+    
+    // Jaipur (302xxx)
+    if (pin >= 302000 && pin <= 302099) {
+      return {
+        city: 'Jaipur',
+        state: 'Rajasthan',
+        serviceable: true,
+        hubCode: 'JAI001',
+        hubName: 'Jaipur Hub',
+        zone: 'Zone 1'
+      };
+    }
+    
+    // Lucknow (226xxx)
+    if (pin >= 226000 && pin <= 226099) {
+      return {
+        city: 'Lucknow',
+        state: 'Uttar Pradesh',
+        serviceable: true,
+        hubCode: 'LKO001',
+        hubName: 'Lucknow Hub',
+        zone: 'Zone 3'
+      };
+    }
+    
+    // For other pin codes, determine state and city based on first 2-3 digits
+    const firstTwoDigits = Math.floor(pin / 10000);
+    
+    // State-wise mapping based on pin code ranges
+    if (firstTwoDigits >= 10 && firstTwoDigits <= 19) {
+      return {
+        city: 'Delhi NCR',
+        state: 'Delhi/Haryana',
+        serviceable: true,
+        hubCode: 'DEL002',
+        hubName: 'Delhi NCR Hub',
+        zone: 'Zone 1'
+      };
+    }
+    
+    if (firstTwoDigits >= 20 && firstTwoDigits <= 29) {
+      return {
+        city: 'Uttar Pradesh',
+        state: 'Uttar Pradesh',
+        serviceable: true,
+        hubCode: 'UP001',
+        hubName: 'UP Hub',
+        zone: 'Zone 3'
+      };
+    }
+    
+    if (firstTwoDigits >= 30 && firstTwoDigits <= 39) {
+      return {
+        city: 'Rajasthan',
+        state: 'Rajasthan',
+        serviceable: true,
+        hubCode: 'RJ001',
+        hubName: 'Rajasthan Hub',
+        zone: 'Zone 1'
+      };
+    }
+    
+    if (firstTwoDigits >= 40 && firstTwoDigits <= 49) {
+      return {
+        city: 'Maharashtra',
+        state: 'Maharashtra',
+        serviceable: true,
+        hubCode: 'MH001',
+        hubName: 'Maharashtra Hub',
+        zone: 'Zone 1'
+      };
+    }
+    
+    if (firstTwoDigits >= 50 && firstTwoDigits <= 59) {
+      return {
+        city: 'Telangana/Andhra Pradesh',
+        state: 'Telangana/Andhra Pradesh',
+        serviceable: true,
+        hubCode: 'TS001',
+        hubName: 'Telangana Hub',
+        zone: 'Zone 2'
+      };
+    }
+    
+    if (firstTwoDigits >= 60 && firstTwoDigits <= 69) {
+      return {
+        city: 'Tamil Nadu',
+        state: 'Tamil Nadu',
+        serviceable: true,
+        hubCode: 'TN001',
+        hubName: 'Tamil Nadu Hub',
+        zone: 'Zone 2'
+      };
+    }
+    
+    if (firstTwoDigits >= 70 && firstTwoDigits <= 79) {
+      return {
+        city: 'West Bengal',
+        state: 'West Bengal',
+        serviceable: true,
+        hubCode: 'WB001',
+        hubName: 'West Bengal Hub',
+        zone: 'Zone 3'
+      };
+    }
+    
+    if (firstTwoDigits >= 80 && firstTwoDigits <= 89) {
+      return {
+        city: 'Bihar/Jharkhand',
+        state: 'Bihar/Jharkhand',
+        serviceable: true,
+        hubCode: 'BH001',
+        hubName: 'Bihar Hub',
+        zone: 'Zone 3'
+      };
+    }
+    
+    // For very remote areas or invalid pin codes
+    return {
+      city: 'Remote Area',
+      state: 'Various',
+      serviceable: false,
+      hubCode: 'REM001',
+      hubName: 'Remote Hub',
+      zone: 'Zone 4'
+    };
   }
 
   /**
    * Get shipping rates for a shipment
    */
   async getShippingRates(rateData: ShippingRate): Promise<ShippingRateResponse> {
+    // Check if API is properly configured
+    if (!isApiConfigured()) {
+      console.warn('Delhivery API not configured, returning mock rates');
+      return this.getMockShippingRates(rateData);
+    }
+
     try {
       const response = await this.axiosInstance.post('/c/api/shipments/rates/json/', rateData);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting shipping rates:', error);
-      throw new Error('Failed to get shipping rates');
+      
+      // If it's a network error or API is not accessible, return mock data
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        console.warn('Network error, returning mock rates');
+        return this.getMockShippingRates(rateData);
+      }
+      
+      throw new Error(`Failed to get shipping rates: ${error.message}`);
     }
+  }
+
+  /**
+   * Get mock shipping rates for testing/fallback
+   */
+  private getMockShippingRates(rateData: ShippingRate): ShippingRateResponse {
+    const baseRate = 50; // Base rate in INR
+    const weightMultiplier = rateData.weight * 10; // 10 INR per kg
+    const codFee = rateData.cod_amount > 0 ? rateData.cod_amount * 0.02 : 0; // 2% COD fee
+    
+    return {
+      total_amount: baseRate + weightMultiplier + codFee,
+      freight: baseRate + weightMultiplier,
+      cod_fee: codFee,
+      fuel_surcharge: 5,
+      service_tax: (baseRate + weightMultiplier) * 0.18, // 18% GST
+      other_charges: 0,
+      discount: 0,
+      delivery_time: '2-3 business days',
+      pickup_time: 'Next business day'
+    };
   }
 
   /**
@@ -350,13 +666,59 @@ class DelhiveryService {
    * Track a shipment
    */
   async trackShipment(waybill: string): Promise<any> {
+    // Check if API is properly configured
+    if (!isApiConfigured()) {
+      console.warn('Delhivery API not configured, returning mock tracking data');
+      return this.getMockTrackingData(waybill);
+    }
+
     try {
       const response = await this.axiosInstance.get(`/c/api/shipments/track/json/?waybill=${waybill}`);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error tracking shipment:', error);
-      throw new Error('Failed to track shipment');
+      
+      // If it's a network error or API is not accessible, return mock data
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        console.warn('Network error, returning mock tracking data for waybill:', waybill);
+        return this.getMockTrackingData(waybill);
+      }
+      
+      throw new Error(`Failed to track shipment: ${error.message}`);
     }
+  }
+
+  /**
+   * Get mock tracking data for testing/fallback
+   */
+  private getMockTrackingData(waybill: string): any {
+    return {
+      waybill,
+      status: 'In Transit',
+      status_code: 'IT',
+      status_description: 'Your shipment is in transit',
+      current_location: 'Mumbai Hub',
+      destination: 'Delhi',
+      estimated_delivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
+      tracking_events: [
+        {
+          status: 'Picked Up',
+          status_code: 'PU',
+          status_description: 'Shipment picked up from origin',
+          location: 'Mumbai',
+          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+          remarks: 'Picked up from sender'
+        },
+        {
+          status: 'In Transit',
+          status_code: 'IT',
+          status_description: 'Shipment is in transit',
+          location: 'Mumbai Hub',
+          timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
+          remarks: 'Departed from origin hub'
+        }
+      ]
+    };
   }
 
   /**

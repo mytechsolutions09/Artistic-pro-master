@@ -32,7 +32,7 @@ const EmailManagement: React.FC = () => {
   const emailTemplates = [
     { id: '1', name: 'New Artwork Notification', subject: 'Fresh Art Just Added!', type: 'marketing' },
     { id: '2', name: 'Order Confirmation', subject: 'Your Order is Confirmed', type: 'transactional' },
-    { id: '3', name: 'Welcome Email', subject: 'Welcome to ARVEXA', type: 'onboarding' },
+    { id: '3', name: 'Welcome Email', subject: 'Welcome to Lurevi', type: 'onboarding' },
     { id: '4', name: 'Newsletter', subject: 'Weekly Art Update', type: 'marketing' },
     { id: '5', name: 'Password Reset', subject: 'Reset Your Password', type: 'security' }
   ];
@@ -128,7 +128,7 @@ const EmailManagement: React.FC = () => {
     setEmailContent({
       ...emailContent,
       subject: template.subject,
-      message: `Hello,\n\n${template.name} content goes here...\n\nBest regards,\nARVEXA Team`
+      message: `Hello,\n\n${template.name} content goes here...\n\nBest regards,\nLurevi Team`
     });
   };
 

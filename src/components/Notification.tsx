@@ -14,25 +14,29 @@ interface NotificationProps {
 }
 
 const NotificationItem: React.FC<NotificationProps> = ({ notification, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      console.log('Auto-closing notification:', notification.id);
-      onClose(notification.id);
-    }, notification.duration || 3000);
+  const [isClosing, setIsClosing] = useState(false);
 
-    return () => clearTimeout(timer);
-  }, [notification.id, notification.duration, onClose]);
+  useEffect(() => {
+    // Only auto-close if duration is specified and not 0
+    if (notification.duration && notification.duration > 0) {
+      const timer = setTimeout(() => {
+        handleClose();
+      }, notification.duration);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification.duration]);
 
   const getIcon = () => {
     switch (notification.type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
       case 'info':
-        return <ShoppingCart className="w-5 h-5 text-blue-500" />;
+        return <ShoppingCart className="w-4 h-4 text-blue-500" />;
       default:
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
     }
   };
 
@@ -49,45 +53,37 @@ const NotificationItem: React.FC<NotificationProps> = ({ notification, onClose }
     }
   };
 
-  const handleClose = (e?: React.MouseEvent) => {
-    console.log('Manual close triggered for:', notification.id);
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    onClose(notification.id);
-  };
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    console.log('Backdrop clicked for:', notification.id);
-    if (e.target === e.currentTarget) {
-      handleClose(e);
-    }
+  const handleClose = () => {
+    if (isClosing) return;
+    
+    setIsClosing(true);
+    
+    // Add a small delay for animation
+    setTimeout(() => {
+      onClose(notification.id);
+    }, 150);
   };
 
   return (
     <div 
-      className={`${getBgColor()} border rounded-lg p-4 shadow-lg flex items-center justify-between mb-3 animate-slide-in cursor-pointer hover:shadow-xl transition-all relative`}
-      onClick={handleBackdropClick}
-      style={{ pointerEvents: 'auto' }}
+      className={`${getBgColor()} border rounded-md p-2 shadow-md flex items-center justify-between mb-2 transition-all duration-300 ${
+        isClosing ? 'opacity-0 transform translate-x-full' : 'opacity-100 transform translate-x-0'
+      }`}
     >
-      <div className="flex items-center space-x-3 flex-1">
-        {getIcon()}
-        <p className="text-gray-800 font-medium">{notification.message}</p>
+      <div className="flex items-center space-x-2 flex-1">
+        <div className="flex-shrink-0">
+          {getIcon()}
+        </div>
+        <p className="text-gray-800 font-medium text-sm leading-tight">{notification.message}</p>
       </div>
       <button
-        onClick={(e) => {
-          console.log('X button clicked for:', notification.id);
-          e.stopPropagation();
-          e.preventDefault();
-          handleClose(e);
-        }}
-        className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 ml-2 p-1 rounded hover:bg-gray-100"
+        onClick={handleClose}
+        className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 ml-2 p-0.5 rounded hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-gray-300"
         type="button"
         aria-label="Close notification"
-        style={{ pointerEvents: 'auto' }}
+        disabled={isClosing}
       >
-        <X className="w-4 h-4" />
+        <X className="w-3 h-3" />
       </button>
     </div>
   );
@@ -109,7 +105,7 @@ export class NotificationManager {
       id: `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type,
       message,
-      duration
+      duration: duration || (type === 'error' ? 0 : 5000) // Errors don't auto-close by default
     };
 
     this.notifications.push(notification);
@@ -117,10 +113,12 @@ export class NotificationManager {
   }
 
   static remove(id: string): void {
-    console.log('NotificationManager.remove called with id:', id);
-    console.log('Current notifications:', this.notifications.map(n => n.id));
     this.notifications = this.notifications.filter(n => n.id !== id);
-    console.log('Notifications after removal:', this.notifications.map(n => n.id));
+    this.notifyListeners();
+  }
+
+  static clearAll(): void {
+    this.notifications = [];
     this.notifyListeners();
   }
 
@@ -136,8 +134,22 @@ export class NotificationManager {
     this.show('info', message, duration);
   }
 
+  static warning(message: string, duration?: number): void {
+    this.show('error', message, duration); // Use error type for warning styling
+  }
+
+  static getNotifications(): Notification[] {
+    return [...this.notifications];
+  }
+
   private static notifyListeners(): void {
-    this.listeners.forEach(listener => listener([...this.notifications]));
+    this.listeners.forEach(listener => {
+      try {
+        listener([...this.notifications]);
+      } catch (error) {
+        console.error('Error in notification listener:', error);
+      }
+    });
   }
 }
 
@@ -149,23 +161,25 @@ const NotificationContainer: React.FC = () => {
     return unsubscribe;
   }, []);
 
-  // Debug: Add test button in development
-  const handleTestNotification = () => {
-    NotificationManager.success('Test notification - click to close!', 10000);
+  const handleClearAll = () => {
+    NotificationManager.clearAll();
   };
 
   if (notifications.length === 0) return null;
 
   return (
     <div className="fixed top-4 right-4 z-[9999] max-w-md">
-      {/* Debug test button - remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <button
-          onClick={handleTestNotification}
-          className="mb-2 px-2 py-1 bg-blue-500 text-white text-xs rounded"
-        >
-          Test Notification
-        </button>
+      {/* Clear all button - only show if there are notifications */}
+      {notifications.length > 0 && (
+        <div className="mb-1 flex justify-end">
+          <button
+            onClick={handleClearAll}
+            className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+            title="Clear all notifications"
+          >
+            Clear All ({notifications.length})
+          </button>
+        </div>
       )}
       
       {notifications.map(notification => (

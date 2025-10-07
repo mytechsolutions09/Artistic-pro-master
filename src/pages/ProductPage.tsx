@@ -785,7 +785,7 @@ const ProductPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-xs text-gray-600 space-y-0.5">
-                  <p>Sale ends on {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
+                  <p>Sale ends on {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { month: 'long', day: 'numeric' })}</p>
                 </div>
               </div>
 
@@ -1159,7 +1159,7 @@ const ProductPage: React.FC = () => {
                             ))}
                           </div>
                           <span className="text-xs font-medium text-[#333333] bg-[#F5F5F5] px-2 py-1 rounded-full">
-                            {new Date(review.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
                       </div>

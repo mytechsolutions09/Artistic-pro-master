@@ -2,6 +2,7 @@ import React from 'react';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
 import MemoryMonitorComponent from '../MemoryMonitor';
+import NotificationContainer from '../Notification';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -52,6 +53,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, noHeader = f
       </div>
       {/* Memory Monitor for Admin */}
       <MemoryMonitorComponent showDetails={true} threshold={75} />
+      {/* Notifications */}
+      <NotificationContainer />
     </div>
   );
 };

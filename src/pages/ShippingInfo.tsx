@@ -88,7 +88,7 @@ const ShippingInfo: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white">
+      <div className="bg-gradient-to-r from-teal-500 to-teal-400 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold">Shipping Information</h1>
@@ -102,9 +102,9 @@ const ShippingInfo: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {shippingOptions.map((option, index) => (
             <div key={index} className="bg-white rounded-md shadow-sm p-4 hover:shadow-lg transition-shadow">
-              <div className="text-blue-600 mb-3">{option.icon}</div>
+              <div className="text-teal-500 mb-3">{option.icon}</div>
               <h3 className="text-base font-bold text-gray-900 mb-2">{option.name}</h3>
-              <p className="text-blue-600 font-semibold mb-1 text-sm">{option.time}</p>
+              <p className="text-teal-500 font-semibold mb-1 text-sm">{option.time}</p>
               <p className="text-gray-900 font-medium mb-2 text-sm">{option.cost}</p>
               <p className="text-gray-600 mb-3 text-sm">{option.description}</p>
               <ul className="space-y-1">
@@ -151,8 +151,8 @@ const ShippingInfo: React.FC = () => {
           {importantNotes.map((note, index) => (
             <div key={index} className="bg-white rounded-md shadow-sm p-4">
               <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 p-2 bg-blue-100 rounded">
-                  <div className="text-blue-600">{note.icon}</div>
+                <div className="flex-shrink-0 p-2 bg-teal-100 rounded">
+                  <div className="text-teal-500">{note.icon}</div>
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-1">{note.title}</h3>
@@ -187,21 +187,21 @@ const ShippingInfo: React.FC = () => {
         </div>
 
         {/* Contact Support */}
-        <div className="bg-gradient-to-r from-pink-600 to-pink-700 rounded-md p-6 text-white text-center">
+        <div className="bg-gradient-to-r from-teal-500 to-teal-400 rounded-md p-6 text-white text-center">
           <h2 className="text-lg font-bold mb-3">Need Help with Shipping?</h2>
-          <p className="text-pink-100 mb-4 text-sm">
+          <p className="text-teal-100 mb-4 text-sm">
             Have questions about your order or shipping options? Our support team is here to help.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="/contact-us"
-              className="inline-flex items-center px-4 py-2 bg-white text-pink-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-white text-teal-500 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
               Contact Support
             </a>
             <a
               href="/help-center"
-              className="inline-flex items-center px-4 py-2 bg-pink-800 text-white font-medium rounded-md hover:bg-pink-900 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 transition-colors text-sm"
             >
               Help Center
             </a>

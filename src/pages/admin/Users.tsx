@@ -203,7 +203,7 @@ const Users: React.FC = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('en-IN', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -656,7 +656,7 @@ interface ViewUserModalProps {
 const ViewUserModal: React.FC<ViewUserModalProps> = ({ user, onClose }) => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString('en-US', {
+    return new Date(dateString).toLocaleString('en-IN', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

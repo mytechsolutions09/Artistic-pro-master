@@ -30,6 +30,7 @@ import FavoritesPage from './pages/FavoritesPage';
 import MenClothingPage from './pages/MenClothingPage';
 import HelpCenter from './pages/HelpCenter';
 import ContactUs from './pages/ContactUs';
+import AboutUs from './pages/AboutUs';
 import FAQ from './pages/FAQ';
 import ShippingInfo from './pages/ShippingInfo';
 import Returns from './pages/Returns';
@@ -65,6 +66,7 @@ function AppContent() {
   const shouldHideHeader = hideHeaderPaths.includes(location.pathname);
   const shouldHideFooter = location.pathname.startsWith('/admin') || 
                           location.pathname === '/dashboard' || 
+                          location.pathname === '/about-us' ||
                           location.pathname === '/sign-in' || 
                           location.pathname === '/sign-up' || 
                           location.pathname === '/forgot-password' || 
@@ -100,6 +102,7 @@ function AppContent() {
                   {/* Support Pages */}
                   <Route path="/help-center" element={<HelpCenter />} />
                   <Route path="/contact-us" element={<ContactUs />} />
+                  <Route path="/about-us" element={<AboutUs />} />
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/shipping-info" element={<ShippingInfo />} />
                   <Route path="/returns" element={<Returns />} />

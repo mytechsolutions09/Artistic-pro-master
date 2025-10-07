@@ -109,14 +109,14 @@ const Returns: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 bg-green-100 rounded-full">
-              <RotateCcw className="w-12 h-12 text-green-600" />
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-3">
+            <div className="p-2 bg-green-100 rounded-full">
+              <RotateCcw className="w-6 h-6 text-green-600" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Returns & Refunds</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Returns & Refunds</h1>
+          <p className="text-sm text-gray-600 max-w-2xl mx-auto">
             We want you to be completely satisfied with your purchase. Our easy return process makes it simple to return items that don't meet your expectations.
           </p>
         </div>
@@ -216,21 +216,21 @@ const Returns: React.FC = () => {
         </div>
 
         {/* Contact Support */}
-        <div className="bg-gradient-to-r from-pink-600 to-pink-700 rounded-md p-6 text-white text-center">
+        <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-md p-6 text-white text-center">
           <h2 className="text-lg font-bold mb-3">Need Help with Returns?</h2>
-          <p className="text-pink-100 mb-4 text-sm">
+          <p className="text-teal-100 mb-4 text-sm">
             Have questions about returning an item or need assistance with the return process?
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="/contact-us"
-              className="inline-flex items-center px-4 py-2 bg-white text-pink-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-white text-teal-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
               Contact Support
             </a>
             <a
               href="/help-center"
-              className="inline-flex items-center px-4 py-2 bg-pink-800 text-white font-medium rounded-md hover:bg-pink-900 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-teal-800 text-white font-medium rounded-md hover:bg-teal-900 transition-colors text-sm"
             >
               Help Center
             </a>

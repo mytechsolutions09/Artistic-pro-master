@@ -3,20 +3,20 @@ import { Save, Globe, Building, Mail } from 'lucide-react';
 
 const GeneralSettings: React.FC = () => {
   const [settings, setSettings] = useState({
-    siteName: 'ARVEXA',
+    siteName: 'Lurevi',
     siteDescription: 'Premium digital art marketplace',
-    siteUrl: 'https://arvexa.com',
-    contactEmail: 'contact@arvexa.com',
-    supportEmail: 'support@arvexa.com',
-    phoneNumber: '+1 (555) 123-4567',
-    address: '123 Art Street, Creative City, CC 12345',
-    companyName: 'ARVEXA Inc.',
-    timezone: 'America/New_York',
+    siteUrl: 'https://lurevi.com',
+    contactEmail: 'contact@lurevi.com',
+    supportEmail: 'support@lurevi.com',
+    phoneNumber: '+91 (555) 123-4567',
+    address: '123 Art Street, Mumbai, India 400001',
+    companyName: 'Lurevi Inc.',
+    timezone: 'Asia/Kolkata',
     language: 'en',
     maintenanceMode: false,
     registrationEnabled: true,
-    termsUrl: 'https://arvexa.com/terms',
-    privacyUrl: 'https://arvexa.com/privacy'
+    termsUrl: 'https://lurevi.com/terms',
+    privacyUrl: 'https://lurevi.com/privacy'
   });
 
   const handleSave = () => {
@@ -144,6 +144,7 @@ const GeneralSettings: React.FC = () => {
               onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
               className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-pink-400"
             >
+              <option value="Asia/Kolkata">Indian Standard Time (IST)</option>
               <option value="America/New_York">Eastern Time</option>
               <option value="America/Chicago">Central Time</option>
               <option value="America/Denver">Mountain Time</option>
