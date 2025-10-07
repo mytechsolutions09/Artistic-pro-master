@@ -214,6 +214,108 @@ If you have any questions about your order, please contact us at support@artisti
   </div>
 </body>
 </html>`
+  },
+  [EmailType.RETURN_REQUEST]: {
+    subject: 'New Return Request - Order #{{orderId}}',
+    html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Return Request Notification</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #0d9488, #14b8a6); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .return-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0d9488; }
+    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+    .info-row:last-child { border-bottom: none; }
+    .label { font-weight: bold; color: #374151; }
+    .value { color: #6b7280; }
+    .action-btn { display: inline-block; background: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 0; }
+    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+    .urgent { background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔄 New Return Request</h1>
+      <p>A customer has requested a return</p>
+    </div>
+    <div class="content">
+      <div class="urgent">
+        <strong>⚠️ Action Required:</strong> A customer has initiated a return request. Please review and process it promptly.
+      </div>
+      
+      <div class="return-details">
+        <h2>Return Request Details</h2>
+        <div class="info-row">
+          <span class="label">Return ID:</span>
+          <span class="value">\${'{returnId}'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Order ID:</span>
+          <span class="value">\${'{orderId}'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Customer Name:</span>
+          <span class="value">\${'{customerName}'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Customer Email:</span>
+          <span class="value">\${'{customerEmail}'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Request Date:</span>
+          <span class="value">\${'{requestDate}'}</span>
+        </div>
+      </div>
+      
+      <div class="return-details">
+        <h2>Product Information</h2>
+        <div class="info-row">
+          <span class="label">Product:</span>
+          <span class="value">\${'{productTitle}'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Quantity:</span>
+          <span class="value">\${'{quantity}'}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Amount:</span>
+          <span class="value">₹\${'{totalPrice}'}</span>
+        </div>
+      </div>
+      
+      <div class="return-details">
+        <h2>Return Reason</h2>
+        <p><strong>\${'{reason}'}</strong></p>
+        <p style="color: #6b7280; margin-top: 10px;">\${'{customerNotes}'}</p>
+      </div>
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="\${'{adminUrl}'}" class="action-btn">Review Return Request</a>
+      </div>
+      
+      <div class="return-details">
+        <h2>Next Steps</h2>
+        <ol style="color: #6b7280;">
+          <li>Review the return request details</li>
+          <li>Approve or reject the return</li>
+          <li>Schedule pickup with Delhivery if approved</li>
+          <li>Process refund once item is received</li>
+        </ol>
+      </div>
+    </div>
+    <div class="footer">
+      <p>© 2024 Lurevi. All rights reserved.</p>
+      <p>This is an automated notification from your returns system.</p>
+    </div>
+  </div>
+</body>
+</html>`
   }
 };
 
@@ -419,6 +521,45 @@ export class EmailService {
         userName,
         resetUrl
       }
+    );
+  }
+
+  /**
+   * Send return request notification email to returns@lurevi.in
+   */
+  static async sendReturnRequestNotification(
+    returnData: {
+      returnId: string;
+      orderId: string;
+      customerName: string;
+      customerEmail: string;
+      productTitle: string;
+      quantity: number;
+      totalPrice: number;
+      reason: string;
+      customerNotes: string;
+      requestDate: string;
+    }
+  ): Promise<EmailResult> {
+    const adminUrl = `${window.location.origin}/admin/returns`;
+    
+    return this.sendTemplateEmail(
+      EmailType.RETURN_REQUEST,
+      { email: 'returns@lurevi.in', name: 'Returns Team' },
+      {
+        returnId: returnData.returnId,
+        orderId: returnData.orderId,
+        customerName: returnData.customerName,
+        customerEmail: returnData.customerEmail,
+        productTitle: returnData.productTitle,
+        quantity: returnData.quantity.toString(),
+        totalPrice: returnData.totalPrice.toFixed(2),
+        reason: returnData.reason,
+        customerNotes: returnData.customerNotes || 'No additional notes provided',
+        requestDate: returnData.requestDate,
+        adminUrl
+      },
+      `New Return Request - Order #${returnData.orderId}`
     );
   }
 

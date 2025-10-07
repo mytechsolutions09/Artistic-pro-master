@@ -1,7 +1,44 @@
-import React from 'react';
-import { RotateCcw, Clock, Package, CheckCircle, AlertCircle, Truck } from 'lucide-react';
+import React, { useState } from 'react';
+import { RotateCcw, Clock, Package, CheckCircle, AlertCircle, Truck, CreditCard, DollarSign, Shield, Mail, ChevronDown, ChevronUp } from 'lucide-react';
 
 const Returns: React.FC = () => {
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+
+  const toggleFAQ = (index: number) => {
+    setOpenFAQ(openFAQ === index ? null : index);
+  };
+
+  const faqData = [
+    {
+      question: "How long do I have to return an item?",
+      answer: "You have 30 days from the delivery date to initiate a return for most physical items. Digital downloads are final sale."
+    },
+    {
+      question: "Do I have to pay for return shipping?",
+      answer: "We provide free return shipping for domestic returns on qualifying items. You'll receive a prepaid return label."
+    },
+    {
+      question: "How long does it take to process my refund?",
+      answer: "Once we receive your return, refunds are processed within 3-5 business days. Credit card and debit card refunds appear within 3-5 business days, while UPI refunds may take 2-4 business days."
+    },
+    {
+      question: "What payment methods do you refund to?",
+      answer: "We process refunds to Credit Cards, UPI, and Debit Cards. You can also choose to receive store credit for immediate use on future purchases."
+    },
+    {
+      question: "Can I exchange an item instead of returning it?",
+      answer: "Yes! You can request an exchange for a different size or color. The process is similar to returns, but we'll send the new item once we receive your return."
+    },
+    {
+      question: "What if my item arrives damaged?",
+      answer: "If your item arrives damaged, contact us immediately with photos. We'll arrange for a replacement or full refund at no cost to you."
+    },
+    {
+      question: "How do I track my refund?",
+      answer: "You'll receive email notifications when your refund is processed. Check your original payment method statement for the credit. For UPI, check your UPI app for transaction history."
+    }
+  ];
+
   const returnSteps = [
     {
       step: "1",
@@ -11,24 +48,18 @@ const Returns: React.FC = () => {
     },
     {
       step: "2",
-      title: "Print Label",
-      description: "Download and print the prepaid return shipping label we provide",
-      icon: <Package className="w-6 h-6" />
-    },
-    {
-      step: "3",
       title: "Package Items",
       description: "Securely package your items in the original packaging with all tags attached",
       icon: <Package className="w-6 h-6" />
     },
     {
-      step: "4",
-      title: "Ship Back",
-      description: "Drop off your package at any authorized shipping location",
+      step: "3",
+      title: "Pick Up",
+      description: "We'll arrange for package pickup from your location",
       icon: <Truck className="w-6 h-6" />
     },
     {
-      step: "5",
+      step: "4",
       title: "Receive Refund",
       description: "Get your refund processed within 3-5 business days of receiving your return",
       icon: <CheckCircle className="w-6 h-6" />
@@ -91,17 +122,41 @@ const Returns: React.FC = () => {
     {
       method: "Credit Card",
       time: "3-5 business days",
-      description: "Refunds will appear on your original payment method"
+      description: "Refunds will appear on your original payment method",
+      icon: <CreditCard className="w-6 h-6" />
     },
     {
-      method: "PayPal",
-      time: "1-3 business days",
-      description: "Refunds will be processed back to your PayPal account"
+      method: "UPI",
+      time: "2-4 business days",
+      description: "Refunds will be processed back to your UPI account",
+      icon: <DollarSign className="w-6 h-6" />
+    },
+    {
+      method: "Debit Card",
+      time: "3-5 business days",
+      description: "Refunds will appear on your original debit card",
+      icon: <CreditCard className="w-6 h-6" />
     },
     {
       method: "Store Credit",
       time: "Immediate",
-      description: "Instant store credit for future purchases"
+      description: "Instant store credit for future purchases",
+      icon: <DollarSign className="w-6 h-6" />
+    }
+  ];
+
+  const refundTypes = [
+    {
+      icon: <Shield className="w-6 h-6" />,
+      title: "Full Refund",
+      description: "Complete refund of the purchase price for eligible returns within 30 days",
+      conditions: "Original condition, unused items with tags attached"
+    },
+    {
+      icon: <Mail className="w-6 h-6" />,
+      title: "Exchange Credit",
+      description: "Store credit for exchanges or when you prefer credit over refund",
+      conditions: "Can be used for any future purchase on our platform"
     }
   ];
 
@@ -117,7 +172,7 @@ const Returns: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Returns & Refunds</h1>
           <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-            We want you to be completely satisfied with your purchase. Our easy return process makes it simple to return items that don't meet your expectations.
+            We want you to be completely satisfied with your purchase. Our easy return and refund process makes it simple to return items that don't meet your expectations or get your money back quickly and securely.
           </p>
         </div>
 
@@ -139,19 +194,19 @@ const Returns: React.FC = () => {
         {/* How to Return */}
         <div className="bg-white rounded-md shadow-sm p-6 mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-6">How to Return an Item</h2>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {returnSteps.map((step, index) => (
               <div key={index} className="text-center">
                 <div className="flex justify-center mb-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                     <div className="text-green-600">{step.icon}</div>
                   </div>
                 </div>
-                <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-xs font-bold">
+                <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">
                   {step.step}
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">{step.title}</h3>
-                <p className="text-gray-600 text-xs">{step.description}</p>
+                <h3 className="text-base font-semibold text-gray-900 mb-2">{step.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
@@ -174,14 +229,40 @@ const Returns: React.FC = () => {
           ))}
         </div>
 
-        {/* Refund Information */}
+        {/* Refund Types */}
         <div className="bg-white rounded-md shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Refund Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Types of Refunds</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {refundTypes.map((type, index) => (
+              <div key={index} className="text-center p-6 bg-gradient-to-br from-teal-50 to-white rounded-lg border border-teal-100 hover:shadow-md hover:shadow-teal-200 transition-all duration-200">
+                <div className="flex justify-center mb-4">
+                  <div className="p-3 bg-teal-100 rounded-full">
+                    <div className="text-teal-600">{type.icon}</div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-3">{type.title}</h3>
+                <p className="text-gray-700 text-sm mb-3 leading-relaxed">{type.description}</p>
+                <div className="pt-3 border-t border-teal-100">
+                  <p className="text-gray-600 text-xs font-medium">{type.conditions}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Refund Methods */}
+        <div className="bg-white rounded-md shadow-sm p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Refund Methods & Processing Times</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {refundInfo.map((info, index) => (
-              <div key={index} className="text-center p-4 bg-gray-50 rounded">
+              <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-center mb-3">
+                  <div className="p-2 bg-pink-100 rounded-full">
+                    <div className="text-pink-600">{info.icon}</div>
+                  </div>
+                </div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-1">{info.method}</h3>
-                <p className="text-green-600 font-medium mb-1 text-sm">{info.time}</p>
+                <p className="text-teal-600 font-medium mb-1 text-sm">{info.time}</p>
                 <p className="text-gray-600 text-xs">{info.description}</p>
               </div>
             ))}
@@ -190,36 +271,36 @@ const Returns: React.FC = () => {
 
         {/* FAQ Section */}
         <div className="bg-white rounded-md shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Returns FAQ</h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">How long do I have to return an item?</h3>
-              <p className="text-sm text-gray-600">You have 30 days from the delivery date to initiate a return for most physical items. Digital downloads are final sale.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">Do I have to pay for return shipping?</h3>
-              <p className="text-sm text-gray-600">We provide free return shipping for domestic returns on qualifying items. You'll receive a prepaid return label.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">How long does it take to process my refund?</h3>
-              <p className="text-sm text-gray-600">Once we receive your return, refunds are processed within 3-5 business days and appear on your original payment method within 7-10 business days.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">Can I exchange an item instead of returning it?</h3>
-              <p className="text-sm text-gray-600">Yes! You can request an exchange for a different size or color. The process is similar to returns, but we'll send the new item once we receive your return.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">What if my item arrives damaged?</h3>
-              <p className="text-sm text-gray-600">If your item arrives damaged, contact us immediately with photos. We'll arrange for a replacement or full refund at no cost to you.</p>
-            </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Returns & Refunds FAQ</h2>
+          <div className="space-y-3">
+            {faqData.map((faq, index) => (
+              <div key={index} className="border border-gray-200 rounded-lg">
+                <button
+                  onClick={() => toggleFAQ(index)}
+                  className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors rounded-lg"
+                >
+                  <h3 className="text-sm font-semibold text-gray-900 pr-4">{faq.question}</h3>
+                  {openFAQ === index ? (
+                    <ChevronUp className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  )}
+                </button>
+                {openFAQ === index && (
+                  <div className="px-4 pb-3">
+                    <p className="text-sm text-gray-600">{faq.answer}</p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Contact Support */}
         <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-md p-6 text-white text-center">
-          <h2 className="text-lg font-bold mb-3">Need Help with Returns?</h2>
+          <h2 className="text-lg font-bold mb-3">Need Help with Returns & Refunds?</h2>
           <p className="text-teal-100 mb-4 text-sm">
-            Have questions about returning an item or need assistance with the return process?
+            Have questions about returning an item, processing refunds, or need assistance with the return process?
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a

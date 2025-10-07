@@ -274,6 +274,48 @@ export interface AdvancedCreateShipmentRequest {
   };
 }
 
+// Return-specific interfaces
+export interface ReturnPickupRequest {
+  order_id: string;
+  return_request_id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  customer_city: string;
+  customer_state: string;
+  customer_pincode: string;
+  product_name: string;
+  product_description: string;
+  quantity: number;
+  weight: number;
+  return_reason: string;
+  pickup_date: string;
+  pickup_time_slot: string;
+  special_instructions?: string;
+}
+
+export interface ReturnPickupResponse {
+  success: boolean;
+  pickup_id?: string;
+  tracking_number?: string;
+  estimated_pickup_date?: string;
+  pickup_time_slot?: string;
+  error?: string;
+}
+
+export interface ReturnTrackingInfo {
+  return_id: string;
+  status: 'pickup_scheduled' | 'picked_up' | 'in_transit' | 'delivered_to_warehouse' | 'processed';
+  current_location: string;
+  estimated_delivery_date?: string;
+  tracking_history: Array<{
+    status: string;
+    location: string;
+    timestamp: string;
+    description: string;
+  }>;
+}
+
 class DelhiveryService {
   private axiosInstance;
   private expressAxiosInstance;
@@ -1158,6 +1200,202 @@ class DelhiveryService {
       console.error('Error creating advanced shipment with waybill:', error);
       throw new Error('Failed to create advanced shipment with waybill');
     }
+  }
+
+  // ===== RETURN MANAGEMENT METHODS =====
+
+  /**
+   * Schedule a return pickup
+   */
+  async scheduleReturnPickup(returnRequest: ReturnPickupRequest): Promise<ReturnPickupResponse> {
+    try {
+      if (!isApiConfigured()) {
+        console.warn('Delhivery API not configured, returning mock return pickup data');
+        return this.getMockReturnPickupResponse(returnRequest);
+      }
+
+      const pickupData = {
+        order_id: returnRequest.order_id,
+        return_request_id: returnRequest.return_request_id,
+        customer_name: returnRequest.customer_name,
+        customer_phone: returnRequest.customer_phone,
+        customer_address: returnRequest.customer_address,
+        customer_city: returnRequest.customer_city,
+        customer_state: returnRequest.customer_state,
+        customer_pincode: returnRequest.customer_pincode,
+        product_name: returnRequest.product_name,
+        product_description: returnRequest.product_description,
+        quantity: returnRequest.quantity,
+        weight: returnRequest.weight,
+        return_reason: returnRequest.return_reason,
+        pickup_date: returnRequest.pickup_date,
+        pickup_time_slot: returnRequest.pickup_time_slot,
+        special_instructions: returnRequest.special_instructions || '',
+        payment_mode: 'prepaid',
+        service_type: 'reverse'
+      };
+
+      const response = await this.axiosInstance.post('/pickup/schedule/return/', pickupData);
+      
+      return {
+        success: true,
+        pickup_id: response.data.pickup_id,
+        tracking_number: response.data.tracking_number,
+        estimated_pickup_date: response.data.estimated_pickup_date,
+        pickup_time_slot: response.data.pickup_time_slot
+      };
+    } catch (error) {
+      console.error('Error scheduling return pickup:', error);
+      
+      // If it's a network error, return mock data
+      if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNREFUSED') {
+        console.warn('Network error, returning mock return pickup data');
+        return this.getMockReturnPickupResponse(returnRequest);
+      }
+
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to schedule return pickup'
+      };
+    }
+  }
+
+  /**
+   * Track return pickup status
+   */
+  async trackReturnPickup(trackingNumber: string): Promise<ReturnTrackingInfo> {
+    try {
+      if (!isApiConfigured()) {
+        console.warn('Delhivery API not configured, returning mock return tracking data');
+        return this.getMockReturnTrackingInfo(trackingNumber);
+      }
+
+      const response = await this.trackAxiosInstance.get(`/api/packages/json/?tracking_number=${trackingNumber}&service=reverse`);
+      
+      const trackingData = response.data[0];
+      
+      return {
+        return_id: trackingNumber,
+        status: this.mapDelhiveryStatusToReturnStatus(trackingData.status),
+        current_location: trackingData.current_location || 'Unknown',
+        estimated_delivery_date: trackingData.estimated_delivery_date,
+        tracking_history: trackingData.tracking_history || []
+      };
+    } catch (error) {
+      console.error('Error tracking return pickup:', error);
+      
+      // If it's a network error, return mock data
+      if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNREFUSED') {
+        console.warn('Network error, returning mock return tracking data');
+        return this.getMockReturnTrackingInfo(trackingNumber);
+      }
+
+      throw new Error('Failed to track return pickup');
+    }
+  }
+
+  /**
+   * Cancel return pickup
+   */
+  async cancelReturnPickup(pickupId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      if (!isApiConfigured()) {
+        console.warn('Delhivery API not configured, returning mock cancellation');
+        return { success: true };
+      }
+
+      await this.axiosInstance.post(`/pickup/cancel/return/${pickupId}/`);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error cancelling return pickup:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to cancel return pickup'
+      };
+    }
+  }
+
+  /**
+   * Get available pickup time slots for returns
+   */
+  async getReturnPickupTimeSlots(pincode: string, date: string): Promise<string[]> {
+    try {
+      if (!isApiConfigured()) {
+        console.warn('Delhivery API not configured, returning mock time slots');
+        return this.getMockPickupTimeSlots();
+      }
+
+      const response = await this.axiosInstance.get(`/pickup/slots/return/?pincode=${pincode}&date=${date}`);
+      
+      return response.data.available_slots || [];
+    } catch (error) {
+      console.error('Error getting return pickup time slots:', error);
+      return this.getMockPickupTimeSlots();
+    }
+  }
+
+  /**
+   * Map Delhivery status to return status
+   */
+  private mapDelhiveryStatusToReturnStatus(delhiveryStatus: string): ReturnTrackingInfo['status'] {
+    const statusMap: Record<string, ReturnTrackingInfo['status']> = {
+      'Pickup Scheduled': 'pickup_scheduled',
+      'Pickup Attempted': 'pickup_scheduled',
+      'Picked Up': 'picked_up',
+      'In Transit': 'in_transit',
+      'Out for Delivery': 'in_transit',
+      'Delivered': 'delivered_to_warehouse',
+      'Processed': 'processed',
+      'Return Completed': 'processed'
+    };
+
+    return statusMap[delhiveryStatus] || 'pickup_scheduled';
+  }
+
+  /**
+   * Mock return pickup response for testing
+   */
+  private getMockReturnPickupResponse(returnRequest: ReturnPickupRequest): ReturnPickupResponse {
+    return {
+      success: true,
+      pickup_id: `RET${Date.now()}`,
+      tracking_number: `RTN${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      estimated_pickup_date: returnRequest.pickup_date,
+      pickup_time_slot: returnRequest.pickup_time_slot
+    };
+  }
+
+  /**
+   * Mock return tracking info for testing
+   */
+  private getMockReturnTrackingInfo(trackingNumber: string): ReturnTrackingInfo {
+    return {
+      return_id: trackingNumber,
+      status: 'pickup_scheduled',
+      current_location: 'Customer Location',
+      estimated_delivery_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      tracking_history: [
+        {
+          status: 'Pickup Scheduled',
+          location: 'Customer Location',
+          timestamp: new Date().toISOString(),
+          description: 'Return pickup has been scheduled'
+        }
+      ]
+    };
+  }
+
+  /**
+   * Mock pickup time slots
+   */
+  private getMockPickupTimeSlots(): string[] {
+    return [
+      '9:00 AM - 12:00 PM',
+      '12:00 PM - 3:00 PM',
+      '3:00 PM - 6:00 PM',
+      '6:00 PM - 9:00 PM'
+    ];
   }
 }
 

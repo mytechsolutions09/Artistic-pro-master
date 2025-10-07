@@ -48,14 +48,13 @@ const MenClothingPage: React.FC = () => {
     if (selectedCategory !== 'all') {
       clothingProducts = clothingProducts.filter(product => {
         const productType = product.clothingType?.toLowerCase() || '';
-        const productTitle = product.title.toLowerCase();
         
         // Match category with exact clothing types
         switch (selectedCategory) {
           case 'oversized-hoodies':
-            return productType === 'oversized hoodies' || 
-                   productType.includes('oversized hoodie') ||
-                   (productTitle.includes('oversized') && productTitle.includes('hoodie'));
+            return (productType === 'oversized hoodies' || 
+                   productType.includes('oversized hoodie')) &&
+                   !productType.includes('extra oversized');
           case 'extra-oversized-hoodies':
             return productType === 'extra oversized hoodies' || 
                    productType.includes('extra oversized hoodie');

@@ -34,6 +34,8 @@ import AboutUs from './pages/AboutUs';
 import FAQ from './pages/FAQ';
 import ShippingInfo from './pages/ShippingInfo';
 import Returns from './pages/Returns';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import LoginForm from './components/auth/LoginForm';
 import SignUpForm from './components/auth/SignUpForm';
 import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
@@ -56,6 +58,7 @@ import Reviews from './pages/admin/Reviews';
 import DatabaseManagement from './pages/admin/Database';
 import Clothes from './pages/admin/Clothes';
 import Shipping from './pages/admin/Shipping';
+import AdminReturns from './pages/admin/Returns';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import EnvTest from './components/EnvTest';
 import SkeletonTest from './pages/SkeletonTest';
@@ -105,7 +108,9 @@ function AppContent() {
                   <Route path="/about-us" element={<AboutUs />} />
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/shipping-info" element={<ShippingInfo />} />
-                  <Route path="/returns" element={<Returns />} />
+                  <Route path="/returns-and-refunds" element={<Returns />} />
+                  <Route path="/terms-and-conditions" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
                   
                   <Route path="/env-test" element={<EnvTest />} />
                   <Route path="/skeleton-test" element={<SkeletonTest />} />
@@ -124,6 +129,7 @@ function AppContent() {
                   <Route path="/admin/products" element={<AdminProtectedRoute><Products /></AdminProtectedRoute>} />
                   <Route path="/admin/clothes" element={<AdminProtectedRoute><Clothes /></AdminProtectedRoute>} />
                   <Route path="/admin/shipping" element={<AdminProtectedRoute><Shipping /></AdminProtectedRoute>} />
+                  <Route path="/admin/returns" element={<AdminProtectedRoute><AdminReturns /></AdminProtectedRoute>} />
                   <Route path="/admin/categories" element={<AdminProtectedRoute><Categories /></AdminProtectedRoute>} />
                   <Route path="/admin/users" element={<AdminProtectedRoute><Users /></AdminProtectedRoute>} />
                   <Route path="/admin/customer-care" element={<AdminProtectedRoute><CustomerCare /></AdminProtectedRoute>} />

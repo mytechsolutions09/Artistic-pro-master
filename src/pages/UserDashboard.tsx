@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   User, Settings, ShoppingBag, Heart, Download, Save, X, Eye, Star,
   FileDown, TrendingUp, Calendar, LogOut,
-  Package, Zap, Sparkles, Activity, Truck, MapPin, Clock, CheckCircle
+  Package, Zap, Sparkles, Activity, Truck, MapPin, Clock, CheckCircle, RotateCcw,
+  Search, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { CompleteOrderService } from '../services/completeOrderService';
 import { Order } from '../types';
@@ -15,7 +16,10 @@ import { generateProductUrl } from '../utils/slugUtils';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewInput from '../components/ReviewInput';
 import FilterSidebar from '../components/FilterSidebar';
+import ReturnRequestForm from '../components/ReturnRequestForm';
+import ReturnRequestsList from '../components/ReturnRequestsList';
 import { delhiveryService } from '../services/DelhiveryService';
+import { ReturnService } from '../services/returnService';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -37,6 +41,14 @@ const UserDashboard: React.FC = () => {
   const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const userFavorites = React.useMemo(() => featuredArtworks.slice(0, 4), [featuredArtworks]);
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+  const [returnRequests, setReturnRequests] = useState<any[]>([]);
+  const [returnNotification, setReturnNotification] = useState<{
+    show: boolean;
+    message: string;
+    type: 'error' | 'success' | 'info';
+  }>({ show: false, message: '', type: 'info' });
   
   // Settings form state
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -47,6 +59,11 @@ const UserDashboard: React.FC = () => {
     emailNotifications: true,
     orderUpdates: true
   });
+
+  // Return request state
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [selectedOrderItem, setSelectedOrderItem] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // Date filter state for orders
   const [dateFilter, setDateFilter] = useState({
@@ -176,22 +193,34 @@ const UserDashboard: React.FC = () => {
   }, [user]);
   
 
-  useEffect(() => {
-    const fetchUserOrders = async () => {
-      setOrdersLoading(true);
-      try {
-        // Get current user ID from auth context
-        const userId = user?.id;
-        
-        if (!userId) {
+  // Function to fetch return requests
+  const fetchReturnRequests = async () => {
+    try {
+      const customerEmail = user?.email;
+      if (!customerEmail) return;
+      
+      const requests = await ReturnService.getCustomerReturns(customerEmail);
+      setReturnRequests(requests);
+    } catch (error) {
+      console.error('Error fetching return requests:', error);
+    }
+  };
 
-          setUserOrders([]);
-          setOrdersLoading(false);
-          return;
-        }
-        
-        // First try to get orders from the database
-        const dbOrdersResult = await CompleteOrderService.getUserOrders(userId);
+  // Function to fetch user orders
+  const fetchUserOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      // Get current user ID from auth context
+      const userId = user?.id;
+      
+      if (!userId) {
+        setUserOrders([]);
+        setOrdersLoading(false);
+        return;
+      }
+      
+      // First try to get orders from the database
+      const dbOrdersResult = await CompleteOrderService.getUserOrders(userId);
         if (dbOrdersResult.success && dbOrdersResult.orders && dbOrdersResult.orders.length > 0) {
           // Transform database orders to match expected Order format
           const transformedOrders = dbOrdersResult.orders.map((dbOrder: any) => ({
@@ -213,7 +242,8 @@ const UserDashboard: React.FC = () => {
               
               
               return {
-                id: item.product_id, // Use product_id instead of order item id
+                id: item.product_id || item.id || `item-${Date.now()}-${Math.random()}`, // Ensure unique ID
+                orderItemId: item.id, // Preserve the actual order item ID from database
                 title: item.products?.title || 'Unknown Product',
                 price: itemPrice,
                 images: item.products?.main_image ? [item.products.main_image] : 
@@ -263,8 +293,11 @@ const UserDashboard: React.FC = () => {
       }
     };
 
+  useEffect(() => {
     fetchUserOrders();
+    fetchReturnRequests();
   }, [user]);
+
 
   // Fetch real tracking data from Delhivery for orders
   const fetchTrackingData = async (order: Order) => {
@@ -465,6 +498,44 @@ const UserDashboard: React.FC = () => {
     }
   };
 
+  const handleReturnRequest = (order: any, item: any) => {
+    setSelectedOrder(order);
+    setSelectedOrderItem(item);
+    setShowReturnForm(true);
+    setActiveTab('returns'); // Switch to returns tab
+  };
+
+  const handleReturnSuccess = async () => {
+    setShowReturnForm(false);
+    setSelectedOrderItem(null);
+    setSelectedOrder(null);
+    // Refresh orders and return requests to show updated status
+    await fetchUserOrders();
+    await fetchReturnRequests();
+  };
+
+  const handleReturnCancel = () => {
+    setShowReturnForm(false);
+    setSelectedOrderItem(null);
+    setSelectedOrder(null);
+  };
+
+  const showReturnNotification = (message: string, type: 'error' | 'success' | 'info' = 'error') => {
+    setReturnNotification({ show: true, message, type });
+    setTimeout(() => {
+      setReturnNotification({ show: false, message: '', type: 'info' });
+    }, 5000);
+  };
+
+  // Check if a return request already exists for an order item
+  const hasActiveReturnRequest = (orderId: string, itemId: string) => {
+    return returnRequests.some(request => 
+      request.order_id === orderId && 
+      request.order_item_id === itemId &&
+      ['pending', 'approved', 'processing'].includes(request.status)
+    );
+  };
+
   const handleReviewProduct = (product: any, orderId?: string, orderItemId?: string) => {
     setSelectedProductForReview({
       ...product,
@@ -497,6 +568,7 @@ const UserDashboard: React.FC = () => {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: User },
     { id: 'orders', label: 'My Orders', icon: ShoppingBag },
+    { id: 'returns', label: 'Returns', icon: RotateCcw },
     { id: 'favorites', label: 'Favorites', icon: Heart },
     { id: 'downloads', label: 'Downloads', icon: Download },
     { id: 'settings', label: 'Settings', icon: Settings }
@@ -512,10 +584,10 @@ const UserDashboard: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm text-gray-900 hover:shadow-lg transition-all duration-200 cursor-pointer">
+          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-teal-100 text-gray-900 hover:shadow-lg hover:shadow-teal-200 transition-all duration-200 cursor-pointer">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-1">
-                <div className="w-5 h-5 bg-gray-100 rounded flex items-center justify-center">
+                <div className="w-5 h-5 rounded flex items-center justify-center">
                   <User className="w-3 h-3 text-gray-700" />
                 </div>
                 <Calendar className="w-3 h-3 text-gray-500" />
@@ -525,10 +597,10 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm text-gray-900 hover:shadow-lg transition-all duration-200 cursor-pointer">
+          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-teal-100 text-gray-900 hover:shadow-lg hover:shadow-teal-200 transition-all duration-200 cursor-pointer">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-1">
-                <div className="w-5 h-5 bg-gray-100 rounded flex items-center justify-center">
+                <div className="w-5 h-5 rounded flex items-center justify-center">
                   <ShoppingBag className="w-3 h-3 text-gray-700" />
                 </div>
                 <TrendingUp className="w-3 h-3 text-gray-500" />
@@ -538,10 +610,10 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm text-gray-900 hover:shadow-lg transition-all duration-200 cursor-pointer">
+          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-teal-100 text-gray-900 hover:shadow-lg hover:shadow-teal-200 transition-all duration-200 cursor-pointer">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-1">
-                <div className="w-5 h-5 bg-gray-100 rounded flex items-center justify-center">
+                <div className="w-5 h-5 rounded flex items-center justify-center">
                   <Download className="w-3 h-3 text-gray-700" />
                 </div>
                 <Zap className="w-3 h-3 text-gray-500" />
@@ -551,10 +623,10 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm text-gray-900 hover:shadow-lg transition-all duration-200 cursor-pointer">
+          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-teal-100 text-gray-900 hover:shadow-lg hover:shadow-teal-200 transition-all duration-200 cursor-pointer">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-1">
-                <div className="w-5 h-5 bg-gray-100 rounded flex items-center justify-center">
+                <div className="w-5 h-5 rounded flex items-center justify-center">
                   <Heart className="w-3 h-3 text-gray-700" />
                 </div>
                 <Sparkles className="w-3 h-3 text-gray-500" />
@@ -569,7 +641,7 @@ const UserDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Recent Activity */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+            <div className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
               <div className="px-4 py-3 bg-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -588,12 +660,12 @@ const UserDashboard: React.FC = () => {
                 {recentActivity.length > 0 ? (
                   <div className="space-y-2">
                      {recentActivity.map((order, index) => (
-                       <div key={order.id} className="flex items-center space-x-3 p-2 bg-white rounded-lg hover:shadow-sm transition-all duration-200">
+                       <div key={order.id} className="flex items-center space-x-3 p-2 bg-white rounded-lg hover:shadow-sm hover:shadow-teal-100 transition-all duration-200">
                          <div className="w-6 h-6 rounded flex items-center justify-center text-gray-900 font-bold text-xs bg-white shadow-sm">
                            #{index + 1}
                          </div>
                          <div className="flex-1">
-                           <p className="font-semibold text-gray-900 text-sm">Order #{order.id.slice(-4)}</p>
+                           <p className="font-semibold text-gray-900 text-sm">Order #{order.id.slice(-4).toUpperCase()}</p>
                            <p className="text-xs text-gray-700">{order.items.length} items • {formatUIPrice(order.total, 'INR')}</p>
                            <p className="text-xs text-gray-500">{new Date(order.date).toLocaleDateString()}</p>
                          </div>
@@ -620,7 +692,7 @@ const UserDashboard: React.FC = () => {
 
           {/* Quick Actions */}
           <div className="space-y-3">
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+            <div className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
               <div className="px-4 py-3 bg-white">
                 <h3 className="text-sm font-bold text-gray-900 flex items-center">
                   <Zap className="w-4 h-4 mr-2 text-gray-700" />
@@ -642,7 +714,7 @@ const UserDashboard: React.FC = () => {
                        window.location.href = '/browse';
                      }
                    }}
-                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm"
+                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm hover:shadow-teal-100"
                  >
                    <ShoppingBag className="w-4 h-4 text-gray-700" />
                    <span className="font-medium text-sm">Browse Artwork</span>
@@ -653,14 +725,14 @@ const UserDashboard: React.FC = () => {
 
                      setActiveTab('downloads');
                    }}
-                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm"
+                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm hover:shadow-teal-100"
                  >
                    <Download className="w-4 h-4 text-gray-700" />
                    <span className="font-medium text-sm">My Downloads</span>
                  </button>
                  <button
                    onClick={() => setActiveTab('favorites')}
-                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm"
+                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm hover:shadow-teal-100"
                  >
                    <Heart className="w-4 h-4 text-gray-700" />
                    <span className="font-medium text-sm">Favorites</span>
@@ -669,10 +741,9 @@ const UserDashboard: React.FC = () => {
             </div>
 
             {/* Achievement Badge */}
-            <div className="p-3 rounded-lg text-gray-900 relative overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-3 rounded-lg text-gray-900 relative overflow-hidden bg-white shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
               <div className="relative z-10">
                 <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-sm">{currentMemberLevel.icon}</span>
                   <h4 className="text-sm font-bold">{currentMemberLevel.name}</h4>
                 </div>
                 <p className="text-gray-600 text-xs mb-2">
@@ -687,7 +758,7 @@ const UserDashboard: React.FC = () => {
                     </div>
                      <div className="w-full bg-white rounded-full h-1 mb-1 border">
                        <div 
-                         className="bg-gray-400 rounded-full h-1 transition-all duration-300"
+                         className="bg-teal-500 rounded-full h-1 transition-all duration-300"
                          style={{ width: `${Math.min(memberProgress.ordersProgress, memberProgress.spentProgress)}%` }}
                        ></div>
                      </div>
@@ -711,24 +782,42 @@ const UserDashboard: React.FC = () => {
     );
   };
 
+  const toggleOrderAccordion = (orderId: string) => {
+    setExpandedOrders(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
+
   const renderOrders = () => {
-    // Filter orders by date if filter is applied
-    const filteredOrders = dateFilter.showAll 
-      ? userOrders 
-      : userOrders.filter(order => {
-          const orderDate = new Date(order.date);
-          const startDate = dateFilter.startDate ? new Date(dateFilter.startDate) : null;
-          const endDate = dateFilter.endDate ? new Date(dateFilter.endDate) : null;
-          
-          if (startDate && endDate) {
-            return orderDate >= startDate && orderDate <= endDate;
-          } else if (startDate) {
-            return orderDate >= startDate;
-          } else if (endDate) {
-            return orderDate <= endDate;
-          }
-          return true;
-        });
+    // Filter orders by date and search query
+    const filteredOrders = userOrders.filter(order => {
+      // Date filter
+      const orderDate = new Date(order.date);
+      const startDate = dateFilter.startDate ? new Date(dateFilter.startDate) : null;
+      const endDate = dateFilter.endDate ? new Date(dateFilter.endDate) : null;
+      
+      const matchesDate = dateFilter.showAll || (() => {
+        if (startDate && endDate) {
+          return orderDate >= startDate && orderDate <= endDate;
+        } else if (startDate) {
+          return orderDate >= startDate;
+        } else if (endDate) {
+          return orderDate <= endDate;
+        }
+        return true;
+      })();
+
+      // Search filter (search in order ID, product titles, status)
+      const matchesSearch = !orderSearchQuery || 
+        order.id.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
+        order.status.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
+        order.items.some(item => 
+          item.title.toLowerCase().includes(orderSearchQuery.toLowerCase())
+        );
+      
+      return matchesDate && matchesSearch;
+    });
 
     const totalOrders = filteredOrders.length;
     const pendingOrders = filteredOrders.filter(order => order.status === 'pending').length;
@@ -738,12 +827,17 @@ const UserDashboard: React.FC = () => {
 
         {/* Order List */}
         <div className="rounded-lg">
-          <div className="p-3 bg-white rounded-lg shadow-sm mb-3 hover:shadow-md transition-shadow duration-200">
+          <div className="p-3 bg-white rounded-lg shadow-sm shadow-teal-100 mb-3 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <h3 className="text-sm font-bold text-gray-900">Order History</h3>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-600">{totalOrders} orders</span>
+                  <span className="text-xs text-gray-600">
+                    {filteredOrders.length === userOrders.length 
+                      ? `${totalOrders} orders`
+                      : `${filteredOrders.length} of ${userOrders.length} orders`
+                    }
+                  </span>
                   {pendingOrders > 0 && (
                     <span className="px-2 py-1 bg-white text-gray-800 text-xs rounded-full">
                       {pendingOrders} pending
@@ -751,9 +845,52 @@ const UserDashboard: React.FC = () => {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="mb-3 relative">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by order ID, product name, or status..."
+                value={orderSearchQuery}
+                onChange={(e) => setOrderSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-8 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+              />
+              {orderSearchQuery && (
+                <button
+                  onClick={() => setOrderSearchQuery('')}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Return Notification */}
+            {returnNotification.show && (
+              <div className={`mb-3 p-3 rounded-lg border flex items-center justify-between ${
+                returnNotification.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+                returnNotification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
+                'bg-blue-50 border-blue-200 text-blue-800'
+              }`}>
+                <div className="flex items-center space-x-2">
+                  {returnNotification.type === 'error' && <X className="w-4 h-4" />}
+                  {returnNotification.type === 'success' && <CheckCircle className="w-4 h-4" />}
+                  {returnNotification.type === 'info' && <Clock className="w-4 h-4" />}
+                  <span className="text-sm font-medium">{returnNotification.message}</span>
+                </div>
+                <button
+                  onClick={() => setReturnNotification({ show: false, message: '', type: 'info' })}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
               
-              {/* Date Filter */}
-              <div className="flex items-center space-x-2">
+            {/* Date Filter */}
+            <div className="flex items-center space-x-2 flex-wrap">
                 <div className="flex items-center space-x-1">
                   <input
                     type="checkbox"
@@ -825,219 +962,259 @@ const UserDashboard: React.FC = () => {
                     e.preventDefault();
                     navigate('/browse');
                   }}
-                  className="inline-flex items-center space-x-2 bg-white text-gray-900 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 text-xs"
+                  className="inline-flex items-center space-x-2 bg-white text-gray-900 px-3 py-2 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200 text-xs"
                 >
                   <ShoppingBag className="w-3 h-3" />
                   <span>Browse Artwork</span>
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {filteredOrders.map((order) => (
-            <div key={order.id} className="rounded-lg p-3 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h4 className="font-medium text-gray-900 text-xs">ORDER #{order.id.slice(-8)}</h4>
-                  <p className="text-xs text-gray-500">{new Date(order.date).toLocaleDateString()}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-gray-900 text-xs">{formatUIPrice(order.total, 'INR')}</p>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    order.status === 'completed' ? 'bg-white text-gray-800' : 'bg-white text-gray-800'
-                  }`}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {order.items.map((item, itemIndex) => (
-                  <div key={item.id} className="flex items-center justify-between p-2 rounded">
-                    <div className="flex items-center space-x-2">
-                      <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-8 h-8 rounded object-cover" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate text-xs">{item.title}</p>
-                        <p className="text-xs text-gray-500">
-                          {item.productType === 'poster' && item.posterSize 
-                            ? `Poster ${item.posterSize}`
-                            : 'Digital'
-                          }
-                        </p>
-                        <p className="text-xs text-gray-900 font-medium">{formatUIPrice(item.price, 'INR')}</p>
-                      </div>
-                    </div>
-                    {order.status === 'completed' && (
-                      <div className="flex items-center space-x-1">
-                        {item.productType === 'digital' && (
-                          <button
-                            onClick={() => handleDownload(order.downloadLinks?.[itemIndex] || '', item.title)}
-                            className="flex items-center space-x-1 px-2 py-1 bg-white text-gray-700 text-xs rounded hover:shadow-sm transition-shadow"
-                          >
-                            <Download className="w-3 h-3" />
-                            <span>Download</span>
-                          </button>
-                        )}
-                        {(
-                          <button
-                            onClick={() => handleReviewProduct(item, order.id, `${order.id}-${itemIndex}`)}
-                            className="flex items-center space-x-1 px-2 py-1 text-gray-600 text-xs rounded hover:shadow-sm transition-shadow"
-                          >
-                            <Star className="w-3 h-3" />
-                            <span>Review</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Order Tracking Section */}
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <Truck className="w-4 h-4 text-teal-600" />
-                    <span className="text-xs font-medium text-gray-900">Order Tracking</span>
-                    {trackingData[order.id] && (
-                      <span className="text-xs text-gray-500">#{trackingData[order.id].trackingNumber}</span>
-                    )}
-                    {trackingData[order.id]?.isFallback && (
-                      <span className="text-xs text-orange-500 bg-orange-100 px-1 rounded">Fallback</span>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {trackingLoading[order.id] && (
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-teal-600"></div>
-                    )}
-                    <button
-                      onClick={() => toggleTrackingExpansion(order.id)}
-                      className="text-xs text-teal-600 hover:text-teal-700 font-medium"
-                      disabled={trackingLoading[order.id]}
-                    >
-                      {expandedTracking[order.id] ? 'Hide Details' : 'Track Order'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Error Message */}
-                {trackingErrors[order.id] && (
-                  <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
-                    {trackingErrors[order.id]}
-                  </div>
-                )}
-
-                {/* Loading State */}
-                {trackingLoading[order.id] && !trackingData[order.id] && (
-                  <div className="space-y-2">
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2 mt-1"></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Tracking Details */}
-                {expandedTracking[order.id] && trackingData[order.id] && (
-                  <div className="space-y-3">
-                    {/* Tracking Status */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          trackingData[order.id].status === 'delivered' ? 'bg-green-500' :
-                          trackingData[order.id].status === 'shipped' ? 'bg-blue-500' :
-                          'bg-yellow-500'
-                        }`}></div>
-                        <span className="text-xs font-medium text-gray-900 capitalize">
-                          {trackingData[order.id].status === 'delivered' ? 'Delivered' :
-                           trackingData[order.id].status === 'shipped' ? 'Shipped' : 'Processing'}
-                        </span>
-                        {trackingData[order.id].isFallback && (
-                          <span className="text-xs text-orange-500">(Estimated)</span>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">Carrier: {trackingData[order.id].carrier}</p>
-                        {trackingData[order.id].estimatedDelivery && (
-                          <p className="text-xs text-gray-500">
-                            Est. Delivery: {trackingData[order.id].estimatedDelivery.toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Refresh Button for Fallback Data */}
-                    {trackingData[order.id].isFallback && (
-                      <div className="flex justify-center">
-                        <button
-                          onClick={() => fetchTrackingData(order)}
-                          disabled={trackingLoading[order.id]}
-                          className="text-xs text-teal-600 hover:text-teal-700 font-medium px-2 py-1 border border-teal-200 rounded hover:bg-teal-50"
-                        >
-                          {trackingLoading[order.id] ? 'Refreshing...' : 'Refresh Tracking'}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Tracking Steps */}
-                    <div className="space-y-2">
-                      {trackingData[order.id].steps.map((step: any, stepIndex: number) => (
-                        <div key={stepIndex} className="flex items-start space-x-3">
-                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                            step.status === 'completed' ? 'bg-green-500' :
-                            step.status === 'current' ? 'bg-blue-500' :
-                            'bg-gray-300'
-                          }`}>
-                            {step.status === 'completed' ? (
-                              <CheckCircle className="w-3 h-3 text-white" />
-                            ) : step.status === 'current' ? (
-                              <Clock className="w-3 h-3 text-white" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {filteredOrders.map((order) => {
+                  const isExpanded = expandedOrders[order.id];
+                  return (
+                    <div key={order.id} className="rounded-lg bg-white shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200 overflow-hidden h-fit">
+                      {/* Accordion Header */}
+                      <button
+                        onClick={() => toggleOrderAccordion(order.id)}
+                        className="w-full p-3 text-left hover:bg-gray-50 transition-colors focus:outline-none"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Package className="w-4 h-4 text-teal-600" />
+                            <div>
+                              <h4 className="font-medium text-gray-900 text-xs">ORDER #{order.id.slice(-8).toUpperCase()}</h4>
+                              <p className="text-xs text-gray-500">{new Date(order.date).toLocaleDateString()} • {order.items.length} item{order.items.length > 1 ? 's' : ''}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="text-right">
+                              <p className="font-semibold text-gray-900 text-xs">{formatUIPrice(order.total, 'INR')}</p>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              </span>
+                            </div>
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4 text-gray-400" />
                             ) : (
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                              <ChevronDown className="w-4 h-4 text-gray-400" />
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className={`text-xs font-medium ${
-                                step.status === 'completed' ? 'text-gray-900' :
-                                step.status === 'current' ? 'text-blue-600' :
-                                'text-gray-500'
-                              }`}>
-                                {step.title}
-                              </p>
-                              {step.date && (
-                                <p className="text-xs text-gray-500">
-                                  {step.date.toLocaleDateString()}
-                                </p>
+                        </div>
+                      </button>
+
+                      {/* Accordion Content */}
+                      {isExpanded && (
+                        <div className="px-3 pb-3 border-t border-gray-100">
+                          <div className="pt-3 space-y-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {order.items.map((item, itemIndex) => (
+                                <div key={`${order.id}-${itemIndex}-${item.id || `item-${itemIndex}`}`} className="flex items-center justify-between p-2 rounded">
+                                  <div className="flex items-center space-x-2">
+                                    <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-8 h-8 rounded object-cover" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-gray-900 truncate text-xs">{item.title}</p>
+                                      <p className="text-xs text-gray-500">
+                                        {item.productType === 'poster' && item.posterSize 
+                                          ? `Poster ${item.posterSize}`
+                                          : 'Digital'
+                                        }
+                                      </p>
+                                      <p className="text-xs text-gray-900 font-medium">{formatUIPrice(item.price, 'INR')}</p>
+                                    </div>
+                                  </div>
+                                  {order.status === 'completed' && (
+                                    <div className="flex items-center space-x-1">
+                                      {item.productType === 'digital' && (
+                                        <button
+                                          onClick={() => handleDownload(order.downloadLinks?.[itemIndex] || '', item.title)}
+                                          className="flex items-center space-x-1 px-2 py-1 bg-white text-gray-700 text-xs rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow"
+                                        >
+                                          <Download className="w-3 h-3" />
+                                          <span>Download</span>
+                                        </button>
+                                      )}
+                                      {item.productType !== 'digital' && (
+                                        <button
+                                          onClick={() => {
+                                            const hasReturn = hasActiveReturnRequest(order.id, item.id);
+                                            if (hasReturn) {
+                                              showReturnNotification('Return request already exists for this item');
+                                            } else {
+                                              handleReturnRequest(order, { ...item, itemIndex });
+                                            }
+                                          }}
+                                          className="flex items-center space-x-1 px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded hover:bg-teal-100 transition-colors"
+                                        >
+                                          <RotateCcw className="w-3 h-3" />
+                                          <span>Return</span>
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => handleReviewProduct(item, order.id, `${order.id}-${itemIndex}`)}
+                                        className="flex items-center space-x-1 px-2 py-1 text-gray-600 text-xs rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow"
+                                      >
+                                        <Star className="w-3 h-3" />
+                                        <span>Review</span>
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Order Tracking Section */}
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-2">
+                                  <Truck className="w-4 h-4 text-teal-600" />
+                                  <span className="text-xs font-medium text-gray-900">Order Tracking</span>
+                                  {trackingData[order.id] && (
+                                    <span className="text-xs text-gray-500">#{trackingData[order.id].trackingNumber}</span>
+                                  )}
+                                  {trackingData[order.id]?.isFallback && (
+                                    <span className="text-xs text-orange-500 bg-orange-100 px-1 rounded">Fallback</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {trackingLoading[order.id] && (
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-teal-600"></div>
+                                  )}
+                                  <button
+                                    onClick={() => toggleTrackingExpansion(order.id)}
+                                    className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                                    disabled={trackingLoading[order.id]}
+                                  >
+                                    {expandedTracking[order.id] ? 'Hide Details' : 'Track Order'}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Error Message */}
+                              {trackingErrors[order.id] && (
+                                <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
+                                  {trackingErrors[order.id]}
+                                </div>
+                              )}
+
+                              {/* Loading State */}
+                              {trackingLoading[order.id] && !trackingData[order.id] && (
+                                <div className="space-y-2">
+                                  <div className="animate-pulse">
+                                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                    <div className="h-3 bg-gray-200 rounded w-1/2 mt-1"></div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Tracking Details */}
+                              {expandedTracking[order.id] && trackingData[order.id] && (
+                                <div className="space-y-3">
+                                  {/* Tracking Status */}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                      <div className={`w-2 h-2 rounded-full ${
+                                        trackingData[order.id].status === 'delivered' ? 'bg-green-500' :
+                                        trackingData[order.id].status === 'shipped' ? 'bg-blue-500' :
+                                        'bg-yellow-500'
+                                      }`}></div>
+                                      <span className="text-xs font-medium text-gray-900 capitalize">
+                                        {trackingData[order.id].status === 'delivered' ? 'Delivered' :
+                                         trackingData[order.id].status === 'shipped' ? 'Shipped' : 'Processing'}
+                                      </span>
+                                      {trackingData[order.id].isFallback && (
+                                        <span className="text-xs text-orange-500">(Estimated)</span>
+                                      )}
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-xs text-gray-500">Carrier: {trackingData[order.id].carrier}</p>
+                                      {trackingData[order.id].estimatedDelivery && (
+                                        <p className="text-xs text-gray-500">
+                                          Est. Delivery: {trackingData[order.id].estimatedDelivery.toLocaleDateString()}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Refresh Button for Fallback Data */}
+                                  {trackingData[order.id].isFallback && (
+                                    <div className="flex justify-center">
+                                      <button
+                                        onClick={() => fetchTrackingData(order)}
+                                        disabled={trackingLoading[order.id]}
+                                        className="text-xs text-teal-600 hover:text-teal-700 font-medium px-2 py-1 border border-teal-200 rounded hover:bg-teal-50"
+                                      >
+                                        {trackingLoading[order.id] ? 'Refreshing...' : 'Refresh Tracking'}
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {/* Tracking Steps */}
+                                  <div className="space-y-2">
+                                    {trackingData[order.id].steps.map((step: any, stepIndex: number) => (
+                                      <div key={stepIndex} className="flex items-start space-x-3">
+                                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                                          step.status === 'completed' ? 'bg-green-500' :
+                                          step.status === 'current' ? 'bg-blue-500' :
+                                          'bg-gray-300'
+                                        }`}>
+                                          {step.status === 'completed' ? (
+                                            <CheckCircle className="w-3 h-3 text-white" />
+                                          ) : step.status === 'current' ? (
+                                            <Clock className="w-3 h-3 text-white" />
+                                          ) : (
+                                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center justify-between">
+                                            <p className={`text-xs font-medium ${
+                                              step.status === 'completed' ? 'text-gray-900' :
+                                              step.status === 'current' ? 'text-blue-600' :
+                                              'text-gray-500'
+                                            }`}>
+                                              {step.title}
+                                            </p>
+                                            {step.date && (
+                                              <p className="text-xs text-gray-500">
+                                                {step.date.toLocaleDateString()}
+                                              </p>
+                                            )}
+                                          </div>
+                                          <p className="text-xs text-gray-600 mt-0.5">{step.description}</p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Delhivery Tracking Link */}
+                                  {trackingData[order.id].trackingNumber && !trackingData[order.id].isFallback && (
+                                    <div className="pt-2 border-t border-gray-100">
+                                      <a
+                                        href={`https://track.delhivery.com/${trackingData[order.id].trackingNumber}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                                      >
+                                        View on Delhivery →
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
-                            <p className="text-xs text-gray-600 mt-0.5">{step.description}</p>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
-
-                    {/* Delhivery Tracking Link */}
-                    {trackingData[order.id].trackingNumber && !trackingData[order.id].isFallback && (
-                      <div className="pt-2 border-t border-gray-100">
-                        <a
-                          href={`https://track.delhivery.com/${trackingData[order.id].trackingNumber}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-teal-600 hover:text-teal-700 font-medium"
-                        >
-                          View on Delhivery →
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
-      </div>
     );
   };
 
@@ -1062,7 +1239,7 @@ const UserDashboard: React.FC = () => {
     return (
       <div className="space-y-4">
         {/* Favorites Stats */}
-        <div className="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white p-3 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-gray-900">My Favorites</h3>
@@ -1076,7 +1253,7 @@ const UserDashboard: React.FC = () => {
         </div>
 
         {/* Favorites Grid */}
-        <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
           <div className="p-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-900">Saved Artwork</h3>
@@ -1107,7 +1284,7 @@ const UserDashboard: React.FC = () => {
                 <p className="text-gray-600 mb-4 text-xs">Save artwork you love to see them here.</p>
                 <button
                   onClick={() => navigate('/browse')}
-                  className="inline-flex items-center space-x-2 bg-white text-gray-900 px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                  className="inline-flex items-center space-x-2 bg-white text-gray-900 px-4 py-2 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
                 >
                   <Heart className="w-4 h-4" />
                   <span className="text-xs">Browse Artwork</span>
@@ -1137,7 +1314,7 @@ const UserDashboard: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredFavorites.map((artwork) => (
-                  <div key={artwork.id} className="group bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={() => handleViewProduct(artwork)}>
+                  <div key={artwork.id} className="group bg-white rounded-lg p-3 shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200 cursor-pointer" onClick={() => handleViewProduct(artwork)}>
                     <div className="relative overflow-hidden rounded-lg mb-2">
                       <img
                         src={artwork.images?.[0] || '/api/placeholder/400/400'}
@@ -1184,7 +1361,7 @@ const UserDashboard: React.FC = () => {
                             e.stopPropagation();
                             handleViewProduct(artwork);
                           }}
-                          className="flex-1 bg-white text-gray-600 py-1.5 px-2 rounded text-xs shadow-sm hover:shadow-md transition-shadow duration-200"
+                          className="flex-1 bg-white text-gray-600 py-1.5 px-2 rounded text-xs shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
                         >
                         View Details
                       </button>
@@ -1193,7 +1370,7 @@ const UserDashboard: React.FC = () => {
                             e.stopPropagation();
                             navigate(`/checkout?product=${artwork.id}`);
                           }}
-                          className="flex-1 bg-white text-gray-900 py-1.5 px-2 rounded text-xs shadow-sm hover:shadow-md transition-shadow duration-200"
+                          className="flex-1 bg-white text-gray-900 py-1.5 px-2 rounded text-xs shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
                         >
                         Buy Now
                       </button>
@@ -1249,7 +1426,7 @@ const UserDashboard: React.FC = () => {
     return (
       <div className="space-y-4">
         {/* Download Stats */}
-        <div className="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white p-3 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-gray-900">My Downloads</h3>
@@ -1263,7 +1440,7 @@ const UserDashboard: React.FC = () => {
         </div>
 
         {/* Downloads List */}
-        <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
           <div className="p-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-900">Downloadable Files</h3>
@@ -1271,7 +1448,7 @@ const UserDashboard: React.FC = () => {
                 {downloadableItems.length > 0 && (
                   <button
                     onClick={handleDownloadAll}
-                    className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded shadow-sm hover:shadow-md transition-shadow duration-200 text-xs"
+                    className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200 text-xs"
                   >
                     <Download className="w-3 h-3" />
                     <span>Download All</span>
@@ -1289,7 +1466,7 @@ const UserDashboard: React.FC = () => {
               <p className="text-gray-600 mb-4 text-xs">Purchase digital products to access PDF files and high-resolution images for download.</p>
               <button
                 onClick={() => navigate('/browse')}
-                className="inline-flex items-center space-x-2 bg-white text-gray-900 px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                className="inline-flex items-center space-x-2 bg-white text-gray-900 px-4 py-2 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span className="text-xs">Browse Artwork</span>
@@ -1298,7 +1475,7 @@ const UserDashboard: React.FC = () => {
           ) : (
             <div className="space-y-2">
               {downloadableItems.map((item) => (
-                <div key={`${item.orderId}-${item.id}`} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div key={`${item.orderId}-${item.id}`} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
                   <div className="flex items-center space-x-3">
                     <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-12 h-12 rounded object-cover" />
                     <div className="flex-1">
@@ -1349,7 +1526,7 @@ const UserDashboard: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDownload(item.downloadUrl || '', item.title)}
-                        className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded shadow-sm hover:shadow-md transition-shadow duration-200"
+                        className="flex items-center space-x-1 px-3 py-1.5 bg-white text-gray-900 rounded shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
                         title="Download Files"
                       >
                         <Download className="w-3 h-3" />
@@ -1516,7 +1693,7 @@ const UserDashboard: React.FC = () => {
     return (
       <div className="space-y-4">
         {/* Profile Settings */}
-        <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white p-4 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-gray-900">Profile Information</h3>
           <div className="flex space-x-2">
@@ -1623,7 +1800,7 @@ const UserDashboard: React.FC = () => {
       </div>
 
       {/* Notification Settings */}
-      <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="bg-white p-4 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-gray-900">Notification Preferences</h3>
           <button
@@ -1701,19 +1878,19 @@ const UserDashboard: React.FC = () => {
       </div>
 
         {/* Privacy Settings */}
-        <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="bg-white p-4 rounded-lg shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
           <h3 className="text-sm font-bold text-gray-900 mb-4">Privacy & Security</h3>
           <div className="space-y-2">
             <button 
               onClick={handleChangePassword}
-              className="w-full text-left p-3 bg-white rounded shadow-sm hover:shadow-md transition-shadow duration-200"
+              className="w-full text-left p-3 bg-white rounded shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
             >
               <h4 className="font-medium text-gray-900 text-xs">Change Password</h4>
               <p className="text-xs text-gray-600">Update your account password</p>
             </button>
             <button 
               onClick={handleDownloadData}
-              className="w-full text-left p-3 bg-white rounded shadow-sm hover:shadow-md transition-shadow duration-200"
+              className="w-full text-left p-3 bg-white rounded shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200"
             >
               <h4 className="font-medium text-gray-900 text-xs">Download My Data</h4>
               <p className="text-xs text-gray-600">Get a copy of your account data</p>
@@ -1724,10 +1901,60 @@ const UserDashboard: React.FC = () => {
     );
   };
 
+  const renderReturns = () => {
+    if (showReturnForm && selectedOrderItem && selectedOrder) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900">Request Return</h2>
+            <button
+              onClick={handleReturnCancel}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <ReturnRequestForm
+            orderId={selectedOrder.id}
+            itemId={selectedOrderItem.orderItemId}
+            productTitle={selectedOrderItem.title}
+            productImage={selectedOrderItem.images?.[0]}
+            quantity={1}
+            unitPrice={selectedOrderItem.price}
+            totalPrice={selectedOrderItem.price}
+            selectedProductType={selectedOrderItem.productType}
+            onSuccess={handleReturnSuccess}
+            onCancel={handleReturnCancel}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Returns & Refunds</h2>
+            <p className="text-gray-600 text-sm mt-1">Track your return requests and refund status</p>
+          </div>
+          <button
+            onClick={() => navigate('/returns-and-refunds')}
+            className="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors text-sm"
+          >
+            View Return Policy
+          </button>
+        </div>
+
+        <ReturnRequestsList customerEmail={user?.email || ''} />
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview': return renderOverview();
       case 'orders': return renderOrders();
+      case 'returns': return renderReturns();
       case 'favorites': return renderFavorites();
       case 'downloads': return renderDownloads();
       case 'settings': return renderSettings();
@@ -1741,7 +1968,7 @@ const UserDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4">
           {/* Main Content */}
           <div className="w-full">
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden">
               <div className="p-4">
                 {renderContent()}
               </div>
@@ -1762,13 +1989,11 @@ const UserDashboard: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-col items-center space-y-1 px-3 py-2 rounded transition-all duration-200 ${
                   isActive
-                    ? 'text-gray-900'
+                    ? 'text-teal-600'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <div className={`w-6 h-6 rounded flex items-center justify-center ${
-                  isActive ? 'bg-gray-100' : ''
-                }`}>
+                <div className="w-6 h-6 rounded flex items-center justify-center">
                   <Icon className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-medium">{tab.label}</span>

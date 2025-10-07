@@ -17,7 +17,8 @@ import {
   Database,
   Table,
   Truck,
-  MessageSquare
+  MessageSquare,
+  RotateCcw
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -59,6 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'clothes', label: 'Clothes', icon: Table, path: '/admin/clothes' },
     { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },
+    { id: 'returns', label: 'Returns', icon: RotateCcw, path: '/admin/returns' },
     { id: 'categories', label: 'Categories', icon: Palette, path: '/admin/categories' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
     { id: 'customer-care', label: 'Customer Care', icon: MessageSquare, path: '/admin/customer-care' },

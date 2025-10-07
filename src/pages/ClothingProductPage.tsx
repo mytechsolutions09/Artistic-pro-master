@@ -418,6 +418,15 @@ const ClothingProductPage: React.FC = () => {
                 {product.trackInventory && product.stockQuantity === 0 ? 'OUT OF STOCK' : 'BUY NOW'}
               </button>
             </div>
+
+            {/* Extra Oversized Sizing Note */}
+            {product.clothingType && product.clothingType.toLowerCase().includes('extra oversized') && (
+              <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
+                <p className="text-xs font-medium" style={{ color: '#ea580c' }}>
+                  <span className="font-bold">Note:</span> If you usually wear M size, then go for S size. Do check size chart.
+                </p>
+              </div>
+            )}
             </div>
           </div>
         </div>

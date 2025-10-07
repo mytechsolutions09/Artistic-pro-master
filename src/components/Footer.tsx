@@ -125,8 +125,8 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/returns" className="text-gray-400 hover:text-white transition-colors text-sm">
-                  Returns
+                <Link to="/returns-and-refunds" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  Returns & Refunds
                 </Link>
               </li>
             </ul>
@@ -162,7 +162,7 @@ const Footer: React.FC = () => {
               <Link to="/privacy" className="text-gray-400 hover:text-white text-xs transition-colors">
                 Privacy Policy
               </Link>
-              <Link to="/terms" className="text-gray-400 hover:text-white text-xs transition-colors">
+              <Link to="/terms-and-conditions" className="text-gray-400 hover:text-white text-xs transition-colors">
                 Terms of Service
               </Link>
               <div className="flex items-center text-gray-400 text-xs">

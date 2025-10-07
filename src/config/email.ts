@@ -76,7 +76,8 @@ export enum EmailType {
   EMAIL_VERIFICATION = 'email_verification',
   NEWSLETTER = 'newsletter',
   MARKETING = 'marketing',
-  ADMIN_NOTIFICATION = 'admin_notification'
+  ADMIN_NOTIFICATION = 'admin_notification',
+  RETURN_REQUEST = 'return_request'
 }
 
 // Email priority levels
