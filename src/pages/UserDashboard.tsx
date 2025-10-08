@@ -1112,9 +1112,53 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
           {ordersLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-              <p className="text-gray-700 text-sm">Loading your orders...</p>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden animate-pulse">
+                  <div className="p-6">
+                    {/* Header Skeleton */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                        <div className="space-y-2">
+                          <div className="h-4 w-32 bg-gray-200 rounded"></div>
+                          <div className="h-3 w-24 bg-gray-200 rounded"></div>
+                        </div>
+                      </div>
+                      <div className="h-8 w-20 bg-gray-200 rounded-full"></div>
+                    </div>
+                    
+                    {/* Order Details Skeleton */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                    </div>
+                    
+                    {/* Order Items Skeleton */}
+                    <div className="space-y-3">
+                      {[1, 2].map((j) => (
+                        <div key={j} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-16 h-16 bg-gray-200 rounded"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 w-3/4 bg-gray-200 rounded"></div>
+                            <div className="h-3 w-1/2 bg-gray-200 rounded"></div>
+                          </div>
+                          <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Actions Skeleton */}
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between">
+                      <div className="flex space-x-2">
+                        <div className="h-8 w-20 bg-gray-200 rounded"></div>
+                        <div className="h-8 w-20 bg-gray-200 rounded"></div>
+                      </div>
+                      <div className="h-8 w-28 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-12">
@@ -1608,6 +1652,58 @@ const UserDashboard: React.FC = () => {
   };
 
   const renderDownloads = () => {
+    if (ordersLoading) {
+      return (
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="h-10 w-32 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+            
+            {/* Stats Skeleton */}
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-4 w-40 bg-gray-200 rounded"></div>
+                  <div className="h-3 w-32 bg-gray-200 rounded"></div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                  <div className="h-8 w-12 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Download Items Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-4 bg-gray-50 rounded-lg border border-gray-200 animate-pulse">
+                  <div className="flex flex-col space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-3/4 bg-gray-200 rounded"></div>
+                        <div className="h-3 w-1/2 bg-gray-200 rounded"></div>
+                        <div className="h-3 w-2/3 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                      <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                      <div className="h-8 w-20 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Get all completed orders and extract downloadable items (only digital products)
     const completedOrders = userOrders.filter(order => order.status === 'completed');
     const downloadableItems = completedOrders.flatMap(order => 
