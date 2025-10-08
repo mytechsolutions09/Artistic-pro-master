@@ -11,19 +11,39 @@ cd H:\site\Artistic-pro-master
 
 ## 🚀 Step-by-Step Commands
 
-### Step 1: Check if Supabase CLI is Installed
+### Step 1: Install Supabase CLI
 
+**⚠️ Important:** `npm install -g supabase` no longer works!
+
+**Choose one method:**
+
+#### **Option A: Use npx (No Installation - Quick & Easy)**
 ```powershell
-supabase --version
+# No installation needed! Just add 'npx' before every 'supabase' command
+# Example: npx supabase login
 ```
 
-**If not installed:**
+#### **Option B: Install via Scoop (Recommended)**
 ```powershell
-npm install -g supabase
+# Install Scoop first
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+
+# Install Supabase CLI
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
 ```
+
+**See:** `INSTALL_SUPABASE_CLI_WINDOWS.md` for all installation methods
 
 ### Step 2: Login to Supabase
 
+**If using npx:**
+```powershell
+npx supabase login
+```
+
+**If installed via Scoop:**
 ```powershell
 supabase login
 ```
@@ -42,6 +62,12 @@ Your project ref is: `abcdefghijklmnop`
 
 ### Step 4: Link Your Project
 
+**If using npx:**
+```powershell
+npx supabase link --project-ref YOUR-PROJECT-REF
+```
+
+**If installed via Scoop:**
 ```powershell
 supabase link --project-ref YOUR-PROJECT-REF
 ```
@@ -50,7 +76,7 @@ Replace `YOUR-PROJECT-REF` with your actual project reference.
 
 Example:
 ```powershell
-supabase link --project-ref abcdefghijklmnop
+npx supabase link --project-ref abcdefghijklmnop
 ```
 
 ### Step 5: Get Your Razorpay Keys
@@ -63,39 +89,42 @@ supabase link --project-ref abcdefghijklmnop
 
 ### Step 6: Set Razorpay Secrets
 
+**If using npx:**
 ```powershell
-supabase secrets set RAZORPAY_KEY_ID=rzp_live_XXXXXXXXXXXXX
+npx supabase secrets set RAZORPAY_KEY_ID=rzp_live_XXXXXXXXXXXXX
+npx supabase secrets set RAZORPAY_KEY_SECRET=your_actual_secret_key
 ```
 
-Replace `rzp_live_XXXXXXXXXXXXX` with your actual Key ID.
-
-Then:
+**If installed via Scoop:**
 ```powershell
+supabase secrets set RAZORPAY_KEY_ID=rzp_live_XXXXXXXXXXXXX
 supabase secrets set RAZORPAY_KEY_SECRET=your_actual_secret_key
 ```
 
-Replace `your_actual_secret_key` with your actual Key Secret.
+Replace with your actual Razorpay live keys.
 
 ### Step 7: Deploy Edge Functions
 
-Deploy the first function:
+**If using npx:**
 ```powershell
-supabase functions deploy create-razorpay-order
+npx supabase functions deploy
 ```
 
-Deploy the second function:
-```powershell
-supabase functions deploy verify-razorpay-payment
-```
-
-**Or deploy both at once:**
+**If installed via Scoop:**
 ```powershell
 supabase functions deploy
 ```
 
+This deploys both functions at once!
+
 ### Step 8: Verify Deployment
 
-Check if functions are deployed:
+**If using npx:**
+```powershell
+npx supabase functions list
+```
+
+**If installed via Scoop:**
 ```powershell
 supabase functions list
 ```
