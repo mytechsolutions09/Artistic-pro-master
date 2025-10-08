@@ -1,10 +1,12 @@
 import { supabase } from './supabaseService';
 import CurrencyService from './currencyService';
+import delhiveryService from './DelhiveryService';
 
 export interface CompleteOrderData {
   customerId: string | null;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   items: Array<{
     productId: string;
     productTitle: string;
@@ -16,10 +18,11 @@ export interface CompleteOrderData {
     selectedPosterSize?: string;
   }>;
   totalAmount: number;
-  paymentMethod: 'card' | 'paypal' | 'bank_transfer';
+  paymentMethod: 'card' | 'paypal' | 'bank_transfer' | 'razorpay' | 'cod';
   paymentId?: string;
   notes?: string;
   shippingAddress?: string;
+  billingAddress?: string;
 }
 
 export interface OrderCompletionResult {
@@ -66,19 +69,34 @@ export class CompleteOrderService {
 
       const orderId = orderResult.orderId!;
 
-      // Step 2: Get product details for email
+      // Step 2: Create Delhivery shipment for orders with physical products
+      const hasPhysicalProducts = orderData.items.some(item => 
+        item.selectedProductType === 'poster' || item.selectedProductType === 'clothing'
+      );
+      
+      if (hasPhysicalProducts) {
+        try {
+          await this.createDelhiveryShipment(orderData, orderId);
+          console.log('✅ Delhivery shipment created for order:', orderId);
+        } catch (error) {
+          console.error('⚠️ Failed to create Delhivery shipment (non-critical):', error);
+          // Don't fail the entire order if shipment creation fails
+        }
+      }
+
+      // Step 3: Get product details for email
       const productDetails = await this.getProductDetailsForEmail(orderData.items);
       if (!productDetails.success) {
         return { success: false, error: productDetails.error };
       }
 
-      // Step 3: Generate download links
+      // Step 4: Generate download links
       const downloadLinks = await this.generateSecureDownloadLinks(orderId, orderData.items);
 
-      // Step 4: Update order with download links
+      // Step 5: Update order with download links
       await this.updateOrderWithDownloadLinks(orderId, downloadLinks);
 
-      // Step 5: Send confirmation email with main images and PDFs
+      // Step 6: Send confirmation email with main images and PDFs
       const emailResult = await this.sendOrderConfirmationEmail({
         customerName: orderData.customerName,
         customerEmail: orderData.customerEmail,
@@ -89,7 +107,7 @@ export class CompleteOrderService {
         downloadLinks
       });
 
-      // Step 6: Update product download counts
+      // Step 7: Update product download counts
       await this.updateProductDownloadCounts(orderData.items);
 
       return {
@@ -120,6 +138,9 @@ export class CompleteOrderService {
       const currencyRate = currency?.rate || 1.0;
 
       // Create main order record with currency information
+      // COD orders are marked as 'pending' until payment is received
+      const orderStatus = orderData.paymentMethod === 'cod' ? 'pending' : 'completed';
+      
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -127,7 +148,7 @@ export class CompleteOrderService {
           customer_name: orderData.customerName,
           customer_email: orderData.customerEmail,
           total_amount: orderData.totalAmount,
-          status: 'completed',
+          status: orderStatus,
           payment_method: orderData.paymentMethod,
           payment_id: orderData.paymentId,
           notes: orderData.notes,
@@ -533,5 +554,119 @@ export class CompleteOrderService {
         error: error instanceof Error ? error.message : 'Error fetching user orders' 
       };
     }
+  }
+
+  /**
+   * Create Delhivery shipment for COD orders
+   */
+  private static async createDelhiveryShipment(orderData: CompleteOrderData, orderId: string): Promise<void> {
+    try {
+      console.log('📦 Creating Delhivery shipment for COD order:', orderId);
+
+      // Parse shipping address to extract details
+      const addressParts = this.parseShippingAddress(orderData.shippingAddress || '');
+
+      // Filter only physical products for shipment
+      const physicalItems = orderData.items.filter(item => 
+        item.selectedProductType === 'poster' || item.selectedProductType === 'clothing'
+      );
+
+      // Calculate total weight (assuming 0.5kg per item, adjust as needed)
+      const totalWeight = physicalItems.reduce((sum, item) => sum + (item.quantity * 0.5), 0);
+
+      // Prepare product description (only physical items)
+      const productDescriptions = physicalItems
+        .map(item => `${item.productTitle} x${item.quantity}`)
+        .join(', ');
+
+      // Determine payment mode for Delhivery
+      const isCOD = orderData.paymentMethod === 'cod';
+      const paymentMode = isCOD ? 'COD' : 'Prepaid';
+      
+      // Calculate total amount for physical items only
+      const physicalItemsTotal = physicalItems.reduce((sum, item) => sum + item.totalPrice, 0);
+      
+      // Create shipment data for Delhivery
+      const shipmentData = {
+        shipments: [{
+          name: orderData.customerName,
+          add: addressParts.address,
+          pin: addressParts.pincode,
+          city: addressParts.city,
+          state: addressParts.state,
+          country: 'India',
+          phone: orderData.customerPhone,
+          order: orderId,
+          payment_mode: paymentMode,
+          cod_amount: isCOD ? physicalItemsTotal.toString() : '0',
+          total_amount: physicalItemsTotal.toString(),
+          products_desc: productDescriptions,
+          hsn_code: '4911', // Default HSN for printed materials/posters
+          quantity: physicalItems.reduce((sum, item) => sum + item.quantity, 0).toString(),
+          weight: totalWeight.toString(),
+          shipment_width: '10',
+          shipment_height: '5',
+          shipping_mode: 'Surface',
+          address_type: 'home',
+          return_pin: '400001', // Your store pincode
+          return_city: 'Mumbai', // Your store city
+          return_phone: '+919999999999', // Your store phone
+          return_add: 'Lurevi Store, Mumbai', // Your store address
+          return_state: 'Maharashtra', // Your store state
+          return_country: 'India',
+          seller_name: 'Lurevi',
+          seller_add: 'Lurevi Store, Mumbai',
+          order_date: new Date().toISOString().split('T')[0]
+        }],
+        pickup_location: {
+          name: 'Lurevi Main Warehouse'
+        }
+      };
+
+      // Create shipment via Delhivery API
+      const response = await delhiveryService.createShipment(shipmentData);
+      
+      console.log('✅ Delhivery shipment created successfully:', response);
+
+      // Store waybill in order notes if available
+      if (response?.waybill) {
+        await supabase
+          .from('orders')
+          .update({ 
+            notes: `${orderData.notes || ''}\nWaybill: ${response.waybill}`.trim()
+          })
+          .eq('id', orderId);
+      }
+
+    } catch (error) {
+      console.error('❌ Error creating Delhivery shipment:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Parse shipping address string to extract components
+   */
+  private static parseShippingAddress(address: string): {
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  } {
+    // Expected format: "Street Address, City, State Pincode, Country"
+    const parts = address.split(',').map(p => p.trim());
+    
+    // Extract pincode (6 digits) from state part
+    const stateAndPincode = parts[2] || '';
+    const pincodeMatch = stateAndPincode.match(/\b\d{6}\b/);
+    const pincode = pincodeMatch ? pincodeMatch[0] : '400001';
+    const state = stateAndPincode.replace(/\b\d{6}\b/, '').trim();
+
+    return {
+      address: parts[0] || 'Address not provided',
+      city: parts[1] || 'Mumbai',
+      state: state || 'Maharashtra',
+      pincode: pincode
+    };
   }
 }

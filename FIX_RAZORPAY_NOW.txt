@@ -1,0 +1,100 @@
+================================================================================
+🔴 URGENT FIX FOR RAZORPAY 400 ERROR
+================================================================================
+
+PROBLEM: You're using LIVE Razorpay keys with mock order IDs
+SOLUTION: Switch to TEST keys (takes 2 minutes)
+
+================================================================================
+STEP 1: OPEN YOUR .env FILE
+================================================================================
+
+Location: H:\site\Artistic-pro-master\.env
+
+================================================================================
+STEP 2: FIND THIS LINE
+================================================================================
+
+VITE_RAZORPAY_KEY_ID=rzp_live_RQZfBX0KJno9Hd
+
+================================================================================
+STEP 3: CHANGE IT TO YOUR TEST KEY
+================================================================================
+
+VITE_RAZORPAY_KEY_ID=rzp_test_XXXXXXXXXXXXX
+                     ^^^^
+                     Change "live" to "test"
+
+================================================================================
+STEP 4: GET YOUR TEST KEY
+================================================================================
+
+1. Go to: https://dashboard.razorpay.com/
+2. Toggle switch at top to "Test Mode"
+3. Go to: Settings → API Keys
+4. Copy your Test Key ID (starts with rzp_test_)
+5. Paste it in .env file
+
+================================================================================
+STEP 5: ALSO UPDATE THE SECRET
+================================================================================
+
+VITE_RAZORPAY_KEY_SECRET=your_test_secret_key
+
+(Get this from the same place as the Key ID)
+
+================================================================================
+STEP 6: RESTART YOUR SERVER
+================================================================================
+
+In terminal:
+1. Press Ctrl+C to stop
+2. Run: npm run dev
+3. Wait for server to start
+
+================================================================================
+STEP 7: TEST WITH TEST CARD
+================================================================================
+
+Card Number: 4111 1111 1111 1111
+CVV: 123
+Expiry: 12/25
+OTP: 1234
+
+================================================================================
+WHY THIS WORKS
+================================================================================
+
+✅ Test keys accept mock order IDs
+✅ No backend needed
+✅ Works immediately
+✅ No real money
+
+❌ Live keys require real Razorpay orders from backend API
+❌ Your current code creates mock orders
+❌ That's why you get 400 error
+
+================================================================================
+AFTER THIS FIX
+================================================================================
+
+✅ Checkout will work
+✅ Payment flow will complete
+✅ You can test everything
+
+For production later, you'll need to:
+- Create backend API
+- Call Razorpay Order Creation API
+- Use real order IDs
+
+But for NOW, just switch to test keys!
+
+================================================================================
+THAT'S IT!
+================================================================================
+
+Just change ONE line in .env:
+rzp_live_... → rzp_test_...
+
+Then restart server.
+Done!

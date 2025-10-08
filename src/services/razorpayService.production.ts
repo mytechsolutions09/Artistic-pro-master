@@ -3,7 +3,6 @@ import { LogoService } from './logoService';
 
 // Razorpay configuration
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
-const RAZORPAY_KEY_SECRET = import.meta.env.VITE_RAZORPAY_KEY_SECRET;
 const RAZORPAY_CURRENCY = import.meta.env.VITE_RAZORPAY_CURRENCY || 'INR';
 const RAZORPAY_COMPANY_NAME = import.meta.env.VITE_RAZORPAY_COMPANY_NAME || 'Lurevi';
 const RAZORPAY_THEME_COLOR = import.meta.env.VITE_RAZORPAY_THEME_COLOR || '#0d9488';
@@ -56,6 +55,7 @@ interface PaymentVerification {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+  order_id: string;
 }
 
 // Declare Razorpay on window
@@ -65,16 +65,16 @@ declare global {
   }
 }
 
-class RazorpayService {
-  private static instance: RazorpayService;
+class RazorpayServiceProduction {
+  private static instance: RazorpayServiceProduction;
 
   private constructor() {}
 
-  static getInstance(): RazorpayService {
-    if (!RazorpayService.instance) {
-      RazorpayService.instance = new RazorpayService();
+  static getInstance(): RazorpayServiceProduction {
+    if (!RazorpayServiceProduction.instance) {
+      RazorpayServiceProduction.instance = new RazorpayServiceProduction();
     }
-    return RazorpayService.instance;
+    return RazorpayServiceProduction.instance;
   }
 
   /**
@@ -106,7 +106,6 @@ class RazorpayService {
       
       script.onload = () => {
         console.log('Razorpay script loaded successfully');
-        // Wait a bit for Razorpay to initialize
         setTimeout(() => {
           if (window.Razorpay) {
             resolve(true);
@@ -127,73 +126,46 @@ class RazorpayService {
   }
 
   /**
-   * Create Razorpay order
+   * Create Razorpay order via Supabase Edge Function (PRODUCTION)
    */
   async createOrder(orderDetails: OrderDetails): Promise<string> {
     try {
-      // In a real implementation, you would call your backend API to create a Razorpay order
-      // For now, we'll create a mock order ID
-      // Backend should call: https://api.razorpay.com/v1/orders
+      console.log('Creating Razorpay order via Edge Function...', orderDetails);
       
-      const amountInPaise = Math.round(orderDetails.amount * 100); // Convert to paise
-      
-      // This should be done on your backend for security
-      // Example backend call:
-      // const response = await fetch('/api/razorpay/create-order', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     amount: amountInPaise,
-      //     currency: orderDetails.currency || RAZORPAY_CURRENCY,
-      //     receipt: orderDetails.orderId,
-      //   })
-      // });
-      
-      // For development, generate a mock order ID
-      const razorpayOrderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Store order details in Supabase
-      await this.storeOrderInDatabase(orderDetails, razorpayOrderId, amountInPaise);
-      
-      return razorpayOrderId;
-    } catch (error) {
-      console.error('Error creating Razorpay order:', error);
-      throw new Error('Failed to create payment order');
-    }
-  }
-
-  /**
-   * Store order details in database
-   */
-  private async storeOrderInDatabase(
-    orderDetails: OrderDetails,
-    razorpayOrderId: string,
-    amountInPaise: number
-  ): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('razorpay_orders')
-        .insert({
-          order_id: orderDetails.orderId,
-          razorpay_order_id: razorpayOrderId,
-          amount: amountInPaise,
+      // Call Supabase Edge Function to create order
+      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: orderDetails.amount,
           currency: orderDetails.currency || RAZORPAY_CURRENCY,
-          customer_id: orderDetails.customerId,
-          customer_email: orderDetails.customerEmail,
-          status: 'created',
-          created_at: new Date().toISOString()
-        });
+          receipt: orderDetails.orderId,
+          notes: {
+            customer_id: orderDetails.customerId,
+            customer_email: orderDetails.customerEmail,
+            customer_name: orderDetails.customerName,
+            customer_phone: orderDetails.customerPhone
+          }
+        }
+      });
 
       if (error) {
-        console.error('Error storing order in database:', error);
+        console.error('Edge Function error:', error);
+        throw new Error(error.message || 'Failed to create Razorpay order');
       }
-    } catch (error) {
-      console.error('Database error:', error);
+      
+      if (data && data.success && data.order) {
+        console.log('Razorpay order created successfully:', data.order.id);
+        return data.order.id; // Returns real Razorpay order ID
+      } else {
+        throw new Error(data?.error || 'Failed to create order');
+      }
+    } catch (error: any) {
+      console.error('Error creating Razorpay order:', error);
+      throw new Error(error.message || 'Failed to create payment order');
     }
   }
 
   /**
-   * Initialize Razorpay payment
+   * Initialize Razorpay payment (PRODUCTION)
    */
   async initiatePayment(
     orderDetails: OrderDetails,
@@ -206,12 +178,11 @@ class RazorpayService {
         throw new Error('Razorpay API key not configured. Please add VITE_RAZORPAY_KEY_ID to your .env file');
       }
 
-      console.log('Initiating Razorpay payment...');
+      console.log('Initiating Razorpay payment (Production Mode)...');
       
       // Load Razorpay script with retry
       let scriptLoaded = await this.loadRazorpayScript();
       
-      // Retry once if failed
       if (!scriptLoaded) {
         console.log('Retrying Razorpay script load...');
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -226,10 +197,8 @@ class RazorpayService {
         throw new Error('Razorpay is not available. Please refresh the page and try again.');
       }
 
-      // Create Razorpay order
-      // Note: For test mode without backend, we skip order creation
-      // In production, you MUST create orders via backend API
-      // const razorpayOrderId = await this.createOrder(orderDetails);
+      // Create real Razorpay order via Edge Function
+      const razorpayOrderId = await this.createOrder(orderDetails);
 
       // Fetch logo from database
       console.log('Fetching logo from database...');
@@ -238,33 +207,28 @@ class RazorpayService {
       console.log('Logo URL:', companyLogo);
 
       // Razorpay options
-      const options: any = {
+      const options: RazorpayOptions = {
         key: RAZORPAY_KEY_ID,
         amount: Math.round(orderDetails.amount * 100), // Amount in paise
         currency: orderDetails.currency || RAZORPAY_CURRENCY,
         name: RAZORPAY_COMPANY_NAME,
         description: orderDetails.description || 'Order Payment',
         image: companyLogo,
-        // order_id: razorpayOrderId, // Commented out for test mode without backend
+        order_id: razorpayOrderId, // Real Razorpay order ID
         handler: async (response: RazorpayResponse) => {
           try {
-            // Verify payment signature (if order_id exists)
-            // In test mode without backend order creation, signature verification is skipped
-            const isValid = response.razorpay_order_id 
-              ? await this.verifyPayment({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature
-                })
-              : true; // Skip verification in test mode without order_id
+            console.log('Payment successful, verifying...', response);
+            
+            // Verify payment signature on backend
+            const isValid = await this.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              order_id: orderDetails.orderId
+            });
 
             if (isValid) {
-              // Update payment status in database
-              await this.updatePaymentStatus(
-                orderDetails.orderId,
-                response.razorpay_payment_id,
-                'success'
-              );
+              console.log('Payment verified successfully');
               onSuccess(response);
             } else {
               throw new Error('Payment verification failed');
@@ -304,51 +268,32 @@ class RazorpayService {
   }
 
   /**
-   * Verify payment signature
-   * This should be done on the backend for security
+   * Verify payment signature via Edge Function (PRODUCTION)
    */
   async verifyPayment(verification: PaymentVerification): Promise<boolean> {
     try {
-      // In production, this MUST be done on the backend
-      // Backend should verify using crypto.createHmac
-      // const generatedSignature = crypto
-      //   .createHmac('sha256', RAZORPAY_KEY_SECRET)
-      //   .update(verification.razorpay_order_id + '|' + verification.razorpay_payment_id)
-      //   .digest('hex');
-      // return generatedSignature === verification.razorpay_signature;
-
-      // For development, we'll assume verification passes
-      console.log('Payment verification (development mode):', verification);
-      return true;
-    } catch (error) {
-      console.error('Payment verification error:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Update payment status in database
-   */
-  async updatePaymentStatus(
-    orderId: string,
-    paymentId: string,
-    status: 'success' | 'failed'
-  ): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('razorpay_orders')
-        .update({
-          razorpay_payment_id: paymentId,
-          status: status,
-          updated_at: new Date().toISOString()
-        })
-        .eq('order_id', orderId);
+      console.log('Verifying payment signature via Edge Function...');
+      
+      // Call Supabase Edge Function to verify payment
+      const { data, error } = await supabase.functions.invoke('verify-razorpay-payment', {
+        body: verification
+      });
 
       if (error) {
-        console.error('Error updating payment status:', error);
+        console.error('Verification error:', error);
+        return false;
+      }
+
+      if (data && data.success && data.verified) {
+        console.log('Payment verified successfully');
+        return true;
+      } else {
+        console.error('Payment verification failed:', data?.error);
+        return false;
       }
     } catch (error) {
-      console.error('Database error:', error);
+      console.error('Payment verification exception:', error);
+      return false;
     }
   }
 
@@ -376,16 +321,16 @@ class RazorpayService {
   }
 
   /**
-   * Refund payment
+   * Refund payment (should be done via backend)
    */
   async refundPayment(paymentId: string, amount?: number): Promise<boolean> {
     try {
-      // In production, call your backend API to process refund
-      // Backend should call: https://api.razorpay.com/v1/payments/{payment_id}/refund
+      // In production, create an Edge Function for refunds
+      // This should call: https://api.razorpay.com/v1/payments/{payment_id}/refund
       
       console.log('Refund initiated for payment:', paymentId, 'Amount:', amount);
       
-      // Mock refund success
+      // TODO: Implement refund Edge Function
       return true;
     } catch (error) {
       console.error('Refund error:', error);
@@ -394,4 +339,5 @@ class RazorpayService {
   }
 }
 
-export default RazorpayService.getInstance();
+export default RazorpayServiceProduction.getInstance();
+

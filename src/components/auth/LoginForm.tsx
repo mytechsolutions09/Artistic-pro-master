@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabaseService';
-import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Mail, Smartphone } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
 import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
+import PhoneLogin from './PhoneLogin';
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
+  const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -168,7 +170,40 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 <p className="text-gray-600 text-xs sm:text-sm">Sign in to your account</p>
               </div>
 
-              {/* Login Form */}
+              {/* Login Method Tabs */}
+              <div className="flex space-x-2 mb-4 bg-gray-100 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('email')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    loginMethod === 'email'
+                      ? 'bg-white text-teal-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Mail className="w-4 h-4" />
+                    <span>Email</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('phone')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    loginMethod === 'phone'
+                      ? 'bg-white text-teal-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Smartphone className="w-4 h-4" />
+                    <span>Phone</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Email Login Form */}
+              {loginMethod === 'email' && (
               <form className="space-y-3" onSubmit={handleLogin}>
                 <div>
                   <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">
@@ -271,16 +306,27 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
               </form>
+              )}
+
+              {/* Phone Login */}
+              {loginMethod === 'phone' && (
+                <PhoneLogin 
+                  onSuccess={onLoginSuccess}
+                  onError={(err) => setError(err)}
+                />
+              )}
 
               {/* Links Side by Side */}
               <div className="mt-3 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-teal-600 hover:text-teal-700 transition-colors text-center sm:text-left"
-                >
-                  Forgot Password?
-                </Link>
-                <p className="text-xs text-gray-500 text-center sm:text-right">
+                {loginMethod === 'email' && (
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-teal-600 hover:text-teal-700 transition-colors text-center sm:text-left"
+                  >
+                    Forgot Password?
+                  </Link>
+                )}
+                <p className={`text-xs text-gray-500 text-center ${loginMethod === 'email' ? 'sm:text-right' : 'w-full'}`}>
                   Not a user?{' '}
                   <Link
                     to="/sign-up"

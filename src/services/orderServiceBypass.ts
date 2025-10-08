@@ -20,6 +20,7 @@ export interface CompleteOrderData {
   customerId: string | null;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   items: Array<{
     productId: string;
     productTitle: string;
@@ -31,10 +32,11 @@ export interface CompleteOrderData {
     selectedPosterSize?: string;
   }>;
   totalAmount: number;
-  paymentMethod: 'card' | 'paypal' | 'bank_transfer';
+  paymentMethod: 'card' | 'paypal' | 'bank_transfer' | 'razorpay' | 'cod';
   paymentId?: string;
   notes?: string;
   shippingAddress?: string;
+  billingAddress?: string;
 }
 
 export interface OrderCompletionResult {
@@ -65,7 +67,7 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
         customer_name: orderData.customerName,
         customer_email: orderData.customerEmail,
         total_amount: orderData.totalAmount,
-        status: 'completed',
+        status: orderData.paymentMethod === 'cod' ? 'pending' : 'completed',
         payment_method: orderData.paymentMethod,
         payment_id: orderData.paymentId,
         notes: orderData.notes,

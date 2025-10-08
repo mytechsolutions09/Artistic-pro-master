@@ -46,6 +46,7 @@ const Checkout: React.FC = () => {
     billingCountry: 'India',
     sameAsShipping: true
   });
+  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay');
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Check if it's a direct purchase
@@ -55,8 +56,26 @@ const Checkout: React.FC = () => {
   const posterSize = searchParams.get('size');
   const [directPurchaseProduct, setDirectPurchaseProduct] = useState<Product | null>(null);
   
+  // Check if cart has physical products (for COD eligibility)
+  const hasPhysicalProducts = cart.items.some(item => 
+    item.selectedProductType === 'poster' || item.selectedProductType === 'clothing'
+  );
+  
+  // Reset payment method to Razorpay if COD is selected but no physical products
+  useEffect(() => {
+    if (!hasPhysicalProducts && paymentMethod === 'cod') {
+      setPaymentMethod('razorpay');
+    }
+  }, [hasPhysicalProducts, paymentMethod]);
+  
   useEffect(() => {
     if (productId) {
+      // Wait for products to load
+      if (allProducts.length === 0) {
+        console.log('Waiting for products to load...');
+        return;
+      }
+
       // Fetch real product data from ProductContext
       const realProduct = getProductById(productId);
       if (realProduct) {
@@ -77,8 +96,9 @@ const Checkout: React.FC = () => {
           total: finalPrice 
         });
       } else {
-        // If product not found, redirect back or show error
+        // If product not found after products loaded, redirect back
         console.error('Product not found:', productId);
+        alert('Product not found. Redirecting to browse page...');
         navigate('/browse');
       }
     } else {
@@ -89,7 +109,7 @@ const Checkout: React.FC = () => {
       const unsubscribe = CartManager.subscribe(setCart);
       return unsubscribe;
     }
-  }, [productId, productType, productPrice, posterSize, getProductById, navigate]);
+  }, [productId, productType, productPrice, posterSize, getProductById, navigate, allProducts]);
 
   // Autofill user information when logged in
   useEffect(() => {
@@ -197,16 +217,44 @@ const Checkout: React.FC = () => {
           selectedPosterSize: item.selectedPosterSize
         })),
         totalAmount: cart.total,
-        paymentMethod: 'razorpay',
-        paymentId: '', // Will be set after payment
-        notes: undefined,
+        paymentMethod: paymentMethod,
+        paymentId: paymentMethod === 'cod' ? 'COD-PENDING' : '', // Will be set after payment for Razorpay
+        notes: paymentMethod === 'cod' ? 'Cash on Delivery - Payment pending upon delivery' : undefined,
         shippingAddress: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}, ${formData.country}`,
         billingAddress: formData.sameAsShipping 
           ? `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}, ${formData.country}`
           : `${formData.billingAddress}, ${formData.billingCity}, ${formData.billingState} ${formData.billingZipCode}, ${formData.billingCountry}`
       };
 
-      // Initiate Razorpay payment
+      // Handle COD orders separately
+      if (paymentMethod === 'cod') {
+        // Complete the order directly without payment gateway
+        let result = await CompleteOrderService.completeOrder(orderData);
+        
+        // If normal order fails with RLS error, try bypass method
+        if (!result.success && result.error?.includes('row-level security policy')) {
+          if (isServiceRoleAvailable()) {
+            result = await createOrderBypassRLS(orderData);
+          } else {
+            throw new Error('RLS policy error and service role not available.');
+          }
+        }
+        
+        if (result.success && result.orderId) {
+          // Clear cart if not direct purchase
+          if (!productId) {
+            CartManager.clearCart();
+          }
+          
+          // Redirect to success page with COD message
+          navigate(`/payment-success?orderId=${result.orderId}&paymentMethod=cod`);
+        } else {
+          throw new Error(result.error || 'Order placement failed');
+        }
+        return;
+      }
+
+      // Initiate Razorpay payment for online payment
       await razorpayService.initiatePayment(
         {
           orderId: tempOrderId,
@@ -214,7 +262,7 @@ const Checkout: React.FC = () => {
           currency: 'INR',
           customerName: `${formData.firstName} ${formData.lastName}`,
           customerEmail: formData.email,
-          customerPhone: formData.address || '+919999999999', // Use actual phone if available
+          customerPhone: formData.phone || '+919999999999', // Use actual phone if available
           customerId: user?.id || 'guest',
           description: `Order for ${cart.items.length} item(s)`
         },
@@ -273,6 +321,19 @@ const Checkout: React.FC = () => {
   
 
   
+  // Show loading state if waiting for products to load for direct purchase
+  if (productId && allProducts.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <Loader2 className="w-16 h-16 text-teal-600 mx-auto mb-4 animate-spin" />
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Loading Product...</h1>
+          <p className="text-gray-600">Please wait while we fetch the product details.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (cart.items.length === 0 && !directPurchaseProduct) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -282,7 +343,7 @@ const Checkout: React.FC = () => {
           <p className="text-gray-600 mb-6">Add some amazing artworks to your cart before checking out.</p>
           <button 
             onClick={() => navigate('/browse')}
-            className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors"
+            className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors"
           >
             Continue Shopping
           </button>
@@ -567,6 +628,102 @@ const Checkout: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Payment Method Selection */}
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
+                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                  <Lock className="w-5 h-5 text-purple-500 mr-2" />
+                  Payment Method
+                </h2>
+                
+                <div className="space-y-3">
+                  {/* Razorpay Option */}
+                  <label 
+                    className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      paymentMethod === 'razorpay' 
+                        ? 'border-teal-500 bg-teal-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="razorpay"
+                      checked={paymentMethod === 'razorpay'}
+                      onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cod')}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-gray-800">Online Payment (Razorpay)</span>
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Recommended</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Pay securely using Cards, UPI, Net Banking, or Wallets
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">💳 Cards</span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">📱 UPI</span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">🏦 Net Banking</span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">💰 Wallets</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* COD Option - Only show for physical products */}
+                  {hasPhysicalProducts ? (
+                    <label 
+                      className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === 'cod' 
+                          ? 'border-orange-500 bg-orange-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={paymentMethod === 'cod'}
+                        onChange={(e) => setPaymentMethod(e.target.value as 'razorpay' | 'cod')}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-semibold text-gray-800">Cash on Delivery (COD)</span>
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">Physical Items</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Pay with cash when your order is delivered
+                        </p>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <span className="text-xs text-orange-700 bg-orange-100 px-2 py-1 rounded">
+                            💵 Pay at doorstep
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  ) : (
+                    <div className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 opacity-60">
+                      <div className="flex items-start space-x-3">
+                        <input
+                          type="radio"
+                          disabled
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-gray-500">Cash on Delivery (COD)</span>
+                            <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded-full">Not Available</span>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">
+                            COD is only available for physical products (posters). Digital downloads require online payment.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               
               
             </form>
@@ -630,55 +787,85 @@ const Checkout: React.FC = () => {
               </div>
             </div>
             
-            {/* Razorpay Payment Info */}
-            <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-4 border border-teal-200">
-              <div className="flex items-start space-x-3">
-                <Lock className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">Secure Payment with Razorpay</h3>
-                  <p className="text-xs text-gray-600 mb-2">
-                    You'll be redirected to Razorpay's secure payment gateway to complete your purchase.
+            {/* Payment Info */}
+            {paymentMethod === 'razorpay' ? (
+              <>
+                <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-4 border border-teal-200">
+                  <div className="flex items-start space-x-3">
+                    <Lock className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1">Secure Payment with Razorpay</h3>
+                      <p className="text-xs text-gray-600 mb-2">
+                        You'll be redirected to Razorpay's secure payment gateway to complete your purchase.
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
+                          Cards
+                        </span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
+                          UPI
+                        </span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
+                          Net Banking
+                        </span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
+                          Wallets
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                  <p className="text-xs text-yellow-800">
+                    <strong>Note:</strong> Payment details will be entered securely on Razorpay's payment page. Your card information is never stored on our servers.
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
-                      Cards
-                    </span>
-                    <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
-                      UPI
-                    </span>
-                    <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
-                      Net Banking
-                    </span>
-                    <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
-                      Wallets
-                    </span>
+                </div>
+              </>
+            ) : (
+              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-4 border border-orange-200">
+                <div className="flex items-start space-x-3">
+                  <span className="text-2xl mt-0.5">💵</span>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-1">Cash on Delivery</h3>
+                    <p className="text-xs text-gray-600 mb-2">
+                      You'll pay in cash when your order is delivered to your doorstep.
+                    </p>
+                    <ul className="text-xs text-gray-600 space-y-1 mt-2">
+                      <li>✓ No advance payment required</li>
+                      <li>✓ Pay only when you receive the product</li>
+                      <li>✓ Inspect before payment</li>
+                    </ul>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
-              <p className="text-xs text-yellow-800">
-                <strong>Note:</strong> Payment details will be entered securely on Razorpay's payment page. Your card information is never stored on our servers.
-              </p>
-            </div>
+            )}
             
             {/* Submit Button */}
             <button
               type="submit"
               form="checkout-form"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-green-600 hover:to-emerald-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
+                paymentMethod === 'razorpay'
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+                  : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
+              }`}
             >
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Opening Payment Gateway...</span>
+                  <span>{paymentMethod === 'razorpay' ? 'Opening Payment Gateway...' : 'Placing Order...'}</span>
                 </>
-              ) : (
+              ) : paymentMethod === 'razorpay' ? (
                 <>
                   <Lock className="w-5 h-5" />
                   <span>Pay {formatUIPrice(cart.total, 'INR')} - Proceed to Payment</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xl">💵</span>
+                  <span>Place Order - {formatUIPrice(cart.total, 'INR')} COD</span>
                 </>
               )}
             </button>
