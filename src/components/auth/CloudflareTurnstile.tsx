@@ -85,8 +85,16 @@ const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
           console.log('Turnstile verification successful');
           onVerify(token);
         },
-        'error-callback': () => {
-          console.error('Turnstile verification error');
+        'error-callback': (errorCode?: string) => {
+          console.error('Turnstile verification error:', errorCode);
+          
+          // Log specific error codes for debugging
+          if (errorCode === '110200') {
+            console.error('❌ Turnstile Error 110200: Domain not authorized');
+            console.error('Fix: Add your domain to Cloudflare Turnstile dashboard');
+            console.error('Current domain:', window.location.hostname);
+          }
+          
           if (onError) onError();
         },
         'expired-callback': () => {
