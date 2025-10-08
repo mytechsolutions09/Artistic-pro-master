@@ -31,7 +31,8 @@ const UserDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('settings');
   const [isEditing, setIsEditing] = useState(false);
   const [userProfile, setUserProfile] = useState({
-    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
+    firstName: user?.user_metadata?.first_name || user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || '',
+    lastName: user?.user_metadata?.last_name || user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
     email: user?.email || '',
     bio: user?.user_metadata?.bio || 'Welcome to your dashboard!',
     location: user?.user_metadata?.location || '',
@@ -176,8 +177,12 @@ const UserDashboard: React.FC = () => {
   // Update user profile when user data changes
   useEffect(() => {
     if (user) {
+      const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+      const nameParts = fullName.split(' ');
+      
       setUserProfile({
-        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+        firstName: user.user_metadata?.first_name || nameParts[0] || '',
+        lastName: user.user_metadata?.last_name || nameParts.slice(1).join(' ') || '',
         email: user.email || '',
         bio: user.user_metadata?.bio || 'Welcome to your dashboard!',
         location: user.user_metadata?.location || '',
@@ -750,7 +755,7 @@ const UserDashboard: React.FC = () => {
                 </div>
                 <Calendar className="w-3 h-3 text-gray-500" />
               </div>
-              <p className="text-base font-bold mb-0.5 text-gray-900">{userProfile.name.toUpperCase()}</p>
+              <p className="text-base font-bold mb-0.5 text-gray-900">{`${userProfile.firstName} ${userProfile.lastName}`.toUpperCase()}</p>
               <p className="text-gray-600 text-xs">Member since {new Date(userProfile.joinDate).toLocaleDateString()}</p>
             </div>
           </div>
@@ -1826,8 +1831,12 @@ const UserDashboard: React.FC = () => {
     const validateForm = () => {
       const errors: Record<string, string> = {};
       
-      if (!userProfile.name.trim()) {
-        errors.name = 'Name is required';
+      if (!userProfile.firstName.trim()) {
+        errors.firstName = 'First name is required';
+      }
+      
+      if (!userProfile.lastName.trim()) {
+        errors.lastName = 'Last name is required';
       }
       
       if (!userProfile.email.trim()) {
@@ -1851,9 +1860,13 @@ const UserDashboard: React.FC = () => {
         const { supabase } = await import('../services/supabaseService');
         
         // Update user metadata in Supabase
+        const fullName = `${userProfile.firstName.trim()} ${userProfile.lastName.trim()}`;
+        
         const { error } = await supabase.auth.updateUser({
           data: {
-            full_name: userProfile.name,
+            full_name: fullName,
+            first_name: userProfile.firstName.trim(),
+            last_name: userProfile.lastName.trim(),
             location: userProfile.location,
             bio: userProfile.bio
           }
@@ -1905,7 +1918,9 @@ const UserDashboard: React.FC = () => {
         // Create a data export object
         const userData = {
           profile: {
-            name: userProfile.name,
+            firstName: userProfile.firstName,
+            lastName: userProfile.lastName,
+            fullName: `${userProfile.firstName} ${userProfile.lastName}`,
             email: userProfile.email,
             location: userProfile.location,
             bio: userProfile.bio,
@@ -1990,8 +2005,12 @@ const UserDashboard: React.FC = () => {
                       setIsEditing(false);
                       setFormErrors({});
                       // Reset to original values
+                      const fullName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+                      const nameParts = fullName.split(' ');
+                      
                       setUserProfile({
-                        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User',
+                        firstName: user?.user_metadata?.first_name || nameParts[0] || '',
+                        lastName: user?.user_metadata?.last_name || nameParts.slice(1).join(' ') || '',
                         email: user?.email || '',
                         location: user?.user_metadata?.location || '',
                         bio: user?.user_metadata?.bio || 'Welcome to your dashboard!',
@@ -2019,24 +2038,46 @@ const UserDashboard: React.FC = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                 <input
                   type="text"
-                  value={userProfile.name}
+                  value={userProfile.firstName}
                   onChange={(e) => {
-                    setUserProfile({ ...userProfile, name: e.target.value });
-                    if (formErrors.name) setFormErrors({ ...formErrors, name: '' });
+                    setUserProfile({ ...userProfile, firstName: e.target.value });
+                    if (formErrors.firstName) setFormErrors({ ...formErrors, firstName: '' });
                   }}
                   disabled={!isEditing}
-                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm ${
-                    formErrors.name 
-                      ? 'border-red-300 focus:ring-red-300' 
-                      : ''
+                  className={`w-full px-3 py-2 border rounded-lg transition-colors ${
+                    isEditing 
+                      ? 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200' 
+                      : 'border-gray-200 bg-gray-50 cursor-not-allowed'
                   }`}
-                  required
+                  placeholder="First name"
                 />
-                {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
+                {formErrors.firstName && <p className="text-red-500 text-xs mt-1">{formErrors.firstName}</p>}
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <input
+                  type="text"
+                  value={userProfile.lastName}
+                  onChange={(e) => {
+                    setUserProfile({ ...userProfile, lastName: e.target.value });
+                    if (formErrors.lastName) setFormErrors({ ...formErrors, lastName: '' });
+                  }}
+                  disabled={!isEditing}
+                  className={`w-full px-3 py-2 border rounded-lg transition-colors ${
+                    isEditing 
+                      ? 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200' 
+                      : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                  } ${formErrors.lastName ? 'border-red-300 focus:ring-red-300' : ''}`}
+                  placeholder="Last name"
+                />
+                {formErrors.lastName && <p className="text-red-500 text-xs mt-1">{formErrors.lastName}</p>}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input

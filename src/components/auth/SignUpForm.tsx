@@ -10,7 +10,8 @@ import ArtLoader from './ArtLoader';
 const SignUpForm: React.FC = () => {
   const { settings, loading: appearanceLoading } = useAppearance();
   const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,8 +25,12 @@ const SignUpForm: React.FC = () => {
     e.preventDefault();
     
     // Validate form fields
-    if (!name.trim()) {
-      setError('Please enter your full name');
+    if (!firstName.trim()) {
+      setError('Please enter your first name');
+      return;
+    }
+    if (!lastName.trim()) {
+      setError('Please enter your last name');
       return;
     }
     if (!email.trim()) {
@@ -52,13 +57,17 @@ const SignUpForm: React.FC = () => {
     setError(null);
 
     try {
+      const fullName = `${firstName.trim()} ${lastName.trim()}`;
+      
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
         options: {
           emailRedirectTo: `${window.location.origin}/sign-in`,
           data: {
-            full_name: name.trim(),
+            full_name: fullName,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
             email_confirm: true
           }
         }
@@ -244,26 +253,43 @@ const SignUpForm: React.FC = () => {
               {/* Welcome Message */}
               <div className="mb-4">
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Create Account</h1>
-                <p className="text-gray-600 text-xs sm:text-sm">Join our community of artists</p>
               </div>
 
               {/* Sign Up Form */}
               <form className="space-y-3" onSubmit={handleSignUp}>
-                <div>
-                  <label htmlFor="name" className="block text-xs font-medium text-gray-700 mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm"
-                    placeholder="Enter your full name"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="firstName" className="block text-xs font-medium text-gray-700 mb-1">
+                      First Name
+                    </label>
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      autoComplete="given-name"
+                      required
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors text-sm"
+                      placeholder="First name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="block text-xs font-medium text-gray-700 mb-1">
+                      Last Name
+                    </label>
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      autoComplete="family-name"
+                      required
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors text-sm"
+                      placeholder="Last name"
+                    />
+                  </div>
                 </div>
 
                 <div>
