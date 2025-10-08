@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabaseService';
 import { AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
+import { useLogo } from '../../hooks/useLogo';
 import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
 import { PasswordResetService } from '../../services/passwordResetService';
 
 const ForgotPasswordForm: React.FC = () => {
   const { settings, loading: appearanceLoading } = useAppearance();
+  const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,12 +78,27 @@ const ForgotPasswordForm: React.FC = () => {
                 <div className="flex items-center justify-center mb-4">
                   <Link 
                     to="/"
-                    className="w-8 h-8 rounded flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer"
-                    style={{ 
-                      background: `linear-gradient(to bottom right, ${settings.themeColors.pink}, ${settings.themeColors.darkPink})` 
-                    }}
+                    className="hover:scale-110 transition-transform duration-200 cursor-pointer"
                   >
-                    <span className="text-white font-bold text-sm">A</span>
+                    {logoLoading ? (
+                      <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
+                    ) : logoUrl ? (
+                      <img 
+                        src={logoUrl} 
+                        alt="Logo" 
+                        className="h-12 w-auto"
+                        onError={(e) => {
+                          console.error('Error loading logo from Supabase:', e);
+                          e.currentTarget.src = '/lurevi-logo.svg';
+                        }}
+                      />
+                    ) : (
+                      <img 
+                        src="/lurevi-logo.svg" 
+                        alt="Lurevi" 
+                        className="h-12 w-auto"
+                      />
+                    )}
                   </Link>
                 </div>
 
@@ -164,12 +181,27 @@ const ForgotPasswordForm: React.FC = () => {
               <div className="flex items-center justify-center mb-4">
                 <Link 
                   to="/"
-                  className="w-8 h-8 rounded flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer"
-                  style={{ 
-                    background: `linear-gradient(to bottom right, ${settings.themeColors.pink}, ${settings.themeColors.darkPink})` 
-                  }}
+                  className="hover:scale-110 transition-transform duration-200 cursor-pointer"
                 >
-                  <span className="text-white font-bold text-sm">A</span>
+                  {logoLoading ? (
+                    <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
+                  ) : logoUrl ? (
+                    <img 
+                      src={logoUrl} 
+                      alt="Logo" 
+                      className="h-12 w-auto"
+                      onError={(e) => {
+                        console.error('Error loading logo from Supabase:', e);
+                        e.currentTarget.src = '/lurevi-logo.svg';
+                      }}
+                    />
+                  ) : (
+                    <img 
+                      src="/lurevi-logo.svg" 
+                      alt="Lurevi" 
+                      className="h-12 w-auto"
+                    />
+                  )}
                 </Link>
               </div>
 

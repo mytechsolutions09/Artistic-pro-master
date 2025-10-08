@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
+import { useLogo } from '../../hooks/useLogo';
 import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
 
 const SignUpForm: React.FC = () => {
   const { settings, loading: appearanceLoading } = useAppearance();
+  const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,26 +19,6 @@ const SignUpForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [customLogo, setCustomLogo] = useState<string | null>(null);
-
-  // Load custom logo on component mount
-  useEffect(() => {
-    const savedLogo = localStorage.getItem('customLogo');
-    if (savedLogo) {
-      setCustomLogo(savedLogo);
-    }
-    
-    // Listen for logo updates
-    const handleLogoUpdate = (event: CustomEvent) => {
-      setCustomLogo(event.detail.logoUrl);
-    };
-    
-    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    };
-  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,11 +125,25 @@ const SignUpForm: React.FC = () => {
                     to="/"
                     className="hover:scale-110 transition-transform duration-200 cursor-pointer"
                   >
-                    <img 
-                      src="/lurevi-logo.svg" 
-                      alt="Lurevi" 
-                      className="h-12 w-auto"
-                    />
+                    {logoLoading ? (
+                      <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
+                    ) : logoUrl ? (
+                      <img 
+                        src={logoUrl} 
+                        alt="Logo" 
+                        className="h-12 w-auto"
+                        onError={(e) => {
+                          console.error('Error loading logo from Supabase:', e);
+                          e.currentTarget.src = '/lurevi-logo.svg';
+                        }}
+                      />
+                    ) : (
+                      <img 
+                        src="/lurevi-logo.svg" 
+                        alt="Lurevi" 
+                        className="h-12 w-auto"
+                      />
+                    )}
                   </Link>
                 </div>
 
@@ -223,13 +219,15 @@ const SignUpForm: React.FC = () => {
                   to="/"
                   className="hover:scale-110 transition-transform duration-200 cursor-pointer"
                 >
-                  {customLogo ? (
+                  {logoLoading ? (
+                    <div className="h-16 w-32 bg-gray-200 animate-pulse rounded"></div>
+                  ) : logoUrl ? (
                     <img 
-                      src={customLogo} 
-                      alt="Lurevi" 
+                      src={logoUrl} 
+                      alt="Logo" 
                       className="h-16 w-auto"
                       onError={(e) => {
-                        console.error('Error loading custom logo:', e);
+                        console.error('Error loading logo from Supabase:', e);
                         e.currentTarget.src = '/lurevi-logo.svg';
                       }}
                     />

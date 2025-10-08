@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Package, Mail, Calendar, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, 
-  Search, RefreshCw, Trash2, Send, FileText, ChevronDown, ChevronUp
+  Package, Calendar, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, 
+  Search, RefreshCw, FileText, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { orderService, Order, OrderStats } from '../../services/orderService';
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -85,40 +85,6 @@ const OrderManagement: React.FC = () => {
     }
   };
 
-  // Send download links
-  const handleSendDownloadLinks = async (order: Order) => {
-    try {
-      // Generate download links for completed orders
-      if (order.status === 'completed') {
-        const downloadLinks = order.order_items.map(item => {
-          if (item.products?.pdf_url) {
-            return `${window.location.origin}/download/${item.id}`;
-          }
-          return null;
-        }).filter(Boolean);
-
-        // Here you would typically send an email with download links
-
-        alert('Download links have been generated and will be sent to the customer.');
-      }
-    } catch (error) {
-      console.error('Error sending download links:', error);
-    }
-  };
-
-  // Delete order
-  const handleDeleteOrder = async (orderId: string) => {
-    if (window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
-      try {
-        const success = await orderService.deleteOrder(orderId);
-        if (success) {
-          await loadOrders();
-        }
-      } catch (error) {
-        console.error('Error deleting order:', error);
-      }
-    }
-  };
 
   // Toggle order expansion
   const toggleOrderExpansion = (orderId: string) => {
@@ -373,40 +339,50 @@ const OrderManagement: React.FC = () => {
           <p className="text-gray-500">Try adjusting your search or filters</p>
           </div>
         ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
                 {filteredOrders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div key={order.id} className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
               {/* Order Header */}
-              <div className="p-4 border-b border-gray-100">
+              <div 
+                className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-300"
+                onClick={() => toggleOrderExpansion(order.id)}
+              >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-md">
                       {order.customer_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                       </div>
                       <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium text-gray-900">#{order.id.slice(-8)}</h3>
-                        <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(order.status)}`}>
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h3 className="text-lg font-bold text-gray-900">#{order.id.slice(-8)}</h3>
+                        <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full shadow-sm ${getStatusColor(order.status)}`}>
                         {getStatusIcon(order.status)}
                         <span className="ml-1 capitalize">{order.status}</span>
                       </span>
                       </div>
-                      <p className="text-sm text-gray-600">{order.customer_name}</p>
-                      <p className="text-xs text-gray-500">{order.customer_email}</p>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{order.customer_name}</p>
+                        <p className="text-xs text-gray-500 font-mono">{order.customer_email}</p>
+                      </div>
                         </div>
                       </div>
                   <div className="text-right">
-                    <p className="font-medium text-gray-900">
+                    <p className="text-lg font-bold text-gray-900">
                       {formatCurrency(order.total_amount, order.currency_code || 'INR')}
                     </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleDateString()}
+                    <p className="text-xs text-gray-500 font-medium">
+                      {new Date(order.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
                     </p>
                     <div className="flex items-center space-x-2 mt-2">
                           <select
                             value={order.status}
                         onChange={(e) => handleUpdateStatus(order.id, e.target.value as Order['status'])}
-                        className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                        className="text-xs border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent bg-white shadow-sm font-medium"
+                        onClick={(e) => e.stopPropagation()}
                           >
                             <option value="pending">Pending</option>
                             <option value="processing">Processing</option>
@@ -414,12 +390,9 @@ const OrderManagement: React.FC = () => {
                             <option value="cancelled">Cancelled</option>
                             <option value="refunded">Refunded</option>
                           </select>
-                <button
-                        onClick={() => toggleOrderExpansion(order.id)}
-                        className="p-1 text-gray-400 hover:text-gray-600"
-                >
+                <div className="p-1 text-gray-400 hover:text-indigo-600 transition-colors">
                         {expandedOrders.has(order.id) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
+                </div>
               </div>
                     </div>
                   </div>
@@ -427,46 +400,49 @@ const OrderManagement: React.FC = () => {
 
               {/* Order Details (Expandable) */}
               {expandedOrders.has(order.id) && (
-                <div className="p-4 bg-gray-50">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Order Items */}
               <div>
-                      <h4 className="font-medium text-gray-900 mb-3">Order Items</h4>
-                      <div className="space-y-3">
+                      <h4 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                        <Package className="w-5 h-5 text-indigo-600 mr-2" />
+                        Order Items
+                      </h4>
+                      <div className="space-y-2">
                         {order.order_items.map((item) => (
-                          <div key={item.id} className="flex items-start space-x-3 p-3 bg-white rounded border hover:shadow-sm transition-shadow">
+                          <div key={item.id} className="flex items-start space-x-3 p-3 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
                             {/* Product Image */}
                             <div className="flex-shrink-0">
                               {item.products?.main_image || item.product_image ? (
                                 <img 
                                   src={item.products?.main_image || item.product_image} 
                                   alt={item.product_title}
-                                  className="w-16 h-16 object-cover rounded border border-gray-200"
+                                  className="w-12 h-12 object-cover rounded-lg shadow-sm border border-gray-100"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.style.display = 'none';
                                     const parent = target.parentElement;
                                     if (parent) {
                                       const fallback = document.createElement('div');
-                                      fallback.className = 'w-16 h-16 bg-gray-200 rounded flex items-center justify-center';
-                                      fallback.innerHTML = '<svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a7 7 0 00-7 7 7 7 0 007 7 7 7 0 007-7 7 7 0 00-7-7zm0 12a5 5 0 110-10 5 5 0 010 10z"/></svg>';
+                                      fallback.className = 'w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center shadow-sm';
+                                      fallback.innerHTML = '<svg class="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a7 7 0 00-7 7 7 7 0 007 7 7 7 0 007-7 7 7 0 00-7-7zm0 12a5 5 0 110-10 5 5 0 010 10z"/></svg>';
                                       parent.appendChild(fallback);
                                     }
                                   }}
                                 />
                               ) : (
-                                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                  <Package className="w-8 h-8 text-gray-400" />
+                                <div className="w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center shadow-sm">
+                                  <Package className="w-6 h-6 text-gray-500" />
                                 </div>
                               )}
                             </div>
                             
                             {/* Product Details */}
                       <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{item.product_title}</p>
+                              <p className="text-sm font-bold text-gray-900 mb-2 leading-tight">{item.product_title}</p>
                               
                               {/* Product Type & Details */}
-                              <div className="mt-1 space-y-0.5">
+                              <div className="space-y-1">
                                 {/* Check if this is a clothing item by looking for options (color/size) or product title */}
                                 {(() => {
                                   const isClothing = (item.selected_product_type === 'clothing') ||
@@ -497,19 +473,19 @@ const OrderManagement: React.FC = () => {
                                   if (isClothing && item.options && (item.options.color || item.options.size)) {
                                     // This is a clothing item with options - show color, size, and quantity as badges
                                     return (
-                                      <div className="flex flex-wrap gap-1 mt-1">
+                                      <div className="flex flex-wrap gap-1">
                                         {item.options.color && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                                            Color: {item.options.color}
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300">
+                                            🎨 {item.options.color}
                                           </span>
                                         )}
                                         {item.options.size && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                            Size: {item.options.size}
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">
+                                            📏 {item.options.size}
                                           </span>
                                         )}
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                          Qty: {item.quantity}
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300">
+                                          📦 {item.quantity}
                                         </span>
                                       </div>
                                     );
@@ -564,10 +540,10 @@ const OrderManagement: React.FC = () => {
                       
                       {/* Price */}
                       <div className="text-right flex-shrink-0">
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm font-bold text-gray-900">
                                 {formatCurrency(item.total_price, order.currency_code || 'INR')}
                               </p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-500 font-medium">
                                 {formatCurrency(item.unit_price, order.currency_code || 'INR')} each
                               </p>
                       </div>
@@ -577,69 +553,75 @@ const OrderManagement: React.FC = () => {
               </div>
 
                     {/* Order Information */}
-                <div>
-                      <h4 className="font-medium text-gray-900 mb-3">Order Information</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Payment Method:</span>
-                          <span className="text-gray-900 capitalize">{order.payment_method}</span>
-                      </div>
-                        {order.payment_id && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Payment ID:</span>
-                            <span className="text-gray-900 font-mono text-xs">{order.payment_id}</span>
-                </div>
-              )}
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Created:</span>
-                          <span className="text-gray-900">{new Date(order.created_at).toLocaleString()}</span>
-                      </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Updated:</span>
-                          <span className="text-gray-900">{new Date(order.updated_at).toLocaleString()}</span>
-                  </div>
-                        {order.notes && (
-              <div>
-                            <span className="text-gray-500">Notes:</span>
-                            <p className="text-gray-900 mt-1">{order.notes}</p>
-                    </div>
-                  )}
+                <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+                      <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <FileText className="w-5 h-5 text-indigo-600 mr-2" />
+                        Order Information
+                      </h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        {/* Payment Information */}
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 border border-blue-200 shadow-sm">
+                          <div className="flex items-center mb-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                            <span className="text-sm font-bold text-blue-900">💳 Payment Details</span>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="text-blue-700 font-medium">Method:</span>
+                              <span className="text-blue-900 font-bold capitalize bg-blue-200 px-2 py-1 rounded-full">{order.payment_method}</span>
+                            </div>
+                            {order.payment_id && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-blue-700 font-medium">Payment ID:</span>
+                                <span className="text-blue-900 font-mono text-xs bg-blue-200 px-2 py-1 rounded-full border border-blue-300">{order.payment_id}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Order Timeline */}
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 border border-green-200 shadow-sm">
+                          <div className="flex items-center mb-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                            <span className="text-sm font-bold text-green-900">⏰ Order Timeline</span>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="text-green-700 font-medium">Created:</span>
+                              <span className="text-green-900 font-semibold bg-green-200 px-2 py-1 rounded-full">{new Date(order.created_at).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-green-700 font-medium">Updated:</span>
+                              <span className="text-green-900 font-semibold bg-green-200 px-2 py-1 rounded-full">{new Date(order.updated_at).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Shipping Information */}
                         {order.shipping_address && (
-                <div>
-                            <span className="text-gray-500">Shipping Address:</span>
-                            <p className="text-gray-900 mt-1">{order.shipping_address}</p>
-                </div>
-              )}
+                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-3 border border-purple-200 shadow-sm">
+                            <div className="flex items-center mb-2">
+                              <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                              <span className="text-sm font-bold text-purple-900">🚚 Shipping Address</span>
+                            </div>
+                            <p className="text-xs text-purple-900 leading-relaxed bg-purple-200 px-3 py-2 rounded-lg border border-purple-300">{order.shipping_address}</p>
+                          </div>
+                        )}
+
+                        {/* Notes */}
+                        {order.notes && (
+                          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-3 border border-orange-200 shadow-sm">
+                            <div className="flex items-center mb-2">
+                              <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                              <span className="text-sm font-bold text-orange-900">📝 Notes</span>
+                            </div>
+                            <p className="text-xs text-orange-900 leading-relaxed bg-orange-200 px-3 py-2 rounded-lg border border-orange-300">{order.notes}</p>
+                          </div>
+                        )}
             </div>
           </div>
               </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-gray-200">
-                    <button
-                      onClick={() => handleSendDownloadLinks(order)}
-                      disabled={order.status !== 'completed'}
-                      className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>Send Downloads</span>
-                    </button>
-                    <button className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                      <Mail className="w-4 h-4" />
-                      <span>Email Customer</span>
-                    </button>
-                    <button className="flex items-center space-x-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
-                      <FileText className="w-4 h-4" />
-                      <span>Generate Invoice</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteOrder(order.id)}
-                      className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete</span>
-                    </button>
-                  </div>
                 </div>
               )}
             </div>

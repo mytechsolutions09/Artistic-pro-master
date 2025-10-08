@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, Mail, Smartphone } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
+import { useLogo } from '../../hooks/useLogo';
 import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
 import PhoneLogin from './PhoneLogin';
@@ -19,27 +20,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [customLogo, setCustomLogo] = useState<string | null>(null);
   const { settings, loading: appearanceLoading } = useAppearance();
-
-  // Load custom logo on component mount
-  useEffect(() => {
-    const savedLogo = localStorage.getItem('customLogo');
-    if (savedLogo) {
-      setCustomLogo(savedLogo);
-    }
-    
-    // Listen for logo updates
-    const handleLogoUpdate = (event: CustomEvent) => {
-      setCustomLogo(event.detail.logoUrl);
-    };
-    
-    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    };
-  }, []);
+  const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
 
   // Function to clear remembered credentials
   const clearRememberedCredentials = () => {
@@ -144,13 +126,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                   to="/"
                   className="hover:scale-110 transition-transform duration-200 cursor-pointer"
                 >
-                  {customLogo ? (
+                  {logoLoading ? (
+                    <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
+                  ) : logoUrl ? (
                     <img 
-                      src={customLogo} 
-                      alt="Lurevi" 
+                      src={logoUrl} 
+                      alt="Logo" 
                       className="h-12 w-auto"
                       onError={(e) => {
-                        console.error('Error loading custom logo:', e);
+                        console.error('Error loading logo from Supabase:', e);
                         e.currentTarget.src = '/lurevi-logo.svg';
                       }}
                     />

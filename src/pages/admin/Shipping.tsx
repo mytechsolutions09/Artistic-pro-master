@@ -32,6 +32,7 @@ import {
   AdvancedCreateShipmentRequest,
   CustomQCItem
 } from '../../services/DelhiveryService';
+import { orderService } from '../../services/orderService';
 
 interface Shipment {
   id: string;
@@ -321,46 +322,88 @@ const Shipping: React.FC = () => {
     NotificationManager.success('Item removed from history');
   };
 
+  // Helper functions for address parsing
+  const extractPinCodeFromAddress = (address: string): string => {
+    const pinCodeMatch = address.match(/\b\d{6}\b/);
+    return pinCodeMatch ? pinCodeMatch[0] : '';
+  };
+
+  const extractCityFromAddress = (address: string): string => {
+    // Common Indian cities to extract
+    const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat', 'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri', 'Patna', 'Vadodara', 'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan', 'Vasai', 'Varanasi', 'Srinagar', 'Aurangabad', 'Navi Mumbai', 'Solapur', 'Vijayawada', 'Kolhapur', 'Amritsar', 'Noida', 'Ranchi', 'Howrah', 'Coimbatore', 'Raipur', 'Jabalpur', 'Gwalior', 'Chandigarh', 'Tiruchirappalli', 'Mysore', 'Bhubaneswar', 'Kochi', 'Bhavnagar', 'Salem', 'Warangal', 'Guntur', 'Bhiwandi', 'Amravati', 'Nanded', 'Kolhapur', 'Sangli', 'Malegaon', 'Ulhasnagar', 'Jalgaon', 'Latur', 'Ahmadnagar', 'Dhule', 'Ichalkaranji', 'Parbhani', 'Jalna', 'Bhusawal', 'Panvel', 'Satara', 'Beed', 'Yavatmal', 'Kamptee', 'Gondia', 'Barshi', 'Achalpur', 'Osmanabad', 'Nandurbar', 'Wardha', 'Udgir', 'Hinganghat', 'Gurgaon', 'Faridabad', 'Noida', 'Ghaziabad', 'Meerut', 'Agra', 'Lucknow', 'Kanpur', 'Varanasi', 'Allahabad', 'Bareilly', 'Moradabad', 'Aligarh', 'Saharanpur', 'Gorakhpur', 'Firozabad', 'Jhansi', 'Muzaffarnagar', 'Mathura', 'Shahjahanpur', 'Rampur', 'Modinagar', 'Hapur', 'Etawah', 'Mirzapur', 'Bulandshahr', 'Sambhal', 'Amroha', 'Hardoi', 'Fatehpur', 'Raebareli', 'Orai', 'Sitapur', 'Bahraich', 'Modinagar', 'Shamli', 'Kasganj', 'Ghazipur', 'Sultanpur', 'Azamgarh', 'Bijnor', 'Sahaswan', 'Basti', 'Chandausi', 'Akbarpur', 'Ballia', 'Tanda', 'Greater Noida', 'Shikohabad', 'Shamli', 'Awagarh', 'Kasganj', 'Etah', 'Mainpuri', 'Firozabad', 'Aligarh', 'Hathras', 'Sambhal', 'Amroha', 'Moradabad', 'Rampur', 'Bareilly', 'Shahjahanpur', 'Hardoi', 'Sitapur', 'Lakhimpur', 'Bahraich', 'Shravasti', 'Balrampur', 'Gonda', 'Siddharthnagar', 'Basti', 'Sant Kabir Nagar', 'Maharajganj', 'Gorakhpur', 'Kushinagar', 'Deoria', 'Azamgarh', 'Mau', 'Ballia', 'Jaunpur', 'Ghazipur', 'Chandauli', 'Varanasi', 'Sant Ravidas Nagar', 'Mirzapur', 'Sonbhadra', 'Allahabad', 'Fatehpur', 'Pratapgarh', 'Kaushambi', 'Chitrakoot', 'Banda', 'Hamirpur', 'Mahoba', 'Lalitpur', 'Jhansi', 'Jalaun', 'Orai', 'Etawah', 'Auraiya', 'Kanpur Dehat', 'Kanpur Nagar', 'Unnao', 'Lucknow', 'Rae Bareli', 'Sultanpur', 'Amethi', 'Faizabad', 'Ambedkar Nagar', 'Barabanki', 'Bahraich', 'Shravasti', 'Balrampur', 'Gonda', 'Siddharthnagar', 'Basti', 'Sant Kabir Nagar', 'Maharajganj', 'Gorakhpur', 'Kushinagar', 'Deoria', 'Azamgarh', 'Mau', 'Ballia', 'Jaunpur', 'Ghazipur', 'Chandauli', 'Varanasi', 'Sant Ravidas Nagar', 'Mirzapur', 'Sonbhadra'];
+    
+    for (const city of cities) {
+      if (address.toLowerCase().includes(city.toLowerCase())) {
+        return city;
+      }
+    }
+    return '';
+  };
+
+  const extractStateFromAddress = (address: string): string => {
+    // Common Indian states to extract
+    const states = ['Maharashtra', 'Delhi', 'Karnataka', 'Telangana', 'Tamil Nadu', 'West Bengal', 'Gujarat', 'Rajasthan', 'Uttar Pradesh', 'Madhya Pradesh', 'Andhra Pradesh', 'Bihar', 'Odisha', 'Kerala', 'Assam', 'Punjab', 'Haryana', 'Chhattisgarh', 'Jharkhand', 'Uttarakhand', 'Himachal Pradesh', 'Tripura', 'Meghalaya', 'Manipur', 'Nagaland', 'Goa', 'Arunachal Pradesh', 'Mizoram', 'Sikkim', 'Jammu and Kashmir', 'Ladakh'];
+    
+    for (const state of states) {
+      if (address.toLowerCase().includes(state.toLowerCase())) {
+        return state;
+      }
+    }
+    return '';
+  };
+
+  const calculateOrderWeight = (orderItems: any[]): number => {
+    // Estimate weight based on product types
+    let totalWeight = 0;
+    
+    orderItems.forEach(item => {
+      const productTitle = (item.product_title || item.products?.title || '').toLowerCase();
+      
+      if (productTitle.includes('hoodie') || productTitle.includes('sweatshirt')) {
+        totalWeight += 0.5; // 500g per clothing item
+      } else if (productTitle.includes('t-shirt') || productTitle.includes('shirt')) {
+        totalWeight += 0.2; // 200g per t-shirt
+      } else if (productTitle.includes('poster') || productTitle.includes('print')) {
+        totalWeight += 0.1; // 100g per poster
+      } else {
+        totalWeight += 0.3; // Default 300g for other items
+      }
+    });
+    
+    return Math.max(totalWeight, 0.1); // Minimum 100g
+  };
+
   const loadAvailableOrders = async () => {
     try {
       setLoading(true);
       
-      // Fetch real orders from the database
-      const response = await fetch('/api/orders?status=pending&limit=50', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      // Fetch real orders from Supabase using OrderService
+      const orders = await orderService.getAllOrders({
+        status: 'processing',
+        limit: 50
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-
-      const data = await response.json();
       
       // Transform the orders to match our expected format
-      const transformedOrders = data.orders.map((order: any) => ({
+      const transformedOrders = orders.map((order: any) => ({
         id: order.id,
-        customer_name: order.customer_name || order.user?.name || 'Unknown Customer',
-        customer_phone: order.customer_phone || order.user?.phone || order.phone || '',
-        delivery_address: order.shipping_address?.address || order.delivery_address || '',
-        delivery_pincode: order.shipping_address?.pincode || order.delivery_pincode || '',
-        delivery_city: order.shipping_address?.city || order.delivery_city || '',
-        delivery_state: order.shipping_address?.state || order.delivery_state || '',
-        cod_amount: order.total_amount || order.amount || 0,
-        weight: order.total_weight || order.weight || 0,
-        products: order.items?.map((item: any) => ({
-          name: item.product?.name || item.name || 'Unknown Product',
+        customer_name: order.customer_name || 'Unknown Customer',
+        customer_phone: order.customer_phone || '',
+        delivery_address: order.shipping_address || '',
+        delivery_pincode: extractPinCodeFromAddress(order.shipping_address || ''),
+        delivery_city: extractCityFromAddress(order.shipping_address || ''),
+        delivery_state: extractStateFromAddress(order.shipping_address || ''),
+        cod_amount: order.total_amount || 0,
+        weight: calculateOrderWeight(order.order_items || []),
+        products: order.order_items?.map((item: any) => ({
+          name: item.product_title || item.products?.title || 'Unknown Product',
           quantity: item.quantity || 1,
-          price: item.price || item.unit_price || 0
+          price: item.unit_price || item.total_price || 0
         })) || [],
-        created_at: order.created_at || order.order_date || new Date().toISOString()
+        created_at: order.created_at || new Date().toISOString()
       }));
 
-      setAvailableOrders(transformedOrders);
-      NotificationManager.success(`Loaded ${transformedOrders.length} orders`);
+            setAvailableOrders(transformedOrders);
+            NotificationManager.success(`Loaded ${transformedOrders.length} processing orders`);
     } catch (error) {
       console.error('Error loading orders:', error);
       NotificationManager.error('Failed to load orders. Using fallback data.');
@@ -1143,8 +1186,8 @@ const Shipping: React.FC = () => {
                   {availableOrders.length === 0 ? (
                     <div className="text-center py-8">
                       <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">No pending orders found</p>
-                      <p className="text-sm text-gray-400">Orders with "pending" status will appear here</p>
+                      <p className="text-gray-500">No processing orders found</p>
+                      <p className="text-sm text-gray-400">Orders with "processing" status will appear here</p>
                     </div>
                   ) : (
                     <div className="space-y-3">

@@ -98,7 +98,7 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -155,6 +155,218 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Order Process Flow Diagram - Only for Physical Products */}
+          {(() => {
+            // Check if order has physical products (posters or clothing)
+            const hasPhysicalProducts = order?.items?.some((item: any) => 
+              item.productType === 'poster' || item.productType === 'clothing'
+            );
+            
+            return hasPhysicalProducts && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Process Flow</h3>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+              <div className="flex items-center justify-between relative">
+                {/* Process Steps */}
+                <div className="flex items-center space-x-4 w-full">
+                  {/* Step 1: Processing */}
+                  <div className="flex flex-col items-center flex-1">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                      // Check if order is processing or if Delhivery shows it's being prepared
+                      (order?.status === 'processing' || trackingData?.status === 'processing') ? 'bg-blue-500 text-white' : 
+                      // Check if order is completed or Delhivery shows delivered
+                      (order?.status === 'completed' || trackingData?.status === 'delivered') ? 'bg-green-500 text-white' : 
+                      'bg-blue-200 text-blue-700'
+                    }`}>
+                      <Package className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-900">Processing</p>
+                      <p className="text-xs text-gray-600">Order being prepared</p>
+                      {trackingData?.steps?.some((step: any) => step.status === 'Picked Up') && (
+                        <p className="text-xs text-green-600 font-medium">✓ Picked Up</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Arrow 1 */}
+                  <div className={`w-8 h-0.5 ${
+                    order?.status === 'completed' ? 'bg-green-400' : 'bg-blue-300'
+                  }`}></div>
+
+                  {/* Step 2: Shipping */}
+                  <div className="flex flex-col items-center flex-1">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                      // Check if Delhivery shows in transit or shipped
+                      (trackingData?.status === 'shipped' || trackingData?.status === 'in_transit' || 
+                       trackingData?.steps?.some((step: any) => step.status === 'In Transit')) ? 'bg-blue-500 text-white' :
+                      // Check if order is completed or Delhivery shows delivered
+                      (order?.status === 'completed' || trackingData?.status === 'delivered') ? 'bg-green-500 text-white' : 
+                      'bg-gray-200 text-gray-500'
+                    }`}>
+                      <Truck className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-900">Shipping</p>
+                      <p className="text-xs text-gray-600">On the way to you</p>
+                      {trackingData?.currentLocation && (
+                        <p className="text-xs text-blue-600 font-medium">📍 {trackingData.currentLocation}</p>
+                      )}
+                      {trackingData?.steps?.some((step: any) => step.status === 'In Transit') && (
+                        <p className="text-xs text-green-600 font-medium">✓ In Transit</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Arrow 2 */}
+                  <div className={`w-8 h-0.5 ${
+                    order?.status === 'completed' ? 'bg-green-400' : 'bg-gray-300'
+                  }`}></div>
+
+                  {/* Step 3: Delivered */}
+                  <div className="flex flex-col items-center flex-1">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                      // Check if Delhivery shows delivered or if order is completed
+                      (trackingData?.status === 'delivered' || trackingData?.steps?.some((step: any) => step.status === 'Delivered') ||
+                       order?.status === 'completed') ? 'bg-green-500 text-white' : 
+                      'bg-gray-200 text-gray-500'
+                    }`}>
+                      <CheckCircle className="w-6 h-6" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-900">Delivered</p>
+                      <p className="text-xs text-gray-600">Order completed</p>
+                      {trackingData?.steps?.some((step: any) => step.status === 'Delivered') && (
+                        <p className="text-xs text-green-600 font-medium">✓ Delivered</p>
+                      )}
+                      {trackingData?.steps?.find((step: any) => step.status === 'Delivered')?.timestamp && (
+                        <p className="text-xs text-gray-500">
+                          {new Date(trackingData.steps.find((step: any) => step.status === 'Delivered').timestamp).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mt-4">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-500 ${
+                      // Determine progress based on Delhivery tracking data
+                      (trackingData?.status === 'delivered' || trackingData?.steps?.some((step: any) => step.status === 'Delivered') || order?.status === 'completed') ? 'bg-green-500' : 
+                      (trackingData?.status === 'shipped' || trackingData?.status === 'in_transit' || trackingData?.steps?.some((step: any) => step.status === 'In Transit')) ? 'bg-blue-500' : 
+                      (trackingData?.status === 'processing' || order?.status === 'processing') ? 'bg-blue-500' : 
+                      'bg-gray-300'
+                    }`}
+                    style={{
+                      width: (() => {
+                        // Calculate progress based on Delhivery tracking data
+                        if (trackingData?.status === 'delivered' || trackingData?.steps?.some((step: any) => step.status === 'Delivered') || order?.status === 'completed') {
+                          return '100%';
+                        } else if (trackingData?.status === 'shipped' || trackingData?.status === 'in_transit' || trackingData?.steps?.some((step: any) => step.status === 'In Transit')) {
+                          return '66%';
+                        } else if (trackingData?.status === 'processing' || order?.status === 'processing' || trackingData?.steps?.some((step: any) => step.status === 'Picked Up')) {
+                          return '33%';
+                        } else {
+                          return '0%';
+                        }
+                      })()
+                    }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                  <span>0%</span>
+                  <span>50%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+
+              {/* Status Information */}
+              <div className="mt-4 p-3 bg-white rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${
+                    order?.status === 'completed' ? 'bg-green-500' : 
+                    order?.status === 'processing' ? 'bg-blue-500' : 
+                    'bg-gray-400'
+                  }`}></div>
+                  <p className="text-sm font-medium text-gray-900">
+                    Current Status: <span className="capitalize">
+                      {trackingData?.status || order?.status || 'Unknown'}
+                    </span>
+                  </p>
+                </div>
+                {/* Show status-specific messages based on Delhivery tracking data */}
+                {trackingData?.status === 'processing' && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Your order is being prepared for shipping. We'll notify you once it's on the way.
+                  </p>
+                )}
+                {(trackingData?.status === 'shipped' || trackingData?.status === 'in_transit') && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Your order is on the way! Current location: {trackingData.currentLocation || 'In transit'}
+                  </p>
+                )}
+                {trackingData?.status === 'delivered' && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Your order has been successfully delivered. Thank you for your purchase!
+                  </p>
+                )}
+                {!trackingData?.status && order?.status === 'processing' && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Your order is being prepared for shipping. We'll notify you once it's on the way.
+                  </p>
+                )}
+                {!trackingData?.status && order?.status === 'completed' && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Your order has been successfully delivered. Thank you for your purchase!
+                  </p>
+                )}
+                {/* Show tracking number if available */}
+                {trackingData?.trackingNumber && (
+                  <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                    <p className="text-xs text-blue-800 font-medium">
+                      Tracking Number: {trackingData.trackingNumber}
+                    </p>
+                    {trackingData.carrier && (
+                      <p className="text-xs text-blue-600">Carrier: {trackingData.carrier}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+            );
+          })()}
+
+          {/* Digital Products Notice */}
+          {(() => {
+            // Check if order has only digital products
+            const hasOnlyDigitalProducts = order?.items?.every((item: any) => 
+              item.productType === 'digital'
+            );
+            
+            return hasOnlyDigitalProducts && (
+              <div className="mb-6">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Package className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-900">Digital Order</h3>
+                      <p className="text-sm text-green-700">
+                        This order contains digital products only. No physical shipping is required.
+                        Your downloads are available immediately upon order completion.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Current Status */}
           {trackingData && (

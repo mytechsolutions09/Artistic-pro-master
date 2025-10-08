@@ -142,9 +142,19 @@ export class CompleteOrderService {
       const currency = CurrencyService.getCurrency(currentCurrency);
       const currencyRate = currency?.rate || 1.0;
 
-      // Create main order record with currency information
-      // COD orders are marked as 'pending' until payment is received
-      const orderStatus = orderData.paymentMethod === 'cod' ? 'pending' : 'completed';
+      // Determine order status based on payment method and product types
+      let orderStatus: 'pending' | 'processing' | 'completed' = 'completed';
+      
+      // Check if order has physical products (posters or clothing)
+      const hasPhysicalProducts = orderData.items.some(item => 
+        item.selectedProductType === 'poster' || item.selectedProductType === 'clothing'
+      );
+      
+      if (orderData.paymentMethod === 'cod') {
+        orderStatus = 'pending'; // COD orders are pending until payment received
+      } else if (hasPhysicalProducts) {
+        orderStatus = 'processing'; // Physical products start as processing
+      }
       
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -152,6 +162,7 @@ export class CompleteOrderService {
           customer_id: orderData.customerId,
           customer_name: orderData.customerName,
           customer_email: orderData.customerEmail,
+          customer_phone: orderData.customerPhone,
           total_amount: orderData.totalAmount,
           status: orderStatus,
           payment_method: orderData.paymentMethod,

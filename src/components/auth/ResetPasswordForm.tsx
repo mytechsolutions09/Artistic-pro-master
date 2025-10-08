@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useLogo } from '../../hooks/useLogo';
 
 const ResetPasswordForm: React.FC = () => {
+  const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -79,9 +81,30 @@ const ResetPasswordForm: React.FC = () => {
             <div className="lg:w-1/2 bg-white p-8 lg:p-12 flex flex-col justify-between">
               {/* Logo */}
               <div className="flex items-center mb-8">
-                <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-pink-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">A</span>
-                </div>
+                <Link 
+                  to="/"
+                  className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+                >
+                  {logoLoading ? (
+                    <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
+                  ) : logoUrl ? (
+                    <img 
+                      src={logoUrl} 
+                      alt="Logo" 
+                      className="h-12 w-auto"
+                      onError={(e) => {
+                        console.error('Error loading logo from Supabase:', e);
+                        e.currentTarget.src = '/lurevi-logo.svg';
+                      }}
+                    />
+                  ) : (
+                    <img 
+                      src="/lurevi-logo.svg" 
+                      alt="Lurevi" 
+                      className="h-12 w-auto"
+                    />
+                  )}
+                </Link>
               </div>
 
               {/* Success Illustration */}
@@ -185,9 +208,30 @@ const ResetPasswordForm: React.FC = () => {
           <div className="lg:w-1/2 bg-white p-6 sm:p-8 lg:p-10 xl:p-12 flex flex-col justify-center h-[200px] sm:h-[250px] md:h-[300px] lg:h-auto">
             {/* Logo */}
             <div className="flex items-center mb-4 sm:mb-6 lg:mb-8">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-pink-400 to-pink-600 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-xs sm:text-sm">A</span>
-              </div>
+              <Link 
+                to="/"
+                className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+              >
+                {logoLoading ? (
+                  <div className="h-10 w-20 bg-gray-200 animate-pulse rounded"></div>
+                ) : logoUrl ? (
+                  <img 
+                    src={logoUrl} 
+                    alt="Logo" 
+                    className="h-10 w-auto"
+                    onError={(e) => {
+                      console.error('Error loading logo from Supabase:', e);
+                      e.currentTarget.src = '/lurevi-logo.svg';
+                    }}
+                  />
+                ) : (
+                  <img 
+                    src="/lurevi-logo.svg" 
+                    alt="Lurevi" 
+                    className="h-10 w-auto"
+                  />
+                )}
+              </Link>
             </div>
 
             {/* Illustration */}

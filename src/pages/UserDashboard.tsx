@@ -828,9 +828,10 @@ const UserDashboard: React.FC = () => {
                            <p className="text-xs text-gray-500">{new Date(order.date).toLocaleDateString()}</p>
                          </div>
                          <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                           order.status === 'completed' ? 'bg-white text-gray-800' : 
-                           order.status === 'pending' ? 'bg-white text-gray-800' : 
-                           'bg-white text-gray-800'
+                           order.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                           order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                           order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
+                           'bg-gray-100 text-gray-800'
                          }`}>
                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                          </div>
@@ -1164,7 +1165,10 @@ const UserDashboard: React.FC = () => {
                             <div className="text-right">
                               <p className="font-semibold text-gray-900 text-xs">{formatUIPrice(order.total, 'INR')}</p>
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                                order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                order.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
+                                'bg-gray-100 text-gray-800'
                               }`}>
                                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                               </span>
@@ -1226,25 +1230,42 @@ const UserDashboard: React.FC = () => {
                             <div className="mt-3 pt-3 border-t border-gray-100">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center space-x-2">
-                                  {order.items.some((item: any) => item.productType !== 'digital') && (
-                                    <button
-                                      onClick={() => {
-                                        const firstPhysicalItem = order.items.find((item: any) => item.productType !== 'digital');
-                                        if (firstPhysicalItem) {
-                                          const hasReturn = hasActiveReturnRequest(order.id, firstPhysicalItem.id);
-                                          if (hasReturn) {
-                                            showReturnNotification('Return request already exists for this order');
-                                          } else {
-                                            handleReturnRequest(order, { ...firstPhysicalItem, itemIndex: 0 });
+                                  {(() => {
+                                    // Check if order is completed
+                                    const isOrderCompleted = order.status === 'completed';
+                                    
+                                    // Check if order has physical products
+                                    const hasPhysicalProducts = order.items.some((item: any) => item.productType !== 'digital');
+                                    
+                                    // Check if order is within 30 days
+                                    const orderDate = new Date(order.date);
+                                    const currentDate = new Date();
+                                    const daysDifference = Math.floor((currentDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+                                    const isWithin30Days = daysDifference <= 30;
+                                    
+                                    // Show return button only if: completed + physical products + within 30 days
+                                    const shouldShowReturnButton = isOrderCompleted && hasPhysicalProducts && isWithin30Days;
+                                    
+                                    return shouldShowReturnButton && (
+                                      <button
+                                        onClick={() => {
+                                          const firstPhysicalItem = order.items.find((item: any) => item.productType !== 'digital');
+                                          if (firstPhysicalItem) {
+                                            const hasReturn = hasActiveReturnRequest(order.id, firstPhysicalItem.id);
+                                            if (hasReturn) {
+                                              showReturnNotification('Return request already exists for this order');
+                                            } else {
+                                              handleReturnRequest(order, { ...firstPhysicalItem, itemIndex: 0 });
+                                            }
                                           }
-                                        }
-                                      }}
-                                      className="flex items-center space-x-1 px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded hover:bg-teal-100 transition-colors"
-                                    >
-                                      <RotateCcw className="w-3 h-3" />
-                                      <span>Return</span>
-                                    </button>
-                                  )}
+                                        }}
+                                        className="flex items-center space-x-1 px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded hover:bg-teal-100 transition-colors"
+                                      >
+                                        <RotateCcw className="w-3 h-3" />
+                                        <span>Return</span>
+                                      </button>
+                                    );
+                                  })()}
                                   <button
                                     onClick={() => {
                                       const firstItem = order.items[0];

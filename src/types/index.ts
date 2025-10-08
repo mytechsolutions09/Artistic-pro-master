@@ -65,7 +65,7 @@ export interface Order {
   userId: string;
   items: ArtWork[];
   total: number;
-  status: 'pending' | 'completed' | 'cancelled' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'failed';
   date: string;
   paymentId?: string;
   paymentMethod?: string;

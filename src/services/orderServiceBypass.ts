@@ -64,6 +64,20 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
       throw new Error('Service role key not configured. Please set VITE_SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
     }
 
+    // Determine order status based on payment method and product types
+    let orderStatus: 'pending' | 'processing' | 'completed' = 'completed';
+    
+    // Check if order has physical products (posters or clothing)
+    const hasPhysicalProducts = orderData.items.some(item => 
+      item.selectedProductType === 'poster' || item.selectedProductType === 'clothing'
+    );
+    
+    if (orderData.paymentMethod === 'cod') {
+      orderStatus = 'pending'; // COD orders are pending until payment received
+    } else if (hasPhysicalProducts) {
+      orderStatus = 'processing'; // Physical products start as processing
+    }
+
     // Create main order record using service role
     const { data: order, error: orderError } = await supabaseService
       .from('orders')
@@ -71,8 +85,9 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
         customer_id: orderData.customerId,
         customer_name: orderData.customerName,
         customer_email: orderData.customerEmail,
+        customer_phone: orderData.customerPhone,
         total_amount: orderData.totalAmount,
-        status: orderData.paymentMethod === 'cod' ? 'pending' : 'completed',
+        status: orderStatus,
         payment_method: orderData.paymentMethod,
         payment_id: orderData.paymentId,
         notes: orderData.notes,
