@@ -7,6 +7,7 @@ import { useLogo } from '../../hooks/useLogo';
 import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
 import PhoneLogin from './PhoneLogin';
+import CloudflareTurnstile from './CloudflareTurnstile';
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -20,8 +21,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const { settings, loading: appearanceLoading } = useAppearance();
   const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
+
+  // Check if Turnstile is enabled
+  const turnstileEnabled = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_ENABLED === 'true';
+  const hasSiteKey = !!import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY;
 
   // Function to clear remembered credentials
   const clearRememberedCredentials = () => {
@@ -51,6 +57,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Check Turnstile verification if enabled
+    if (turnstileEnabled && hasSiteKey && !turnstileToken) {
+      setError('Please complete the security verification');
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -280,6 +293,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                       </div>
                     </div>
                   </div>
+                )}
+
+                {/* Cloudflare Turnstile */}
+                {turnstileEnabled && hasSiteKey && (
+                  <CloudflareTurnstile
+                    onVerify={(token) => {
+                      setTurnstileToken(token);
+                      setError(null);
+                    }}
+                    onError={() => {
+                      setTurnstileToken(null);
+                      setError('Security verification failed. Please try again.');
+                    }}
+                    onExpire={() => {
+                      setTurnstileToken(null);
+                      setError('Security verification expired. Please verify again.');
+                    }}
+                    theme="light"
+                    size="normal"
+                  />
                 )}
 
                 <button
