@@ -28,8 +28,13 @@ export interface CompleteOrderData {
     quantity: number;
     unitPrice: number;
     totalPrice: number;
-    selectedProductType?: 'digital' | 'poster';
+    selectedProductType?: 'digital' | 'poster' | 'clothing';
     selectedPosterSize?: string;
+    options?: {
+      size?: string;
+      color?: string;
+      [key: string]: any;
+    };
   }>;
   totalAmount: number;
   paymentMethod: 'card' | 'paypal' | 'bank_transfer' | 'razorpay' | 'cod';
@@ -91,7 +96,8 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
       unit_price: item.unitPrice,
       total_price: item.totalPrice,
       selected_product_type: item.selectedProductType || 'digital',
-      selected_poster_size: item.selectedPosterSize || null
+      selected_poster_size: item.selectedPosterSize || null,
+      options: item.options || null
     }));
 
     const { error: itemsError } = await supabaseService

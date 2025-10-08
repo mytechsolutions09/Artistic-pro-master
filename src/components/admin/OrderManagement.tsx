@@ -432,17 +432,138 @@ const OrderManagement: React.FC = () => {
               {/* Order Items */}
               <div>
                       <h4 className="font-medium text-gray-900 mb-3">Order Items</h4>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {order.order_items.map((item) => (
-                          <div key={item.id} className="flex items-center space-x-3 p-2 bg-white rounded border">
-                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                              <Package className="w-4 h-4 text-gray-400" />
+                          <div key={item.id} className="flex items-start space-x-3 p-3 bg-white rounded border hover:shadow-sm transition-shadow">
+                            {/* Product Image */}
+                            <div className="flex-shrink-0">
+                              {item.products?.main_image || item.product_image ? (
+                                <img 
+                                  src={item.products?.main_image || item.product_image} 
+                                  alt={item.product_title}
+                                  className="w-16 h-16 object-cover rounded border border-gray-200"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      const fallback = document.createElement('div');
+                                      fallback.className = 'w-16 h-16 bg-gray-200 rounded flex items-center justify-center';
+                                      fallback.innerHTML = '<svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a7 7 0 00-7 7 7 7 0 007 7 7 7 0 007-7 7 7 0 00-7-7zm0 12a5 5 0 110-10 5 5 0 010 10z"/></svg>';
+                                      parent.appendChild(fallback);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                                  <Package className="w-8 h-8 text-gray-400" />
+                                </div>
+                              )}
                             </div>
-                      <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900">{item.product_title}</p>
-                              <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                            
+                            {/* Product Details */}
+                      <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{item.product_title}</p>
+                              
+                              {/* Product Type & Details */}
+                              <div className="mt-1 space-y-0.5">
+                                {/* Check if this is a clothing item by looking for options (color/size) or product title */}
+                                {(() => {
+                                  const isClothing = (item.selected_product_type === 'clothing') ||
+                                                   (item.options && (item.options.color || item.options.size)) ||
+                                                   (item.product_title && (
+                                                     item.product_title.toLowerCase().includes('sweatshirt') ||
+                                                     item.product_title.toLowerCase().includes('hoodie') ||
+                                                     item.product_title.toLowerCase().includes('t-shirt') ||
+                                                     item.product_title.toLowerCase().includes('shirt') ||
+                                                     item.product_title.toLowerCase().includes('jacket') ||
+                                                     item.product_title.toLowerCase().includes('sweater') ||
+                                                     item.product_title.toLowerCase().includes('crewneck') ||
+                                                     item.product_title.toLowerCase().includes('oversized')
+                                                   ));
+                                  
+                                  // Debug logging - log ALL item data
+                                  console.log('Order item data:', {
+                                    id: item.id,
+                                    product_title: item.product_title,
+                                    selected_product_type: item.selected_product_type,
+                                    selected_poster_size: item.selected_poster_size,
+                                    options: item.options,
+                                    quantity: item.quantity,
+                                    isClothing: isClothing,
+                                    full_item: item
+                                  });
+                                  
+                                  if (isClothing && item.options && (item.options.color || item.options.size)) {
+                                    // This is a clothing item with options - show color, size, and quantity as badges
+                                    return (
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {item.options.color && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                            Color: {item.options.color}
+                                          </span>
+                                        )}
+                                        {item.options.size && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                            Size: {item.options.size}
+                                          </span>
+                                        )}
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                          Qty: {item.quantity}
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (isClothing) {
+                                    // Clothing item but no options data - check if size is in selected_poster_size (data corruption)
+                                    const hasSizeInPosterSize = item.selected_poster_size && item.selected_product_type === 'poster';
+                                    
+                                    return (
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                          Clothing
+                                        </span>
+                                        {hasSizeInPosterSize && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                            Size: {item.selected_poster_size}
+                                          </span>
+                                        )}
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                          Qty: {item.quantity}
+                                        </span>
+                                        {hasSizeInPosterSize && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                            Data Issue
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  } else {
+                                    // This is not a clothing item - show type and quantity
+                                    return (
+                                      <>
+                                        <p className="text-xs text-gray-500">
+                                          <span className="font-medium">Type:</span> {' '}
+                                          <span className="capitalize">
+                                            {item.selected_product_type === 'poster' ? 'Poster' : 'Digital'}
+                                          </span>
+                                        </p>
+                                        {item.selected_product_type === 'poster' && item.selected_poster_size && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Size: {item.selected_poster_size}
+                                          </span>
+                                        )}
+                                        <p className="text-xs text-gray-500">
+                                          <span className="font-medium">Quantity:</span> {item.quantity}
+                                        </p>
+                                      </>
+                                    );
+                                  }
+                                })()}
+                              </div>
                       </div>
-                      <div className="text-right">
+                      
+                      {/* Price */}
+                      <div className="text-right flex-shrink-0">
                               <p className="text-sm font-medium text-gray-900">
                                 {formatCurrency(item.total_price, order.currency_code || 'INR')}
                               </p>

@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   User, Settings, ShoppingBag, Heart, Download, X, Eye, Star,
   FileDown, TrendingUp, Calendar, LogOut,
-  Package, Zap, Sparkles, Activity, Truck, MapPin, Clock, CheckCircle, RotateCcw,
+  Package, Zap, Sparkles, Activity, Truck, Clock, CheckCircle, RotateCcw,
   Search, ChevronDown, ChevronUp, Edit, Shield, Key
 } from 'lucide-react';
 import { CompleteOrderService } from '../services/completeOrderService';
 import { Order } from '../types';
-import { SITE_COLORS } from '../constants/colors';
+// import { SITE_COLORS } from '../constants/colors';
 import { getProgressToNextLevel } from '../constants/memberLevels';
 import { useProducts } from '../contexts/ProductContext';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -19,6 +19,7 @@ import FilterSidebar from '../components/FilterSidebar';
 import ReturnRequestForm from '../components/ReturnRequestForm';
 import ReturnRequestsList from '../components/ReturnRequestsList';
 import AddressManagement from '../components/AddressManagement';
+import OrderTrackingModal from '../components/OrderTrackingModal';
 import { delhiveryService } from '../services/DelhiveryService';
 import { ReturnService } from '../services/returnService';
 
@@ -73,6 +74,10 @@ const UserDashboard: React.FC = () => {
   const [expandedTracking, setExpandedTracking] = useState<Record<string, boolean>>({});
   const [trackingLoading, setTrackingLoading] = useState<Record<string, boolean>>({});
   const [trackingErrors, setTrackingErrors] = useState<Record<string, string>>({});
+  
+  // Tracking modal state
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<Order | null>(null);
 
   
   // Review state
@@ -239,7 +244,12 @@ const UserDashboard: React.FC = () => {
                 images: item.products?.main_image ? [item.products.main_image] : 
                         (item.products?.images && item.products.images.length > 0 ? item.products.images : []),
                 productType: productType,
-                posterSize: posterSize
+                posterSize: posterSize,
+                // Add clothing options if available
+                ...(item.options && {
+                  color: item.options.color,
+                  size: item.options.size
+                })
               };
             }) || [],
             total: (() => {
@@ -267,7 +277,9 @@ const UserDashboard: React.FC = () => {
             paymentId: dbOrder.payment_id,
             paymentMethod: dbOrder.payment_method,
             downloadLinks: dbOrder.download_links || [],
-            customerEmail: dbOrder.customer_email
+            customerEmail: dbOrder.customer_email,
+            shipping_address: dbOrder.shipping_address,
+            billing_address: dbOrder.billing_address
           }));
           setUserOrders(transformedOrders);
         } else {
@@ -291,8 +303,8 @@ const UserDashboard: React.FC = () => {
 
   // Fetch real tracking data from Delhivery for orders
   const fetchTrackingData = async (order: Order) => {
-    // Check if order has a waybill number (this would be stored in order metadata)
-    const waybill = order.metadata?.waybill || order.trackingNumber;
+    // Check if order has a waybill number (this would be stored in order notes or metadata)
+    const waybill = (order as any).metadata?.waybill || (order as any).trackingNumber;
     
     if (!waybill) {
       // If no waybill, generate fallback tracking data
@@ -346,46 +358,186 @@ const UserDashboard: React.FC = () => {
     const daysSinceOrder = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
     
     let trackingStatus = 'processing';
-    let trackingSteps = [];
+    let trackingSteps: any[] = [];
+    let currentLocation = 'Mumbai Hub';
+    let estimatedDelivery = new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000);
     
     if (order.status === 'completed') {
       trackingStatus = 'delivered';
+      currentLocation = order.shipping_address || 'Delivered';
       trackingSteps = [
-        { status: 'completed', title: 'Order Placed', date: orderDate, description: 'Your order has been confirmed' },
-        { status: 'completed', title: 'Processing', date: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000), description: 'Your order is being prepared' },
-        { status: 'completed', title: 'Shipped', date: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000), description: 'Your order is on its way' },
-        { status: 'completed', title: 'Delivered', date: new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000), description: 'Your order has been delivered' }
+        { 
+          status: 'Order Placed', 
+          description: 'Your order has been confirmed and payment received', 
+          location: 'Mumbai Hub',
+          timestamp: orderDate.toISOString(),
+          completed: true
+        },
+        { 
+          status: 'Processing', 
+          description: 'Your order is being prepared and quality checked', 
+          location: 'Mumbai Hub',
+          timestamp: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+          completed: true
+        },
+        { 
+          status: 'Shipped', 
+          description: 'Your order has been dispatched from our warehouse', 
+          location: 'Mumbai Hub',
+          timestamp: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+          completed: true
+        },
+        { 
+          status: 'Out for Delivery', 
+          description: 'Your order is out for delivery to your address', 
+          location: order.shipping_address || 'Local Delivery Hub',
+          timestamp: new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+          completed: true
+        },
+        { 
+          status: 'Delivered', 
+          description: 'Your order has been successfully delivered', 
+          location: (order as any).shipping_address || 'Delivered',
+          timestamp: new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+          completed: true
+        }
       ];
     } else if (order.status === 'pending') {
-      if (daysSinceOrder >= 2) {
-        trackingStatus = 'shipped';
+      if (daysSinceOrder >= 3) {
+        trackingStatus = 'in transit';
+        currentLocation = 'In Transit';
         trackingSteps = [
-          { status: 'completed', title: 'Order Placed', date: orderDate, description: 'Your order has been confirmed' },
-          { status: 'completed', title: 'Processing', date: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000), description: 'Your order is being prepared' },
-          { status: 'current', title: 'Shipped', date: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000), description: 'Your order is on its way' },
-          { status: 'pending', title: 'Delivered', date: null, description: 'Your order will be delivered soon' }
+          { 
+            status: 'Order Placed', 
+            description: 'Your order has been confirmed and payment received', 
+            location: 'Mumbai Hub',
+            timestamp: orderDate.toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Processing', 
+            description: 'Your order is being prepared and quality checked', 
+            location: 'Mumbai Hub',
+            timestamp: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Shipped', 
+            description: 'Your order has been dispatched from our warehouse', 
+            location: 'Mumbai Hub',
+            timestamp: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: true
+          },
+          { 
+            status: 'In Transit', 
+            description: 'Your order is on its way to your city', 
+            location: 'In Transit',
+            timestamp: new Date(orderDate.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: false
+          },
+          { 
+            status: 'Out for Delivery', 
+            description: 'Your order will be out for delivery soon', 
+            location: 'Local Delivery Hub',
+            timestamp: null,
+            completed: false
+          }
+        ];
+      } else if (daysSinceOrder >= 1) {
+        trackingStatus = 'shipped';
+        currentLocation = 'Mumbai Hub';
+        trackingSteps = [
+          { 
+            status: 'Order Placed', 
+            description: 'Your order has been confirmed and payment received', 
+            location: 'Mumbai Hub',
+            timestamp: orderDate.toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Processing', 
+            description: 'Your order is being prepared and quality checked', 
+            location: 'Mumbai Hub',
+            timestamp: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Shipped', 
+            description: 'Your order has been dispatched from our warehouse', 
+            location: 'Mumbai Hub',
+            timestamp: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: false
+          },
+          { 
+            status: 'In Transit', 
+            description: 'Your order will be in transit soon', 
+            location: 'In Transit',
+            timestamp: null,
+            completed: false
+          }
         ];
       } else {
         trackingStatus = 'processing';
+        currentLocation = 'Mumbai Hub';
         trackingSteps = [
-          { status: 'completed', title: 'Order Placed', date: orderDate, description: 'Your order has been confirmed' },
-          { status: 'current', title: 'Processing', date: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000), description: 'Your order is being prepared' },
-          { status: 'pending', title: 'Shipped', date: null, description: 'Your order will be shipped soon' },
-          { status: 'pending', title: 'Delivered', date: null, description: 'Your order will be delivered soon' }
+          { 
+            status: 'Order Placed', 
+            description: 'Your order has been confirmed and payment received', 
+            location: 'Mumbai Hub',
+            timestamp: orderDate.toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Processing', 
+            description: 'Your order is being prepared and quality checked', 
+            location: 'Mumbai Hub',
+            timestamp: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: false
+          },
+          { 
+            status: 'Shipped', 
+            description: 'Your order will be shipped soon', 
+            location: 'Mumbai Hub',
+            timestamp: null,
+            completed: false
+          },
+          { 
+            status: 'Delivered', 
+            description: 'Your order will be delivered soon', 
+            location: order.shipping_address || 'Local Delivery Hub',
+            timestamp: null,
+            completed: false
+          }
         ];
       }
     }
 
     return {
       status: trackingStatus,
-      trackingNumber: order.metadata?.waybill || `TRK${order.id.slice(-8).toUpperCase()}`,
+      description: getStatusDescription(trackingStatus),
+      currentLocation: currentLocation,
+      trackingNumber: (order as any).metadata?.waybill || `TRK${order.id.slice(-8).toUpperCase()}`,
       carrier: 'Lurevi Logistics',
-      estimatedDelivery: order.status === 'completed' 
-        ? new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000)
-        : new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000),
+      estimatedDelivery: estimatedDelivery,
       steps: trackingSteps,
       isFallback: true
     };
+  };
+
+  // Helper function to get status descriptions
+  const getStatusDescription = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return 'Your order has been successfully delivered';
+      case 'in transit':
+        return 'Your order is on its way to your location';
+      case 'shipped':
+        return 'Your order has been dispatched from our warehouse';
+      case 'processing':
+        return 'Your order is being prepared and quality checked';
+      default:
+        return 'Your order is being processed';
+    }
   };
 
   // Parse Delhivery tracking response into our step format
@@ -466,11 +618,28 @@ const UserDashboard: React.FC = () => {
     }
   }, [userOrders]);
 
-  const toggleTrackingExpansion = (orderId: string) => {
-    setExpandedTracking(prev => ({
-      ...prev,
-      [orderId]: !prev[orderId]
-    }));
+  // const toggleTrackingExpansion = (orderId: string) => {
+  //   setExpandedTracking(prev => ({
+  //     ...prev,
+  //     [orderId]: !prev[orderId]
+  //   }));
+  // };
+
+  // Handle tracking modal
+  const openTrackingModal = (order: Order) => {
+    setSelectedOrderForTracking(order);
+    setShowTrackingModal(true);
+  };
+
+  const closeTrackingModal = () => {
+    setShowTrackingModal(false);
+    setSelectedOrderForTracking(null);
+  };
+
+  const refreshTrackingData = async () => {
+    if (selectedOrderForTracking) {
+      await fetchTrackingData(selectedOrderForTracking);
+    }
   };
   
   // Calculate downloadable items from completed orders (only digital products)
@@ -1023,6 +1192,13 @@ const UserDashboard: React.FC = () => {
                                       <p className="text-xs text-gray-500">
                                         {item.productType === 'poster' && item.posterSize 
                                           ? `Poster ${item.posterSize}`
+                                          : item.productType === 'clothing'
+                                          ? (() => {
+                                              const parts = [];
+                                              if (item.color) parts.push(`Color: ${item.color}`);
+                                              if (item.size) parts.push(`Size: ${item.size}`);
+                                              return parts.length > 0 ? parts.join(', ') : 'Clothing';
+                                            })()
                                           : 'Digital'
                                         }
                                       </p>
@@ -1040,58 +1216,63 @@ const UserDashboard: React.FC = () => {
                                           <span>Download</span>
                                         </button>
                                       )}
-                                      {item.productType !== 'digital' && (
-                                        <button
-                                          onClick={() => {
-                                            const hasReturn = hasActiveReturnRequest(order.id, item.id);
-                                            if (hasReturn) {
-                                              showReturnNotification('Return request already exists for this item');
-                                            } else {
-                                              handleReturnRequest(order, { ...item, itemIndex });
-                                            }
-                                          }}
-                                          className="flex items-center space-x-1 px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded hover:bg-teal-100 transition-colors"
-                                        >
-                                          <RotateCcw className="w-3 h-3" />
-                                          <span>Return</span>
-                                        </button>
-                                      )}
-                                      <button
-                                        onClick={() => handleReviewProduct(item, order.id, `${order.id}-${itemIndex}`)}
-                                        className="flex items-center space-x-1 px-2 py-1 text-gray-600 text-xs rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow"
-                                      >
-                                        <Star className="w-3 h-3" />
-                                        <span>Review</span>
-                                      </button>
                                     </div>
                                   )}
                                 </div>
                               ))}
                             </div>
 
-                            {/* Order Tracking Section */}
+                            {/* Order Actions Section */}
                             <div className="mt-3 pt-3 border-t border-gray-100">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center space-x-2">
+                                  {order.items.some((item: any) => item.productType !== 'digital') && (
+                                    <button
+                                      onClick={() => {
+                                        const firstPhysicalItem = order.items.find((item: any) => item.productType !== 'digital');
+                                        if (firstPhysicalItem) {
+                                          const hasReturn = hasActiveReturnRequest(order.id, firstPhysicalItem.id);
+                                          if (hasReturn) {
+                                            showReturnNotification('Return request already exists for this order');
+                                          } else {
+                                            handleReturnRequest(order, { ...firstPhysicalItem, itemIndex: 0 });
+                                          }
+                                        }
+                                      }}
+                                      className="flex items-center space-x-1 px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded hover:bg-teal-100 transition-colors"
+                                    >
+                                      <RotateCcw className="w-3 h-3" />
+                                      <span>Return</span>
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => {
+                                      const firstItem = order.items[0];
+                                      handleReviewProduct(firstItem, order.id, `${order.id}-0`);
+                                    }}
+                                    className="flex items-center space-x-1 px-2 py-1 text-gray-600 text-xs rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow"
+                                  >
+                                    <Star className="w-3 h-3" />
+                                    <span>Review</span>
+                                  </button>
+                                </div>
+                                <div className="flex items-center space-x-2">
                                   <Truck className="w-4 h-4 text-teal-600" />
-                                  <span className="text-xs font-medium text-gray-900">Order Tracking</span>
                                   {trackingData[order.id] && (
                                     <span className="text-xs text-gray-500">#{trackingData[order.id].trackingNumber}</span>
                                   )}
                                   {trackingData[order.id]?.isFallback && (
                                     <span className="text-xs text-orange-500 bg-orange-100 px-1 rounded">Fallback</span>
                                   )}
-                                </div>
-                                <div className="flex items-center space-x-2">
                                   {trackingLoading[order.id] && (
                                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-teal-600"></div>
                                   )}
                                   <button
-                                    onClick={() => toggleTrackingExpansion(order.id)}
+                                    onClick={() => openTrackingModal(order)}
                                     className="text-xs text-teal-600 hover:text-teal-700 font-medium"
                                     disabled={trackingLoading[order.id]}
                                   >
-                                    {expandedTracking[order.id] ? 'Hide Details' : 'Track Order'}
+                                    Track Order
                                   </button>
                                 </div>
                               </div>
@@ -1977,6 +2158,16 @@ const UserDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Order Tracking Modal */}
+      <OrderTrackingModal
+        isOpen={showTrackingModal}
+        onClose={closeTrackingModal}
+        order={selectedOrderForTracking}
+        trackingData={selectedOrderForTracking ? trackingData[selectedOrderForTracking.id] : null}
+        onRefresh={refreshTrackingData}
+        isLoading={selectedOrderForTracking ? trackingLoading[selectedOrderForTracking.id] || false : false}
+      />
     </div>
   );
 };

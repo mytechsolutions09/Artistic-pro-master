@@ -214,7 +214,8 @@ const Checkout: React.FC = () => {
           unitPrice: item.selectedPrice,
           totalPrice: item.selectedPrice * item.quantity,
           selectedProductType: item.selectedProductType,
-          selectedPosterSize: item.selectedPosterSize
+          selectedPosterSize: item.selectedPosterSize,
+          options: item.options
         })),
         totalAmount: cart.total,
         paymentMethod: paymentMethod,
@@ -750,6 +751,13 @@ const Checkout: React.FC = () => {
                       <p className="text-xs text-gray-500">
                         {item.selectedProductType === 'digital' 
                           ? 'Digital Download' 
+                          : item.selectedProductType === 'clothing'
+                          ? (() => {
+                              const parts = [];
+                              if (item.options?.color) parts.push(`Color: ${item.options.color}`);
+                              if (item.options?.size) parts.push(`Size: ${item.options.size}`);
+                              return parts.length > 0 ? parts.join(', ') : 'Clothing';
+                            })()
                           : `Poster Size: ${item.selectedPosterSize || 'Standard'}`
                         }
                       </p>

@@ -496,28 +496,27 @@ const Shipping: React.FC = () => {
     setLoading(true);
     try {
       const shipmentData = {
-        name: newShipment.customer_name,
-        phone: newShipment.customer_phone,
-        add: newShipment.delivery_address,
-        pin: newShipment.delivery_pincode,
-        city: newShipment.delivery_city,
-        state: newShipment.delivery_state,
-        country: 'India',
-        return_name: 'Lurevi Store',
-        return_add: '123 Art Street, Mumbai',
-        return_phone: '+91 555 123 4567',
-        return_pin: '400001',
-        return_city: 'Mumbai',
-        return_state: 'Maharashtra',
-        return_country: 'India',
-        products_desc: newShipment.products_desc,
-        cod_amount: parseFloat(newShipment.cod_amount || '0'),
-        weight: parseFloat(newShipment.weight),
-        length: parseFloat(newShipment.length || '10'),
-        width: parseFloat(newShipment.width || '10'),
-        height: parseFloat(newShipment.height || '10'),
-        pickup_date: new Date().toISOString().split('T')[0],
-        payment_mode: newShipment.cod_amount ? 'COD' : 'Prepaid'
+        shipments: [{
+          name: newShipment.customer_name,
+          phone: newShipment.customer_phone,
+          add: newShipment.delivery_address,
+          pin: newShipment.delivery_pincode,
+          city: newShipment.delivery_city,
+          state: newShipment.delivery_state,
+          country: 'India',
+          order: `ORD_${Date.now()}`,
+          payment_mode: newShipment.cod_amount ? 'COD' : 'Prepaid',
+          products_desc: newShipment.products_desc,
+          cod_amount: parseFloat(newShipment.cod_amount || '0'),
+          weight: parseFloat(newShipment.weight),
+          length: parseFloat(newShipment.length || '10'),
+          width: parseFloat(newShipment.width || '10'),
+          height: parseFloat(newShipment.height || '10'),
+          pickup_date: new Date().toISOString().split('T')[0]
+        }],
+        pickup_location: {
+          name: 'warehouse_name'
+        }
       };
 
       const result = await delhiveryService.createShipment(shipmentData);
@@ -624,54 +623,57 @@ const Shipping: React.FC = () => {
   };
 
   const handleCreateWarehouse = async () => {
-    if (!warehouseCreate.name || !warehouseCreate.phone || !warehouseCreate.address) {
-      NotificationManager.error('Please fill in all required fields');
-      return;
-    }
-
     setWarehouseCreate(prev => ({ ...prev, loading: true }));
     try {
       const result = await delhiveryService.createWarehouseWithValidation(warehouseCreate);
       setWarehouseCreate(prev => ({ ...prev, result }));
-      NotificationManager.success('Warehouse created successfully');
       
-      // Reset form
-      setWarehouseCreate(prev => ({
-        ...prev,
-        phone: '',
-        city: '',
-        name: '',
-        pin: '',
-        address: '',
-        country: 'India',
-        email: '',
-        registered_name: '',
-        return_address: '',
-        return_pin: '',
-        return_city: '',
-        return_state: '',
-        return_country: 'India'
-      }));
-    } catch (error) {
-      NotificationManager.error('Failed to create warehouse');
+      if (result.success) {
+        NotificationManager.success(result.message || 'Warehouse created successfully');
+        
+        // Reset form
+        setWarehouseCreate(prev => ({
+          ...prev,
+          phone: '',
+          city: '',
+          name: '',
+          pin: '',
+          address: '',
+          country: 'India',
+          email: '',
+          registered_name: '',
+          return_address: '',
+          return_pin: '',
+          return_city: '',
+          return_state: '',
+          return_country: 'India',
+          result: null
+        }));
+      } else {
+        NotificationManager.error(result.message || 'Failed to create warehouse');
+      }
+    } catch (error: any) {
+      console.error('Warehouse creation error:', error);
+      NotificationManager.error(error.message || 'Failed to create warehouse');
     } finally {
       setWarehouseCreate(prev => ({ ...prev, loading: false }));
     }
   };
 
   const handleEditWarehouse = async () => {
-    if (!warehouseEdit.name || !warehouseEdit.phone || !warehouseEdit.address) {
-      NotificationManager.error('Please fill in all required fields');
-      return;
-    }
-
     setWarehouseEdit(prev => ({ ...prev, loading: true }));
     try {
       const result = await delhiveryService.editWarehouseWithValidation(warehouseEdit);
       setWarehouseEdit(prev => ({ ...prev, result }));
-      NotificationManager.success('Warehouse updated successfully');
-    } catch (error) {
-      NotificationManager.error('Failed to update warehouse');
+      
+      if (result.success) {
+        NotificationManager.success(result.message || 'Warehouse updated successfully');
+      } else {
+        NotificationManager.error(result.message || 'Failed to update warehouse');
+      }
+    } catch (error: any) {
+      console.error('Warehouse update error:', error);
+      NotificationManager.error(error.message || 'Failed to update warehouse');
     } finally {
       setWarehouseEdit(prev => ({ ...prev, loading: false }));
     }
@@ -1560,7 +1562,12 @@ const Shipping: React.FC = () => {
         <div className="space-y-4">
           {/* Create Warehouse */}
           <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Create Warehouse</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-gray-900">Create Warehouse</h2>
+              <div className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
+                <span className="font-medium">Tip:</span> All fields marked with * are required
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -1579,11 +1586,13 @@ const Shipping: React.FC = () => {
                   Phone *
                 </label>
                 <input
-                  type="text"
+                  type="tel"
                   className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.phone}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="9999999999"
+                  placeholder="9876543210"
+                  pattern="[0-9]{10}"
+                  title="Enter a valid 10-digit Indian phone number"
                 />
               </div>
               <div>
@@ -1619,7 +1628,10 @@ const Shipping: React.FC = () => {
                   className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
                   value={warehouseCreate.pin}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, pin: e.target.value }))}
-                  placeholder="110042"
+                  placeholder="400001"
+                  pattern="[0-9]{6}"
+                  title="Enter a valid 6-digit pin code"
+                  maxLength={6}
                 />
               </div>
               <div>
@@ -1720,9 +1732,34 @@ const Shipping: React.FC = () => {
             {warehouseCreate.result && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-medium text-gray-900 mb-2">Warehouse Creation Result:</h3>
-                <pre className="text-sm text-gray-600 overflow-auto">
-                  {JSON.stringify(warehouseCreate.result, null, 2)}
-                </pre>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-700">Status:</span>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      warehouseCreate.result.success 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {warehouseCreate.result.success ? 'Success' : 'Failed'}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {warehouseCreate.result.message}
+                  </div>
+                  {warehouseCreate.result.warehouse_id && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Warehouse ID:</span> {warehouseCreate.result.warehouse_id}
+                    </div>
+                  )}
+                  {process.env.NODE_ENV === 'development' && (
+                    <details className="mt-2">
+                      <summary className="text-xs text-gray-500 cursor-pointer">Show Raw Response</summary>
+                      <pre className="text-xs text-gray-600 overflow-auto mt-2 p-2 bg-white rounded border">
+                        {JSON.stringify(warehouseCreate.result, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1781,9 +1818,29 @@ const Shipping: React.FC = () => {
             {warehouseEdit.result && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-medium text-gray-900 mb-2">Warehouse Update Result:</h3>
-                <pre className="text-sm text-gray-600 overflow-auto">
-                  {JSON.stringify(warehouseEdit.result, null, 2)}
-                </pre>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-700">Status:</span>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      warehouseEdit.result.success 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {warehouseEdit.result.success ? 'Success' : 'Failed'}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {warehouseEdit.result.message}
+                  </div>
+                  {process.env.NODE_ENV === 'development' && (
+                    <details className="mt-2">
+                      <summary className="text-xs text-gray-500 cursor-pointer">Show Raw Response</summary>
+                      <pre className="text-xs text-gray-600 overflow-auto mt-2 p-2 bg-white rounded border">
+                        {JSON.stringify(warehouseEdit.result, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
               </div>
             )}
           </div>

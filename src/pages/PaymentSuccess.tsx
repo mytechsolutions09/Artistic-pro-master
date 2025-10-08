@@ -187,12 +187,20 @@ const PaymentSuccess: React.FC = () => {
                       />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{item.title}</h3>
-                        {(item.productType === 'digital' || item.productType === 'poster') && (
+                        {(item.productType === 'digital' || item.productType === 'poster' || item.productType === 'clothing') && (
                           <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
                             {item.productType === 'poster' && item.posterSize && (
                               <>
                                 <span>{item.posterSize}</span>
                                 <span>•</span>
+                              </>
+                            )}
+                            {item.productType === 'clothing' && (
+                              <>
+                                {item.color && <span>Color: {item.color}</span>}
+                                {item.color && item.size && <span>•</span>}
+                                {item.size && <span>Size: {item.size}</span>}
+                                {(item.color || item.size) && <span>•</span>}
                               </>
                             )}
                             <span className="capitalize">{item.productType}</span>

@@ -48,6 +48,11 @@ export interface CartItem {
   selectedProductType: 'digital' | 'poster' | 'clothing';
   selectedPosterSize?: string;
   selectedPrice: number;
+  options?: {
+    size?: string;
+    color?: string;
+    [key: string]: any;
+  };
 }
 
 export interface Cart {
@@ -66,6 +71,8 @@ export interface Order {
   paymentMethod?: string;
   downloadLinks?: string[];
   customerEmail?: string;
+  shipping_address?: string;
+  billing_address?: string;
 }
 
 export interface PaymentResult {

@@ -1093,11 +1093,50 @@ class DelhiveryService {
    */
   async createWarehouse(warehouseData: CreateWarehouseRequest): Promise<any> {
     try {
-      const response = await this.axiosInstance.put('/api/backend/clientwarehouse/create/', warehouseData);
-      return response.data;
-    } catch (error) {
+      // Check if API is configured
+      if (!isApiConfigured()) {
+        console.warn('Delhivery API not configured, returning mock response');
+        return {
+          success: true,
+          message: 'Warehouse created successfully (Mock)',
+          warehouse_id: `WH_${Date.now()}`,
+          data: warehouseData
+        };
+      }
+
+      // Prepare the request data with proper format
+      const requestData = {
+        ...warehouseData,
+        // Ensure required fields are present
+        registered_name: warehouseData.registered_name || warehouseData.name,
+        return_pin: warehouseData.return_pin || warehouseData.pin,
+        return_city: warehouseData.return_city || warehouseData.city,
+        return_state: warehouseData.return_state || 'Maharashtra',
+        return_country: warehouseData.return_country || 'India'
+      };
+
+      const response = await this.axiosInstance.put('/api/backend/clientwarehouse/create/', requestData);
+      
+      return {
+        success: true,
+        message: 'Warehouse created successfully',
+        data: response.data
+      };
+    } catch (error: any) {
       console.error('Error creating warehouse:', error);
-      throw new Error('Failed to create warehouse');
+      
+      // Provide more specific error messages
+      if (error.response?.status === 401) {
+        throw new Error('Invalid API token. Please check your Delhivery API configuration.');
+      } else if (error.response?.status === 400) {
+        throw new Error(`Invalid warehouse data: ${error.response?.data?.message || 'Please check all required fields'}`);
+      } else if (error.response?.status === 403) {
+        throw new Error('Access denied. Please check your API permissions.');
+      } else if (error.code === 'ERR_NETWORK') {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(`Failed to create warehouse: ${error.message || 'Unknown error'}`);
+      }
     }
   }
 
@@ -1106,11 +1145,40 @@ class DelhiveryService {
    */
   async editWarehouse(warehouseData: EditWarehouseRequest): Promise<any> {
     try {
+      // Check if API is configured
+      if (!isApiConfigured()) {
+        console.warn('Delhivery API not configured, returning mock response');
+        return {
+          success: true,
+          message: 'Warehouse updated successfully (Mock)',
+          data: warehouseData
+        };
+      }
+
       const response = await this.axiosInstance.post('/api/backend/clientwarehouse/edit/', warehouseData);
-      return response.data;
-    } catch (error) {
+      
+      return {
+        success: true,
+        message: 'Warehouse updated successfully',
+        data: response.data
+      };
+    } catch (error: any) {
       console.error('Error editing warehouse:', error);
-      throw new Error('Failed to edit warehouse');
+      
+      // Provide more specific error messages
+      if (error.response?.status === 401) {
+        throw new Error('Invalid API token. Please check your Delhivery API configuration.');
+      } else if (error.response?.status === 400) {
+        throw new Error(`Invalid warehouse data: ${error.response?.data?.message || 'Please check all required fields'}`);
+      } else if (error.response?.status === 403) {
+        throw new Error('Access denied. Please check your API permissions.');
+      } else if (error.response?.status === 404) {
+        throw new Error('Warehouse not found. Please check the warehouse name.');
+      } else if (error.code === 'ERR_NETWORK') {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(`Failed to update warehouse: ${error.message || 'Unknown error'}`);
+      }
     }
   }
 
@@ -1140,19 +1208,50 @@ class DelhiveryService {
   async createWarehouseWithValidation(warehouseData: CreateWarehouseRequest): Promise<any> {
     try {
       // Validate required fields
-      if (!warehouseData.name || !warehouseData.phone || !warehouseData.address) {
-        throw new Error('Name, phone, and address are required');
+      const errors: string[] = [];
+      
+      if (!warehouseData.name || warehouseData.name.trim().length === 0) {
+        errors.push('Warehouse name is required');
       }
-
+      
+      if (!warehouseData.phone || warehouseData.phone.trim().length === 0) {
+        errors.push('Phone number is required');
+      } else if (!/^[6-9]\d{9}$/.test(warehouseData.phone.replace(/\D/g, ''))) {
+        errors.push('Please enter a valid 10-digit Indian phone number');
+      }
+      
+      if (!warehouseData.address || warehouseData.address.trim().length === 0) {
+        errors.push('Address is required');
+      }
+      
+      if (!warehouseData.city || warehouseData.city.trim().length === 0) {
+        errors.push('City is required');
+      }
+      
       if (!warehouseData.pin || !/^\d{6}$/.test(warehouseData.pin)) {
-        throw new Error('Valid 6-digit pin code is required');
+        errors.push('Valid 6-digit pin code is required');
       }
-
+      
       if (!warehouseData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(warehouseData.email)) {
-        throw new Error('Valid email address is required');
+        errors.push('Valid email address is required');
       }
 
-      return await this.createWarehouse(warehouseData);
+      if (errors.length > 0) {
+        throw new Error(`Validation failed: ${errors.join(', ')}`);
+      }
+
+      // Clean and format the data
+      const cleanedData = {
+        ...warehouseData,
+        phone: warehouseData.phone.replace(/\D/g, ''), // Remove non-digits
+        name: warehouseData.name.trim(),
+        address: warehouseData.address.trim(),
+        city: warehouseData.city.trim(),
+        email: warehouseData.email.toLowerCase().trim(),
+        pin: warehouseData.pin.trim()
+      };
+
+      return await this.createWarehouse(cleanedData);
     } catch (error) {
       console.error('Error creating warehouse with validation:', error);
       throw error;
@@ -1165,11 +1264,35 @@ class DelhiveryService {
   async editWarehouseWithValidation(warehouseData: EditWarehouseRequest): Promise<any> {
     try {
       // Validate required fields
-      if (!warehouseData.name || !warehouseData.phone || !warehouseData.address) {
-        throw new Error('Name, phone, and address are required');
+      const errors: string[] = [];
+      
+      if (!warehouseData.name || warehouseData.name.trim().length === 0) {
+        errors.push('Warehouse name is required');
+      }
+      
+      if (!warehouseData.phone || warehouseData.phone.trim().length === 0) {
+        errors.push('Phone number is required');
+      } else if (!/^[6-9]\d{9}$/.test(warehouseData.phone.replace(/\D/g, ''))) {
+        errors.push('Please enter a valid 10-digit Indian phone number');
+      }
+      
+      if (!warehouseData.address || warehouseData.address.trim().length === 0) {
+        errors.push('Address is required');
       }
 
-      return await this.editWarehouse(warehouseData);
+      if (errors.length > 0) {
+        throw new Error(`Validation failed: ${errors.join(', ')}`);
+      }
+
+      // Clean and format the data
+      const cleanedData = {
+        ...warehouseData,
+        phone: warehouseData.phone.replace(/\D/g, ''), // Remove non-digits
+        name: warehouseData.name.trim(),
+        address: warehouseData.address.trim()
+      };
+
+      return await this.editWarehouse(cleanedData);
     } catch (error) {
       console.error('Error editing warehouse with validation:', error);
       throw error;

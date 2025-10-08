@@ -59,7 +59,15 @@ const ClothingProductPage: React.FC = () => {
   }, [product]);
 
   const handleAddToCart = async () => {
+    // Validate size selection
     if (!selectedSize) {
+      alert('Please select a size before adding to cart.');
+      return;
+    }
+
+    // Validate color selection if colors are available
+    if (availableColors.length > 0 && !selectedColor) {
+      alert('Please select a color before adding to cart.');
       return;
     }
 
@@ -71,14 +79,34 @@ const ClothingProductPage: React.FC = () => {
     if (!product) return;
 
     try {
-      CartManager.addItem(product as any, 1, product.productType || 'clothing', selectedSize);
+      // Include both size and color in the cart item
+      const itemOptions = {
+        size: selectedSize,
+        ...(selectedColor && { color: selectedColor })
+      };
+      
+      console.log('Adding clothing item to cart:', {
+        productTitle: product.title,
+        selectedProductType: 'clothing',
+        options: itemOptions
+      });
+      
+      CartManager.addItem(product as any, 1, 'clothing', undefined, itemOptions);
     } catch (error) {
       console.error('Failed to add to cart:', error);
     }
   };
 
   const handleBuyNow = async () => {
+    // Validate size selection
     if (!selectedSize) {
+      alert('Please select a size before buying now.');
+      return;
+    }
+
+    // Validate color selection if colors are available
+    if (availableColors.length > 0 && !selectedColor) {
+      alert('Please select a color before buying now.');
       return;
     }
 
@@ -418,6 +446,14 @@ const ClothingProductPage: React.FC = () => {
                 {product.trackInventory && product.stockQuantity === 0 ? 'OUT OF STOCK' : 'BUY NOW'}
               </button>
             </div>
+
+            {/* Validation Messages */}
+            {(!selectedSize || (availableColors.length > 0 && !selectedColor)) && (
+              <div className="mt-2 text-xs text-red-600">
+                {!selectedSize && 'Please select a size. '}
+                {availableColors.length > 0 && !selectedColor && 'Please select a color.'}
+              </div>
+            )}
 
             {/* Extra Oversized Sizing Note */}
             {product.clothingType && product.clothingType.toLowerCase().includes('extra oversized') && (

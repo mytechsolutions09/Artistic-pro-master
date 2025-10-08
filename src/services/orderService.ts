@@ -31,6 +31,11 @@ export interface OrderItem {
   total_price: number;
   selected_product_type?: string;
   selected_poster_size?: string;
+  options?: {
+    size?: string;
+    color?: string;
+    [key: string]: any;
+  };
   currency_code?: string;
   currency_rate?: number;
   products?: {
@@ -300,11 +305,12 @@ class CartManager {
     return this.cart.items.reduce((count, item) => count + item.quantity, 0);
   }
 
-  static addItem(product: ArtWork, quantity: number = 1, selectedProductType?: string, selectedPosterSize?: string): void {
+  static addItem(product: ArtWork, quantity: number = 1, selectedProductType?: string, selectedPosterSize?: string, options?: any): void {
     const existingItemIndex = this.cart.items.findIndex(
       item => item.product.id === product.id && 
       item.selectedProductType === selectedProductType && 
-      item.selectedPosterSize === selectedPosterSize
+      item.selectedPosterSize === selectedPosterSize &&
+      JSON.stringify(item.options) === JSON.stringify(options)
     );
 
     let selectedPrice = product.price;
@@ -331,7 +337,8 @@ class CartManager {
         quantity,
         selectedProductType,
         selectedPosterSize,
-        selectedPrice
+        selectedPrice,
+        options
       });
     }
 
@@ -359,7 +366,7 @@ class CartManager {
     this.calculateTotal();
     this.notifySubscribers();
   }
-  
+
   static clearCart(): void {
     this.cart = { items: [], total: 0 };
     this.notifySubscribers();
