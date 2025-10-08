@@ -307,12 +307,12 @@ const Header: React.FC = () => {
           {/* Navigation - Desktop Only (lg+) */}
           <nav className="hidden lg:flex items-center space-x-4">
             <Link to="/favorites" className="p-2 text-gray-200 hover:text-pink-300 transition-colors">
-              <Heart className="w-6 h-6" />
+              <Heart className="w-5 h-5" />
             </Link>
-            <Link to="/browse" className="text-gray-200 hover:text-pink-300 transition-colors">
+            <Link to="/browse" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium">
               Art
             </Link>
-            <Link to="/clothes" className="text-gray-200 hover:text-pink-300 transition-colors">
+            <Link to="/clothes" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium">
               Clothes
             </Link>
             {isAdmin(user?.email) && (
@@ -321,15 +321,15 @@ const Header: React.FC = () => {
               </Link>
             )}
             <Link to="/cart" className="relative p-2 text-gray-200 hover:text-pink-300 transition-colors">
-              <ShoppingCart className="w-6 h-6" />
+              <ShoppingCart className="w-5 h-5" />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {cartItemCount}
                 </span>
               )}
             </Link>
-            <Link to={user ? "/dashboard" : "/sign-in"} className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
-              <User className="w-6 h-6" />
+            <Link to={user ? "/dashboard" : "/sign-in"} className="p-2 text-white hover:text-pink-300 transition-colors">
+              <User className="w-5 h-5" />
             </Link>
           </nav>
 
@@ -340,18 +340,18 @@ const Header: React.FC = () => {
               className="p-2 text-gray-700 hover:text-pink-600 transition-colors"
               title="Search"
             >
-              <Search className="w-6 h-6" />
+              <Search className="w-5 h-5" />
             </Link>
             <Link to="/cart" className="relative p-2 text-gray-700 hover:text-pink-600 transition-colors">
-              <ShoppingCart className="w-6 h-6" />
+              <ShoppingCart className="w-5 h-5" />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {cartItemCount}
                 </span>
               )}
             </Link>
-            <Link to={user ? "/dashboard" : "/sign-in"} className="p-2 text-gray-700 hover:text-pink-600 transition-colors">
-              <User className="w-6 h-6" />
+            <Link to={user ? "/dashboard" : "/sign-in"} className="p-2 text-white hover:text-pink-600 transition-colors">
+              <User className="w-5 h-5" />
             </Link>
           </div>
 
@@ -483,7 +483,7 @@ const Header: React.FC = () => {
                   className="flex items-center text-gray-200 hover:text-pink-300 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <ShoppingCart className="w-6 h-6 mr-2" />
+                  <ShoppingCart className="w-5 h-5 mr-2" />
                   Cart ({cartItemCount})
                 </Link>
                 <Link
@@ -491,7 +491,7 @@ const Header: React.FC = () => {
                   className="flex items-center text-gray-200 hover:text-pink-300 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <User className="w-6 h-6 mr-2" />
+                  <User className="w-5 h-5 mr-2" />
                   {user ? "Dashboard" : "Sign In"}
                 </Link>
               </div>
