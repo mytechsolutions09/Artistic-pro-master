@@ -22,10 +22,8 @@ Write-Host ""
 
 # Check if logged in
 Write-Host "Checking Supabase login status..." -ForegroundColor Yellow
-try {
-    $null = supabase projects list 2>&1
-    Write-Host "✓ Logged in to Supabase" -ForegroundColor Green
-} catch {
+$loginCheck = supabase projects list 2>&1
+if ($LASTEXITCODE -ne 0) {
     Write-Host "X Not logged in to Supabase" -ForegroundColor Red
     Write-Host ""
     Write-Host "Login with:" -ForegroundColor Yellow
@@ -34,6 +32,7 @@ try {
     exit 1
 }
 
+Write-Host "✓ Logged in to Supabase" -ForegroundColor Green
 Write-Host ""
 
 # Prompt for project reference
@@ -50,6 +49,11 @@ Write-Host ""
 Write-Host "Linking to project: $PROJECT_REF" -ForegroundColor Yellow
 supabase link --project-ref $PROJECT_REF
 
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "X Failed to link project" -ForegroundColor Red
+    exit 1
+}
+
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "Setting Environment Variables" -ForegroundColor Cyan
@@ -62,10 +66,9 @@ Write-Host "(Get them from: https://dashboard.razorpay.com/app/keys)" -Foregroun
 Write-Host ""
 
 $RAZORPAY_KEY_ID = Read-Host "Razorpay Key ID (rzp_live_XXXXX or rzp_test_XXXXX)"
-$RAZORPAY_KEY_SECRET = Read-Host "Razorpay Key Secret" -AsSecureString
-$RAZORPAY_KEY_SECRET_PLAIN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($RAZORPAY_KEY_SECRET))
+$RAZORPAY_KEY_SECRET = Read-Host "Razorpay Key Secret"
 
-if ([string]::IsNullOrWhiteSpace($RAZORPAY_KEY_ID) -or [string]::IsNullOrWhiteSpace($RAZORPAY_KEY_SECRET_PLAIN)) {
+if ([string]::IsNullOrWhiteSpace($RAZORPAY_KEY_ID) -or [string]::IsNullOrWhiteSpace($RAZORPAY_KEY_SECRET)) {
     Write-Host "X Razorpay credentials are required" -ForegroundColor Red
     exit 1
 }
@@ -82,8 +85,13 @@ if ($RAZORPAY_KEY_ID -notmatch "^rzp_(live|test)_") {
 
 Write-Host ""
 Write-Host "Setting Razorpay secrets..." -ForegroundColor Yellow
-supabase secrets set RAZORPAY_KEY_ID="$RAZORPAY_KEY_ID"
-supabase secrets set RAZORPAY_KEY_SECRET="$RAZORPAY_KEY_SECRET_PLAIN"
+supabase secrets set "RAZORPAY_KEY_ID=$RAZORPAY_KEY_ID"
+supabase secrets set "RAZORPAY_KEY_SECRET=$RAZORPAY_KEY_SECRET"
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "X Failed to set secrets" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host ""
 Write-Host "✓ Environment variables set" -ForegroundColor Green
@@ -98,9 +106,19 @@ Write-Host ""
 Write-Host "Deploying create-razorpay-order function..." -ForegroundColor Yellow
 supabase functions deploy create-razorpay-order
 
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "X Failed to deploy create-razorpay-order" -ForegroundColor Red
+    exit 1
+}
+
 Write-Host ""
 Write-Host "Deploying verify-razorpay-payment function..." -ForegroundColor Yellow
 supabase functions deploy verify-razorpay-payment
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "X Failed to deploy verify-razorpay-payment" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
@@ -134,4 +152,3 @@ Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "Happy selling! 🚀" -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Cyan
-
