@@ -2,89 +2,132 @@
 
 ## Overview
 
-This guide helps you set up mobile phone OTP authentication for Indian users using Supabase Phone Auth.
+This guide helps you set up mobile phone OTP authentication for Indian users using **MSG91** SMS service. MSG91 is much more cost-effective than Twilio for Indian SMS delivery.
+
+> **⚠️ Important:** This project now uses MSG91 instead of Twilio for better pricing and delivery in India.
+
+## Why MSG91 Over Twilio?
+
+### Cost Comparison
+- **MSG91:** ₹0.10-0.30 per SMS (70-90% cheaper)
+- **Twilio:** ₹0.50-1.50 per SMS
+- **No monthly rental fees** with MSG91
+
+### Benefits
+- ✅ Better delivery rates in India
+- ✅ Excellent coverage (Jio, Airtel, Vodafone, BSNL)
+- ✅ 24/7 Indian support
+- ✅ DND-compliant delivery
 
 ## Prerequisites
 
 - Supabase project
-- SMS provider (Twilio recommended for India)
+- MSG91 account (sign up at https://msg91.com/)
 - Indian phone numbers start with +91
+- Supabase CLI (optional, for deploying Edge Functions)
 
-## Step 1: Enable Phone Authentication in Supabase
+## Step 1: Create MSG91 Account
 
-### 1.1 Go to Supabase Dashboard
+### 1.1 Sign Up
 
-1. Navigate to your project at https://app.supabase.com
-2. Go to **Authentication** → **Providers**
-3. Find **Phone** in the list
+1. Visit: https://msg91.com/
+2. Click "Sign Up"
+3. Complete registration with:
+   - Name
+   - Email
+   - Indian phone number
+   - Company details
 
-### 1.2 Enable Phone Provider
+### 1.2 Get Credentials
 
-1. Toggle **Enable Phone provider** to ON
-2. Choose your SMS provider (recommended: **Twilio**)
+1. **Auth Key:**
+   - Dashboard → Settings → API Keys
+   - Copy your Auth Key
 
-## Step 2: Configure Twilio (Recommended for India)
+2. **Sender ID:**
+   - For testing: Use `MSGIND` (default)
+   - For production: Create custom sender ID (requires KYC)
 
-### 2.1 Create Twilio Account
+3. **Template ID:**
+   - Dashboard → SMS → Templates
+   - Create OTP template:
+     ```
+     Your verification code is ##OTP##. Valid for 5 minutes. Do not share with anyone.
+     ```
+   - Submit for approval
+   - Copy Template ID once approved
 
-1. Sign up at https://www.twilio.com/
-2. Verify your account
-3. Get a phone number with SMS capabilities for India
+## Step 2: Setup Database
 
-### 2.2 Get Twilio Credentials
+### 2.1 Run SQL Script
 
-From Twilio Console:
-- **Account SID**
-- **Auth Token**
-- **Phone Number** (Twilio number)
+1. Open Supabase Dashboard → SQL Editor
+2. Create new query
+3. Copy contents from `setup_msg91_phone_auth.sql`
+4. Click **Run**
 
-### 2.3 Configure in Supabase
+This creates:
+- `phone_otp` - Stores OTP codes
+- `phone_auth_logs` - Logs authentication attempts
+- Helper functions for rate limiting and cleanup
 
-In Supabase Dashboard → Authentication → Providers → Phone:
+## Step 3: Deploy Edge Function
 
+### 3.1 Using Supabase CLI (Recommended)
+
+```bash
+# Install Supabase CLI (if not installed)
+npm install -g supabase
+
+# Login to Supabase
+supabase login
+
+# Link your project
+supabase link --project-ref your-project-ref
+
+# Deploy the function
+supabase functions deploy send-otp-msg91
+
+# Set secrets
+supabase secrets set MSG91_AUTH_KEY=your-auth-key
+supabase secrets set MSG91_SENDER_ID=MSGIND
+supabase secrets set MSG91_TEMPLATE_ID=your-template-id
 ```
-Provider: Twilio
-Account SID: [Your Account SID]
-Auth Token: [Your Auth Token]
-Twilio Phone Number: [Your Twilio Number]
-```
 
-Click **Save**
+### 3.2 Manual Deployment (Alternative)
 
-## Step 3: Add Environment Variables
+1. Go to Supabase Dashboard → Edge Functions
+2. Click "Create Function"
+3. Name: `send-otp-msg91`
+4. Copy code from `supabase_functions/send-otp-msg91/index.ts`
+5. Deploy
+6. Add environment variables in function settings
+
+## Step 4: Add Environment Variables
 
 Add to your `.env` file:
 
 ```env
+# MSG91 Configuration
+VITE_MSG91_AUTH_KEY=your-msg91-auth-key
+VITE_MSG91_SENDER_ID=MSGIND
+VITE_MSG91_TEMPLATE_ID=your-template-id
+
 # Phone Authentication
 VITE_PHONE_AUTH_ENABLED=true
 VITE_PHONE_AUTH_COUNTRY_CODE=+91
 VITE_PHONE_AUTH_COUNTRY=IN
 ```
 
-## Step 4: Update Auth Configuration
-
-The phone authentication service and components have been created for you:
-
-- `src/services/phoneAuthService.ts` - Phone OTP operations
-- `src/components/auth/PhoneLogin.tsx` - Phone login UI
-- Updated `src/contexts/AuthContext.tsx` - Phone auth support
-
 ## Step 5: Test Phone Authentication
 
-### 5.1 Test Mode Numbers (Development)
+### 5.1 Start Development Server
 
-Supabase allows test phone numbers in development:
+```bash
+npm run dev
+```
 
-**Phone:** `+91 9999999999`
-**OTP:** `123456`
-
-To set up test numbers:
-1. Go to Supabase Dashboard → Authentication → Settings
-2. Scroll to **Phone Auth Test Numbers**
-3. Add test numbers and fixed OTPs
-
-### 5.2 Real Testing
+### 5.2 Test with Real Phone
 
 1. Go to your login page
 2. Click **"Sign in with Phone"** tab
@@ -92,6 +135,11 @@ To set up test numbers:
 4. Click **"Send OTP"**
 5. Check SMS for 6-digit OTP
 6. Enter OTP and submit
+
+### 5.3 Verify Logs
+
+- **MSG91 Dashboard:** Check SMS delivery logs
+- **Supabase:** Check Edge Function logs
 
 ## Step 6: Configure SMS Templates (Optional)
 
@@ -150,63 +198,54 @@ Valid for 5 minutes.
 
 ## Pricing Considerations
 
-### Twilio Costs (India)
-- **Outbound SMS:** ~₹0.50-1.50 per message
-- **Monthly phone rental:** ~₹750/month
-- **Free trial:** $15 credit
+### MSG91 Costs (India) - NOW USING THIS! ✅
+- **SMS Cost:** ₹0.10-0.30 per message
+- **No monthly rental fees**
+- **Free credits** for new accounts
+- **Example:** 1000 users × 2 OTPs = ₹200-600/month
 
-### Alternative Providers
-1. **MSG91** (India-specific)
-   - Cheaper for Indian SMS
-   - ~₹0.10-0.30 per SMS
-   - Better Indian network coverage
+### Previous Provider (Twilio)
+- **SMS Cost:** ₹0.50-1.50 per message (3-5x more expensive)
+- **Monthly rental:** ~₹750/month
+- **Example:** 1000 users × 2 OTPs = ₹1000-3000/month + ₹750
 
-2. **TextLocal**
-   - India-focused
-   - ~₹0.15-0.40 per SMS
+### Cost Savings with MSG91
+- **70-90% cheaper** than Twilio
+- **No monthly fees**
+- **Better delivery rates in India**
 
-3. **Vonage (Nexmo)**
-   - Global provider
-   - Similar to Twilio pricing
+## Why We Switched to MSG91
 
-## Using MSG91 Instead of Twilio
-
-If you prefer MSG91 (cheaper for India):
-
-### 1. Sign up at MSG91
-https://msg91.com/
-
-### 2. Get Credentials
-- Auth Key
-- Sender ID
-
-### 3. Configure in Supabase
-
-Unfortunately, Supabase doesn't have built-in MSG91 support. You'll need to:
-
-1. Use Twilio in Supabase (for auth infrastructure)
-2. Or implement custom SMS via Edge Functions
-
-For custom SMS with MSG91, see: `PHONE_AUTH_CUSTOM_SMS.md` (to be created if needed)
+1. **Much Cheaper:** Up to 90% cost reduction
+2. **Better for India:** Optimized routing for Indian carriers
+3. **No Monthly Fees:** Pay only for what you use
+4. **Faster Delivery:** <10 second delivery time
+5. **DND Compliance:** OTP SMS work even on DND numbers
+6. **Indian Support:** 24/7 support in IST timezone
 
 ## Troubleshooting
 
 ### OTP Not Received
 
-**Check 1: Twilio Console**
-- Go to Twilio → Messaging → Logs
-- Check if SMS was sent
-- Look for delivery status
+**Check 1: MSG91 Dashboard**
+- Go to MSG91 Dashboard → Reports → SMS Logs
+- Search for your phone number
+- Check delivery status (Delivered/Failed/Pending)
 
-**Check 2: Phone Number Format**
+**Check 2: Supabase Edge Function**
+- Go to Supabase Dashboard → Edge Functions → Logs
+- Check `send-otp-msg91` function logs
+- Look for error messages
+
+**Check 3: Phone Number Format**
 - Must be valid Indian number
 - 10 digits after +91
 - Example: +919876543210
 
-**Check 3: Twilio Account**
-- Verify account is active
-- Check balance
-- Verify phone number is SMS-capable
+**Check 4: MSG91 Configuration**
+- Verify Auth Key is correct
+- Check template is approved
+- Verify sufficient balance
 
 ### Invalid Phone Number Error
 
@@ -244,9 +283,12 @@ Error: For security purposes, you can only request this once every 60 seconds
 
 ## Testing Checklist
 
-- [ ] Supabase phone auth enabled
-- [ ] Twilio configured and connected
-- [ ] Test phone number works
+- [ ] MSG91 account created
+- [ ] MSG91 credentials obtained
+- [ ] Database tables created
+- [ ] Edge function deployed
+- [ ] Secrets configured in Supabase
+- [ ] Environment variables added
 - [ ] OTP SMS received
 - [ ] OTP verification successful
 - [ ] User session created
@@ -257,32 +299,40 @@ Error: For security purposes, you can only request this once every 60 seconds
 
 ## Production Checklist
 
-- [ ] Use real Twilio phone number
-- [ ] Remove test phone numbers
+- [ ] Complete MSG91 KYC verification
+- [ ] Get custom sender ID (optional)
+- [ ] Template approved by MSG91
+- [ ] Load sufficient balance in MSG91
+- [ ] Setup auto-recharge (optional)
+- [ ] Deploy Edge Function to production
+- [ ] Configure production secrets
 - [ ] Set up proper error logging
 - [ ] Monitor SMS delivery rates
-- [ ] Set up billing alerts
-- [ ] Add analytics tracking
-- [ ] Test with multiple networks (Jio, Airtel, Vodafone)
+- [ ] Set up low balance alerts
+- [ ] Test with multiple networks (Jio, Airtel, Vodafone, BSNL)
 - [ ] Add phone number to user profile
 - [ ] Allow users to update phone number
 - [ ] Implement phone verification badge
 
 ## Cost Optimization
 
-### Reduce SMS Costs
+### Reduce SMS Costs with MSG91
 
-1. **Cache OTPs properly** - Don't send duplicate OTPs
-2. **Rate limiting** - Prevent abuse
-3. **Use test numbers** in development
-4. **Voice fallback** - Cheaper for some users
-5. **Longer OTP validity** - Reduce resends (but less secure)
+1. **Volume discounts** - Higher volume = lower per-SMS cost
+2. **Cache OTPs properly** - Don't send duplicate OTPs
+3. **Rate limiting** - Prevent abuse and unnecessary sends
+4. **Longer OTP validity** - Reduce resends (balance with security)
+5. **Monitor delivery rates** - Identify and fix issues quickly
 
-### Estimated Costs
+### Estimated Costs with MSG91
 
-For 1000 users/month with 2 logins each:
-- **Twilio:** ~₹2000-3000/month
-- **MSG91:** ~₹200-600/month
+| Users/Month | SMS/Month | Cost (MSG91) | Cost (Twilio) | Savings |
+|-------------|-----------|--------------|---------------|---------|
+| 1,000 | 2,000 | ₹200-600 | ₹1,000-3,000 | 70-80% |
+| 5,000 | 10,000 | ₹1,000-2,000 | ₹5,000-15,000 | 80-87% |
+| 10,000 | 20,000 | ₹2,000-3,000 | ₹10,000-30,000 | 85-90% |
+
+**Assuming 2 OTPs per user per month (1 login + 1 resend)**
 
 ## Next Steps
 
@@ -294,17 +344,30 @@ For 1000 users/month with 2 logins each:
 
 ## Support
 
-For issues:
-1. Check Supabase logs
-2. Check Twilio logs
+### For Issues:
+1. Check MSG91 Dashboard → SMS Logs
+2. Check Supabase Edge Function logs
 3. Review browser console
-4. Test with test numbers first
-5. Verify Supabase RLS policies
+4. Test with your own number first
+5. Verify MSG91 credentials
+6. Check database tables
+
+### MSG91 Support:
+- **Website:** https://msg91.com/help
+- **Email:** support@msg91.com
+- **Phone:** +91-9650340007
+- **Chat:** Available in dashboard
 
 ## Related Files
 
-- `src/services/phoneAuthService.ts` - Phone auth operations
+### Implementation Files:
+- `src/services/phoneAuthService.ts` - Phone auth operations (uses MSG91)
 - `src/components/auth/PhoneLogin.tsx` - Phone login UI
-- `src/contexts/AuthContext.tsx` - Auth context with phone support
-- `src/pages/Login.tsx` - Updated login page
+- `supabase_functions/send-otp-msg91/index.ts` - MSG91 Edge Function
+- `setup_msg91_phone_auth.sql` - Database setup
+
+### Documentation:
+- `MSG91_PHONE_AUTH_SETUP.md` - Detailed MSG91 setup guide
+- `MSG91_QUICK_START.md` - Quick 15-minute setup
+- `PHONE_AUTH_SETUP.md` - This file
 - `env.template` - Environment variables template

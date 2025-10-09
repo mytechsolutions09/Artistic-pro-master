@@ -1,0 +1,99 @@
+========================================
+MSG91 OTP TEMPLATE - QUICK COPY
+========================================
+
+📋 TEMPLATE TO COPY-PASTE
+========================================
+
+Template Name:
+OTP Verification
+
+Template Type:
+Transactional OTP
+
+Template Message (Choose one):
+========================================
+
+OPTION 1 (RECOMMENDED):
+Your verification code is ##OTP##. Valid for 5 minutes. Do not share with anyone.
+
+OPTION 2 (WITH BRAND):
+Your Artistic Pro verification code is ##OTP##. Valid for 5 minutes. Do not share.
+
+OPTION 3 (SHORT):
+##OTP## is your verification code. Valid for 5 minutes.
+
+========================================
+
+🔧 TEMPLATE SETTINGS
+========================================
+
+Variable Name: OTP
+Variable Type: Number
+Required: Yes
+
+Sender ID (Testing): MSGIND
+Sender ID (Production): [Your custom 6-letter ID]
+
+========================================
+
+📱 QUICK STEPS
+========================================
+
+1. Login: https://control.msg91.com/
+2. Go to: SMS → Templates
+3. Click: Create New Template
+4. Select Type: Transactional OTP
+5. Paste template message above
+6. Add variable: OTP (Number, Required)
+7. Sender ID: MSGIND
+8. Submit for approval
+9. Wait 1-2 hours
+10. Copy Template ID
+
+========================================
+
+✅ AFTER APPROVAL
+========================================
+
+You'll get Template ID like:
+123456789012345678901234
+
+Then run:
+npx supabase secrets set MSG91_TEMPLATE_ID=123456789012345678901234
+
+Add to .env:
+VITE_MSG91_TEMPLATE_ID=123456789012345678901234
+
+========================================
+
+🎯 RECOMMENDED FINAL TEMPLATE
+========================================
+
+Your verification code is ##OTP##. Valid for 5 minutes. Do not share with anyone.
+
+Why this template?
+- Clear and professional
+- Mentions validity
+- Security warning
+- Under 160 characters (1 SMS)
+- DLT compliant
+- Fast approval
+
+========================================
+
+📞 SUPPORT
+========================================
+
+MSG91 Support:
+- Email: support@msg91.com
+- Phone: +91-9650340007
+- Chat: Dashboard
+
+Template Approval Time: 1-2 hours
+KYC Approval Time: 1-2 days
+
+========================================
+
+That's it! Copy, paste, and submit! 🚀
+
