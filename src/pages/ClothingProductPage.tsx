@@ -400,20 +400,6 @@ const ClothingProductPage: React.FC = () => {
               </div>
             )}
 
-            {/* Gift Card Checkbox */}
-            <div className="py-1">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={hasGiftCard}
-                  onChange={(e) => setHasGiftCard(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded"
-                  style={{ accentColor: '#ff6e00' }}
-                />
-                <span className="text-xs font-medium uppercase tracking-wide">HAVE A GIFT CARD?</span>
-              </label>
-            </div>
-
             {/* Action Buttons */}
             <div className="flex gap-2">
               <button
