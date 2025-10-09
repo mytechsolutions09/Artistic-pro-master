@@ -32,9 +32,9 @@ const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
   const widgetIdRef = useRef<string | null>(null);
 
   // Get Cloudflare Turnstile configuration from environment
-  const siteKey = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY;
+  const siteKey = String(import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY || '');
   const enabled = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_ENABLED === 'true';
-  const themeFromEnv = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_THEME || 'light';
+  const themeFromEnv = String(import.meta.env.VITE_CLOUDFLARE_TURNSTILE_THEME || 'light');
 
   useEffect(() => {
     // If Turnstile is disabled or no site key, skip rendering
