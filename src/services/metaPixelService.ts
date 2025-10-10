@@ -23,7 +23,7 @@ export class MetaPixelService {
   static trackPageView(): void {
     if (this.isLoaded()) {
       window.fbq('track', 'PageView');
-      console.log('Meta Pixel: PageView tracked');
+      // PageView tracked
     }
   }
 
@@ -47,7 +47,7 @@ export class MetaPixelService {
         value: params.value || 0,
         currency: params.currency || 'INR'
       });
-      console.log('Meta Pixel: ViewContent tracked', params);
+      // ViewContent tracked
     }
   }
 
@@ -59,7 +59,7 @@ export class MetaPixelService {
       window.fbq('track', 'Search', {
         search_string: searchQuery
       });
-      console.log('Meta Pixel: Search tracked', searchQuery);
+      // Search tracked
     }
   }
 
@@ -81,7 +81,7 @@ export class MetaPixelService {
         value: params.value,
         currency: params.currency || 'INR'
       });
-      console.log('Meta Pixel: AddToCart tracked', params);
+      // AddToCart tracked
     }
   }
 
@@ -103,7 +103,7 @@ export class MetaPixelService {
         value: params.value,
         currency: params.currency || 'INR'
       });
-      console.log('Meta Pixel: InitiateCheckout tracked', params);
+      // InitiateCheckout tracked
     }
   }
 
@@ -121,7 +121,7 @@ export class MetaPixelService {
         value: params.value,
         currency: params.currency || 'INR'
       });
-      console.log('Meta Pixel: AddPaymentInfo tracked', params);
+      // AddPaymentInfo tracked
     }
   }
 
@@ -143,7 +143,7 @@ export class MetaPixelService {
         currency: params.currency || 'INR',
         num_items: params.num_items || 1
       });
-      console.log('Meta Pixel: Purchase tracked', params);
+      // Purchase tracked
     }
   }
 
@@ -158,7 +158,7 @@ export class MetaPixelService {
   }): void {
     if (this.isLoaded()) {
       window.fbq('track', 'Lead', params || {});
-      console.log('Meta Pixel: Lead tracked', params);
+      // Lead tracked
     }
   }
 
@@ -173,7 +173,7 @@ export class MetaPixelService {
   }): void {
     if (this.isLoaded()) {
       window.fbq('track', 'CompleteRegistration', params || {});
-      console.log('Meta Pixel: CompleteRegistration tracked', params);
+      // CompleteRegistration tracked
     }
   }
 
@@ -193,7 +193,7 @@ export class MetaPixelService {
         value: params.value,
         currency: params.currency || 'INR'
       });
-      console.log('Meta Pixel: AddToWishlist tracked', params);
+      // AddToWishlist tracked
     }
   }
 
@@ -203,7 +203,7 @@ export class MetaPixelService {
   static trackCustomEvent(eventName: string, params?: any): void {
     if (this.isLoaded()) {
       window.fbq('trackCustom', eventName, params || {});
-      console.log('Meta Pixel: Custom event tracked', eventName, params);
+      // Custom event tracked
     }
   }
 
@@ -213,7 +213,7 @@ export class MetaPixelService {
   static trackContact(): void {
     if (this.isLoaded()) {
       window.fbq('track', 'Contact');
-      console.log('Meta Pixel: Contact tracked');
+      // Contact tracked
     }
   }
 
@@ -223,7 +223,7 @@ export class MetaPixelService {
   static trackFindLocation(): void {
     if (this.isLoaded()) {
       window.fbq('track', 'FindLocation');
-      console.log('Meta Pixel: FindLocation tracked');
+      // FindLocation tracked
     }
   }
 

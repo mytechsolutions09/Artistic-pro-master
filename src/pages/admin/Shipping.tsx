@@ -592,7 +592,7 @@ const Shipping: React.FC = () => {
   const handleTrackShipment = async (waybill: string) => {
     try {
       const result = await delhiveryService.trackShipment(waybill);
-      console.log('Tracking result:', result);
+      // Tracking result received
       NotificationManager.success('Shipment tracking information retrieved');
     } catch (error) {
       NotificationManager.error('Failed to track shipment');

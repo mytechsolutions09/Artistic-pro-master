@@ -44,17 +44,10 @@ const ClothingProductPage: React.FC = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [productSlug]);
 
-  // Debug: Log product data to see what fields are available
+  // Product data loaded and available
   useEffect(() => {
     if (product) {
-      console.log('Product data:', {
-        title: product.title,
-        gender: product.gender,
-        details: product.details,
-        washCare: product.washCare,
-        shipping: product.shipping,
-        clothingType: product.clothingType
-      });
+      // Product data is ready for use
     }
   }, [product]);
 
@@ -85,11 +78,7 @@ const ClothingProductPage: React.FC = () => {
         ...(selectedColor && { color: selectedColor })
       };
       
-      console.log('Adding clothing item to cart:', {
-        productTitle: product.title,
-        selectedProductType: 'clothing',
-        options: itemOptions
-      });
+      // Adding clothing item to cart
       
       CartManager.addItem(product as any, 1, 'clothing', undefined, itemOptions);
     } catch (error) {

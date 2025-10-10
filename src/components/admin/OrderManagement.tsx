@@ -458,17 +458,7 @@ const OrderManagement: React.FC = () => {
                                                      item.product_title.toLowerCase().includes('oversized')
                                                    ));
                                   
-                                  // Debug logging - log ALL item data
-                                  console.log('Order item data:', {
-                                    id: item.id,
-                                    product_title: item.product_title,
-                                    selected_product_type: item.selected_product_type,
-                                    selected_poster_size: item.selected_poster_size,
-                                    options: item.options,
-                                    quantity: item.quantity,
-                                    isClothing: isClothing,
-                                    full_item: item
-                                  });
+                                  // Order item data processed
                                   
                                   if (isClothing && item.options && (item.options.color || item.options.size)) {
                                     // This is a clothing item with options - show color, size, and quantity as badges

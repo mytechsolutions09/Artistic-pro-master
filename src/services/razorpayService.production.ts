@@ -84,7 +84,7 @@ class RazorpayServiceProduction {
     return new Promise((resolve) => {
       // Check if script is already loaded
       if (window.Razorpay) {
-        console.log('Razorpay already loaded');
+        // Razorpay already loaded
         resolve(true);
         return;
       }

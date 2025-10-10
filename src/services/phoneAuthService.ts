@@ -67,7 +67,7 @@ class PhoneAuthService {
       // Format phone number
       const formattedPhone = this.formatPhoneNumber(phone);
       
-      console.log('Sending OTP via MSG91 to:', formattedPhone);
+      // Sending OTP via MSG91
 
       // Get current session for authorization
       const { data: { session } } = await supabase.auth.getSession();
@@ -104,7 +104,7 @@ class PhoneAuthService {
         };
       }
 
-      console.log('OTP sent successfully via MSG91');
+      // OTP sent successfully
 
       return {
         success: true,
@@ -142,7 +142,7 @@ class PhoneAuthService {
       // Format phone number
       const formattedPhone = this.formatPhoneNumber(phone);
       
-      console.log('Verifying OTP via MSG91 for:', formattedPhone);
+      // Verifying OTP
 
       // Call Supabase Edge Function to verify OTP
       const response = await fetch(this.EDGE_FUNCTION_URL, {
@@ -191,7 +191,7 @@ class PhoneAuthService {
         };
       }
 
-      console.log('OTP verified successfully via MSG91:', result);
+      // OTP verified successfully
 
       // After successful OTP verification, sign in the user using phone
       // This creates or updates the user session in Supabase Auth
@@ -204,7 +204,7 @@ class PhoneAuthService {
         if (authError) {
           console.error('Auth error after OTP verification:', authError);
         } else {
-          console.log('User signed in successfully');
+          // User signed in successfully
         }
       }
 

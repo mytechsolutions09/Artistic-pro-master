@@ -72,7 +72,7 @@ const Checkout: React.FC = () => {
     if (productId) {
       // Wait for products to load
       if (allProducts.length === 0) {
-        console.log('Waiting for products to load...');
+        // Waiting for products to load
         return;
       }
 
@@ -179,7 +179,7 @@ const Checkout: React.FC = () => {
       const result = await AddressService.saveAddress(user.id, addressData, true); // Save as default
       
       if (result.success) {
-        console.log('Address saved successfully');
+        // Address saved successfully
       } else {
         console.error('Failed to save address:', result.error);
       }

@@ -82,7 +82,6 @@ const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
         theme: theme || themeFromEnv,
         size: size,
         callback: (token: string) => {
-          console.log('Turnstile verification successful');
           onVerify(token);
         },
         'error-callback': (errorCode?: string) => {

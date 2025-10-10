@@ -137,7 +137,7 @@ serve(async (req) => {
           )
         }
 
-        console.log('SMS sent successfully via MSG91')
+        // SMS sent successfully
 
         return new Response(
           JSON.stringify({ 

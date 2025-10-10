@@ -1,0 +1,26 @@
+DLT-COMPLIANT TEMPLATE FOR MSG91
+=====================================
+
+Use this exact template in MSG91:
+
+Template Name: Lurevi_OTP_Verification
+Category: Transactional
+Content: Your Lurevi verification code is ##OTP##. Valid for 5 minutes. Do not share with anyone. - Lurevi Team
+
+IMPORTANT:
+- Must include "Lurevi" (your brand name)
+- Must include security warning
+- Must include sender identification
+- Use ##OTP## placeholder exactly as shown
+
+NEXT STEPS:
+1. Create this template in MSG91
+2. Submit for DLT approval
+3. Wait 24-48 hours for approval
+4. Update your template ID in code
+5. Test the integration
+
+ALTERNATIVE (if urgent):
+- Enable test mode in MSG91
+- Use any template for testing
+- Switch to DLT template after approval

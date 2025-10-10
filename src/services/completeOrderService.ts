@@ -82,7 +82,7 @@ export class CompleteOrderService {
       if (hasPhysicalProducts) {
         try {
           await this.createDelhiveryShipment(orderData, orderId);
-          console.log('✅ Delhivery shipment created for order:', orderId);
+          // Delhivery shipment created
         } catch (error) {
           console.error('⚠️ Failed to create Delhivery shipment (non-critical):', error);
           // Don't fail the entire order if shipment creation fails
@@ -578,7 +578,7 @@ export class CompleteOrderService {
    */
   private static async createDelhiveryShipment(orderData: CompleteOrderData, orderId: string): Promise<void> {
     try {
-      console.log('📦 Creating Delhivery shipment for COD order:', orderId);
+      // Creating Delhivery shipment for COD order
 
       // Parse shipping address to extract details
       const addressParts = this.parseShippingAddress(orderData.shippingAddress || '');
@@ -643,7 +643,7 @@ export class CompleteOrderService {
       // Create shipment via Delhivery API
       const response = await delhiveryService.createShipment(shipmentData);
       
-      console.log('✅ Delhivery shipment created successfully:', response);
+      // Delhivery shipment created successfully
 
       // Store waybill in order notes if available
       if (response?.waybill) {
