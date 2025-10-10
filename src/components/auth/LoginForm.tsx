@@ -167,7 +167,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 <p className="text-gray-600 text-xs sm:text-sm">Sign in to your account</p>
               </div>
 
-              {/* Login Method Tabs */}
+              {/* Login Method Tabs - Phone hidden for now */}
               <div className="flex space-x-2 mb-4 bg-gray-100 rounded-lg p-1">
                 <button
                   type="button"
@@ -183,20 +183,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                     <span>Email</span>
                   </div>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginMethod('phone')}
-                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                    loginMethod === 'phone'
-                      ? 'bg-white text-teal-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <Smartphone className="w-4 h-4" />
-                    <span>Phone</span>
-                  </div>
-                </button>
+                {/* Phone tab hidden temporarily - functionality preserved */}
+                {false && (
+                  <button
+                    type="button"
+                    onClick={() => setLoginMethod('phone')}
+                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                      loginMethod === 'phone'
+                        ? 'bg-white text-teal-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <Smartphone className="w-4 h-4" />
+                      <span>Phone</span>
+                    </div>
+                  </button>
+                )}
               </div>
 
               {/* Email Login Form */}
