@@ -8,7 +8,7 @@ import { CategoryProvider } from './contexts/CategoryContext';
 import { AppearanceProvider } from './contexts/AppearanceContext';
 import { useScrollRestoration } from './hooks/useScrollToTop';
 import { checkEnvironmentVariables, getLocalhostConfig, isLocalhost } from './utils/envCheck';
-import './utils/testEnv'; // Auto-run environment test in development
+// Environment test removed - debug file cleaned up
 import Header from './components/Header';
 import Footer from './components/Footer';
 import BottomTabs from './components/BottomTabs';
