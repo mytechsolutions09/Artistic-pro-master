@@ -21,18 +21,6 @@ export class PasswordResetService {
    */
   static async requestPasswordReset(email: string): Promise<PasswordResetResult> {
     try {
-
-
-      // Check if user exists
-      const { data: user, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        // For security, we don't reveal if email exists or not
-        return {
-          success: true,
-          message: 'If an account with that email exists, you will receive a password reset link.'
-        };
-      }
-
       // Generate password reset token using Supabase
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`
@@ -46,7 +34,7 @@ export class PasswordResetService {
         };
       }
 
-      // Send custom password reset email via Hostinger SMTP
+      // Send custom password reset email via Hostinger SMTP (optional)
       try {
         const emailResult = await EmailService.sendPasswordResetEmail(
           email,
@@ -63,10 +51,10 @@ export class PasswordResetService {
         // Don't fail the request if custom email fails
       }
 
-
+      // Always return success - for security, we don't reveal if email exists or not
       return {
         success: true,
-        message: 'Password reset email sent. Please check your inbox.'
+        message: 'If an account with that email exists, you will receive a password reset link.'
       };
 
     } catch (error) {
@@ -83,8 +71,6 @@ export class PasswordResetService {
    */
   static async updatePasswordWithToken(token: string, newPassword: string): Promise<PasswordResetResult> {
     try {
-
-
       // In a real implementation, you would verify the token and update the password
       // For now, we'll use Supabase's built-in password reset flow
       const { error } = await supabase.auth.updateUser({
@@ -98,7 +84,6 @@ export class PasswordResetService {
           error: 'Failed to update password. The reset link may have expired.'
         };
       }
-
 
       return {
         success: true,

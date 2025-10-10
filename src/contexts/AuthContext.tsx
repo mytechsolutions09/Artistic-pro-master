@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../services/supabaseService';
 import { User, Session } from '@supabase/supabase-js';
+import { clearDebugOnLogin } from '../utils/debugCleanup';
 
 interface AuthContextType {
   user: User | null;
@@ -45,6 +46,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Clear debug information when user logs in
+      if (session?.user && !user) {
+        clearDebugOnLogin();
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -55,6 +61,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       email,
       password,
     });
+    
+    // Clear debug information on successful login
+    if (!error) {
+      clearDebugOnLogin();
+    }
+    
     return { error };
   };
 
@@ -85,6 +97,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signOut = async () => {
+    // Clear debug information before signing out
+    clearDebugOnLogin();
     await supabase.auth.signOut();
   };
 

@@ -8,6 +8,7 @@ import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
 import PhoneLogin from './PhoneLogin';
 import CloudflareTurnstile from './CloudflareTurnstile';
+import { clearDebugOnLogin } from '../../utils/debugCleanup';
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -74,7 +75,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       if (error) throw error;
 
       if (data.user) {
-
+        // Clear debug information on successful login
+        clearDebugOnLogin();
         
         // Handle remember me functionality
         if (rememberMe) {
