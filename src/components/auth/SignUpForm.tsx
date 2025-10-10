@@ -110,10 +110,7 @@ const SignUpForm: React.FC = () => {
   if (success) {
     return (
       <div 
-        className="p-2 sm:p-4 lg:min-h-screen lg:flex lg:items-center lg:justify-center"
-        style={{
-          background: `linear-gradient(to bottom right, ${settings.themeColors.lightPink}, ${settings.themeColors.pink}, ${settings.themeColors.darkPink})`
-        }}
+        className="p-2 sm:p-4 lg:min-h-screen lg:flex lg:items-center lg:justify-center bg-teal-800"
       >
         <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden my-4 sm:my-8 lg:my-0">
           <div className="flex flex-col lg:flex-row lg:h-[450px] xl:h-[500px]">
@@ -164,13 +161,13 @@ const SignUpForm: React.FC = () => {
 
                 {/* Success Details */}
                 <div className="space-y-3">
-                  <div className="rounded-md bg-green-50 p-2 border border-green-200">
+                  <div className="rounded-md bg-teal-50 p-2 border border-teal-200">
                     <div className="flex">
                       <div className="flex-shrink-0">
-                        <CheckCircle className="h-3 w-3 text-green-400" />
+                        <CheckCircle className="h-3 w-3 text-teal-400" />
                       </div>
                       <div className="ml-2">
-                        <h3 className="text-xs font-medium text-green-800">
+                        <h3 className="text-xs font-medium text-teal-800">
                           Success! We've sent a verification link to your email address.
                         </h3>
                       </div>
@@ -180,18 +177,13 @@ const SignUpForm: React.FC = () => {
                   <div className="space-y-2">
                     <Link
                       to="/sign-in"
-                      className="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                      style={{ 
-                        background: `linear-gradient(to right, ${settings.themeColors.pink}, ${settings.themeColors.darkPink})`,
-                        '--tw-ring-color': settings.themeColors.pink
-                      } as React.CSSProperties}
+                      className="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       Sign In
                     </Link>
                     <Link
                       to="/"
-                      className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
-                      style={{ '--tw-ring-color': settings.themeColors.pink } as React.CSSProperties}
+                      className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200"
                     >
                       Go to Homepage
                     </Link>
