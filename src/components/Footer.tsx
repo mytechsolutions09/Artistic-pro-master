@@ -1,29 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
-  const [customLogo, setCustomLogo] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Load custom logo from localStorage
-    const savedLogo = localStorage.getItem('customLogo');
-    if (savedLogo) {
-      setCustomLogo(savedLogo);
-    }
-    
-    // Listen for logo updates
-    const handleLogoUpdate = (event: CustomEvent) => {
-      setCustomLogo(event.detail.logoUrl);
-    };
-    
-    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    };
-  }, []);
 
   return (
     <footer className="bg-teal-800 text-white">
@@ -32,22 +12,11 @@ const Footer: React.FC = () => {
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className="flex items-center mb-3">
-              {customLogo ? (
-                <img 
-                  src={customLogo} 
-                  alt="Lurevi" 
-                  className="h-8 w-auto"
-                  onError={(e) => {
-                    console.error('Error loading custom logo:', e);
-                    e.currentTarget.src = '/lurevi-logo.svg';
-                  }}
-                />
-              ) : (
-                <div className="text-lg font-handwriting text-pink-300 relative">
-                  <span className="font-bold">L</span>urevi
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-pink-300 transform translate-y-1"></div>
-                </div>
-              )}
+              <img 
+                src="/logo.png" 
+                alt="Lurevi" 
+                className="h-8 w-auto"
+              />
             </div>
             <p className="text-gray-400 mb-4 text-sm">
               Your premier destination for digital art and premium clothing. Discover unique pieces that express your style.

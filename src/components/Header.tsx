@@ -14,7 +14,6 @@ const Header: React.FC = () => {
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -24,14 +23,14 @@ const Header: React.FC = () => {
   const isAdminPage = location.pathname.startsWith('/admin');
   const { user } = useAuth();
   const { categories } = useCategories();
-  const { logoUrl, isLoading: logoLoading } = useLogo();
+  const { logoUrl } = useLogo();
   
   useEffect(() => {
     // Initialize cart count
     setCartItemCount(CartManager.getItemCount());
     
     // Subscribe to cart changes
-    const unsubscribe = CartManager.subscribe((cart) => {
+    const unsubscribe = CartManager.subscribe(() => {
       setCartItemCount(CartManager.getItemCount());
     });
     
@@ -55,7 +54,6 @@ const Header: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchSuggestions(false);
-        setIsSearchFocused(false);
         setSelectedIndex(-1);
       }
     };
@@ -74,7 +72,6 @@ const Header: React.FC = () => {
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
       setShowSearchSuggestions(false);
       setSearchQuery('');
-      setIsSearchFocused(false);
       setSelectedIndex(-1);
     }
   };
@@ -138,7 +135,6 @@ const Header: React.FC = () => {
         break;
       case 'Escape':
         setShowSearchSuggestions(false);
-        setIsSearchFocused(false);
         setSelectedIndex(-1);
         break;
     }
@@ -169,20 +165,11 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            {!logoLoading && (
-              <img 
-                src={logoUrl} 
-                alt="Lurevi" 
-                className="h-12 w-auto"
-                onError={(e) => {
-                  console.error('Error loading logo:', e);
-                  e.currentTarget.src = '/lurevi-logo.svg';
-                }}
-              />
-            )}
-            {logoLoading && (
-              <div className="h-12 w-24 bg-gray-200 rounded animate-pulse"></div>
-            )}
+            <img 
+              src={logoUrl} 
+              alt="Lurevi" 
+              className="h-12 w-auto"
+            />
           </Link>
 
           {/* Categories - Desktop with Dropdown */}
@@ -240,7 +227,7 @@ const Header: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
-                onFocus={() => setIsSearchFocused(true)}
+                onFocus={() => {}}
                 placeholder="search"
                 className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent transition-all duration-200"
               />
@@ -375,7 +362,7 @@ const Header: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => handleSearchInputChange(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onFocus={() => setIsSearchFocused(true)}
+                  onFocus={() => {}}
                   placeholder="search"
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300"
                 />

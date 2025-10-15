@@ -173,7 +173,7 @@ const ClothingProductPage: React.FC = () => {
             <div className="flex gap-4">
               {/* Main Product Image */}
               <div 
-                className="flex-1 relative aspect-[3/4] max-h-[450px] bg-gradient-to-br from-yellow-200 via-amber-300 to-orange-400 rounded-lg overflow-hidden cursor-pointer group"
+                className="flex-1 relative aspect-[3/4] max-h-[450px] bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
                 onClick={() => setShowFullImage(true)}
               >
                 <img

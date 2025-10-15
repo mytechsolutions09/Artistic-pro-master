@@ -31,26 +31,6 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick, onExpand, onLogout }) => {
   const location = useLocation();
-  const [customLogo, setCustomLogo] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Load custom logo from localStorage
-    const savedLogo = localStorage.getItem('customLogo');
-    if (savedLogo) {
-      setCustomLogo(savedLogo);
-    }
-    
-    // Listen for logo updates
-    const handleLogoUpdate = (event: CustomEvent) => {
-      setCustomLogo(event.detail.logoUrl);
-    };
-    
-    window.addEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('logoUpdated', handleLogoUpdate as EventListener);
-    };
-  }, []);
   
   const menuItems = [
     { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/admin/tasks' },
@@ -86,23 +66,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
       {/* Logo */}
       <div className="p-4 border-b border-pink-100 flex-shrink-0">
         <Link to="/" className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'}`}>
-          {customLogo ? (
-            <img 
-              src={customLogo} 
-              alt="Lurevi" 
-              className={`${collapsed ? 'h-8 w-auto' : 'h-10 w-auto'}`}
-              onError={(e) => {
-                console.error('Error loading custom logo:', e);
-                e.currentTarget.src = '/lurevi-logo.svg';
-              }}
-            />
-          ) : (
-            <img 
-              src="/lurevi-logo.svg" 
-              alt="Lurevi" 
-              className={`${collapsed ? 'h-8 w-auto' : 'h-10 w-auto'}`}
-            />
-          )}
+          <img 
+            src="/logo.png" 
+            alt="Lurevi" 
+            className={`${collapsed ? 'h-8 w-auto' : 'h-10 w-auto'}`}
+          />
           {!collapsed && (
             <div>
               <p className="text-sm text-gray-500">Admin Panel</p>

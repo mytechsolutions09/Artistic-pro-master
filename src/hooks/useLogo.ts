@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { LogoService } from '../services/logoService';
 
 export const useLogo = () => {
-  const [logoUrl, setLogoUrl] = useState<string>('/lurevi-logo.svg');
-  const [isLoading, setIsLoading] = useState(true);
+  const [logoUrl, setLogoUrl] = useState<string>('/logo.png');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    loadLogo();
+    // Set logo to local file from public folder
+    setLogoUrl('/logo.png');
     
-    // Listen for logo updates from admin panel
+    // Listen for logo updates from admin panel (if needed in future)
     const handleLogoUpdate = (event: CustomEvent) => {
       setLogoUrl(event.detail.logoUrl);
     };
@@ -21,33 +21,8 @@ export const useLogo = () => {
   }, []);
 
   const loadLogo = async () => {
-    try {
-      setIsLoading(true);
-      
-      // First try to load from Supabase
-      const settings = await LogoService.getActiveLogoSettings();
-      if (settings && settings.logo_url) {
-        setLogoUrl(settings.logo_url);
-        return;
-      }
-      
-      // Fallback to localStorage for backward compatibility
-      const savedLogo = localStorage.getItem('customLogo');
-      if (savedLogo) {
-        setLogoUrl(savedLogo);
-        return;
-      }
-      
-      // Final fallback to default logo
-      setLogoUrl('/lurevi-logo.svg');
-    } catch (error) {
-      console.error('Error loading logo:', error);
-      // Fallback to localStorage or default
-      const savedLogo = localStorage.getItem('customLogo');
-      setLogoUrl(savedLogo || '/lurevi-logo.svg');
-    } finally {
-      setIsLoading(false);
-    }
+    // No async loading needed - using local file
+    setLogoUrl('/logo.png');
   };
 
   return {
