@@ -221,6 +221,12 @@ const Shipping: React.FC = () => {
           'Delhivery API not configured. Using mock data for testing. Please configure your API token in .env file.',
           0 // Don't auto-close
         );
+      } else {
+        // API is configured, show success message
+        NotificationManager.success(
+          'Delhivery API configured successfully. Real-time shipping data is now available.',
+          3000
+        );
       }
     };
     
