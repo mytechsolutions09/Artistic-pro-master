@@ -6,6 +6,8 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import { CartManager } from '../services/orderService';
 import ClothingProductPageSkeleton from '../components/ClothingProductPageSkeleton';
+import OpenGraphTags from '../components/OpenGraphTags';
+import { MetaPixelService } from '../services/metaPixelService';
 
 const ClothingProductPage: React.FC = () => {
   const { productSlug } = useParams<{ productSlug: string }>();
@@ -47,7 +49,14 @@ const ClothingProductPage: React.FC = () => {
   // Product data loaded and available
   useEffect(() => {
     if (product) {
-      // Product data is ready for use
+      // Track ViewContent event for Meta Pixel
+      MetaPixelService.trackViewContent({
+        content_ids: [product.id],
+        content_name: product.title,
+        content_type: 'product',
+        value: product.price,
+        currency: 'INR'
+      });
     }
   }, [product]);
 
@@ -78,8 +87,16 @@ const ClothingProductPage: React.FC = () => {
         ...(selectedColor && { color: selectedColor })
       };
       
-      // Adding clothing item to cart
+      // Track AddToCart event for Meta Pixel
+      MetaPixelService.trackAddToCart({
+        content_ids: [product.id],
+        content_name: product.title,
+        content_type: 'product',
+        value: product.price,
+        currency: 'INR'
+      });
       
+      // Adding clothing item to cart
       CartManager.addItem(product as any, 1, 'clothing', undefined, itemOptions);
     } catch (error) {
       console.error('Failed to add to cart:', error);
@@ -125,6 +142,11 @@ const ClothingProductPage: React.FC = () => {
     );
   }
 
+  // Prepare Open Graph data
+  const productUrl = `/clothes/${productSlug}`;
+  const productImage = product.main_image || product.images?.[0] || '';
+  const productAvailability = (product.quantity || 0) > 0 ? 'in stock' : 'out of stock';
+
   // Extract available sizes from product tags (remove duplicates and sort)
   const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
   const availableSizes = [...new Set(
@@ -164,9 +186,24 @@ const ClothingProductPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Image Section - Shows first on mobile */}
+    <>
+      {/* Open Graph Tags for Social Media Sharing */}
+      <OpenGraphTags
+        title={product.title}
+        description={product.description || product.details || `Shop ${product.title} at Lurevi`}
+        image={productImage}
+        url={productUrl}
+        type="product"
+        price={product.price}
+        currency="INR"
+        availability={productAvailability}
+        brand={product.brand || 'Lurevi'}
+        condition="new"
+      />
+      
+      <div className="min-h-screen bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Image Section - Shows first on mobile */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-16">
           <div className="order-1 lg:order-2">
             {/* Product Image with Side Thumbnails */}
@@ -616,6 +653,7 @@ const ClothingProductPage: React.FC = () => {
       )}
       </div>
     </div>
+    </>
   );
 };
 

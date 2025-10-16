@@ -7,6 +7,7 @@ import { Shirt, Plus, Package, TrendingUp, Upload, X, Edit, Trash2, Save, Copy }
 import ProductCard from '../../components/ProductCard';
 import { ProductService } from '../../services/supabaseService';
 import { NotificationManager } from '../../components/Notification';
+import ProductExport from '../../components/admin/ProductExport';
 
 const Clothes: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -1238,15 +1239,7 @@ const Clothes: React.FC = () => {
   );
 
   const renderExport = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Export Clothing Data</h2>
-      <p className="text-gray-600 mb-6">
-        Export your clothing products to CSV format for backup or analysis.
-      </p>
-      <button className="px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors">
-        Export to CSV
-      </button>
-    </div>
+    <ProductExport />
   );
 
   const renderCategories = () => (

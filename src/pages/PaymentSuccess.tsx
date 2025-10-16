@@ -17,6 +17,7 @@ import { CompleteOrderService } from '../services/completeOrderService';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewInput from '../components/ReviewInput';
+import { MetaPixelService } from '../services/metaPixelService';
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -77,16 +78,51 @@ const PaymentSuccess: React.FC = () => {
               customerEmail: result.order.customer_email
             };
             setOrder(transformedOrder);
+            
+            // Track Purchase event for Meta Pixel
+            MetaPixelService.trackPurchase({
+              content_ids: transformedOrder.items.map(item => item.id),
+              content_type: 'product',
+              value: transformedOrder.total,
+              currency: 'INR',
+              num_items: transformedOrder.items.length
+            });
           } else {
             // Fallback to mock OrderManager
             const foundOrder = OrderManager.getOrderById(orderId);
-            setOrder(foundOrder || null);
+            if (foundOrder) {
+              setOrder(foundOrder);
+              
+              // Track Purchase event
+              MetaPixelService.trackPurchase({
+                content_ids: foundOrder.items.map(item => item.id),
+                content_type: 'product',
+                value: foundOrder.total,
+                currency: 'INR',
+                num_items: foundOrder.items.length
+              });
+            } else {
+              setOrder(null);
+            }
           }
         } catch (error) {
           console.error('Error fetching order:', error);
           // Fallback to mock OrderManager
           const foundOrder = OrderManager.getOrderById(orderId);
-          setOrder(foundOrder || null);
+          if (foundOrder) {
+            setOrder(foundOrder);
+            
+            // Track Purchase event
+            MetaPixelService.trackPurchase({
+              content_ids: foundOrder.items.map(item => item.id),
+              content_type: 'product',
+              value: foundOrder.total,
+              currency: 'INR',
+              num_items: foundOrder.items.length
+            });
+          } else {
+            setOrder(null);
+          }
         }
       }
       setLoading(false);
