@@ -1,5 +1,5 @@
 // Meta (Facebook) Pixel Tracking Service
-// Pixel ID: 1165585550249911
+// Supports dynamic Pixel ID from database or environment
 
 declare global {
   interface Window {
@@ -8,7 +8,14 @@ declare global {
 }
 
 export class MetaPixelService {
-  private static pixelId = '1165585550249911';
+  private static pixelId = import.meta.env.VITE_META_PIXEL_ID || '1905415970060955';
+
+  /**
+   * Set pixel ID dynamically (e.g., from database)
+   */
+  static setPixelId(pixelId: string): void {
+    this.pixelId = pixelId;
+  }
 
   /**
    * Check if Meta Pixel is loaded

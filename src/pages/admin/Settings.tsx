@@ -5,6 +5,7 @@ import SettingsSecondaryNav from '../../components/admin/SettingsSecondaryNav';
 import GeneralSettings from '../../components/admin/settings/GeneralSettings';
 import CurrencySettings from '../../components/admin/settings/CurrencySettings';
 import PaymentSettings from '../../components/admin/settings/PaymentSettings';
+import MarketingSettings from '../../components/admin/settings/MarketingSettings';
 import NotificationSettings from '../../components/admin/settings/NotificationSettings';
 import PlaceholderSettings from '../../components/admin/settings/PlaceholderSettings';
 import CouponSettings from '../../components/admin/settings/CouponSettings';
@@ -24,6 +25,8 @@ const Settings: React.FC = () => {
         return <CurrencySettings />;
       case 'payment':
         return <PaymentSettings />;
+      case 'marketing':
+        return <MarketingSettings />;
       case 'notifications':
         return <NotificationSettings />;
       case 'appearance':

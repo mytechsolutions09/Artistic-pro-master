@@ -33,6 +33,7 @@ import {
   CustomQCItem
 } from '../../services/DelhiveryService';
 import { orderService } from '../../services/orderService';
+import { shippingService } from '../../services/shippingService';
 
 interface Shipment {
   id: string;
@@ -47,6 +48,14 @@ interface Shipment {
   cod_amount: number;
   weight: number;
   tracking_url: string;
+  // Pickup information
+  pickup_id?: string;
+  pickup_date?: string;
+  pickup_time?: string;
+  pickup_status?: 'scheduled' | 'picked_up' | 'failed' | 'cancelled';
+  pickup_location?: string;
+  pickup_attempts?: number;
+  last_pickup_attempt?: string;
 }
 
 const Shipping: React.FC = () => {
@@ -85,7 +94,7 @@ const Shipping: React.FC = () => {
   });
 
   // New shipment form
-  const [newShipment, setNewShipment] = useState({
+  const [newShipment, setNewShipment] = useState<any>({
     customer_name: '',
     customer_phone: '',
     delivery_address: '',
@@ -97,7 +106,8 @@ const Shipping: React.FC = () => {
     length: '',
     width: '',
     height: '',
-    products_desc: ''
+    products_desc: '',
+    order_id: undefined // Optional order ID for linking
   });
 
   // Import orders functionality
@@ -236,40 +246,35 @@ const Shipping: React.FC = () => {
   const loadShipments = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with actual API call
-      const mockShipments: Shipment[] = [
-        {
-          id: '1',
-          waybill: 'DL123456789',
-          customer_name: 'John Doe',
-          customer_phone: '+91 9876543210',
-          delivery_address: '123 Main St, Mumbai',
-          delivery_pincode: '400001',
-          status: 'in_transit',
-          created_at: '2024-01-15',
-          estimated_delivery: '2024-01-18',
-          cod_amount: 1500,
-          weight: 0.5,
-          tracking_url: 'https://track.delhivery.com/DL123456789'
-        },
-        {
-          id: '2',
-          waybill: 'DL987654321',
-          customer_name: 'Jane Smith',
-          customer_phone: '+91 8765432109',
-          delivery_address: '456 Park Ave, Delhi',
-          delivery_pincode: '110001',
-          status: 'delivered',
-          created_at: '2024-01-10',
-          estimated_delivery: '2024-01-13',
-          cod_amount: 2500,
-          weight: 0.8,
-          tracking_url: 'https://track.delhivery.com/DL987654321'
-        }
-      ];
-      setShipments(mockShipments);
+      // Load shipments from database
+      const dbShipments = await shippingService.getAllShipments();
+      
+      // Transform to match UI format
+      const formattedShipments: Shipment[] = dbShipments.map((ship: any) => ({
+        id: ship.id,
+        waybill: ship.waybill,
+        customer_name: ship.customer_name,
+        customer_phone: ship.customer_phone,
+        delivery_address: ship.delivery_address,
+        delivery_pincode: ship.delivery_pincode,
+        status: ship.status,
+        created_at: ship.created_at,
+        estimated_delivery: ship.estimated_delivery || '',
+        cod_amount: ship.cod_amount || 0,
+        weight: ship.weight,
+        tracking_url: ship.tracking_url || `https://track.delhivery.com/${ship.waybill}`,
+        pickup_date: ship.pickup_date,
+        pickup_status: ship.pickup_status,
+        pickup_location: ship.pickup_location,
+        pickup_attempts: ship.pickup_attempts,
+        last_pickup_attempt: ship.last_pickup_attempt
+      }));
+      
+      setShipments(formattedShipments);
+      console.log(`✅ Loaded ${formattedShipments.length} shipments from database`);
     } catch (error) {
-      NotificationManager.error('Failed to load shipments');
+      console.error('Error loading shipments:', error);
+      NotificationManager.error('Failed to load shipments from database');
     } finally {
       setLoading(false);
     }
@@ -482,10 +487,11 @@ const Shipping: React.FC = () => {
       length: '30', // Default dimensions
       width: '20',
       height: '15',
-      products_desc: order.products.map((p: any) => `${p.name} (Qty: ${p.quantity})`).join(', ')
-    });
+      products_desc: order.products.map((p: any) => `${p.name} (Qty: ${p.quantity})`).join(', '),
+      order_id: order.id // Store order ID for linking
+    } as any);
     setShowOrderImport(false);
-    NotificationManager.success('Order imported successfully');
+    NotificationManager.success(`Order #${order.id} imported successfully - now create shipment`);
   };
 
   const clearShipmentForm = () => {
@@ -501,7 +507,8 @@ const Shipping: React.FC = () => {
       length: '',
       width: '',
       height: '',
-      products_desc: ''
+      products_desc: '',
+      order_id: undefined
     });
     NotificationManager.success('Form cleared successfully');
   };
@@ -569,7 +576,48 @@ const Shipping: React.FC = () => {
       };
 
       const result = await delhiveryService.createShipment(shipmentData);
-      NotificationManager.success('Shipment created successfully');
+      
+      // Generate waybill for this shipment
+      const waybills = await delhiveryService.generateWaybills(1);
+      const waybill = waybills[0] || `DL${Date.now()}`;
+      
+      // Save shipment to database
+      try {
+        await shippingService.createShipment({
+          waybill: waybill,
+          customer_name: newShipment.customer_name,
+          customer_phone: newShipment.customer_phone,
+          delivery_address: newShipment.delivery_address,
+          delivery_pincode: newShipment.delivery_pincode,
+          delivery_city: newShipment.delivery_city,
+          delivery_state: newShipment.delivery_state,
+          delivery_country: 'India',
+          products_desc: newShipment.products_desc,
+          cod_amount: parseFloat(newShipment.cod_amount || '0'),
+          weight: parseFloat(newShipment.weight),
+          length: parseFloat(newShipment.length || '10'),
+          width: parseFloat(newShipment.width || '10'),
+          height: parseFloat(newShipment.height || '10'),
+          status: 'pending',
+          payment_mode: newShipment.cod_amount ? 'COD' : 'Prepaid',
+          pickup_date: new Date().toISOString().split('T')[0],
+          order_id: newShipment.order_id // Link to order if imported from orders
+        });
+        
+        console.log(`✅ Shipment ${waybill} saved to database${newShipment.order_id ? ` (linked to order ${newShipment.order_id})` : ''}`);
+        
+        if (newShipment.order_id) {
+          NotificationManager.success(`Shipment created for Order #${newShipment.order_id}! Waybill: ${waybill}`);
+        } else {
+          NotificationManager.success(`Shipment created successfully! Waybill: ${waybill}`);
+        }
+        
+        // Reload shipments to show the new one
+        loadShipments();
+      } catch (dbError: any) {
+        console.error('Failed to save shipment to database:', dbError);
+        NotificationManager.warning('Shipment created but failed to save to database');
+      }
       
       // Reset form
       setNewShipment({
@@ -584,11 +632,11 @@ const Shipping: React.FC = () => {
         length: '',
         width: '',
         height: '',
-        products_desc: ''
+        products_desc: '',
+        order_id: undefined
       });
-      
-      loadShipments();
     } catch (error) {
+      console.error('Shipment creation error:', error);
       NotificationManager.error('Failed to create shipment');
     } finally {
       setLoading(false);
@@ -609,10 +657,28 @@ const Shipping: React.FC = () => {
     if (!confirm('Are you sure you want to cancel this shipment?')) return;
 
     try {
-      await delhiveryService.cancelShipmentViaEdit(waybill);
-      NotificationManager.success('Shipment cancelled successfully');
-      loadShipments();
+      const result = await delhiveryService.cancelShipmentViaEdit(waybill);
+      
+      // Update the shipment status in database
+      await shippingService.updateShipmentStatus(waybill, 'cancelled');
+      
+      // Update the shipment status in local state immediately
+      setShipments(prev => prev.map(shipment => 
+        shipment.waybill === waybill 
+          ? { ...shipment, status: 'cancelled' }
+          : shipment
+      ));
+      
+      // Show success message
+      if (result.message && result.message.includes('mock')) {
+        NotificationManager.success('Shipment cancelled (mock mode - API not configured)');
+      } else {
+        NotificationManager.success('Shipment cancelled successfully');
+      }
+      
+      console.log(`✅ Shipment ${waybill} cancelled and saved to database`);
     } catch (error) {
+      console.error('Cancel shipment error:', error);
       NotificationManager.error('Failed to cancel shipment');
     }
   };
@@ -674,11 +740,31 @@ const Shipping: React.FC = () => {
   const handleCreateWarehouse = async () => {
     setWarehouseCreate(prev => ({ ...prev, loading: true }));
     try {
+      // Call Delhivery API (or mock)
       const result = await delhiveryService.createWarehouseWithValidation(warehouseCreate);
       setWarehouseCreate(prev => ({ ...prev, result }));
       
-      if (result.success) {
-        NotificationManager.success(result.message || 'Warehouse created successfully');
+      // Save warehouse to database
+      try {
+        const savedWarehouse = await shippingService.createWarehouse({
+          name: warehouseCreate.name,
+          phone: warehouseCreate.phone,
+          email: warehouseCreate.email,
+          city: warehouseCreate.city,
+          pin: warehouseCreate.pin,
+          address: warehouseCreate.address,
+          country: warehouseCreate.country || 'India',
+          registered_name: warehouseCreate.registered_name,
+          return_address: warehouseCreate.return_address,
+          return_pin: warehouseCreate.return_pin,
+          return_city: warehouseCreate.return_city,
+          return_state: warehouseCreate.return_state,
+          return_country: warehouseCreate.return_country || 'India',
+          is_active: true
+        });
+        
+        console.log('✅ Warehouse saved to database:', savedWarehouse.id);
+        NotificationManager.success('Warehouse created and saved successfully!');
         
         // Reset form
         setWarehouseCreate(prev => ({
@@ -698,8 +784,9 @@ const Shipping: React.FC = () => {
           return_country: 'India',
           result: null
         }));
-      } else {
-        NotificationManager.error(result.message || 'Failed to create warehouse');
+      } catch (dbError: any) {
+        console.error('Failed to save warehouse to database:', dbError);
+        NotificationManager.warning('Warehouse created in Delhivery but failed to save to database');
       }
     } catch (error: any) {
       console.error('Warehouse creation error:', error);
@@ -804,6 +891,26 @@ const Shipping: React.FC = () => {
     }
   };
 
+  const getPickupStatusColor = (status: string) => {
+    switch (status) {
+      case 'scheduled': return 'text-blue-600 bg-blue-100';
+      case 'picked_up': return 'text-green-600 bg-green-100';
+      case 'failed': return 'text-red-600 bg-red-100';
+      case 'cancelled': return 'text-gray-600 bg-gray-100';
+      default: return 'text-yellow-600 bg-yellow-100';
+    }
+  };
+
+  const getPickupStatusIcon = (status: string) => {
+    switch (status) {
+      case 'scheduled': return <Clock className="w-3 h-3" />;
+      case 'picked_up': return <CheckCircle className="w-3 h-3" />;
+      case 'failed': return <XCircle className="w-3 h-3" />;
+      case 'cancelled': return <X className="w-3 h-3" />;
+      default: return <AlertCircle className="w-3 h-3" />;
+    }
+  };
+
   const filteredShipments = shipments.filter(shipment => {
     const matchesSearch = shipment.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          shipment.waybill.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -869,6 +976,9 @@ const Shipping: React.FC = () => {
                       Status
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pickup
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       COD Amount
                     </th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -896,6 +1006,36 @@ const Shipping: React.FC = () => {
                           {getStatusIcon(shipment.status)}
                           <span className="ml-1 capitalize">{shipment.status.replace('_', ' ')}</span>
                         </span>
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {shipment.pickup_id ? (
+                          <div className="text-sm">
+                            <div className="flex items-center">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getPickupStatusColor(shipment.pickup_status || 'scheduled')}`}>
+                                {getPickupStatusIcon(shipment.pickup_status || 'scheduled')}
+                                <span className="ml-1 capitalize">{shipment.pickup_status?.replace('_', ' ') || 'Scheduled'}</span>
+                              </span>
+                            </div>
+                            {shipment.pickup_date && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {new Date(shipment.pickup_date).toLocaleDateString()}
+                                {shipment.pickup_time && ` at ${shipment.pickup_time}`}
+                              </div>
+                            )}
+                            {shipment.pickup_attempts && shipment.pickup_attempts > 0 && (
+                              <div className="text-xs text-orange-600">
+                                {shipment.pickup_attempts} attempt{shipment.pickup_attempts > 1 ? 's' : ''}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Not Scheduled
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                         Rs {shipment.cod_amount}
