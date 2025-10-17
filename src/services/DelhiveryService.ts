@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { supabase } from './supabaseService';
 
+// Use Supabase Edge Function for Delhivery API calls (avoids CORS)
+const USE_SUPABASE_PROXY = import.meta.env.VITE_USE_SUPABASE_DELHIVERY_PROXY !== 'false'; // Default to true
+
 // Delhivery API Configuration
 const DELHIVERY_CONFIG = {
   baseURL: import.meta.env.VITE_DELHIVERY_BASE_URL || 'https://staging-express.delhivery.com',
@@ -13,9 +16,62 @@ const DELHIVERY_CONFIG = {
 
 // Check if API is properly configured
 const isApiConfigured = () => {
+  // When using Supabase proxy, we don't need the frontend token
+  if (USE_SUPABASE_PROXY) {
+    return true; // Assume Edge Function has the token
+  }
   const token = import.meta.env.VITE_DELHIVERY_API_TOKEN;
   return token && token !== 'your-delhivery-api-token' && token !== 'xxxxxxxxxxxxxxxx';
 };
+
+// Helper to call Supabase Edge Function for Delhivery API
+async function callDelhiveryViaSupabase(action: string, data: any, endpoint: 'staging' | 'express' | 'track' = 'staging', method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'POST') {
+  try {
+    console.log(`📡 Calling Delhivery via Supabase Edge Function: ${action}`);
+    console.log('📝 Request payload:', { action, data, endpoint, method });
+    
+    const { data: result, error } = await supabase.functions.invoke('delhivery-api', {
+      body: {
+        action,
+        data,
+        endpoint,
+        method
+      }
+    });
+
+    if (error) {
+      console.error('❌ Supabase Edge Function error:', error);
+      
+      // Provide more helpful error message
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        console.error('💡 This might be because:');
+        console.error('   1. DELHIVERY_API_TOKEN secret is not set in Supabase');
+        console.error('   2. Delhivery token is invalid or expired');
+        console.error('   → Go to Supabase Dashboard → Project Settings → Edge Functions → Secrets');
+      }
+      
+      throw new Error(`Edge Function error: ${error.message}`);
+    }
+
+    if (!result) {
+      console.error('❌ No result from Edge Function');
+      throw new Error('Edge Function returned no data');
+    }
+
+    console.log('📊 Edge Function response:', result);
+
+    if (!result.success) {
+      console.error('❌ Delhivery API error via Edge Function:', result);
+      throw new Error(result.data?.message || result.data?.error || `Delhivery API error: ${result.statusText}`);
+    }
+
+    console.log('✅ Delhivery API call successful via Edge Function');
+    return result.data;
+  } catch (error: any) {
+    console.error('❌ Error calling Delhivery via Supabase:', error);
+    throw error;
+  }
+}
 
 // Types for Delhivery API responses
 export interface DelhiveryPinCodeData {
@@ -189,8 +245,16 @@ export interface PackingSlipRequest {
 export interface PickupRequest {
   pickup_time: string;
   pickup_date: string;
-  pickup_location: string;
-  expected_package_count: number;
+  pickup_location: string;  // UI field name
+  expected_package_count: number;  // UI field name
+}
+
+// Delhivery API expects different parameter names
+interface DelhiveryPickupRequest {
+  pickup_time: string;
+  pickup_date: string;
+  warehouse_name: string;
+  quantity: number;
 }
 
 // Warehouse Management Types
@@ -1093,12 +1157,62 @@ class DelhiveryService {
    * Request pickup
    */
   async requestPickup(request: PickupRequest): Promise<any> {
+    // Check if API is configured
+    if (!isApiConfigured()) {
+      console.log('🔧 Skipping Delhivery pickup request (API not configured)');
+      return {
+        success: false,
+        message: 'Delhivery API not configured',
+        pickup_id: null
+      };
+    }
+
     try {
-      const response = await this.axiosInstance.post('/fm/request/new/', request);
-      return response.data;
-    } catch (error) {
-      console.error('Error requesting pickup:', error);
-      throw new Error('Failed to request pickup');
+      // Transform parameters to match Delhivery API expectations
+      const delhiveryRequest: DelhiveryPickupRequest = {
+        pickup_time: request.pickup_time,
+        pickup_date: request.pickup_date,
+        warehouse_name: request.pickup_location,  // Map pickup_location to warehouse_name
+        quantity: request.expected_package_count  // Map expected_package_count to quantity
+      };
+
+      console.log('📦 Requesting pickup from Delhivery:', delhiveryRequest);
+      
+      let responseData: any;
+
+      // Use Supabase Edge Function if enabled
+      if (USE_SUPABASE_PROXY) {
+        responseData = await callDelhiveryViaSupabase('/fm/request/new/', delhiveryRequest, 'staging', 'POST');
+      } else {
+        // Direct API call (will likely fail due to CORS)
+        const response = await this.axiosInstance.post('/fm/request/new/', delhiveryRequest);
+        responseData = response.data;
+      }
+      
+      console.log('✅ Delhivery pickup request successful:', responseData);
+      
+      return {
+        success: true,
+        message: 'Pickup requested successfully',
+        pickup_id: responseData.pickup_id || responseData.id,
+        ...responseData
+      };
+    } catch (error: any) {
+      console.error('❌ Error requesting pickup from Delhivery:', error);
+      
+      // Provide more detailed error message
+      if (error.response) {
+        // Server responded with error
+        console.error('Delhivery API error response:', error.response.data);
+        throw new Error(error.response.data.message || `Delhivery API error: ${error.response.status}`);
+      } else if (error.request) {
+        // Request made but no response (network error, CORS, etc.)
+        console.error('Network error - no response from Delhivery:', error.message);
+        throw new Error('Network error: Unable to reach Delhivery API. This may be due to CORS restrictions or network connectivity issues.');
+      } else {
+        // Error setting up request
+        throw new Error(`Request error: ${error.message}`);
+      }
     }
   }
 

@@ -601,6 +601,9 @@ const Shipping: React.FC = () => {
           length: parseFloat(newShipment.length || '10'),
           width: parseFloat(newShipment.width || '10'),
           height: parseFloat(newShipment.height || '10'),
+          shipment_width: parseFloat(newShipment.width || '10'),
+          shipment_height: parseFloat(newShipment.height || '10'),
+          shipping_mode: 'Surface',
           pickup_date: new Date().toISOString().split('T')[0]
         }],
         pickup_location: {
@@ -608,13 +611,36 @@ const Shipping: React.FC = () => {
         }
       };
 
-      const result = await delhiveryService.createShipment(shipmentData);
+      // Try to create shipment in Delhivery and get waybill (optional)
+      let waybill = '';
+      let delhiverySuccess = false;
       
-      // Generate waybill for this shipment
-      const waybills = await delhiveryService.generateWaybills(1);
-      const waybill = waybills[0] || `DL${Date.now()}`;
+      try {
+        const result = await delhiveryService.createShipment(shipmentData);
+        
+        // Try to generate waybill from Delhivery
+        try {
+          const waybills = await delhiveryService.generateWaybills(1);
+          waybill = waybills[0] || '';
+        } catch (waybillError: any) {
+          console.warn('⚠️ Failed to get waybill from Delhivery:', waybillError.message);
+        }
+        
+        if (waybill) {
+          delhiverySuccess = true;
+          console.log('✅ Shipment created in Delhivery with waybill:', waybill);
+        }
+      } catch (delhiveryError: any) {
+        console.warn('⚠️ Delhivery API not available, creating shipment in database only:', delhiveryError.message);
+      }
       
-      // Save shipment to database
+      // If no waybill from Delhivery, generate local waybill
+      if (!waybill) {
+        waybill = `LOCAL_${Date.now()}`;
+        console.log('📋 Generated local waybill:', waybill);
+      }
+      
+      // ALWAYS save shipment to database (regardless of Delhivery status)
       try {
         await shippingService.createShipment({
           waybill: waybill,
@@ -639,17 +665,23 @@ const Shipping: React.FC = () => {
         
         console.log(`✅ Shipment ${waybill} saved to database${newShipment.order_id ? ` (linked to order ${newShipment.order_id})` : ''}`);
         
-        if (newShipment.order_id) {
-          NotificationManager.success(`Shipment created for Order #${newShipment.order_id}! Waybill: ${waybill}`);
+        // Show appropriate message based on what worked
+        const orderText = newShipment.order_id ? ` for Order #${newShipment.order_id}` : '';
+        if (delhiverySuccess) {
+          NotificationManager.success(`Shipment created${orderText}! Waybill: ${waybill}`);
         } else {
-          NotificationManager.success(`Shipment created successfully! Waybill: ${waybill}`);
+          NotificationManager.success(`Shipment saved to database${orderText}! Waybill: ${waybill}`);
         }
         
         // Reload shipments to show the new one
         loadShipments();
       } catch (dbError: any) {
         console.error('Failed to save shipment to database:', dbError);
-        NotificationManager.warning('Shipment created but failed to save to database');
+        if (delhiverySuccess) {
+          NotificationManager.warning(`Shipment created in Delhivery (${waybill}) but failed to save to database`);
+        } else {
+          NotificationManager.error('Failed to create shipment. Please try again.');
+        }
       }
       
       // Reset form
@@ -770,10 +802,34 @@ const Shipping: React.FC = () => {
         expected_package_count: selectedShipmentsForPickup.length
       };
 
-      const result = await delhiveryService.requestPickup(updatedPickupRequest);
-      setPickupRequest(prev => ({ ...prev, result }));
+      // Try to request pickup from Delhivery API
+      let delhiverySuccess = false;
+      let delhiveryError: string | null = null;
+      try {
+        const result = await delhiveryService.requestPickup(updatedPickupRequest);
+        setPickupRequest(prev => ({ ...prev, result }));
+        delhiverySuccess = result.success || false;
+        if (delhiverySuccess) {
+          console.log('✅ Pickup requested via Delhivery API, Pickup ID:', result.pickup_id);
+        } else {
+          delhiveryError = result.message || 'Unknown error';
+          console.warn('⚠️ Delhivery pickup request failed:', delhiveryError);
+        }
+      } catch (error: any) {
+        delhiveryError = error.message;
+        console.error('❌ Delhivery API error:', delhiveryError);
+        
+        // Check if it's a CORS issue
+        if (delhiveryError.includes('CORS') || delhiveryError.includes('Network error')) {
+          NotificationManager.warning(
+            'Delhivery API requires a backend proxy to avoid CORS restrictions. ' +
+            'Pickup scheduled in database, but Delhivery was not notified.'
+          );
+        }
+        // Continue to update database even if Delhivery fails
+      }
       
-      // Update shipment pickup date in database for selected shipments
+      // ALWAYS update shipment pickup date in database (regardless of Delhivery status)
       try {
         for (const waybill of selectedShipmentsForPickup) {
           await shippingService.updateShipment(waybill, {
@@ -781,19 +837,31 @@ const Shipping: React.FC = () => {
           });
         }
         
+        console.log(`✅ Updated ${selectedShipmentsForPickup.length} shipment(s) in database`);
+        
         // Reload shipments to reflect updated status
         loadShipments();
         
         // Clear selection
         setSelectedShipmentsForPickup([]);
         
-        NotificationManager.success(`Pickup request submitted for ${selectedShipmentsForPickup.length} shipment(s)`);
-      } catch (dbError) {
+        // Show appropriate message based on what worked
+        if (delhiverySuccess) {
+          NotificationManager.success(`Pickup requested via Delhivery for ${selectedShipmentsForPickup.length} shipment(s)!`);
+        } else {
+          NotificationManager.success(`Pickup scheduled for ${selectedShipmentsForPickup.length} shipment(s). (Database updated)`);
+        }
+      } catch (dbError: any) {
         console.error('Failed to update shipment pickup status:', dbError);
-        NotificationManager.warning('Pickup requested but failed to update shipment status in database');
+        if (delhiverySuccess) {
+          NotificationManager.warning('Pickup requested via Delhivery but failed to update database');
+        } else {
+          NotificationManager.error('Failed to schedule pickup. Please try again.');
+        }
       }
-    } catch (error) {
-      NotificationManager.error('Failed to request pickup');
+    } catch (error: any) {
+      console.error('Pickup request error:', error);
+      NotificationManager.error('Failed to process pickup request');
     } finally {
       setPickupRequest(prev => ({ ...prev, loading: false }));
     }
@@ -980,10 +1048,16 @@ const Shipping: React.FC = () => {
 
       const result = await delhiveryService.createAdvancedShipmentWithWaybill(shipmentData);
       setAdvancedShipment(prev => ({ ...prev, result }));
+      console.log('✅ Advanced shipment created in Delhivery');
       // Important action - keep notification
       NotificationManager.success('Advanced shipment created successfully');
-    } catch (error) {
-      NotificationManager.error('Failed to create advanced shipment');
+    } catch (error: any) {
+      console.error('Failed to create advanced shipment:', error);
+      if (error.code === 'ERR_NETWORK') {
+        NotificationManager.error('Network error. Delhivery API is unavailable. Please check your connection and try again.');
+      } else {
+        NotificationManager.error(error.message || 'Failed to create advanced shipment');
+      }
     } finally {
       setAdvancedShipment(prev => ({ ...prev, loading: false }));
     }
@@ -2414,9 +2488,10 @@ const Shipping: React.FC = () => {
             )}
           </div>
 
-          {/* Edit Warehouse */}
+          {/* Edit Warehouse - Deprecated: Now using inline edit in warehouse list */}
+          {false && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Edit Warehouse</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Edit Warehouse (Deprecated)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2494,6 +2569,7 @@ const Shipping: React.FC = () => {
               </div>
             )}
           </div>
+          )}
           </div>
         )}
 
