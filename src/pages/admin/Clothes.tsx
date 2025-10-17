@@ -407,7 +407,7 @@ const Clothes: React.FC = () => {
       const uploadedUrls = await Promise.all(uploadPromises);
       setImages(prev => [...prev, ...uploadedUrls]);
       
-      NotificationManager.success(`Successfully uploaded ${uploadedUrls.length} image(s)`);
+      // No notification needed - uploaded images are immediately visible in the UI
       
       // Reset file input
       e.target.value = '';
@@ -762,7 +762,7 @@ const Clothes: React.FC = () => {
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    NotificationManager.success(`Product duplicated! Edit details and click Create to save.`);
+    // No notification needed - tab switch and form population are immediately visible
   };
 
   const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];

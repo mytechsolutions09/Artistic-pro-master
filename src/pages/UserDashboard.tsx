@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, Settings, ShoppingBag, Heart, Download, X, Eye, Star,
+  User, Settings, ShoppingBag, Heart, Download, X, Eye, EyeOff, Star,
   FileDown, TrendingUp, Calendar, LogOut,
   Package, Zap, Sparkles, Activity, Truck, Clock, CheckCircle, RotateCcw,
   Search, ChevronDown, ChevronUp, Edit, Shield, Key
@@ -79,6 +79,21 @@ const UserDashboard: React.FC = () => {
   // Tracking modal state
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<Order | null>(null);
+  
+  // Change Password modal state
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordErrors, setPasswordErrors] = useState({
+    newPassword: '',
+    confirmPassword: '',
+    general: ''
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   
   // Review state
@@ -709,6 +724,66 @@ const UserDashboard: React.FC = () => {
     setShowReviewInput(true);
   };
 
+
+  // Handle change password modal
+  const handleChangePassword = async () => {
+    setShowChangePasswordModal(true);
+  };
+
+  const handlePasswordSubmit = async () => {
+    // Reset errors
+    setPasswordErrors({ newPassword: '', confirmPassword: '', general: '' });
+    
+    // Validation
+    if (!passwordForm.newPassword) {
+      setPasswordErrors(prev => ({ ...prev, newPassword: 'Please enter a new password' }));
+      return;
+    }
+    
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordErrors(prev => ({ ...prev, newPassword: 'Password must be at least 6 characters long' }));
+      return;
+    }
+    
+    if (!passwordForm.confirmPassword) {
+      setPasswordErrors(prev => ({ ...prev, confirmPassword: 'Please confirm your password' }));
+      return;
+    }
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+      return;
+    }
+    
+    setIsChangingPassword(true);
+    
+    try {
+      const { supabase } = await import('../services/supabaseService');
+      const { error } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Success - close modal and reset form
+      setShowChangePasswordModal(false);
+      setPasswordForm({ newPassword: '', confirmPassword: '' });
+      setPasswordErrors({ newPassword: '', confirmPassword: '', general: '' });
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+      alert('Password updated successfully!');
+    } catch (error) {
+      console.error('Error updating password:', error);
+      setPasswordErrors(prev => ({ 
+        ...prev, 
+        general: 'Failed to update password. Please try again.' 
+      }));
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -1887,32 +1962,6 @@ const UserDashboard: React.FC = () => {
       }
     };
 
-    const handleChangePassword = async () => {
-      const newPassword = prompt('Enter your new password:');
-      if (!newPassword) return;
-      
-      if (newPassword.length < 6) {
-        alert('Password must be at least 6 characters long');
-        return;
-      }
-      
-      try {
-        const { supabase } = await import('../services/supabaseService');
-        const { error } = await supabase.auth.updateUser({
-          password: newPassword
-        });
-        
-        if (error) {
-          throw error;
-        }
-        
-        alert('Password updated successfully!');
-      } catch (error) {
-        console.error('Error updating password:', error);
-        alert('Failed to update password. Please try again.');
-      }
-    };
-
     const handleDownloadData = async () => {
       try {
         // Create a data export object
@@ -2326,6 +2375,119 @@ const UserDashboard: React.FC = () => {
         onRefresh={refreshTrackingData}
         isLoading={selectedOrderForTracking ? trackingLoading[selectedOrderForTracking.id] || false : false}
       />
+
+      {/* Change Password Modal */}
+      {showChangePasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-teal-100 rounded-lg">
+                  <Key className="w-5 h-5 text-teal-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Change Password</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowChangePasswordModal(false);
+                  setPasswordForm({ newPassword: '', confirmPassword: '' });
+                  setPasswordErrors({ newPassword: '', confirmPassword: '', general: '' });
+                  setShowNewPassword(false);
+                  setShowConfirmPassword(false);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {passwordErrors.general && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm">{passwordErrors.general}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    className={`w-full px-4 py-2 pr-10 border ${
+                      passwordErrors.newPassword ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    placeholder="Enter new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {passwordErrors.newPassword && (
+                  <p className="mt-1 text-sm text-red-600">{passwordErrors.newPassword}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    className={`w-full px-4 py-2 pr-10 border ${
+                      passwordErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    placeholder="Confirm new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {passwordErrors.confirmPassword && (
+                  <p className="mt-1 text-sm text-red-600">{passwordErrors.confirmPassword}</p>
+                )}
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={handlePasswordSubmit}
+                  disabled={isChangingPassword}
+                  className="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isChangingPassword ? 'Updating...' : 'Update Password'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowChangePasswordModal(false);
+                    setPasswordForm({ newPassword: '', confirmPassword: '' });
+                    setPasswordErrors({ newPassword: '', confirmPassword: '', general: '' });
+                    setShowNewPassword(false);
+                    setShowConfirmPassword(false);
+                  }}
+                  disabled={isChangingPassword}
+                  className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

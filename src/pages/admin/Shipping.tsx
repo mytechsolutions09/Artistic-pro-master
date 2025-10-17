@@ -65,6 +65,9 @@ const Shipping: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+  
+  // Warehouses list
+  const [warehouses, setWarehouses] = useState<any[]>([]);
 
   // Pin code serviceability check
   const [pinCodeCheck, setPinCodeCheck] = useState({
@@ -157,6 +160,9 @@ const Shipping: React.FC = () => {
     result: null as any,
     loading: false
   });
+  
+  // Selected shipments for pickup
+  const [selectedShipmentsForPickup, setSelectedShipmentsForPickup] = useState<string[]>([]);
 
   // Warehouse management
   const [warehouseCreate, setWarehouseCreate] = useState({
@@ -222,6 +228,7 @@ const Shipping: React.FC = () => {
 
   useEffect(() => {
     loadShipments();
+    loadWarehouses();
     
     // Check if Delhivery API is configured
     const checkApiConfiguration = () => {
@@ -231,17 +238,23 @@ const Shipping: React.FC = () => {
           'Delhivery API not configured. Using mock data for testing. Please configure your API token in .env file.',
           0 // Don't auto-close
         );
-      } else {
-        // API is configured, show success message
-        NotificationManager.success(
-          'Delhivery API configured successfully. Real-time shipping data is now available.',
-          3000
-        );
       }
+      // Only show warning if API is not configured - success is not necessary
     };
     
     checkApiConfiguration();
   }, []);
+
+  const loadWarehouses = async () => {
+    try {
+      const dbWarehouses = await shippingService.getAllWarehouses();
+      setWarehouses(dbWarehouses);
+      console.log(`✅ Loaded ${dbWarehouses.length} warehouses from database`);
+    } catch (error) {
+      console.error('Error loading warehouses:', error);
+      NotificationManager.error('Failed to load warehouses from database');
+    }
+  };
 
   const loadShipments = async () => {
     setLoading(true);
@@ -311,7 +324,7 @@ const Shipping: React.FC = () => {
         });
       }
       
-      NotificationManager.success('Pincode serviceability checked successfully');
+      // No notification needed for successful pincode check - result is visible
     } catch (error) {
       NotificationManager.error('Failed to check pincode serviceability');
     } finally {
@@ -325,12 +338,12 @@ const Shipping: React.FC = () => {
 
   const clearHistory = () => {
     setSearchHistory([]);
-    NotificationManager.success('Search history cleared');
+    // No notification needed - action is self-evident
   };
 
   const removeHistoryItem = (pinCode: string) => {
     setSearchHistory(prev => prev.filter(item => item.pinCode !== pinCode));
-    NotificationManager.success('Item removed from history');
+    // No notification needed - removal is immediately visible
   };
 
   // Helper functions for address parsing
@@ -414,7 +427,7 @@ const Shipping: React.FC = () => {
       }));
 
             setAvailableOrders(transformedOrders);
-            NotificationManager.success(`Loaded ${transformedOrders.length} processing orders`);
+            // No notification needed - data loading is routine operation
     } catch (error) {
       console.error('Error loading orders:', error);
       NotificationManager.error('Failed to load orders. Using fallback data.');
@@ -491,7 +504,7 @@ const Shipping: React.FC = () => {
       order_id: order.id // Store order ID for linking
     } as any);
     setShowOrderImport(false);
-    NotificationManager.success(`Order #${order.id} imported successfully - now create shipment`);
+    // No notification needed - form population is immediately visible
   };
 
   const clearShipmentForm = () => {
@@ -510,7 +523,7 @@ const Shipping: React.FC = () => {
       products_desc: '',
       order_id: undefined
     });
-    NotificationManager.success('Form cleared successfully');
+    // No notification needed - form clearing is self-evident
   };
 
   const handleRateCalculation = async () => {
@@ -535,7 +548,7 @@ const Shipping: React.FC = () => {
       
       const result = await delhiveryService.getShippingRates(rateData);
       setRateCalculation(prev => ({ ...prev, result }));
-      NotificationManager.success('Shipping rates calculated successfully');
+      // No notification needed - results are displayed directly
     } catch (error) {
       NotificationManager.error('Failed to calculate shipping rates');
     } finally {
@@ -646,8 +659,7 @@ const Shipping: React.FC = () => {
   const handleTrackShipment = async (waybill: string) => {
     try {
       const result = await delhiveryService.trackShipment(waybill);
-      // Tracking result received
-      NotificationManager.success('Shipment tracking information retrieved');
+      // Tracking result received - no notification needed
     } catch (error) {
       NotificationManager.error('Failed to track shipment');
     }
@@ -669,7 +681,7 @@ const Shipping: React.FC = () => {
           : shipment
       ));
       
-      // Show success message
+      // Show success message - important action that needs confirmation
       if (result.message && result.message.includes('mock')) {
         NotificationManager.success('Shipment cancelled (mock mode - API not configured)');
       } else {
@@ -693,7 +705,7 @@ const Shipping: React.FC = () => {
     try {
       const waybills = await delhiveryService.generateWaybills(parseInt(waybillGeneration.count));
       setWaybillGeneration(prev => ({ ...prev, waybills }));
-      NotificationManager.success(`Generated ${waybills.length} waybills successfully`);
+      // No notification needed - generated waybills are displayed
     } catch (error) {
       NotificationManager.error('Failed to generate waybills');
     } finally {
@@ -711,7 +723,7 @@ const Shipping: React.FC = () => {
     try {
       const result = await delhiveryService.getExpectedTAT(expectedTAT);
       setExpectedTAT(prev => ({ ...prev, result }));
-      NotificationManager.success('Expected TAT calculated successfully');
+      // No notification needed - TAT result is displayed
     } catch (error) {
       NotificationManager.error('Failed to calculate expected TAT');
     } finally {
@@ -725,11 +737,41 @@ const Shipping: React.FC = () => {
       return;
     }
 
+    if (selectedShipmentsForPickup.length === 0) {
+      NotificationManager.error('Please select at least one shipment for pickup');
+      return;
+    }
+
     setPickupRequest(prev => ({ ...prev, loading: true }));
     try {
-      const result = await delhiveryService.requestPickup(pickupRequest);
+      // Update expected package count based on selected shipments
+      const updatedPickupRequest = {
+        ...pickupRequest,
+        expected_package_count: selectedShipmentsForPickup.length
+      };
+
+      const result = await delhiveryService.requestPickup(updatedPickupRequest);
       setPickupRequest(prev => ({ ...prev, result }));
-      NotificationManager.success('Pickup request submitted successfully');
+      
+      // Update shipment pickup date in database for selected shipments
+      try {
+        for (const waybill of selectedShipmentsForPickup) {
+          await shippingService.updateShipment(waybill, {
+            pickup_date: pickupRequest.pickup_date
+          });
+        }
+        
+        // Reload shipments to reflect updated status
+        loadShipments();
+        
+        // Clear selection
+        setSelectedShipmentsForPickup([]);
+        
+        NotificationManager.success(`Pickup request submitted for ${selectedShipmentsForPickup.length} shipment(s)`);
+      } catch (dbError) {
+        console.error('Failed to update shipment pickup status:', dbError);
+        NotificationManager.warning('Pickup requested but failed to update shipment status in database');
+      }
     } catch (error) {
       NotificationManager.error('Failed to request pickup');
     } finally {
@@ -765,6 +807,9 @@ const Shipping: React.FC = () => {
         
         console.log('✅ Warehouse saved to database:', savedWarehouse.id);
         NotificationManager.success('Warehouse created and saved successfully!');
+        
+        // Reload warehouses list
+        loadWarehouses();
         
         // Reset form
         setWarehouseCreate(prev => ({
@@ -861,6 +906,7 @@ const Shipping: React.FC = () => {
 
       const result = await delhiveryService.createAdvancedShipmentWithWaybill(shipmentData);
       setAdvancedShipment(prev => ({ ...prev, result }));
+      // Important action - keep notification
       NotificationManager.success('Advanced shipment created successfully');
     } catch (error) {
       NotificationManager.error('Failed to create advanced shipment');
@@ -927,10 +973,9 @@ const Shipping: React.FC = () => {
         onTabChange={setActiveTab}
       />
       <div className="ml-20 p-6">
-
-      {/* Tab Content */}
-      {activeTab === 'shipments' && (
-        <div>
+        {/* Tab Content */}
+        {activeTab === 'shipments' && (
+          <div>
           {/* Filters */}
           <div className="mb-4 flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
@@ -1062,11 +1107,11 @@ const Shipping: React.FC = () => {
               </table>
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === 'pincheck' && (
-        <div className="bg-white rounded-lg shadow p-4">
+        {activeTab === 'pincheck' && (
+          <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Pin Code Serviceability Check</h2>
           <div className="space-y-3">
             <div>
@@ -1220,11 +1265,11 @@ const Shipping: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === 'rates' && (
-        <div className="bg-white rounded-lg shadow p-4">
+        {activeTab === 'rates' && (
+          <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Shipping Rate Calculator</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
@@ -1296,10 +1341,10 @@ const Shipping: React.FC = () => {
             </div>
           )}
         </div>
-      )}
+        )}
 
-      {activeTab === 'create' && (
-        <div className="bg-white rounded-lg shadow p-4">
+        {activeTab === 'create' && (
+          <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-gray-900">Create New Shipment</h2>
             <button
@@ -1542,11 +1587,11 @@ const Shipping: React.FC = () => {
               <span>Clear Form</span>
             </button>
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === 'waybills' && (
-        <div className="bg-white rounded-lg shadow p-4">
+        {activeTab === 'waybills' && (
+          <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Generate Waybills</h2>
           <div className="space-y-3">
             <div>
@@ -1584,11 +1629,11 @@ const Shipping: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === 'tat' && (
-        <div className="bg-white rounded-lg shadow p-4">
+        {activeTab === 'tat' && (
+          <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Expected TAT Calculator</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
@@ -1672,13 +1717,94 @@ const Shipping: React.FC = () => {
               </pre>
             </div>
           )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === 'pickup' && (
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Request Pickup</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {activeTab === 'pickup' && (
+          <div className="space-y-4">
+          {/* Pending Shipments for Pickup */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Shipments Ready for Pickup</h2>
+            <p className="text-sm text-gray-600 mb-4">Select shipments to include in pickup request</p>
+            
+            {shipments.filter(s => s.status === 'pending').length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                <p>No pending shipments available for pickup</p>
+                <p className="text-sm mt-1">Create a shipment first to request pickup</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {shipments.filter(s => s.status === 'pending').map((shipment) => (
+                  <div 
+                    key={shipment.waybill}
+                    className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                      selectedShipmentsForPickup.includes(shipment.waybill)
+                        ? 'border-pink-500 bg-pink-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => {
+                      setSelectedShipmentsForPickup(prev => 
+                        prev.includes(shipment.waybill)
+                          ? prev.filter(w => w !== shipment.waybill)
+                          : [...prev, shipment.waybill]
+                      );
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedShipmentsForPickup.includes(shipment.waybill)}
+                          onChange={() => {}}
+                          className="mt-1 h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="font-mono font-semibold text-pink-600">{shipment.waybill}</span>
+                            <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">
+                              Pending Pickup
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-700">
+                            <span className="font-medium">{shipment.customer_name}</span> • {shipment.customer_phone}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            📍 {shipment.delivery_address}, {shipment.delivery_pincode}
+                          </div>
+                          <div className="flex items-center space-x-3 mt-2 text-xs text-gray-600">
+                            <span>⚖️ {shipment.weight}kg</span>
+                            <span>💰 ₹{shipment.cod_amount}</span>
+                            <span>📅 {new Date(shipment.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {selectedShipmentsForPickup.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>{selectedShipmentsForPickup.length}</strong> shipment(s) selected for pickup
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedShipmentsForPickup.map(waybill => (
+                    <span key={waybill} className="px-2 py-1 bg-white border border-blue-300 rounded text-xs font-mono">
+                      {waybill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Pickup Request Form */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Pickup Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pickup Location *
@@ -1725,8 +1851,9 @@ const Shipping: React.FC = () => {
                 onChange={(e) => setPickupRequest(prev => ({ ...prev, expected_package_count: parseInt(e.target.value) }))}
               />
             </div>
-          </div>
-          <div className="mt-3">
+            </div>
+            
+            <div className="mt-3">
             <button
               onClick={handleRequestPickup}
               disabled={pickupRequest.loading}
@@ -1744,15 +1871,61 @@ const Shipping: React.FC = () => {
               </pre>
             </div>
           )}
-        </div>
-      )}
+          </div>
+          </div>
+        )}
 
-      {activeTab === 'warehouse' && (
-        <div className="space-y-4">
+        {activeTab === 'warehouse' && (
+          <div className="space-y-4">
+          {/* Saved Warehouses List */}
+          {warehouses.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">Saved Warehouses</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {warehouses.map((warehouse) => (
+                  <div key={warehouse.id} className="border border-gray-200 rounded-lg p-3 hover:border-pink-300 transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{warehouse.name}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{warehouse.registered_name || 'Unregistered'}</p>
+                      </div>
+                      {warehouse.is_active ? (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
+                      ) : (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">Inactive</span>
+                      )}
+                    </div>
+                    <div className="space-y-1.5 text-sm text-gray-600">
+                      <div className="flex items-start">
+                        <MapPin className="w-3.5 h-3.5 mr-1.5 mt-0.5 flex-shrink-0 text-gray-400" />
+                        <span className="text-xs">{warehouse.address}, {warehouse.city}, {warehouse.pin}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-xs">📞 {warehouse.phone}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-xs">✉️ {warehouse.email}</span>
+                      </div>
+                    </div>
+                    {warehouse.return_address && (
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <p className="text-xs text-gray-500 font-medium mb-1">Return Address:</p>
+                        <p className="text-xs text-gray-600">{warehouse.return_address}, {warehouse.return_city}, {warehouse.return_pin}</p>
+                      </div>
+                    )}
+                    <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                      <span>Created: {new Date(warehouse.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Create Warehouse */}
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-gray-900">Create Warehouse</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Create New Warehouse</h2>
               <div className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
                 <span className="font-medium">Tip:</span> All fields marked with * are required
               </div>
@@ -2033,11 +2206,11 @@ const Shipping: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === 'advanced' && (
-        <div className="bg-white rounded-lg shadow p-4">
+        {activeTab === 'advanced' && (
+          <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Advanced Shipment Creation</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
@@ -2243,8 +2416,8 @@ const Shipping: React.FC = () => {
               </pre>
             </div>
           )}
-        </div>
-      )}
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
