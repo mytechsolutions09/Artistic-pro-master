@@ -68,6 +68,8 @@ const Shipping: React.FC = () => {
   
   // Warehouses list
   const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<any>(null);
+  const [showWarehouseEdit, setShowWarehouseEdit] = useState(false);
 
   // Pin code serviceability check
   const [pinCodeCheck, setPinCodeCheck] = useState({
@@ -187,6 +189,14 @@ const Shipping: React.FC = () => {
     name: '',
     phone: '',
     address: '',
+    city: '',
+    pin: '',
+    email: '',
+    registered_name: '',
+    return_address: '',
+    return_city: '',
+    return_pin: '',
+    is_active: true,
     result: null as any,
     loading: false
   });
@@ -250,6 +260,16 @@ const Shipping: React.FC = () => {
       const dbWarehouses = await shippingService.getAllWarehouses();
       setWarehouses(dbWarehouses);
       console.log(`✅ Loaded ${dbWarehouses.length} warehouses from database`);
+      
+      // Auto-select warehouse if only one active warehouse exists
+      const activeWarehouses = dbWarehouses.filter(w => w.is_active);
+      if (activeWarehouses.length === 1 && !pickupRequest.pickup_location) {
+        setPickupRequest(prev => ({ 
+          ...prev, 
+          pickup_location: activeWarehouses[0].name 
+        }));
+        console.log(`✅ Auto-selected warehouse: ${activeWarehouses[0].name}`);
+      }
     } catch (error) {
       console.error('Error loading warehouses:', error);
       NotificationManager.error('Failed to load warehouses from database');
@@ -782,11 +802,21 @@ const Shipping: React.FC = () => {
   const handleCreateWarehouse = async () => {
     setWarehouseCreate(prev => ({ ...prev, loading: true }));
     try {
-      // Call Delhivery API (or mock)
-      const result = await delhiveryService.createWarehouseWithValidation(warehouseCreate);
-      setWarehouseCreate(prev => ({ ...prev, result }));
+      // Try to call Delhivery API (optional - won't block Supabase save)
+      let delhiverySuccess = false;
+      try {
+        const result = await delhiveryService.createWarehouseWithValidation(warehouseCreate);
+        setWarehouseCreate(prev => ({ ...prev, result }));
+        delhiverySuccess = result.success;
+        if (result.success) {
+          console.log('✅ Warehouse created in Delhivery');
+        }
+      } catch (delhiveryError: any) {
+        console.warn('⚠️ Delhivery API not available, saving to Supabase only:', delhiveryError.message);
+        // Continue to save in Supabase even if Delhivery fails
+      }
       
-      // Save warehouse to database
+      // ALWAYS save warehouse to Supabase database (regardless of Delhivery status)
       try {
         const savedWarehouse = await shippingService.createWarehouse({
           name: warehouseCreate.name,
@@ -805,8 +835,13 @@ const Shipping: React.FC = () => {
           is_active: true
         });
         
-        console.log('✅ Warehouse saved to database:', savedWarehouse.id);
-        NotificationManager.success('Warehouse created and saved successfully!');
+        console.log('✅ Warehouse saved to Supabase database:', savedWarehouse.id);
+        
+        if (delhiverySuccess) {
+          NotificationManager.success('Warehouse created in Delhivery and saved to database!');
+        } else {
+          NotificationManager.success('Warehouse saved to database successfully!');
+        }
         
         // Reload warehouses list
         loadWarehouses();
@@ -841,16 +876,55 @@ const Shipping: React.FC = () => {
     }
   };
 
-  const handleEditWarehouse = async () => {
+  const handleEditWarehouse = async (warehouseId: string) => {
     setWarehouseEdit(prev => ({ ...prev, loading: true }));
     try {
-      const result = await delhiveryService.editWarehouseWithValidation(warehouseEdit);
-      setWarehouseEdit(prev => ({ ...prev, result }));
+      // Try to call Delhivery API (optional - won't block Supabase update)
+      let delhiverySuccess = false;
+      try {
+        const result = await delhiveryService.editWarehouseWithValidation(warehouseEdit);
+        setWarehouseEdit(prev => ({ ...prev, result }));
+        delhiverySuccess = result.success;
+        if (result.success) {
+          console.log('✅ Warehouse updated in Delhivery');
+        }
+      } catch (delhiveryError: any) {
+        console.warn('⚠️ Delhivery API not available, updating in Supabase only:', delhiveryError.message);
+        // Continue to update in Supabase even if Delhivery fails
+      }
       
-      if (result.success) {
-        NotificationManager.success(result.message || 'Warehouse updated successfully');
-      } else {
-        NotificationManager.error(result.message || 'Failed to update warehouse');
+      // ALWAYS update warehouse in Supabase database (regardless of Delhivery status)
+      try {
+        await shippingService.updateWarehouse(warehouseId, {
+          name: warehouseEdit.name,
+          phone: warehouseEdit.phone,
+          email: warehouseEdit.email,
+          city: warehouseEdit.city,
+          pin: warehouseEdit.pin,
+          address: warehouseEdit.address,
+          registered_name: warehouseEdit.registered_name,
+          return_address: warehouseEdit.return_address,
+          return_city: warehouseEdit.return_city,
+          return_pin: warehouseEdit.return_pin,
+          is_active: warehouseEdit.is_active
+        });
+        
+        console.log('✅ Warehouse updated in Supabase database');
+        
+        if (delhiverySuccess) {
+          NotificationManager.success('Warehouse updated in Delhivery and database!');
+        } else {
+          NotificationManager.success('Warehouse updated in database successfully!');
+        }
+        
+        // Reload warehouses list
+        await loadWarehouses();
+        // Close edit form
+        setShowWarehouseEdit(false);
+        setSelectedWarehouse(null);
+      } catch (dbError: any) {
+        console.error('Database update error:', dbError);
+        NotificationManager.error('Failed to update warehouse in database');
       }
     } catch (error: any) {
       console.error('Warehouse update error:', error);
@@ -1809,13 +1883,39 @@ const Shipping: React.FC = () => {
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Pickup Location *
               </label>
-              <input
-                type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
-                value={pickupRequest.pickup_location}
-                onChange={(e) => setPickupRequest(prev => ({ ...prev, pickup_location: e.target.value }))}
-                placeholder="warehouse_name"
-              />
+              {warehouses.length === 0 ? (
+                <div className="space-y-2">
+                  <div className="w-full px-2.5 py-1.5 text-sm border border-yellow-300 rounded-md bg-yellow-50">
+                    <span className="text-yellow-700">⚠️ No warehouses available.</span>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('warehouse')}
+                    className="w-full px-2.5 py-1.5 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    + Create Warehouse First
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <select
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={pickupRequest.pickup_location}
+                    onChange={(e) => setPickupRequest(prev => ({ ...prev, pickup_location: e.target.value }))}
+                  >
+                    <option value="">Select warehouse</option>
+                    {warehouses
+                      .filter(w => w.is_active)
+                      .map((warehouse) => (
+                        <option key={warehouse.id} value={warehouse.name}>
+                          {warehouse.name} - {warehouse.city}, {warehouse.pin}
+                        </option>
+                      ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {warehouses.filter(w => w.is_active).length} active warehouse(s) available
+                  </p>
+                </>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -1915,9 +2015,197 @@ const Shipping: React.FC = () => {
                     )}
                     <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                       <span>Created: {new Date(warehouse.created_at).toLocaleDateString()}</span>
+                      <button
+                        onClick={() => {
+                          setSelectedWarehouse(warehouse);
+                          setWarehouseEdit({
+                            name: warehouse.name,
+                            phone: warehouse.phone,
+                            city: warehouse.city,
+                            pin: warehouse.pin,
+                            address: warehouse.address,
+                            email: warehouse.email,
+                            registered_name: warehouse.registered_name || '',
+                            return_address: warehouse.return_address || '',
+                            return_city: warehouse.return_city || '',
+                            return_pin: warehouse.return_pin || '',
+                            is_active: warehouse.is_active
+                          });
+                          setShowWarehouseEdit(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
+                      >
+                        <Edit className="w-3 h-3" />
+                        <span>Edit</span>
+                      </button>
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Edit Warehouse */}
+          {showWarehouseEdit && selectedWarehouse && (
+            <div className="bg-white rounded-lg shadow p-4 border-2 border-blue-300">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold text-gray-900">Edit Warehouse: {selectedWarehouse.name}</h2>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
+                    <span className="font-medium">Editing</span>
+                  </span>
+                  <button
+                    onClick={() => {
+                      setShowWarehouseEdit(false);
+                      setSelectedWarehouse(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Warehouse Name *
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.name}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Phone *
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.phone}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, phone: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.email}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, email: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2 lg:col-span-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Address *
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.address}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, address: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.city}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, city: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Pin Code *
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.pin}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, pin: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Registered Name
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.registered_name}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, registered_name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Return Address
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.return_address}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, return_address: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Return City
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.return_city}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, return_city: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Return Pin Code
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    value={warehouseEdit.return_pin}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, return_pin: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="edit-warehouse-active"
+                    checked={warehouseEdit.is_active}
+                    onChange={(e) => setWarehouseEdit({ ...warehouseEdit, is_active: e.target.checked })}
+                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="edit-warehouse-active" className="text-sm text-gray-700">
+                    Active Warehouse
+                  </label>
+                </div>
+              </div>
+              <div className="mt-4 flex space-x-3">
+                <button
+                  onClick={() => handleEditWarehouse(selectedWarehouse?.id || '')}
+                  disabled={warehouseEdit.loading}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {warehouseEdit.loading ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowWarehouseEdit(false);
+                    setSelectedWarehouse(null);
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           )}
