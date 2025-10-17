@@ -1,211 +1,169 @@
 /**
- * Image Optimization Utilities
- * Provides optimized image URLs for better performance
+ * Image optimization utilities for better performance
  */
 
-export interface ImageOptimizationOptions {
-  width?: number;
-  height?: number;
-  quality?: number;
-  format?: 'webp' | 'jpeg' | 'png' | 'auto';
-  blur?: number;
-  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside';
-}
+// Cache for loaded images
+const imageCache = new Map<string, string>();
 
 /**
- * Get optimized image URL for Supabase storage
+ * Optimize image URL with compression parameters
  */
-export const getOptimizedImageUrl = (
-  originalUrl: string, 
-  options: ImageOptimizationOptions = {}
+export const optimizeImageUrl = (
+  url: string,
+  width?: number,
+  quality: number = 80
 ): string => {
-  // If it's not a Supabase URL, return as-is
-  if (!originalUrl.includes('supabase') || !originalUrl.includes('storage')) {
-    return originalUrl;
-  }
-
   try {
-    const url = new URL(originalUrl);
+    // Return cached URL if available
+    const cacheKey = `${url}-${width}-${quality}`;
+    if (imageCache.has(cacheKey)) {
+      return imageCache.get(cacheKey)!;
+    }
+
+    let optimizedUrl = url;
+
+    // Optimize Pexels images
+    if (url.includes('pexels.com')) {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('auto', 'compress');
+      urlObj.searchParams.set('cs', 'tinysrgb');
+      urlObj.searchParams.set('fit', 'crop');
+      
+      // Set appropriate width
+      const targetWidth = width || (window.innerWidth > 768 ? 800 : 400);
+      urlObj.searchParams.set('w', targetWidth.toString());
+      
+      optimizedUrl = urlObj.toString();
+    }
+    // Optimize Supabase storage images
+    else if (url.includes('supabase')) {
+      const urlObj = new URL(url);
+      if (width) {
+        urlObj.searchParams.set('width', width.toString());
+      }
+      urlObj.searchParams.set('quality', quality.toString());
+      optimizedUrl = urlObj.toString();
+    }
+
+    // Cache the optimized URL
+    imageCache.set(cacheKey, optimizedUrl);
     
-    // Set default values
-    const {
-      width = 800,
-      height,
-      quality = 85,
-      format = 'webp',
-      blur = 0,
-      fit = 'cover'
-    } = options;
-
-    // Add transformation parameters
-    if (width) url.searchParams.set('width', width.toString());
-    if (height) url.searchParams.set('height', height.toString());
-    if (quality) url.searchParams.set('quality', quality.toString());
-    if (format && format !== 'auto') url.searchParams.set('format', format);
-    if (blur > 0) url.searchParams.set('blur', blur.toString());
-    if (fit) url.searchParams.set('resize', fit);
-
-    return url.toString();
+    return optimizedUrl;
   } catch (error) {
-    console.warn('Failed to optimize image URL:', error);
-    return originalUrl;
+    console.error('Error optimizing image URL:', error);
+    return url; // Return original URL if optimization fails
   }
 };
 
 /**
- * Get responsive image URLs for different screen sizes
+ * Preload critical images
  */
-export const getResponsiveImageUrls = (originalUrl: string) => {
-  return {
-    thumbnail: getOptimizedImageUrl(originalUrl, { width: 200, quality: 60 }),
-    small: getOptimizedImageUrl(originalUrl, { width: 400, quality: 70 }),
-    medium: getOptimizedImageUrl(originalUrl, { width: 600, quality: 80 }),
-    large: getOptimizedImageUrl(originalUrl, { width: 800, quality: 85 }),
-    xlarge: getOptimizedImageUrl(originalUrl, { width: 1200, quality: 90 })
-  };
-};
-
-/**
- * Get blur placeholder URL
- */
-export const getBlurPlaceholderUrl = (originalUrl: string): string => {
-  return getOptimizedImageUrl(originalUrl, {
-    width: 50,
-    quality: 20,
-    blur: 10,
-    format: 'jpeg'
-  });
-};
-
-/**
- * Generate a low-quality placeholder for progressive loading
- */
-export const generateImagePlaceholder = (width: number = 400, height: number = 400): string => {
-  return `data:image/svg+xml;base64,${btoa(`
-    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100%" height="100%" fill="#f3f4f6"/>
-      <rect width="100%" height="100%" fill="url(#gradient)"/>
-      <defs>
-        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#f3f4f6;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#e5e7eb;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-    </svg>
-  `)}`;
-};
-
-/**
- * Check if image format is supported
- */
-export const isWebPSupported = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  
-  const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 1;
-  
-  return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
-};
-
-/**
- * Get optimal format based on browser support
- */
-export const getOptimalFormat = (preferredFormat: 'webp' | 'jpeg' | 'png' = 'webp'): string => {
-  if (preferredFormat === 'webp' && isWebPSupported()) {
-    return 'webp';
-  }
-  
-  return 'jpeg'; // Fallback to JPEG
-};
-
-/**
- * Preload image with error handling
- */
-export const preloadImage = (url: string): Promise<HTMLImageElement> => {
+export const preloadImage = (url: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-    
+    img.onload = () => resolve();
+    img.onerror = reject;
     img.src = url;
   });
 };
 
 /**
- * Batch preload images with concurrency control
+ * Preload multiple images
  */
-export const preloadImages = async (
-  urls: string[], 
-  maxConcurrent: number = 3
-): Promise<HTMLImageElement[]> => {
-  const results: HTMLImageElement[] = [];
-  const errors: Error[] = [];
-  
-  for (let i = 0; i < urls.length; i += maxConcurrent) {
-    const batch = urls.slice(i, i + maxConcurrent);
-    const batchPromises = batch.map(url => 
-      preloadImage(url).catch(error => {
-        errors.push(error);
-        return null;
-      })
-    );
-    
-    const batchResults = await Promise.all(batchPromises);
-    results.push(...batchResults.filter(Boolean) as HTMLImageElement[]);
-  }
-  
-  if (errors.length > 0) {
-    console.warn(`Failed to preload ${errors.length} images:`, errors);
-  }
-  
-  return results;
+export const preloadImages = async (urls: string[]): Promise<void[]> => {
+  return Promise.all(urls.map(url => preloadImage(url)));
 };
 
 /**
- * Get image dimensions from URL (for aspect ratio calculations)
+ * Generate responsive image srcset
  */
-export const getImageDimensions = (url: string): Promise<{ width: number; height: number }> => {
-  return new Promise((resolve, reject) => {
+export const generateSrcSet = (url: string, sizes: number[]): string => {
+  return sizes
+    .map(size => `${optimizeImageUrl(url, size)} ${size}w`)
+    .join(', ');
+};
+
+/**
+ * Create blur data URL placeholder
+ */
+export const createBlurDataUrl = (color: string = '#e5e7eb'): string => {
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='${encodeURIComponent(color)}'/%3E%3C/svg%3E`;
+};
+
+/**
+ * Clear image cache
+ */
+export const clearImageCache = (): void => {
+  imageCache.clear();
+};
+
+/**
+ * Get cache size
+ */
+export const getCacheSize = (): number => {
+  return imageCache.size;
+};
+
+/**
+ * Check if image is cached
+ */
+export const isImageCached = (url: string, width?: number, quality: number = 80): boolean => {
+  const cacheKey = `${url}-${width}-${quality}`;
+  return imageCache.has(cacheKey);
+};
+
+/**
+ * Estimate image file size reduction
+ */
+export const estimateCompression = (originalWidth: number, targetWidth: number): number => {
+  const ratio = targetWidth / originalWidth;
+  return Math.round((1 - ratio * ratio) * 100); // Approximate compression percentage
+};
+
+/**
+ * Get optimal image width based on viewport
+ */
+export const getOptimalImageWidth = (): number => {
+  const width = window.innerWidth;
+  
+  if (width < 640) return 400; // Mobile
+  if (width < 768) return 600; // Tablet portrait
+  if (width < 1024) return 800; // Tablet landscape
+  if (width < 1280) return 1000; // Desktop
+  return 1200; // Large desktop
+};
+
+/**
+ * Create responsive sizes attribute
+ */
+export const createSizesAttribute = (
+  mobile: string = '100vw',
+  tablet: string = '50vw',
+  desktop: string = '33vw'
+): string => {
+  return `(max-width: 640px) ${mobile}, (max-width: 1024px) ${tablet}, ${desktop}`;
+};
+
+/**
+ * Detect WebP support
+ */
+let webpSupported: boolean | null = null;
+
+export const supportsWebP = async (): Promise<boolean> => {
+  if (webpSupported !== null) {
+    return webpSupported;
+  }
+
+  return new Promise((resolve) => {
     const img = new Image();
-    
     img.onload = () => {
-      resolve({
-        width: img.naturalWidth,
-        height: img.naturalHeight
-      });
+      webpSupported = img.width > 0 && img.height > 0;
+      resolve(webpSupported);
     };
-    
     img.onerror = () => {
-      reject(new Error(`Failed to load image: ${url}`));
+      webpSupported = false;
+      resolve(false);
     };
-    
-    img.src = url;
+    img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==';
   });
-};
-
-/**
- * Calculate optimal image size based on container dimensions
- */
-export const calculateOptimalImageSize = (
-  containerWidth: number,
-  containerHeight: number,
-  imageAspectRatio: number
-): { width: number; height: number } => {
-  const containerAspectRatio = containerWidth / containerHeight;
-  
-  if (imageAspectRatio > containerAspectRatio) {
-    // Image is wider than container
-    return {
-      width: containerWidth,
-      height: Math.round(containerWidth / imageAspectRatio)
-    };
-  } else {
-    // Image is taller than container
-    return {
-      width: Math.round(containerHeight * imageAspectRatio),
-      height: containerHeight
-    };
-  }
 };

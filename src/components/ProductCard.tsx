@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { Product } from '../types';
 import { generateProductUrl } from '../utils/slugUtils';
+import OptimizedImage from './OptimizedImage';
 
 interface ProductCardProps {
   product: Product;
@@ -71,13 +72,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       onClick={handleCardClick}
     >
       {/* Image Container */}
-      <div className="relative overflow-hidden rounded-none">
+      <div className="relative overflow-hidden rounded-none h-80">
         {/* Main Image */}
         {product.images && product.images.length > 0 && product.images[0] ? (
-          <img
+          <OptimizedImage
             src={product.images[0]}
             alt={product.title}
             className="w-full object-cover transition-transform duration-300 h-80 group-hover:scale-102"
+            width={400}
+            height={320}
           />
         ) : (
           <div className="w-full h-80 flex items-center justify-center bg-gray-100">

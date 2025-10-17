@@ -7,6 +7,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { generateProductUrl } from '../utils/slugUtils';
 import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
 import HomepageSkeleton from '../components/HomepageSkeleton';
+import OptimizedImage from '../components/OptimizedImage';
 
 const Homepage: React.FC = () => {
   // Currency context
@@ -548,10 +549,12 @@ const Homepage: React.FC = () => {
 
             {/* Featured Card */}
             <Link to={heroSection.featuredCard.link} className="relative rounded-2xl overflow-hidden group cursor-pointer" style={{ minHeight: `${heroSection.height}px` }}>
-              <img
+              <OptimizedImage
                 src={heroSection.featuredCard.images[0]}
                 alt={heroSection.featuredCard.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                width={600}
+                priority={true}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
@@ -562,10 +565,12 @@ const Homepage: React.FC = () => {
 
             {/* Categories Card */}
             <Link to={heroSection.categoriesCard.link} className="relative rounded-2xl overflow-hidden group cursor-pointer" style={{ minHeight: `${heroSection.height}px` }}>
-              <img
+              <OptimizedImage
                 src={heroSection.categoriesCard.images[0]}
                 alt={heroSection.categoriesCard.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                width={600}
+                priority={true}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
@@ -584,10 +589,12 @@ const Homepage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[300px] lg:h-[400px]">
               {/* Image Section */}
               <div className="relative overflow-hidden h-[250px] lg:h-full">
-                <img
+                <OptimizedImage
                   src={safeImageSlider.slides[currentSlide].images[0]}
                   alt={safeImageSlider.slides[currentSlide].title}
                   className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                  width={800}
+                  priority={true}
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent lg:from-black/20" />
                 
@@ -647,11 +654,12 @@ const Homepage: React.FC = () => {
           }`}>
             {safeFeaturedGrid.items.map((item: any) => (
               <Link key={item.id} to={item.link} className="group">
-                <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <img
+                <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-64">
+                  <OptimizedImage
                     src={item.images[0]}
                     alt={item.title}
                     className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                    width={600}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
@@ -684,11 +692,12 @@ const Homepage: React.FC = () => {
             {safeBestSellers.selectedProducts.map((product: any) => (
               <Link key={product.id} to={product.link} className="group">
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative overflow-hidden">
-                    <img
+                  <div className="relative overflow-hidden h-80">
+                    <OptimizedImage
                       src={product.images[0]}
                       alt={product.title}
                       className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+                      width={500}
                     />
                     {safeBestSellers.showBadge && (
                       <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium text-white bg-${product.badgeColor}-500`}>
@@ -770,11 +779,12 @@ const Homepage: React.FC = () => {
             {safeFeaturedArtwork.selectedProducts.map((product: any) => (
               <Link key={product.id} to={product.link} className="group">
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative overflow-hidden">
-                    <img
+                  <div className="relative overflow-hidden h-80">
+                    <OptimizedImage
                       src={product.images[0]}
                       alt={product.title}
                       className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+                      width={400}
                     />
                     {safeFeaturedArtwork.showBadge && (
                       <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium text-white bg-${product.badgeColor}-500`}>
@@ -856,11 +866,12 @@ const Homepage: React.FC = () => {
             {categoriesSection.selectedCategories.map((category: any) => (
               <Link key={category.id} to={`/${category.slug}`} className="group">
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
-                  <div className="relative">
-                    <img
+                  <div className="relative h-32">
+                    <OptimizedImage
                       src={category.image}
                       alt={category.name}
                       className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                      width={300}
                     />
                     {category.featured && (
                       <div className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium text-white bg-pink-500">
@@ -910,11 +921,12 @@ const Homepage: React.FC = () => {
             {trendingCollections.collections.map((collection: any) => (
               <Link key={collection.id} to={collection.link} className="group">
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative">
-                    <img
+                  <div className="relative h-48">
+                    <OptimizedImage
                       src={collection.image}
                       alt={collection.title}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      width={500}
                     />
                     <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium text-white bg-${collection.badgeColor}-500`}>
                       {collection.badge}

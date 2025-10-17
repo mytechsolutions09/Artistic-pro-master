@@ -8,6 +8,7 @@ import { CartManager } from '../services/orderService';
 import ClothingProductPageSkeleton from '../components/ClothingProductPageSkeleton';
 import OpenGraphTags from '../components/OpenGraphTags';
 import { MetaPixelService } from '../services/metaPixelService';
+import OptimizedImage from '../components/OptimizedImage';
 
 const ClothingProductPage: React.FC = () => {
   const { productSlug } = useParams<{ productSlug: string }>();
@@ -213,10 +214,12 @@ const ClothingProductPage: React.FC = () => {
                 className="flex-1 relative aspect-[3/4] max-h-[450px] bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
                 onClick={() => setShowFullImage(true)}
               >
-                <img
+                <OptimizedImage
                   src={product.images && product.images.length > 0 ? product.images[selectedImage] : product.main_image}
                   alt={product.title}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  width={600}
+                  priority={true}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
@@ -241,10 +244,11 @@ const ClothingProductPage: React.FC = () => {
                             selectedImage === index ? 'opacity-100' : 'opacity-60 hover:opacity-100'
                           }`}
                         >
-                          <img
+                          <OptimizedImage
                             src={image}
                             alt={`${product.title} ${index + 1}`}
                             className="w-full h-full object-cover rounded"
+                            width={80}
                           />
                         </button>
                       ))}
@@ -265,10 +269,11 @@ const ClothingProductPage: React.FC = () => {
                       selectedImage === index ? 'opacity-100' : 'opacity-60'
                     }`}
                   >
-                    <img
+                    <OptimizedImage
                       src={image}
                       alt={`${product.title} ${index + 1}`}
                       className="w-full h-full object-cover rounded"
+                      width={80}
                     />
                   </button>
                 ))}
@@ -634,10 +639,12 @@ const ClothingProductPage: React.FC = () => {
           onClick={() => setShowFullImage(false)}
         >
           <div className="relative max-w-6xl max-h-screen w-full h-full flex items-center justify-center">
-            <img
+            <OptimizedImage
               src={product.images && product.images.length > 0 ? product.images[selectedImage] : product.main_image}
               alt={product.title}
               className="max-w-full max-h-full object-contain"
+              width={1200}
+              priority={true}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
