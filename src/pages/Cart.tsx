@@ -240,9 +240,27 @@ const CartPage: React.FC = () => {
                       {/* Price and Quantity */}
                       <div className="flex flex-col items-end space-y-3">
                         {/* Price */}
-                        <p className="font-bold text-gray-900 text-lg">
-                          {formatUIPrice(item.selectedPrice, 'INR')}
-                        </p>
+                        <div className="text-right">
+                          {item.product.originalPrice && item.product.originalPrice > item.selectedPrice ? (
+                            <>
+                              <p className="text-sm text-gray-500 line-through">
+                                {formatUIPrice(item.product.originalPrice, 'INR')}
+                              </p>
+                              <p className="font-bold text-gray-900 text-lg">
+                                {formatUIPrice(item.selectedPrice, 'INR')}
+                              </p>
+                              {item.product.discountPercentage && (
+                                <p className="text-xs text-green-600 font-medium">
+                                  {item.product.discountPercentage}% OFF
+                                </p>
+                              )}
+                            </>
+                          ) : (
+                            <p className="font-bold text-gray-900 text-lg">
+                              {formatUIPrice(item.selectedPrice, 'INR')}
+                            </p>
+                          )}
+                        </div>
                         
                         {/* Quantity Controls */}
                         <div className="flex items-center space-x-3">

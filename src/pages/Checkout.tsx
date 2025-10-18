@@ -763,11 +763,21 @@ const Checkout: React.FC = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-800 text-xs">{formatUIPrice(item.selectedPrice, 'INR')}</p>
+                      {item.product.originalPrice && item.product.originalPrice > item.selectedPrice ? (
+                        <div>
+                          <p className="text-xs text-gray-400 line-through">{formatUIPrice(item.product.originalPrice, 'INR')}</p>
+                          <p className="font-semibold text-gray-800 text-xs">{formatUIPrice(item.selectedPrice, 'INR')}</p>
+                          {item.product.discountPercentage && (
+                            <p className="text-xs text-green-600 font-medium">{item.product.discountPercentage}% OFF</p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="font-semibold text-gray-800 text-xs">{formatUIPrice(item.selectedPrice, 'INR')}</p>
+                      )}
                       {!productId && (
                         <button
                           onClick={() => removeItem(item.product.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 mt-1"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -779,18 +789,45 @@ const Checkout: React.FC = () => {
               
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="space-y-1">
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Subtotal</span>
-                    <span>{formatUIPrice(cart.total, 'INR')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Processing Fee</span>
-                    <span>{formatUIPrice(0, 'INR')}</span>
-                  </div>
-                  <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-200">
-                    <span>Total</span>
-                    <span>{formatUIPrice(cart.total, 'INR')}</span>
-                  </div>
+                  {/* Calculate original total and discount */}
+                  {(() => {
+                    const originalTotal = cart.items.reduce((sum, item) => {
+                      const originalPrice = item.product.originalPrice && item.product.originalPrice > item.selectedPrice 
+                        ? item.product.originalPrice 
+                        : item.selectedPrice;
+                      return sum + (originalPrice * item.quantity);
+                    }, 0);
+                    const totalDiscount = originalTotal - cart.total;
+                    
+                    return (
+                      <>
+                        {totalDiscount > 0 && (
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Original Price</span>
+                            <span>{formatUIPrice(originalTotal, 'INR')}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Subtotal</span>
+                          <span>{formatUIPrice(cart.total, 'INR')}</span>
+                        </div>
+                        {totalDiscount > 0 && (
+                          <div className="flex justify-between text-sm text-green-600 font-medium">
+                            <span>Discount</span>
+                            <span>-{formatUIPrice(totalDiscount, 'INR')}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Processing Fee</span>
+                          <span>{formatUIPrice(0, 'INR')}</span>
+                        </div>
+                        <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-200">
+                          <span>Total</span>
+                          <span>{formatUIPrice(cart.total, 'INR')}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
