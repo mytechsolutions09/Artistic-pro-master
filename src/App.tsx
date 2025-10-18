@@ -98,7 +98,7 @@ function AppContent() {
                   <Route path="/payment-success" element={<PaymentSuccess />} />
                   <Route path="/payment-failed" element={<PaymentFailed />} />
                   <Route path="/download/:productId" element={<DownloadPage />} />
-                  <Route path="/sign-in" element={<LoginForm onLoginSuccess={() => window.location.href = '/dashboard'} />} />
+                  <Route path="/sign-in" element={<LoginForm onLoginSuccess={() => window.location.href = '/'} />} />
                   <Route path="/sign-up" element={<SignUpForm />} />
                   <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                   <Route path="/reset-password" element={<ResetPasswordForm />} />

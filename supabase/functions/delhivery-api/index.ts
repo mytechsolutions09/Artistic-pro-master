@@ -16,6 +16,8 @@ serve(async (req) => {
     console.log('🔔 Incoming request to delhivery-api Edge Function')
     console.log('📍 Request URL:', req.url)
     console.log('🔑 Auth header present:', req.headers.has('authorization'))
+    console.log('🔑 ApiKey header present:', req.headers.has('apikey'))
+    
     // Get the API token from environment variables
     const delhiveryToken = Deno.env.get('DELHIVERY_API_TOKEN')
     if (!delhiveryToken) {
@@ -28,28 +30,107 @@ serve(async (req) => {
       )
     }
 
-    // Parse the request body
-    const { action, data, endpoint, method = 'POST' } = await req.json()
+    // Check content type to determine how to parse request
+    const contentType = req.headers.get('content-type') || ''
+    console.log('📄 Content-Type:', contentType)
+    
+    let action: string
+    let data: any
+    let endpoint: string
+    let method: string
+    let isFormData = false
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Handle FormData requests (for file uploads like manifest creation)
+      const formData = await req.formData()
+      action = formData.get('action') as string || '/manifest'
+      endpoint = formData.get('endpoint') as string || 'ltl'
+      method = formData.get('method') as string || 'POST'
+      isFormData = true
+      data = formData
+      console.log('📎 FormData request detected')
+    } else {
+      // Handle JSON requests (default)
+      const body = await req.json()
+      console.log('📦 Request body:', JSON.stringify(body))
+      action = body.action
+      data = body.data
+      endpoint = body.endpoint
+      method = body.method || 'POST'
+    }
+    
+    // Validate required fields
+    if (!action) {
+      console.error('❌ Missing action in request')
+      return new Response(
+        JSON.stringify({ error: 'Missing required field: action' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+    
+    if (!endpoint) {
+      console.error('❌ Missing endpoint in request')
+      return new Response(
+        JSON.stringify({ error: 'Missing required field: endpoint' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+    
+    console.log('✅ Parsed request - Action:', action, 'Endpoint:', endpoint, 'Method:', method)
 
     // Determine the base URL based on the endpoint
     let baseURL = 'https://staging-express.delhivery.com'
+    let authHeader = `Token ${delhiveryToken}`
+    
     if (endpoint === 'express') {
       baseURL = 'https://express-dev-test.delhivery.com'
     } else if (endpoint === 'track') {
       baseURL = 'https://track.delhivery.com'
+    } else if (endpoint === 'ltl') {
+      // New LTL API for warehouse management
+      baseURL = 'https://ltl-clients-api-dev.delhivery.com'
+      authHeader = `Bearer ${delhiveryToken}`
+    } else if (endpoint === 'ltl-prod') {
+      // Production LTL API
+      baseURL = 'https://ltl-clients-api.delhivery.com'
+      authHeader = `Bearer ${delhiveryToken}`
+    } else if (endpoint === 'main') {
+      baseURL = 'https://staging-express.delhivery.com'
     }
 
     // Prepare the request
     const url = `${baseURL}${action}`
-    const headers = {
-      'Authorization': `Token ${delhiveryToken}`,
-      'Content-Type': 'application/json',
+    let headers: any = {
+      'Authorization': authHeader,
+    }
+    
+    // Only set Content-Type for JSON requests (FormData sets its own)
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json'
     }
 
     console.log(`📦 Delhivery API Request: ${method} ${url}`)
-    console.log('📝 Request Data:', JSON.stringify(data))
+    if (!isFormData) {
+      console.log('📝 Request Data:', JSON.stringify(data))
+    } else {
+      console.log('📎 FormData with', Array.from((data as FormData).keys()).length, 'fields')
+    }
 
     let response: Response
+    let body: any
+
+    // Prepare body based on data type
+    if (isFormData) {
+      body = data  // FormData is used as-is
+    } else if (method !== 'GET' && method !== 'DELETE') {
+      body = JSON.stringify(data)
+    }
 
     // Make the appropriate request based on method from body
     if (method === 'GET') {
@@ -61,13 +142,19 @@ serve(async (req) => {
       response = await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body,
       })
     } else if (method === 'PUT') {
       response = await fetch(url, {
         method: 'PUT',
         headers,
-        body: JSON.stringify(data),
+        body,
+      })
+    } else if (method === 'PATCH') {
+      response = await fetch(url, {
+        method: 'PATCH',
+        headers,
+        body,
       })
     } else if (method === 'DELETE') {
       response = await fetch(url, {

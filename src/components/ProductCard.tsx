@@ -12,18 +12,16 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { formatUIPrice } = useCurrency();
 
-  // Debug logging for image issues (removed for production)
-
-  //   hasImages: !!product.images,
-  //   imagesLength: product.images?.length || 0,
-  //   currentImageIndex,
-  //   currentImageUrl: product.images?.[currentImageIndex],
-  //   mainImage: product.main_image,
-  //   imageLoaded,
-  //   imageError
-  // });
-
-  // Debug logging removed
+  // Debug logging for image issues
+  React.useEffect(() => {
+    console.log('ProductCard Debug:', {
+      productTitle: product.title,
+      hasImages: !!product.images,
+      imagesLength: product.images?.length || 0,
+      firstImage: product.images?.[0],
+      mainImage: product.main_image
+    });
+  }, [product]);
 
   // Get current price based on selected options
   const getCurrentPrice = () => {
@@ -80,7 +78,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             alt={product.title}
             className="w-full object-cover transition-transform duration-300 h-80 group-hover:scale-102"
             width={400}
-            height={320}
           />
         ) : (
           <div className="w-full h-80 flex items-center justify-center bg-gray-100">

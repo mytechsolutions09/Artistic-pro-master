@@ -113,7 +113,7 @@ const Shipping: React.FC = () => {
     height: '',
     products_desc: '',
     order_id: undefined, // Optional order ID for linking
-    payment_method: 'COD' // Default payment method
+    payment_method: '' // Payment method from order
   });
 
   // Import orders functionality
@@ -127,7 +127,7 @@ const Shipping: React.FC = () => {
     delivery_state: string;
     cod_amount: number;
     weight: number;
-    payment_method?: string; // COD or Prepaid
+    payment_method: string;
     products: Array<{
       name: string;
       quantity: number;
@@ -440,7 +440,7 @@ const Shipping: React.FC = () => {
         delivery_state: extractStateFromAddress(order.shipping_address || ''),
         cod_amount: order.total_amount || 0,
         weight: calculateOrderWeight(order.order_items || []),
-        payment_method: order.payment_method || 'COD', // Add payment method
+        payment_method: order.payment_method || 'prepaid',
         products: order.order_items?.map((item: any) => ({
           name: item.product_title || item.products?.title || 'Unknown Product',
           quantity: item.quantity || 1,
@@ -467,7 +467,7 @@ const Shipping: React.FC = () => {
           delivery_state: 'Haryana',
           cod_amount: 2500,
           weight: 1.2,
-          payment_method: 'COD',
+          payment_method: 'cod',
           products: [
             { name: 'Wireless Headphones', quantity: 1, price: 2500 }
           ],
@@ -481,9 +481,9 @@ const Shipping: React.FC = () => {
           delivery_pincode: '400058',
           delivery_city: 'Mumbai',
           delivery_state: 'Maharashtra',
-          cod_amount: 0,
+          cod_amount: 1800,
           weight: 0.8,
-          payment_method: 'Prepaid',
+          payment_method: 'razorpay',
           products: [
             { name: 'Smart Watch', quantity: 1, price: 1800 }
           ],
@@ -499,7 +499,7 @@ const Shipping: React.FC = () => {
           delivery_state: 'Karnataka',
           cod_amount: 3200,
           weight: 2.1,
-          payment_method: 'COD',
+          payment_method: 'razorpay',
           products: [
             { name: 'Laptop Stand', quantity: 1, price: 1200 },
             { name: 'Wireless Mouse', quantity: 1, price: 2000 }
@@ -521,14 +521,14 @@ const Shipping: React.FC = () => {
       delivery_pincode: order.delivery_pincode,
       delivery_city: order.delivery_city,
       delivery_state: order.delivery_state,
-      cod_amount: order.payment_method === 'COD' ? order.cod_amount.toString() : '0', // Set to 0 for prepaid
+      cod_amount: order.cod_amount.toString(),
       weight: order.weight.toString(),
       length: '30', // Default dimensions
       width: '20',
       height: '15',
       products_desc: order.products.map((p: any) => `${p.name} (Qty: ${p.quantity})`).join(', '),
       order_id: order.id, // Store order ID for linking
-      payment_method: order.payment_method || 'COD' // Store payment method
+      payment_method: order.payment_method // Store payment method
     } as any);
     setShowOrderImport(false);
     // No notification needed - form population is immediately visible
@@ -548,8 +548,7 @@ const Shipping: React.FC = () => {
       width: '',
       height: '',
       products_desc: '',
-      order_id: undefined,
-      payment_method: 'COD' // Reset to default
+      order_id: undefined
     });
     // No notification needed - form clearing is self-evident
   };
@@ -1576,14 +1575,6 @@ const Shipping: React.FC = () => {
                                 <span className="text-xs text-gray-500">
                                   {new Date(order.created_at).toLocaleTimeString()}
                                 </span>
-                                {/* Payment Method Badge */}
-                                <span className={`text-xs font-medium px-2 py-1 rounded ${
-                                  order.payment_method === 'COD' 
-                                    ? 'bg-orange-100 text-orange-700' 
-                                    : 'bg-green-100 text-green-700'
-                                }`}>
-                                  {order.payment_method === 'COD' ? '💵 COD' : '✓ Prepaid'}
-                                </span>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div>
@@ -1605,6 +1596,13 @@ const Shipping: React.FC = () => {
                                   </span>
                                   <span className="text-gray-600">
                                     <span className="font-medium">Weight:</span> {order.weight}kg
+                                  </span>
+                                  <span className={`px-2 py-1 rounded-full font-medium ${
+                                    order.payment_method?.toLowerCase() === 'cod' 
+                                      ? 'bg-orange-100 text-orange-700' 
+                                      : 'bg-green-100 text-green-700'
+                                  }`}>
+                                    {order.payment_method?.toLowerCase() === 'cod' ? 'COD' : 'Prepaid'}
                                   </span>
                                 </div>
                               </div>
@@ -1707,27 +1705,14 @@ const Shipping: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                COD Amount (Rs) 
-                {newShipment.payment_method === 'Prepaid' && (
-                  <span className="ml-2 text-xs text-green-600 font-medium">✓ Prepaid Order</span>
-                )}
-                {newShipment.payment_method === 'COD' && (
-                  <span className="ml-2 text-xs text-orange-600 font-medium">💵 COD Order</span>
-                )}
+                COD Amount (Rs)
               </label>
               <input
                 type="number"
-                className={`w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent ${
-                  newShipment.payment_method === 'Prepaid' ? 'bg-gray-100 cursor-not-allowed' : ''
-                }`}
-                value={newShipment.payment_method === 'Prepaid' ? '0' : newShipment.cod_amount}
+                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                value={newShipment.cod_amount}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, cod_amount: e.target.value }))}
-                disabled={newShipment.payment_method === 'Prepaid'}
-                readOnly={newShipment.payment_method === 'Prepaid'}
               />
-              {newShipment.payment_method === 'Prepaid' && (
-                <p className="text-xs text-gray-500 mt-1">COD amount is automatically set to 0 for prepaid orders</p>
-              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">

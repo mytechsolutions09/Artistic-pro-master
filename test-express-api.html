@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Express API - Quick</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background: #e91e63;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #c2185b;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .loading { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Express API - Pickup Request</h1>
+    
+    <button onclick="testExpressAPI()">🚀 Test Express API Pickup</button>
+    <button onclick="location.reload()">🔄 Reset</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testExpressAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p class="loading">⏳ Testing Express API...</p>';
+            
+            // Tomorrow's date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const pickupDate = tomorrow.toISOString().split('T')[0];
+            
+            const payload = {
+                action: '/fm/request/new/',
+                method: 'POST',
+                endpoint: 'main',
+                data: {
+                    warehouse_name: 'Lurevi - Janak puri',
+                    pickup_date: pickupDate,
+                    pickup_time: '10:00:00',
+                    quantity: 1
+                }
+            };
+            
+            console.log('📤 Request:', payload);
+            
+            let html = '<h2>Request Sent:</h2>';
+            html += '<pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+            
+            try {
+                const response = await fetch('https://varduayfdqivaofymfov.supabase.co/functions/v1/delhivery-api', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmR1YXlmZHFpdmFvZnltZm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg0NjE1ODMsImV4cCI6MjA0NDAzNzU4M30.sqQ1EGshZgGI4lD6CIkWRGZeglQP8_2YvxgUc_ruwlw'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                console.log('📥 Response Status:', response.status);
+                console.log('📥 Response:', result);
+                
+                html += '<h2>Response Status: ' + response.status + '</h2>';
+                html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                
+                if (result.success && response.ok) {
+                    html += '<h2 class="success">✅ SUCCESS!</h2>';
+                    if (result.data) {
+                        html += '<h3>Delhivery Response:</h3>';
+                        html += '<pre>' + JSON.stringify(result.data, null, 2) + '</pre>';
+                    }
+                } else {
+                    html += '<h2 class="error">❌ FAILED</h2>';
+                    
+                    html += '<h3>Error Details:</h3>';
+                    html += '<p><strong>HTTP Status:</strong> ' + response.status + ' ' + response.statusText + '</p>';
+                    
+                    if (result.status) {
+                        html += '<p><strong>Delhivery Status:</strong> ' + result.status + '</p>';
+                    }
+                    
+                    if (result.data) {
+                        html += '<h3>Delhivery Response:</h3>';
+                        html += '<pre>' + JSON.stringify(result.data, null, 2) + '</pre>';
+                        
+                        // Parse specific errors
+                        if (result.data.error) {
+                            html += '<h3 class="error">❌ Error Message:</h3>';
+                            html += '<pre>' + JSON.stringify(result.data.error, null, 2) + '</pre>';
+                        }
+                        
+                        if (result.data.message) {
+                            html += '<p><strong>Message:</strong> ' + result.data.message + '</p>';
+                        }
+                    }
+                    
+                    // Error analysis
+                    html += '<h3>💡 What This Means:</h3><ul>';
+                    
+                    if (response.status === 400) {
+                        html += '<li class="error">Bad Request - Data format issue or validation error</li>';
+                        html += '<li>Check if warehouse name is registered in Delhivery</li>';
+                        html += '<li>Verify all required fields are present</li>';
+                    } else if (response.status === 401) {
+                        html += '<li class="error">Unauthorized - API token is invalid</li>';
+                        html += '<li>Check DELHIVERY_API_TOKEN in Supabase secrets</li>';
+                    } else if (response.status === 403) {
+                        html += '<li class="error">Forbidden - Token lacks permission</li>';
+                        html += '<li>Contact Delhivery to enable pickup API access</li>';
+                    } else if (response.status === 404) {
+                        html += '<li class="error">Not Found - Warehouse not registered</li>';
+                        html += '<li>Register "Lurevi - Janak puri" in Delhivery dashboard</li>';
+                    } else if (response.status === 500) {
+                        html += '<li class="error">Server Error - Delhivery API issue</li>';
+                        html += '<li>Check Delhivery API status</li>';
+                    } else if (!result.success) {
+                        html += '<li class="error">API call failed</li>';
+                        html += '<li>Check the error details above</li>';
+                    }
+                    
+                    html += '</ul>';
+                }
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                html += '<h2 class="error">❌ Network Error</h2>';
+                html += '<pre>' + error.message + '</pre>';
+                html += '<p>Could not reach the API. Check your internet connection.</p>';
+                resultsDiv.innerHTML = html;
+            }
+        }
+    </script>
+</body>
+</html>
+

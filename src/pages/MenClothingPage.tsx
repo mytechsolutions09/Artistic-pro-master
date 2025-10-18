@@ -27,6 +27,9 @@ const MenClothingPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    console.log('=== MenClothingPage Debug ===');
+    console.log('Total adminProducts:', adminProducts.length);
+    
     // Filter products for Men's/Women's clothing category
     let clothingProducts = adminProducts.filter(product => {
       // Check if product has gender field or clothing-related categories
@@ -43,6 +46,16 @@ const MenClothingPage: React.FC = () => {
       }
       return false;
     });
+
+    console.log('Filtered clothing products:', clothingProducts.length);
+    console.log('First 3 clothing products:', clothingProducts.slice(0, 3).map(p => ({
+      title: p.title,
+      hasImages: !!p.images,
+      imagesLength: p.images?.length || 0,
+      firstImage: p.images?.[0],
+      categories: p.categories,
+      gender: p.gender
+    })));
 
     // Filter by selected category
     if (selectedCategory !== 'all') {

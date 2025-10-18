@@ -217,6 +217,96 @@ export interface EditShipmentRequest {
   cancellation?: boolean;
 }
 
+export interface ManifestRequest {
+  lrn?: string;
+  pickup_location_name: string;  // Registered warehouse name
+  payment_mode: 'cod' | 'prepaid';
+  cod_amount?: string;
+  weight: string;
+  dropoff_location: {
+    consignee_name: string;
+    address: string;
+    city: string;
+    state: string;
+    zip: string;
+    phone: string;
+    email?: string;
+  };
+  rov_insurance?: boolean;
+  invoices?: Array<{
+    ewaybill?: string;
+    inv_num: string;
+    inv_amt: number | string;
+    inv_qr_code?: string;
+  }>;
+  shipment_details: Array<{
+    order_id: string;
+    box_count: number;
+    description: string;
+    weight: number;
+    waybills?: string[];
+    master?: boolean;
+  }>;
+  doc_data?: Array<{
+    doc_type: string;
+    doc_meta?: any;
+  }>;
+  doc_file?: File | Blob;
+  fm_pickup?: boolean;
+  freight_mode?: string;
+  billing_address?: {
+    name: string;
+    company: string;
+    consignor: string;
+    address: string;
+    city: string;
+    state: string;
+    pin: string;
+    phone: string;
+    pan_number?: string;
+    gst_number?: string;
+  };
+}
+
+export interface UpdateLRNRequest {
+  invoices?: Array<{
+    inv_number: string;
+    inv_amount: number | string;
+    qr_code?: string;
+    ewaybill?: string;
+  }>;
+  cod_amount?: string;
+  consignee_name?: string;
+  consignee_address?: string;
+  consignee_pincode?: string;
+  consignee_phone?: string;
+  weight_g?: string;
+  cb?: {
+    uri: string;
+    method: string;
+    authorization: string;
+  };
+  dimensions?: Array<{
+    width_cm: number;
+    height_cm: number;
+    length_cm: number;
+    box_count: number;
+  }>;
+  invoice_files_meta?: Array<{
+    invoices: string[];
+  }>;
+  invoice_file?: File | Blob;
+}
+
+export interface AppointmentRequest {
+  lrn: string;
+  date: string;  // Format: DD/MM/YYYY
+  start_time: string;  // Format: HH:MM
+  end_time: string;  // Format: HH:MM
+  po_number?: string[];
+  appointment_id?: string;
+}
+
 export interface EWaybillRequest {
   dcn: string; // Invoice number
   ewbn: string; // E-waybill number
@@ -418,8 +508,10 @@ class DelhiveryService {
   /**
    * Make API call through Supabase Edge Function to avoid CORS issues
    */
-  private async makeApiCall(action: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', data?: any, endpoint: 'main' | 'express' | 'track' = 'main') {
+  private async makeApiCall(action: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET', data?: any, endpoint: 'main' | 'express' | 'track' | 'ltl' | 'ltl-prod' = 'main') {
     try {
+      console.log('🔄 Making API call:', { action, method, endpoint });
+      
       const { data: response, error } = await supabase.functions.invoke('delhivery-api', {
         body: {
           action,
@@ -429,17 +521,32 @@ class DelhiveryService {
         }
       });
 
+      console.log('📥 Edge Function response:', { response, error });
+
       if (error) {
+        console.error('❌ Edge Function error:', error);
         throw new Error(`Edge Function error: ${error.message}`);
       }
 
+      if (!response) {
+        console.error('❌ No response from Edge Function');
+        throw new Error('No response from Edge Function');
+      }
+
+      // Check if response has error field
+      if (response.error) {
+        console.error('❌ API returned error:', response.error);
+        throw new Error(`API error: ${response.error}`);
+      }
+
       if (!response.success) {
-        throw new Error(`API error: ${response.statusText || 'Unknown error'}`);
+        console.error('❌ API call unsuccessful:', response);
+        throw new Error(`API error: ${response.statusText || JSON.stringify(response)}`);
       }
 
       return response.data;
     } catch (error: any) {
-      console.error('API call failed:', error);
+      console.error('❌ API call failed:', error);
       throw error;
     }
   }
@@ -1045,7 +1152,8 @@ class DelhiveryService {
    */
   async editShipment(request: EditShipmentRequest): Promise<any> {
     try {
-      const response = await this.axiosInstance.post('/api/p/edit', request);
+      // Use Edge Function to avoid CORS issues
+      const response = await this.makeApiCall('/api/p/edit', 'POST', request, 'main');
       return response.data;
     } catch (error) {
       console.error('Error editing shipment:', error);
@@ -1070,10 +1178,11 @@ class DelhiveryService {
     }
 
     try {
-      const response = await this.axiosInstance.post('/api/p/edit', {
+      // Use Edge Function to avoid CORS issues
+      const response = await this.makeApiCall('/api/p/edit', 'POST', {
         waybill,
         cancellation: true
-      });
+      }, 'main');
       return response.data;
     } catch (error: any) {
       console.error('Error canceling shipment via edit:', error);
@@ -1154,42 +1263,53 @@ class DelhiveryService {
   }
 
   /**
-   * Request pickup
+   * Request pickup (Express API)
+   * Uses standard Delhivery Express API for parcel pickups
    */
   async requestPickup(request: PickupRequest): Promise<any> {
-    // Check if API is configured
-    if (!isApiConfigured()) {
-      console.log('🔧 Skipping Delhivery pickup request (API not configured)');
+    console.log('🚀 Starting pickup request with:', request);
+    
+    // Validate warehouse name
+    if (!request.pickup_location || request.pickup_location.trim() === '') {
+      console.error('❌ Pickup location (warehouse name) is required');
       return {
         success: false,
-        message: 'Delhivery API not configured',
-        pickup_id: null
+        message: 'Pickup location (warehouse name) is required. Please select a warehouse.',
+        error: 'VALIDATION_ERROR'
       };
     }
 
+    // Check if API is configured
+    if (!isApiConfigured()) {
+      console.log('⚠️ Delhivery API not configured - using proxy mode');
+      // When using Supabase proxy, we still proceed (Edge Function has the token)
+    }
+
     try {
-      // Transform parameters to match Delhivery API expectations
-      const delhiveryRequest: DelhiveryPickupRequest = {
-        pickup_time: request.pickup_time,
-        pickup_date: request.pickup_date,
-        warehouse_name: request.pickup_location,  // Map pickup_location to warehouse_name
-        quantity: request.expected_package_count  // Map expected_package_count to quantity
-      };
-
-      console.log('📦 Requesting pickup from Delhivery:', delhiveryRequest);
-      
-      let responseData: any;
-
-      // Use Supabase Edge Function if enabled
-      if (USE_SUPABASE_PROXY) {
-        responseData = await callDelhiveryViaSupabase('/fm/request/new/', delhiveryRequest, 'staging', 'POST');
-      } else {
-        // Direct API call (will likely fail due to CORS)
-        const response = await this.axiosInstance.post('/fm/request/new/', delhiveryRequest);
-        responseData = response.data;
+      // Ensure time is in HH:MM:SS format
+      let pickupTime = request.pickup_time || '10:00:00';
+      if (pickupTime.length === 5) {
+        // If time is HH:MM, convert to HH:MM:SS
+        pickupTime = `${pickupTime}:00`;
       }
       
-      console.log('✅ Delhivery pickup request successful:', responseData);
+      // Transform to Express API format (standard pickup API)
+      const expressPickupRequest = {
+        pickup_time: pickupTime,
+        pickup_date: request.pickup_date,
+        warehouse_name: request.pickup_location,
+        quantity: request.expected_package_count || 1
+      };
+
+      console.log('📦 Requesting pickup from Delhivery Express API with payload:', expressPickupRequest);
+      console.log('🔗 Using endpoint: main (https://staging-express.delhivery.com)');
+      console.log('📍 Action: /fm/request/new/');
+      
+      // Use Edge Function with Express API endpoint (simpler, standard token)
+      const responseData = await this.makeApiCall('/fm/request/new/', 'POST', expressPickupRequest, 'main');
+      
+      console.log('✅ Delhivery pickup request successful!');
+      console.log('📄 Response data:', JSON.stringify(responseData, null, 2));
       
       return {
         success: true,
@@ -1198,21 +1318,235 @@ class DelhiveryService {
         ...responseData
       };
     } catch (error: any) {
-      console.error('❌ Error requesting pickup from Delhivery:', error);
+      console.error('❌ Error requesting pickup from Delhivery');
+      console.error('Error details:', error);
       
-      // Provide more detailed error message
-      if (error.response) {
-        // Server responded with error
-        console.error('Delhivery API error response:', error.response.data);
-        throw new Error(error.response.data.message || `Delhivery API error: ${error.response.status}`);
-      } else if (error.request) {
-        // Request made but no response (network error, CORS, etc.)
-        console.error('Network error - no response from Delhivery:', error.message);
-        throw new Error('Network error: Unable to reach Delhivery API. This may be due to CORS restrictions or network connectivity issues.');
-      } else {
-        // Error setting up request
-        throw new Error(`Request error: ${error.message}`);
+      // Parse error message for better user feedback
+      let errorMessage = 'Failed to request pickup from Delhivery';
+      let errorDetails = '';
+      
+      // Check if it's an Edge Function error response
+      if (error.message) {
+        const msg = error.message.toLowerCase();
+        
+        if (msg.includes('warehouse') || msg.includes('client_warehouse')) {
+          errorMessage = 'Warehouse not found in Delhivery';
+          errorDetails = 'The warehouse name does not exist in Delhivery system. Please ensure the warehouse is registered with Delhivery first.';
+        } else if (msg.includes('401') || msg.includes('unauthorized')) {
+          errorMessage = 'Authentication failed';
+          errorDetails = 'Delhivery API token is invalid or expired. Please check DELHIVERY_API_TOKEN in Supabase Edge Function secrets.';
+        } else if (msg.includes('403') || msg.includes('forbidden')) {
+          errorMessage = 'Access denied';
+          errorDetails = 'Your Delhivery API token does not have permission to create pickups.';
+        } else if (msg.includes('400') || msg.includes('bad request')) {
+          errorMessage = 'Invalid request data';
+          errorDetails = 'The pickup request data is invalid. Please check all required fields.';
+        } else if (msg.includes('edge function error')) {
+          errorMessage = 'Edge Function error';
+          errorDetails = 'The Supabase Edge Function encountered an error. Please check the deployment and logs.';
+        } else if (msg.includes('network') || msg.includes('cors')) {
+          errorMessage = 'Network/CORS error';
+          errorDetails = 'Unable to reach Delhivery API through Edge Function. Please check network connectivity and Edge Function deployment.';
+        }
       }
+      
+      console.error(`❌ ${errorMessage}: ${errorDetails}`);
+      console.error('💡 Troubleshooting steps:');
+      console.error('   1. Verify warehouse is registered in Delhivery (same exact name)');
+      console.error('   2. Check DELHIVERY_API_TOKEN secret in Supabase');
+      console.error('   3. Ensure Edge Function is deployed: supabase functions deploy delhivery-api');
+      console.error('   4. Check Edge Function logs: supabase functions logs delhivery-api');
+      
+      return {
+        success: false,
+        message: errorMessage,
+        error: errorDetails || error.message,
+        troubleshooting: [
+          'Verify the warehouse name matches exactly what is registered in Delhivery',
+          'Check that DELHIVERY_API_TOKEN is set in Supabase Edge Function secrets',
+          'Ensure the Edge Function is deployed',
+          'Check Edge Function logs for detailed error information'
+        ]
+      };
+    }
+  }
+
+  // ============ LRN (Load Receipt Number) OPERATIONS ============
+
+  /**
+   * Update LRN details with FormData support
+   */
+  async updateLRN(lrn: string, updateData: UpdateLRNRequest): Promise<any> {
+    try {
+      // Check if API is configured
+      if (!isApiConfigured()) {
+        console.warn('Delhivery API not configured, returning mock response');
+        return {
+          success: true,
+          message: 'LRN updated successfully (Mock)',
+          lrn: lrn
+        };
+      }
+
+      // Create FormData for multipart request
+      const formData = new FormData();
+      
+      // Add fields
+      if (updateData.invoices) {
+        formData.append('invoices', JSON.stringify(updateData.invoices));
+      }
+      if (updateData.cod_amount) {
+        formData.append('cod_amount', updateData.cod_amount);
+      }
+      if (updateData.consignee_name) {
+        formData.append('consignee_name', updateData.consignee_name);
+      }
+      if (updateData.consignee_address) {
+        formData.append('consignee_address', updateData.consignee_address);
+      }
+      if (updateData.consignee_pincode) {
+        formData.append('consignee_pincode', updateData.consignee_pincode);
+      }
+      if (updateData.consignee_phone) {
+        formData.append('consignee_phone', updateData.consignee_phone);
+      }
+      if (updateData.weight_g) {
+        formData.append('weight_g', updateData.weight_g);
+      }
+      if (updateData.cb) {
+        formData.append('cb', JSON.stringify(updateData.cb));
+      }
+      if (updateData.dimensions) {
+        formData.append('dimensions', JSON.stringify(updateData.dimensions));
+      }
+      if (updateData.invoice_files_meta) {
+        formData.append('invoice_files_meta', JSON.stringify(updateData.invoice_files_meta));
+      }
+      if (updateData.invoice_file) {
+        formData.append('invoice_file', updateData.invoice_file);
+      }
+
+      // Add metadata for Edge Function
+      formData.append('action', `/lrn/update/${lrn}`);
+      formData.append('endpoint', 'ltl');
+      formData.append('method', 'PUT');
+
+      console.log(`📦 Updating LRN ${lrn} via LTL API`);
+      
+      // Call Edge Function with FormData
+      const { data: response, error } = await supabase.functions.invoke('delhivery-api', {
+        body: formData
+      });
+
+      if (error) {
+        throw new Error(`Edge Function error: ${error.message}`);
+      }
+
+      if (!response.success) {
+        throw new Error(`API error: ${response.statusText || 'Unknown error'}`);
+      }
+
+      return {
+        success: true,
+        message: 'LRN updated successfully',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('Error updating LRN:', error);
+      throw new Error(`Failed to update LRN: ${error.message}`);
+    }
+  }
+
+  /**
+   * Cancel LRN
+   */
+  async cancelLRN(lrn: string): Promise<any> {
+    try {
+      // Check if API is configured
+      if (!isApiConfigured()) {
+        console.log('🔧 Skipping LRN cancellation (API not configured)');
+        return {
+          success: true,
+          message: 'LRN cancelled (Mock)',
+          lrn: lrn
+        };
+      }
+
+      console.log(`📦 Cancelling LRN ${lrn} via LTL API`);
+      
+      // Use Edge Function with LTL API endpoint
+      const response = await this.makeApiCall(`/lrn/cancel/${lrn}`, 'DELETE', undefined, 'ltl');
+      
+      return {
+        success: true,
+        message: 'LRN cancelled successfully',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('Error cancelling LRN:', error);
+      throw new Error(`Failed to cancel LRN: ${error.message}`);
+    }
+  }
+
+  /**
+   * Track LRN
+   */
+  async trackLRN(lrn: string): Promise<any> {
+    try {
+      // Check if API is configured
+      if (!isApiConfigured()) {
+        console.log('🔧 Returning mock tracking data (API not configured)');
+        return {
+          success: true,
+          lrn: lrn,
+          status: 'in_transit',
+          message: 'Mock tracking data'
+        };
+      }
+
+      console.log(`📦 Tracking LRN ${lrn} via LTL API`);
+      
+      // Use Edge Function with query parameter
+      const response = await this.makeApiCall(`/lrn/track?lrnum=${lrn}`, 'GET', undefined, 'ltl');
+      
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('Error tracking LRN:', error);
+      throw new Error(`Failed to track LRN: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create appointment for last-mile delivery
+   */
+  async createAppointment(appointmentData: AppointmentRequest): Promise<any> {
+    try {
+      // Check if API is configured
+      if (!isApiConfigured()) {
+        console.warn('Delhivery API not configured, returning mock response');
+        return {
+          success: true,
+          message: 'Appointment created successfully (Mock)',
+          appointment_id: appointmentData.appointment_id || `APT_${Date.now()}`
+        };
+      }
+
+      console.log('📦 Creating appointment via LTL API');
+      
+      // Use Edge Function with LTL API endpoint
+      const response = await this.makeApiCall('/appointments/lm', 'POST', appointmentData, 'ltl');
+      
+      return {
+        success: true,
+        message: 'Appointment created successfully',
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('Error creating appointment:', error);
+      throw new Error(`Failed to create appointment: ${error.message}`);
     }
   }
 
@@ -1351,18 +1685,48 @@ class DelhiveryService {
         };
       }
 
-      // Prepare the request data with proper format
-      const requestData = {
-        ...warehouseData,
-        // Ensure required fields are present
-        registered_name: warehouseData.registered_name || warehouseData.name,
-        return_pin: warehouseData.return_pin || warehouseData.pin,
-        return_city: warehouseData.return_city || warehouseData.city,
-        return_state: warehouseData.return_state || 'Maharashtra',
-        return_country: warehouseData.return_country || 'India'
+      // Transform to new LTL API format
+      const ltlRequestData = {
+        name: warehouseData.name,
+        pin_code: warehouseData.pin,
+        city: warehouseData.city,
+        state: warehouseData.state || 'Maharashtra',
+        country: warehouseData.country || 'India',
+        address_details: {
+          address: warehouseData.address,
+          contact_person: warehouseData.registered_name || 'Manager',
+          phone_number: warehouseData.phone,
+          email: warehouseData.email || 'info@example.com'
+        },
+        business_hours: {
+          MON: { start_time: '09:00', close_time: '18:00' },
+          TUE: { start_time: '09:00', close_time: '18:00' },
+          WED: { start_time: '09:00', close_time: '18:00' },
+          THU: { start_time: '09:00', close_time: '18:00' },
+          FRI: { start_time: '09:00', close_time: '18:00' },
+          SAT: { start_time: '09:00', close_time: '14:00' }
+        },
+        pick_up_hours: {
+          MON: { start_time: '10:00', close_time: '17:00' },
+          TUE: { start_time: '10:00', close_time: '17:00' },
+          WED: { start_time: '10:00', close_time: '17:00' },
+          THU: { start_time: '10:00', close_time: '17:00' },
+          FRI: { start_time: '10:00', close_time: '17:00' },
+          SAT: { start_time: '10:00', close_time: '13:00' }
+        },
+        pick_up_days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+        business_days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+        ret_address: {
+          pin: warehouseData.return_pin || warehouseData.pin,
+          address: warehouseData.return_address || warehouseData.address,
+          city: warehouseData.return_city || warehouseData.city,
+          state: warehouseData.return_state || warehouseData.state || 'Maharashtra',
+          country: warehouseData.return_country || 'India'
+        }
       };
 
-      const response = await this.axiosInstance.put('/api/backend/clientwarehouse/create/', requestData);
+      // Use Edge Function with new LTL API endpoint
+      const response = await this.makeApiCall('/client-warehouse/create/', 'POST', ltlRequestData, 'ltl');
       
       return {
         success: true,
@@ -1402,7 +1766,31 @@ class DelhiveryService {
         };
       }
 
-      const response = await this.axiosInstance.post('/api/backend/clientwarehouse/edit/', warehouseData);
+      // Transform to new LTL API format
+      const ltlUpdateData = {
+        cl_warehouse_name: warehouseData.name,
+        update_dict: {
+          city: warehouseData.city,
+          state: warehouseData.state || 'Maharashtra',
+          country: warehouseData.country || 'India',
+          address_details: {
+            address: warehouseData.address,
+            contact_person: warehouseData.registered_name || 'Manager',
+            phone_number: warehouseData.phone,
+            email: warehouseData.email || 'info@example.com'
+          },
+          ret_address: {
+            address: warehouseData.return_address || warehouseData.address,
+            city: warehouseData.return_city || warehouseData.city,
+            state: warehouseData.return_state || warehouseData.state || 'Maharashtra',
+            pin: warehouseData.return_pin || warehouseData.pin,
+            country: warehouseData.return_country || 'India'
+          }
+        }
+      };
+
+      // Use Edge Function with new LTL API endpoint (PATCH method)
+      const response = await this.makeApiCall('/client-warehouses/update', 'PATCH', ltlUpdateData, 'ltl');
       
       return {
         success: true,

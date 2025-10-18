@@ -22,65 +22,56 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   onClick
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isInView, setIsInView] = useState(priority);
+  const [isInView, setIsInView] = useState(true); // Always true for now - load immediately
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
 
-  // Intersection Observer for lazy loading
+  // Intersection Observer for lazy loading - DISABLED FOR NOW
+  // useEffect(() => {
+  //   if (priority || !imgRef.current) return;
+
+  //   const observer = new IntersectionObserver(
+  //     (entries) => {
+  //       entries.forEach((entry) => {
+  //         if (entry.isIntersecting) {
+  //           setIsInView(true);
+  //           observer.disconnect();
+  //         }
+  //       });
+  //     },
+  //     {
+  //       rootMargin: '100px', // Start loading 100px before image enters viewport
+  //       threshold: 0.01
+  //     }
+  //   );
+
+  //   observer.observe(imgRef.current);
+
+  //   return () => {
+  //     observer.disconnect();
+  //   };
+  // }, [priority]);
+
+  // Optimize image URL and load immediately
   useEffect(() => {
-    if (priority || !imgRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-            observer.disconnect();
-          }
-        });
-      },
-      {
-        rootMargin: '100px', // Start loading 100px before image enters viewport
-        threshold: 0.01
-      }
-    );
-
-    observer.observe(imgRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [priority]);
-
-  // Optimize image URL and preload if priority
-  useEffect(() => {
-    if (!isInView) return;
+    if (!src) return;
 
     const quality = getOptimalImageQuality();
     const optimizedSrc = optimizeImageUrl(src, width, quality);
     
-    // Preload priority images with timeout
-    if (priority) {
-      preloadImage(optimizedSrc, 5000) // 5 second timeout
-        .then(() => {
-          setImageSrc(optimizedSrc);
-          setIsLoaded(true);
-        })
-        .catch((error) => {
-          console.warn('Image preload failed:', error);
-          // Still load the image even if preload fails
-          setImageSrc(optimizedSrc);
-        });
-    } else {
-      setImageSrc(optimizedSrc);
-    }
-  }, [isInView, src, width, priority]);
+    console.log('OptimizedImage loading:', { src, optimizedSrc, priority });
+    
+    // Load image immediately - no preload complexity
+    setImageSrc(optimizedSrc);
+  }, [src, width, priority]);
 
   const handleLoad = () => {
+    console.log('Image loaded successfully:', imageSrc);
     setIsLoaded(true);
   };
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.error('Image failed to load:', imageSrc);
     setIsLoaded(true); // Still remove blur even on error
     if (onError) {
       onError(e);
@@ -104,12 +95,11 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       {imageSrc && (
         <img
           ref={imgRef}
-          src={isInView ? imageSrc : ''}
+          src={imageSrc}
           alt={alt}
           className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
-          fetchPriority={priority ? 'high' : 'auto'}
           onLoad={handleLoad}
           onError={handleError}
           onClick={onClick}

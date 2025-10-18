@@ -207,78 +207,66 @@ const ClothingProductPage: React.FC = () => {
           {/* Image Section - Shows first on mobile */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-16">
           <div className="order-1 lg:order-2">
-            {/* Product Image with Side Thumbnails */}
+            {/* Main Image with Right Thumbnails Layout */}
             <div className="flex gap-4">
-              {/* Main Product Image */}
-              <div 
-                className="flex-1 relative aspect-[3/4] max-h-[450px] bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
-                onClick={() => setShowFullImage(true)}
-              >
-                <OptimizedImage
-                  src={product.images && product.images.length > 0 ? product.images[selectedImage] : product.main_image}
-                  alt={product.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  width={600}
-                  priority={true}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white rounded-full p-2 shadow-lg">
-                  <svg className="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
-                  </svg>
+              {/* Main Image */}
+              <div className="flex-1">
+                <div 
+                  className="relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
+                  onClick={() => setShowFullImage(true)}
+                >
+                  <OptimizedImage
+                    src={product.images && product.images.length > 0 ? product.images[selectedImage] : product.main_image}
+                    alt={product.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    width={600}
+                    priority={true}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white rounded-full p-2 shadow-lg">
+                    <svg className="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                    </svg>
+                  </div>
+                  {/* Image number badge */}
+                  {product.images && product.images.length > 1 && (
+                    <div className="absolute bottom-3 left-3 bg-black/60 text-white px-2 py-1 rounded text-xs font-medium">
+                      {selectedImage + 1} / {product.images.length}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Right Side Thumbnail Slider */}
+              {/* Right Side Thumbnails */}
               {product.images && product.images.length > 1 && (
-                <div className="hidden md:flex flex-col items-center">
-                  <div className="h-[450px] overflow-y-auto scrollbar-hide">
-                    <div className="flex flex-col space-y-2">
-                      {product.images.map((image: string, index: number) => (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedImage(index)}
-                          className={`flex-shrink-0 w-16 h-16 lg:w-20 lg:h-20 rounded transition-all duration-200 ${
-                            selectedImage === index ? 'opacity-100' : 'opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          <OptimizedImage
-                            src={image}
-                            alt={`${product.title} ${index + 1}`}
-                            className="w-full h-full object-cover rounded"
-                            width={80}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                <div className="w-20 md:w-24 flex flex-col gap-3 overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  {product.images.map((image: string, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden transition-all duration-200 ${
+                        selectedImage === index 
+                          ? 'opacity-100' 
+                          : 'opacity-60 hover:opacity-80'
+                      }`}
+                    >
+                      <OptimizedImage
+                        src={image}
+                        alt={`${product.title} - Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        width={100}
+                        priority={index < 3}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
-
-            {/* Mobile Thumbnail Images (Horizontal) */}
-            {product.images && product.images.length > 1 && (
-              <div className="flex md:hidden gap-2 overflow-x-auto pb-2 mt-3">
-                {product.images.map((image: string, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`flex-shrink-0 w-16 h-16 rounded transition-all ${
-                      selectedImage === index ? 'opacity-100' : 'opacity-60'
-                    }`}
-                  >
-                    <OptimizedImage
-                      src={image}
-                      alt={`${product.title} ${index + 1}`}
-                      className="w-full h-full object-cover rounded"
-                      width={80}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Product Title and Price - Shows second on mobile, left side on desktop */}
