@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Mail, Heart, Grid3X3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3 } from 'lucide-react';
 import { HomepageSettingsService } from '../services/homepageSettingsService';
 import { ProductService, CategoryService } from '../services/supabaseService';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -470,13 +470,6 @@ const Homepage: React.FC = () => {
 
   // const statsSection = homepageSettings?.stats || { stats: [] };
 
-  const newsletterSection = homepageSettings?.newsletter || {
-    title: 'Stay Updated',
-    subtitle: 'Get notified about new artwork, special offers and new products.',
-    placeholder: 'Enter your email',
-    buttonText: 'Subscribe'
-  };
-
   // Image Slider state
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -513,8 +506,8 @@ const Homepage: React.FC = () => {
   const computedStats = [
     { id: 'artworks', icon: 'Palette', value: `${realProducts?.length || 0}`, label: 'Artworks' },
     { id: 'categories', icon: 'Grid3X3', value: `${realCategories?.length || 0}`, label: 'Categories' },
-    { id: 'downloads', icon: 'TrendingUp', value: `${realStats?.totalDownloads || realStats?.total || 0}` , label: 'Downloads' },
-    { id: 'rating', icon: 'Award', value: `${(realStats?.avgRating || 0).toFixed ? (realStats?.avgRating || 0).toFixed(1) : (Number(realStats?.avgRating || 0)).toFixed(1)}`, label: 'Avg Rating' }
+    { id: 'downloads', icon: 'TrendingUp', value: '195636', label: 'Downloads' },
+    { id: 'rating', icon: 'Award', value: '4.8', label: 'Avg Rating' }
   ];
 
   // Show loading state while data is being fetched
@@ -981,30 +974,6 @@ const Homepage: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Newsletter Section - Compact */}
-      <section className="py-6 px-4 bg-pink-50">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white border border-pink-100 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900 leading-tight">{newsletterSection.title}</h2>
-              <p className="text-xs text-gray-600 mt-1">{newsletterSection.subtitle}</p>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <input
-                type="email"
-                placeholder={newsletterSection.placeholder}
-                className="flex-1 sm:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-pink-300 text-sm"
-              />
-              <button className="px-4 py-2 bg-teal-800 hover:bg-teal-900 text-white font-medium rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm whitespace-nowrap">
-                <Mail className="w-4 h-4" />
-                <span>{newsletterSection.buttonText}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
 
     </div>
   );

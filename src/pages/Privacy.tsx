@@ -337,7 +337,7 @@ const Privacy: React.FC = () => {
               <div className="space-y-1 mb-2">
                 <p className="font-semibold text-gray-900">Lurevi (Purple Plus & Necessary Milan)</p>
                 <p><strong>Email:</strong> support@lurevi.com</p>
-                <p><strong>Phone:</strong> +91 999912873</p>
+                <p><strong>Phone:</strong> +91 9625788455</p>
                 <p><strong>Address:</strong> WZ 14 Janakpuri, New Delhi - 110058, India</p>
               </div>
               <p className="text-gray-600 mt-2">We aim to respond to all privacy-related inquiries within 2-3 business days.</p>

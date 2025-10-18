@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Heart, Mail, Phone, MapPin, Facebook, Instagram } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -22,17 +22,23 @@ const Footer: React.FC = () => {
               Your premier destination for digital art and premium clothing. Discover unique pieces that express your style.
             </p>
             <div className="flex space-x-3">
-              <a href="#" className="text-gray-400 hover:text-pink-300 transition-colors">
+              <a 
+                href="https://www.facebook.com/lurevi.in" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-pink-300 transition-colors"
+                aria-label="Visit our Facebook page"
+              >
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-pink-300 transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-pink-300 transition-colors">
+              <a 
+                href="https://www.instagram.com/lurevi.in/" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-pink-300 transition-colors"
+                aria-label="Visit our Instagram page"
+              >
                 <Instagram className="w-4 h-4" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-pink-300 transition-colors">
-                <Youtube className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -111,7 +117,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <Phone className="w-3 h-3 text-pink-300 mr-2" />
-                <span className="text-gray-400 text-sm">+91 999912873</span>
+                <span className="text-gray-400 text-sm">+91 9625788455</span>
               </div>
               <div className="flex items-start">
                 <MapPin className="w-3 h-3 text-pink-300 mr-2 mt-1" />

@@ -67,7 +67,7 @@ const ContactUs: React.FC = () => {
     {
       icon: <Phone className="w-6 h-6" />,
       title: "Call Us",
-      details: "+91 999912873",
+      details: "+91 9625788455",
       description: "Mon-Fri 9AM-6PM IST"
     },
     {
