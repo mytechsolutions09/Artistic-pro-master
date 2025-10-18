@@ -112,7 +112,8 @@ const Shipping: React.FC = () => {
     width: '',
     height: '',
     products_desc: '',
-    order_id: undefined // Optional order ID for linking
+    order_id: undefined, // Optional order ID for linking
+    payment_method: 'COD' // Default payment method
   });
 
   // Import orders functionality
@@ -126,6 +127,7 @@ const Shipping: React.FC = () => {
     delivery_state: string;
     cod_amount: number;
     weight: number;
+    payment_method?: string; // COD or Prepaid
     products: Array<{
       name: string;
       quantity: number;
@@ -438,6 +440,7 @@ const Shipping: React.FC = () => {
         delivery_state: extractStateFromAddress(order.shipping_address || ''),
         cod_amount: order.total_amount || 0,
         weight: calculateOrderWeight(order.order_items || []),
+        payment_method: order.payment_method || 'COD', // Add payment method
         products: order.order_items?.map((item: any) => ({
           name: item.product_title || item.products?.title || 'Unknown Product',
           quantity: item.quantity || 1,
@@ -464,6 +467,7 @@ const Shipping: React.FC = () => {
           delivery_state: 'Haryana',
           cod_amount: 2500,
           weight: 1.2,
+          payment_method: 'COD',
           products: [
             { name: 'Wireless Headphones', quantity: 1, price: 2500 }
           ],
@@ -477,8 +481,9 @@ const Shipping: React.FC = () => {
           delivery_pincode: '400058',
           delivery_city: 'Mumbai',
           delivery_state: 'Maharashtra',
-          cod_amount: 1800,
+          cod_amount: 0,
           weight: 0.8,
+          payment_method: 'Prepaid',
           products: [
             { name: 'Smart Watch', quantity: 1, price: 1800 }
           ],
@@ -494,6 +499,7 @@ const Shipping: React.FC = () => {
           delivery_state: 'Karnataka',
           cod_amount: 3200,
           weight: 2.1,
+          payment_method: 'COD',
           products: [
             { name: 'Laptop Stand', quantity: 1, price: 1200 },
             { name: 'Wireless Mouse', quantity: 1, price: 2000 }
@@ -515,13 +521,14 @@ const Shipping: React.FC = () => {
       delivery_pincode: order.delivery_pincode,
       delivery_city: order.delivery_city,
       delivery_state: order.delivery_state,
-      cod_amount: order.cod_amount.toString(),
+      cod_amount: order.payment_method === 'COD' ? order.cod_amount.toString() : '0', // Set to 0 for prepaid
       weight: order.weight.toString(),
       length: '30', // Default dimensions
       width: '20',
       height: '15',
       products_desc: order.products.map((p: any) => `${p.name} (Qty: ${p.quantity})`).join(', '),
-      order_id: order.id // Store order ID for linking
+      order_id: order.id, // Store order ID for linking
+      payment_method: order.payment_method || 'COD' // Store payment method
     } as any);
     setShowOrderImport(false);
     // No notification needed - form population is immediately visible
@@ -541,7 +548,8 @@ const Shipping: React.FC = () => {
       width: '',
       height: '',
       products_desc: '',
-      order_id: undefined
+      order_id: undefined,
+      payment_method: 'COD' // Reset to default
     });
     // No notification needed - form clearing is self-evident
   };
@@ -784,6 +792,10 @@ const Shipping: React.FC = () => {
   };
 
   const handleRequestPickup = async () => {
+    console.log('🚀 handleRequestPickup called');
+    console.log('📦 Pickup request data:', pickupRequest);
+    console.log('📋 Selected shipments:', selectedShipmentsForPickup);
+    
     if (!pickupRequest.pickup_location || !pickupRequest.pickup_date) {
       NotificationManager.error('Please fill in all required fields');
       return;
@@ -794,7 +806,7 @@ const Shipping: React.FC = () => {
       return;
     }
 
-    setPickupRequest(prev => ({ ...prev, loading: true }));
+    setPickupRequest(prev => ({ ...prev, loading: true, result: null }));
     try {
       // Update expected package count based on selected shipments
       const updatedPickupRequest = {
@@ -802,66 +814,88 @@ const Shipping: React.FC = () => {
         expected_package_count: selectedShipmentsForPickup.length
       };
 
-      // Try to request pickup from Delhivery API
-      let delhiverySuccess = false;
-      let delhiveryError: string | null = null;
-      try {
-        const result = await delhiveryService.requestPickup(updatedPickupRequest);
-        setPickupRequest(prev => ({ ...prev, result }));
-        delhiverySuccess = result.success || false;
-        if (delhiverySuccess) {
-          console.log('✅ Pickup requested via Delhivery API, Pickup ID:', result.pickup_id);
-        } else {
-          delhiveryError = result.message || 'Unknown error';
-          console.warn('⚠️ Delhivery pickup request failed:', delhiveryError);
-        }
-      } catch (error: any) {
-        delhiveryError = error.message;
-        console.error('❌ Delhivery API error:', delhiveryError);
-        
-        // Check if it's a CORS issue
-        if (delhiveryError.includes('CORS') || delhiveryError.includes('Network error')) {
-          NotificationManager.warning(
-            'Delhivery API requires a backend proxy to avoid CORS restrictions. ' +
-            'Pickup scheduled in database, but Delhivery was not notified.'
-          );
-        }
-        // Continue to update database even if Delhivery fails
-      }
+      console.log('📤 Sending pickup request to Delhivery...');
       
-      // ALWAYS update shipment pickup date in database (regardless of Delhivery status)
-      try {
-        for (const waybill of selectedShipmentsForPickup) {
-          await shippingService.updateShipment(waybill, {
-            pickup_date: pickupRequest.pickup_date
-          });
-        }
+      // Request pickup from Delhivery API
+      const result = await delhiveryService.requestPickup(updatedPickupRequest);
+      
+      console.log('📥 Received response from Delhivery:', result);
+      setPickupRequest(prev => ({ ...prev, result }));
+      
+      if (result.success) {
+        console.log('✅ Pickup requested successfully via Delhivery API');
+        console.log('🆔 Pickup ID:', result.pickup_id);
         
-        console.log(`✅ Updated ${selectedShipmentsForPickup.length} shipment(s) in database`);
-        
-        // Reload shipments to reflect updated status
-        loadShipments();
-        
-        // Clear selection
-        setSelectedShipmentsForPickup([]);
-        
-        // Show appropriate message based on what worked
-        if (delhiverySuccess) {
-          NotificationManager.success(`Pickup requested via Delhivery for ${selectedShipmentsForPickup.length} shipment(s)!`);
-        } else {
-          NotificationManager.success(`Pickup scheduled for ${selectedShipmentsForPickup.length} shipment(s). (Database updated)`);
-        }
-      } catch (dbError: any) {
-        console.error('Failed to update shipment pickup status:', dbError);
-        if (delhiverySuccess) {
+        // Update shipment pickup date in database
+        try {
+          for (const waybill of selectedShipmentsForPickup) {
+            await shippingService.updateShipment(waybill, {
+              pickup_date: pickupRequest.pickup_date,
+              pickup_id: result.pickup_id
+            });
+          }
+          
+          console.log(`✅ Updated ${selectedShipmentsForPickup.length} shipment(s) in database`);
+          
+          // Reload shipments to reflect updated status
+          loadShipments();
+          
+          // Clear selection
+          setSelectedShipmentsForPickup([]);
+          
+          NotificationManager.success(
+            `✅ Pickup requested successfully! Pickup ID: ${result.pickup_id || 'N/A'}`
+          );
+        } catch (dbError: any) {
+          console.error('Failed to update shipment pickup status in database:', dbError);
           NotificationManager.warning('Pickup requested via Delhivery but failed to update database');
-        } else {
-          NotificationManager.error('Failed to schedule pickup. Please try again.');
+        }
+      } else {
+        // Delhivery request failed
+        console.error('❌ Delhivery pickup request failed:', result.message);
+        console.error('📋 Error details:', result.error);
+        
+        // Show detailed error message
+        let errorMsg = `❌ ${result.message}`;
+        if (result.error) {
+          errorMsg += `\n\n${result.error}`;
+        }
+        
+        // Show troubleshooting steps if available
+        if (result.troubleshooting && result.troubleshooting.length > 0) {
+          console.log('💡 Troubleshooting steps:');
+          result.troubleshooting.forEach((step: string, idx: number) => {
+            console.log(`   ${idx + 1}. ${step}`);
+          });
+          
+          errorMsg += '\n\n💡 Troubleshooting:\n' + result.troubleshooting.map((s: string, i: number) => `${i + 1}. ${s}`).join('\n');
+        }
+        
+        NotificationManager.error(errorMsg, 10000); // Show for 10 seconds
+        
+        // Still try to update database for internal tracking
+        console.log('ℹ️ Updating database for internal tracking...');
+        try {
+          for (const waybill of selectedShipmentsForPickup) {
+            await shippingService.updateShipment(waybill, {
+              pickup_date: pickupRequest.pickup_date
+            });
+          }
+          
+          console.log(`✅ Updated ${selectedShipmentsForPickup.length} shipment(s) in database (internal tracking)`);
+          loadShipments();
+          
+          NotificationManager.warning(
+            `⚠️ Pickup NOT sent to Delhivery (see error above), but scheduled in database for internal tracking.`
+          );
+        } catch (dbError: any) {
+          console.error('Failed to update database:', dbError);
+          NotificationManager.error('Failed to schedule pickup in database. Please try again.');
         }
       }
     } catch (error: any) {
-      console.error('Pickup request error:', error);
-      NotificationManager.error('Failed to process pickup request');
+      console.error('❌ Unexpected error in handleRequestPickup:', error);
+      NotificationManager.error(`Unexpected error: ${error.message}`);
     } finally {
       setPickupRequest(prev => ({ ...prev, loading: false }));
     }
@@ -1542,6 +1576,14 @@ const Shipping: React.FC = () => {
                                 <span className="text-xs text-gray-500">
                                   {new Date(order.created_at).toLocaleTimeString()}
                                 </span>
+                                {/* Payment Method Badge */}
+                                <span className={`text-xs font-medium px-2 py-1 rounded ${
+                                  order.payment_method === 'COD' 
+                                    ? 'bg-orange-100 text-orange-700' 
+                                    : 'bg-green-100 text-green-700'
+                                }`}>
+                                  {order.payment_method === 'COD' ? '💵 COD' : '✓ Prepaid'}
+                                </span>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
             <div>
@@ -1665,14 +1707,27 @@ const Shipping: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                COD Amount (Rs)
+                COD Amount (Rs) 
+                {newShipment.payment_method === 'Prepaid' && (
+                  <span className="ml-2 text-xs text-green-600 font-medium">✓ Prepaid Order</span>
+                )}
+                {newShipment.payment_method === 'COD' && (
+                  <span className="ml-2 text-xs text-orange-600 font-medium">💵 COD Order</span>
+                )}
               </label>
               <input
                 type="number"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
-                value={newShipment.cod_amount}
+                className={`w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent ${
+                  newShipment.payment_method === 'Prepaid' ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+                value={newShipment.payment_method === 'Prepaid' ? '0' : newShipment.cod_amount}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, cod_amount: e.target.value }))}
+                disabled={newShipment.payment_method === 'Prepaid'}
+                readOnly={newShipment.payment_method === 'Prepaid'}
               />
+              {newShipment.payment_method === 'Prepaid' && (
+                <p className="text-xs text-gray-500 mt-1">COD amount is automatically set to 0 for prepaid orders</p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
