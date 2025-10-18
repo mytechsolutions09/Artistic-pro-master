@@ -38,6 +38,7 @@ import { parseProductUrl, findProductBySlugs, generateSlug } from '../utils/slug
 import { ReviewService } from '../services/reviewService';
 import { FavoritesService } from '../services/favoritesService';
 import { Review } from '../types';
+import OptimizedImage from '../components/OptimizedImage';
 
 const ProductPage: React.FC = () => {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
@@ -554,14 +555,15 @@ const ProductPage: React.FC = () => {
                           ? 'border-gray-600 ring-2 ring-gray-200' 
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
+                      onContextMenu={handleContextMenu}
+                      onDragStart={handleDragStart}
                     >
-                      <img 
+                      <OptimizedImage
                         src={image} 
                         alt={`View ${index + 1}`} 
                         className="w-full h-full object-contain"
-                        onContextMenu={handleContextMenu}
-                        onDragStart={handleDragStart}
-                        draggable={false}
+                        width={80}
+                        priority={index === selectedProductImage}
                       />
                     </button>
                   ))}
@@ -575,11 +577,11 @@ const ProductPage: React.FC = () => {
                       title="Play video"
                     >
                       <div className="relative w-full h-full">
-                        <img
+                        <OptimizedImage
                           src={product.main_image || productImages[0]}
                           alt="Video preview"
                           className="w-full h-full object-cover"
-                          draggable={false}
+                          width={80}
                         />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
@@ -593,13 +595,12 @@ const ProductPage: React.FC = () => {
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-2">
                   <div className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 overflow-hidden border-2 border-gray-200">
-                    <img 
+                    <OptimizedImage
                       src={productImages[0]} 
                       alt={product.title} 
                       className="w-full h-full object-contain"
-                      onContextMenu={handleContextMenu}
-                      onDragStart={handleDragStart}
-                      draggable={false}
+                      width={80}
+                      priority={true}
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Single Image</p>
@@ -613,11 +614,11 @@ const ProductPage: React.FC = () => {
                       title="Play video"
                     >
                       <div className="relative w-full h-full">
-                        <img
+                        <OptimizedImage
                           src={product.main_image || productImages[0]}
                           alt="Video preview"
                           className="w-full h-full object-cover"
-                          draggable={false}
+                          width={80}
                         />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
