@@ -650,7 +650,7 @@ const ProductPage: React.FC = () => {
                 </div>
               ) : (
                 <div 
-                  className="w-full aspect-[6/5] max-w-[600px] overflow-hidden group cursor-zoom-in"
+                  className="w-full aspect-[6/5] max-w-[600px] overflow-hidden group cursor-zoom-in relative"
                   onMouseMove={handleMouseMove}
                 >
                   <img
@@ -672,6 +672,7 @@ const ProductPage: React.FC = () => {
                     draggable={false}
                     loading="eager"
                     decoding="async"
+                    fetchPriority="high"
                   />
                 </div>
               )}

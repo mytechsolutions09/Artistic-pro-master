@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { optimizeImageUrl, preloadImage } from '../utils/imageOptimization';
-import { getOptimalImageQuality, isSlowConnection } from '../utils/performanceUtils';
+import { getOptimalImageQuality } from '../utils/performanceUtils';
 
 interface OptimizedImageProps {
   src: string;
   alt: string;
   className?: string;
   width?: number;
-  height?: number;
   priority?: boolean;
   onError?: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   onClick?: () => void;
@@ -18,7 +17,6 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   alt,
   className = '',
   width,
-  height,
   priority = false,
   onError,
   onClick
@@ -61,14 +59,16 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     const quality = getOptimalImageQuality();
     const optimizedSrc = optimizeImageUrl(src, width, quality);
     
-    // Preload priority images
+    // Preload priority images with timeout
     if (priority) {
-      preloadImage(optimizedSrc)
+      preloadImage(optimizedSrc, 5000) // 5 second timeout
         .then(() => {
           setImageSrc(optimizedSrc);
           setIsLoaded(true);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.warn('Image preload failed:', error);
+          // Still load the image even if preload fails
           setImageSrc(optimizedSrc);
         });
     } else {
@@ -101,22 +101,24 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       )}
       
       {/* Actual image */}
-      <img
-        ref={imgRef}
-        src={isInView ? imageSrc : ''}
-        alt={alt}
-        className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
-        fetchpriority={priority ? 'high' : 'auto'}
-        onLoad={handleLoad}
-        onError={handleError}
-        onClick={onClick}
-        style={{
-          width: '100%',
-          height: '100%',
-        }}
-      />
+      {imageSrc && (
+        <img
+          ref={imgRef}
+          src={isInView ? imageSrc : ''}
+          alt={alt}
+          className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={priority ? 'high' : 'auto'}
+          onLoad={handleLoad}
+          onError={handleError}
+          onClick={onClick}
+          style={{
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      )}
     </div>
   );
 };

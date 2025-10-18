@@ -42,6 +42,22 @@ export const optimizeImageUrl = (
         urlObj.searchParams.set('width', width.toString());
       }
       urlObj.searchParams.set('quality', quality.toString());
+      urlObj.searchParams.set('resize', 'contain');
+      optimizedUrl = urlObj.toString();
+    }
+    // Optimize other image URLs (Cloudinary, Imgix, etc.)
+    else if (url.includes('cloudinary.com')) {
+      // Cloudinary optimization
+      optimizedUrl = url.replace('/upload/', `/upload/q_${quality},w_${width || 800},f_auto/`);
+    }
+    else if (url.includes('imgix.net')) {
+      // Imgix optimization
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('auto', 'format,compress');
+      urlObj.searchParams.set('q', quality.toString());
+      if (width) {
+        urlObj.searchParams.set('w', width.toString());
+      }
       optimizedUrl = urlObj.toString();
     }
 
@@ -56,13 +72,35 @@ export const optimizeImageUrl = (
 };
 
 /**
- * Preload critical images
+ * Preload critical images with timeout
  */
-export const preloadImage = (url: string): Promise<void> => {
+export const preloadImage = (url: string, timeout: number = 10000): Promise<void> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = reject;
+    let timeoutId: NodeJS.Timeout;
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      img.onload = null;
+      img.onerror = null;
+    };
+
+    // Set timeout to prevent hanging
+    timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error(`Image load timeout: ${url}`));
+    }, timeout);
+
+    img.onload = () => {
+      cleanup();
+      resolve();
+    };
+
+    img.onerror = () => {
+      cleanup();
+      reject(new Error(`Image load error: ${url}`));
+    };
+
     img.src = url;
   });
 };
@@ -166,4 +204,51 @@ export const supportsWebP = async (): Promise<boolean> => {
     };
     img.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==';
   });
+};
+
+/**
+ * Load image with retry logic and timeout
+ */
+export const loadImageWithRetry = async (
+  url: string,
+  retries: number = 3,
+  timeout: number = 10000
+): Promise<string> => {
+  let lastError: Error | null = null;
+
+  for (let i = 0; i < retries; i++) {
+    try {
+      await preloadImage(url, timeout);
+      return url;
+    } catch (error) {
+      lastError = error as Error;
+      console.warn(`Image load attempt ${i + 1} failed:`, error);
+      
+      // Wait before retrying (exponential backoff)
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+      }
+    }
+  }
+
+  throw lastError || new Error('Failed to load image');
+};
+
+/**
+ * Compress image URL by reducing quality based on viewport
+ */
+export const getCompressedImageUrl = (url: string): string => {
+  const isMobile = window.innerWidth < 768;
+  
+  // Check for slow connection safely
+  const connection = (navigator as any).connection;
+  const isSlowConnection = connection && 
+    (connection.effectiveType === 'slow-2g' || 
+     connection.effectiveType === '2g' ||
+     connection.saveData);
+
+  const quality = isSlowConnection ? 50 : (isMobile ? 70 : 80);
+  const width = isMobile ? 400 : 800;
+
+  return optimizeImageUrl(url, width, quality);
 };
