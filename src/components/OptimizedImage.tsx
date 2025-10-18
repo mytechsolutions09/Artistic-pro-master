@@ -56,22 +56,21 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   useEffect(() => {
     if (!src) return;
 
+    // Reset loaded state when src changes
+    setIsLoaded(false);
+
     const quality = getOptimalImageQuality();
     const optimizedSrc = optimizeImageUrl(src, width, quality);
-    
-    console.log('OptimizedImage loading:', { src, optimizedSrc, priority });
     
     // Load image immediately - no preload complexity
     setImageSrc(optimizedSrc);
   }, [src, width, priority]);
 
   const handleLoad = () => {
-    console.log('Image loaded successfully:', imageSrc);
     setIsLoaded(true);
   };
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error('Image failed to load:', imageSrc);
     setIsLoaded(true); // Still remove blur even on error
     if (onError) {
       onError(e);

@@ -207,15 +207,45 @@ const ClothingProductPage: React.FC = () => {
           {/* Image Section - Shows first on mobile */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-16">
           <div className="order-1 lg:order-2">
-            {/* Main Image with Right Thumbnails Layout */}
-            <div className="flex gap-4">
+            {/* Main Image with Left Thumbnails Layout */}
+            <div className="flex gap-4 justify-end">
+              {/* Left Side Thumbnails */}
+              {product.images && product.images.length > 1 && (
+                <div className="w-16 md:w-20 flex flex-col gap-2 overflow-y-auto max-h-[450px] scrollbar-hide">
+                  {product.images.map((image: string, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`relative aspect-[3/4] bg-gray-100 rounded overflow-hidden transition-all duration-200 ${
+                        selectedImage === index 
+                          ? 'opacity-100' 
+                          : 'opacity-60 hover:opacity-80'
+                      }`}
+                    >
+                      <OptimizedImage
+                        src={image}
+                        alt={`${product.title} - Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        width={80}
+                        priority={index < 3}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Main Image */}
-              <div className="flex-1">
+              <div className="flex-1 max-w-md">
                 <div 
-                  className="relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
+                  className="relative aspect-[3/4] max-h-[450px] bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
                   onClick={() => setShowFullImage(true)}
+                  key={`main-image-${selectedImage}`}
                 >
                   <OptimizedImage
+                    key={selectedImage}
                     src={product.images && product.images.length > 0 ? product.images[selectedImage] : product.main_image}
                     alt={product.title}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -238,34 +268,6 @@ const ClothingProductPage: React.FC = () => {
                   )}
                 </div>
               </div>
-
-              {/* Right Side Thumbnails */}
-              {product.images && product.images.length > 1 && (
-                <div className="w-20 md:w-24 flex flex-col gap-3 overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                  {product.images.map((image: string, index: number) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={`relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden transition-all duration-200 ${
-                        selectedImage === index 
-                          ? 'opacity-100' 
-                          : 'opacity-60 hover:opacity-80'
-                      }`}
-                    >
-                      <OptimizedImage
-                        src={image}
-                        alt={`${product.title} - Thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        width={100}
-                        priority={index < 3}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 

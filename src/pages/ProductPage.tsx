@@ -533,16 +533,16 @@ const ProductPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50" onContextMenu={handleContextMenu}>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-4 lg:py-6">
         {/* Product Top Section - Matching Image Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
+        <div className="grid grid-cols-[auto_1fr] lg:grid-cols-12 gap-2 sm:gap-4 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
           
           {/* Left Panel - Thumbnail Gallery */}
-          <div className="hidden lg:flex lg:col-span-2 flex-col items-center space-y-2 sm:space-y-3">
+          <div className="flex col-span-1 lg:col-span-2 flex-col items-center space-y-2 sm:space-y-3">
 
             
 
             
             {/* Thumbnails Container with Hidden Slider - Single Column */}
-            <div className="h-[400px] sm:h-[500px] lg:h-[500px] overflow-y-auto scrollbar-hide">
+            <div className="h-[300px] sm:h-[400px] lg:h-[500px] overflow-y-auto scrollbar-hide w-16 sm:w-18 lg:w-20">
               {productImages.length > 1 ? (
                 <div className="flex flex-col space-y-2 sm:space-y-3">
                   {productImages.map((image: string, index: number) => (
@@ -638,7 +638,7 @@ const ProductPage: React.FC = () => {
           <div className="col-span-1 lg:col-span-6 flex justify-center">
             <div className="relative w-full max-w-[600px]">
               {((product as any).video_url && showVideo) ? (
-                <div className="w-full aspect-[6/5] max-w-[600px] overflow-hidden rounded-lg">
+                <div className="w-full aspect-[6/5] max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] max-w-[600px] overflow-hidden rounded-lg">
                   <video
                     src={(product as any).video_url}
                     controls
@@ -650,7 +650,7 @@ const ProductPage: React.FC = () => {
                 </div>
               ) : (
                 <div 
-                  className="w-full aspect-[6/5] max-w-[600px] overflow-hidden group cursor-zoom-in relative"
+                  className="w-full aspect-[6/5] max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] max-w-[600px] overflow-hidden group cursor-zoom-in relative"
                   onMouseMove={handleMouseMove}
                 >
                   <img
@@ -676,21 +676,21 @@ const ProductPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Left Arrow - Outside and smaller */}
+              {/* Left Arrow - Hidden on mobile since thumbnails are visible */}
               {productImages.length > 1 && (
                 <button
                   onClick={previousImage}
-                  className="absolute -left-10 top-1/4 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow-md border border-gray-200 flex items-center justify-center transition-all duration-200 hover:shadow-lg hover:scale-105 z-10"
+                  className="hidden lg:flex absolute -left-10 top-1/4 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow-md border border-gray-200 items-center justify-center transition-all duration-200 hover:shadow-lg hover:scale-105 z-10"
                 >
                   <ArrowLeftIcon className="w-4 h-4" />
                 </button>
               )}
 
-              {/* Right Arrow - Outside and smaller */}
+              {/* Right Arrow - Hidden on mobile since thumbnails are visible */}
               {productImages.length > 1 && (
                 <button
                   onClick={nextImage}
-                  className="absolute -right-10 top-1/4 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow-md border border-gray-200 flex items-center justify-center transition-all duration-200 hover:shadow-lg hover:scale-105 z-10"
+                  className="hidden lg:flex absolute -right-10 top-1/4 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow-md border border-gray-200 items-center justify-center transition-all duration-200 hover:shadow-lg hover:scale-105 z-10"
                 >
                   <ArrowRightIcon className="w-4 h-4" />
                 </button>
@@ -701,7 +701,7 @@ const ProductPage: React.FC = () => {
                 </div>
 
           {/* Right Panel - Product Information */}
-          <div className="col-span-1 lg:col-span-4">
+          <div className="col-span-2 lg:col-span-4">
             <div className="p-2 sm:p-3 space-y-2 sm:space-y-3">
               {/* Top Actions */}
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">

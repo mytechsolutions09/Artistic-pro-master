@@ -12,17 +12,6 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { formatUIPrice } = useCurrency();
 
-  // Debug logging for image issues
-  React.useEffect(() => {
-    console.log('ProductCard Debug:', {
-      productTitle: product.title,
-      hasImages: !!product.images,
-      imagesLength: product.images?.length || 0,
-      firstImage: product.images?.[0],
-      mainImage: product.main_image
-    });
-  }, [product]);
-
   // Get current price based on selected options
   const getCurrentPrice = () => {
     return product.price;
