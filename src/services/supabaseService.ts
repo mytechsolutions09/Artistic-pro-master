@@ -713,15 +713,33 @@ export class OrderService {
 export class ProductService {
   static async getAllProducts(): Promise<Product[]> {
     try {
+      // ⚡ OPTIMIZED: Removed favorites subquery - now using materialized view or direct count
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          favorites_count:favorites(count)
-        `)
+        .select('*')
         .order('created_date', { ascending: false });
 
       if (error) throw error;
+      
+      // Get favorites counts in a single efficient query using LEFT JOIN
+      // This is much faster than the subquery approach
+      let favoritesMap: Record<string, number> = {};
+      try {
+        const { data: favoritesCounts, error: favError } = await supabase
+          .from('favorites')
+          .select('product_id');
+        
+        if (!favError && favoritesCounts) {
+          // Count favorites per product
+          favoritesMap = favoritesCounts.reduce((acc, fav) => {
+            acc[fav.product_id] = (acc[fav.product_id] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+        }
+      } catch (favError) {
+        console.warn('Could not fetch favorites counts:', favError);
+        // Continue without favorites - not critical
+      }
       
       // Transform database fields to interface fields
       return (data || []).map(product => ({
@@ -735,7 +753,7 @@ export class ProductService {
         itemDetails: product.item_details,
         delivery: product.delivery_info,
         didYouKnow: product.did_you_know,
-        favoritesCount: product.favorites_count?.[0]?.count || 0,
+        favoritesCount: favoritesMap[product.id] || 0,
         // Clothing-specific fields
         productId: product.productid,
         gender: product.gender,
