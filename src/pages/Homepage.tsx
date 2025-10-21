@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, 
 import { HomepageSettingsService } from '../services/homepageSettingsService';
 import { ProductService, CategoryService } from '../services/supabaseService';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { generateProductUrl } from '../utils/slugUtils';
+import { generateProductUrl, generateSlug } from '../utils/slugUtils';
 import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
 import HomepageSkeleton from '../components/HomepageSkeleton';
 import OptimizedImage from '../components/OptimizedImage';
@@ -237,21 +237,44 @@ const Homepage: React.FC = () => {
           .sort((a, b) => (b.downloads || 0) - (a.downloads || 0))
           .slice(0, 3);
     
-    return bestSellersProducts.map(product => ({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      originalPrice: product.originalPrice,
-      discountPercentage: product.discountPercentage,
-      images: product.images || (product.main_image ? [product.main_image] : ['/placeholder-image.jpg']),
-      rating: product.rating || 4.5,
-      downloads: product.downloads || 0,
-      favoritesCount: product.favoritesCount || 0,
-      category: product.categories?.[0] || 'Art',
-      badge: 'Best Seller',
-      badgeColor: 'pink',
-      link: generateProductUrl(product.categories?.[0] || product.category, product.title)
-    }));
+    return bestSellersProducts.map(product => {
+      const category = product.categories?.[0] || product.category || 'Art';
+      
+      // Check if product is clothing by category or properties
+      const clothingCategories = ['unisex', 'men', 'women', 'mens', 'womens', 'clothing', 'tshirt', 't-shirt', 'shirt', 'sweatshirt', 'hoodie'];
+      const isCategoryClothing = clothingCategories.some(cat => 
+        category?.toLowerCase().includes(cat)
+      );
+      const hasClothingProperties = !!(product.sizes || product.colors || product.type === 'clothing');
+      const isClothing = isCategoryClothing || hasClothingProperties;
+      
+      // Generate appropriate URL based on product type
+      let productLink;
+      if (isClothing) {
+        // For clothing products, use /clothes/ prefix
+        productLink = `/clothes/${generateSlug(product.title)}`;
+      } else {
+        // For art products, use category/product format
+        productLink = generateProductUrl(category, product.title);
+      }
+      
+      return {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        discountPercentage: product.discountPercentage,
+        images: product.images || (product.main_image ? [product.main_image] : ['/placeholder-image.jpg']),
+        rating: product.rating || 4.5,
+        downloads: product.downloads || 0,
+        favoritesCount: product.favoritesCount || 0,
+        category: category,
+        badge: 'Best Seller',
+        badgeColor: 'pink',
+        link: productLink,
+        isClothing: isClothing
+      };
+    });
   };
 
   // Ensure best sellers products have valid images array
