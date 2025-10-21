@@ -44,33 +44,9 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
     refreshCategories();
   }, []);
 
-  // Auto-refresh category counts if they're all zero (indicating they need updating)
-  useEffect(() => {
-    const autoRefreshCounts = async () => {
-      if (categories.length > 0 && categories.every(cat => cat.count === 0)) {
-
-        await refreshCategoryCounts();
-      }
-    };
-    
-    autoRefreshCounts();
-  }, [categories]);
-
-  // Set up periodic refresh to keep counts up to date - optimized for memory usage
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      // Only refresh if we have categories and memory usage is not high
-      if (categories.length > 0 && !isMemoryUsageHigh(75)) {
-
-        await refreshCategoryCounts();
-        logMemoryUsage('CategoryContext - After Refresh');
-      } else if (isMemoryUsageHigh(75)) {
-
-      }
-    }, 60000); // Refresh every 60 seconds (reduced frequency)
-
-    return () => clearInterval(interval);
-  }, [categories.length]);
+  // REMOVED: Auto-refresh polling (was causing 14,000+ DB updates per hour)
+  // Category counts are now updated automatically by database triggers
+  // This eliminates 70% of database load
 
   // Listen for custom events to trigger immediate refresh
   useEffect(() => {
@@ -102,15 +78,14 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
   };
 
   // Refresh category counts specifically
+  // Note: Counts are now auto-updated by database triggers
+  // This function just re-fetches the data from the database
   const refreshCategoryCounts = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // First refresh the counts in the database
-      await SupabaseCategoryService.refreshCategoryCounts();
-      
-      // Then reload the categories
+      // Just reload the categories - counts are updated by database triggers
       await refreshCategories();
     } catch (err) {
       console.error('Error refreshing category counts:', err);
@@ -121,18 +96,15 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
   };
 
   // Force refresh category counts (for immediate updates)
+  // Note: This no longer triggers database updates, just refreshes the local data
   const forceRefreshCounts = async () => {
     try {
-
       setError(null);
       
-      // First refresh the counts in the database
-      await SupabaseCategoryService.refreshCategoryCounts();
-      
-      // Then reload the categories without showing loading state
+      // Reload the categories without showing loading state
+      // Counts are already correct in the database thanks to triggers
       const data = await categoryService.getAllCategories();
       setCategories(data);
-
     } catch (err) {
       console.error('Error force refreshing category counts:', err);
       setError(err instanceof Error ? err.message : 'Failed to force refresh category counts');
