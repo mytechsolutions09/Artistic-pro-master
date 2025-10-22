@@ -140,6 +140,9 @@ const Footer: React.FC = () => {
               <Link to="/terms-and-conditions" className="text-gray-400 hover:text-white text-xs transition-colors">
                 Terms of Service
               </Link>
+              <Link to="/use-and-return-policy" className="text-gray-400 hover:text-white text-xs transition-colors">
+                Use & Return Policy
+              </Link>
               <div className="flex items-center text-gray-400 text-xs">
                 Made with <Heart className="w-3 h-3 text-pink-300 mx-1" /> by Lurevi Team
               </div>

@@ -36,6 +36,7 @@ import ShippingInfo from './pages/ShippingInfo';
 import Returns from './pages/Returns';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import UseAndReturnPolicy from './pages/UseAndReturnPolicy';
 import LoginForm from './components/auth/LoginForm';
 import SignUpForm from './components/auth/SignUpForm';
 import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
@@ -112,6 +113,7 @@ function AppContent() {
                   <Route path="/returns-and-refunds" element={<Returns />} />
                   <Route path="/terms-and-conditions" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/use-and-return-policy" element={<UseAndReturnPolicy />} />
                   
                   <Route path="/env-test" element={<EnvTest />} />
                   <Route path="/skeleton-test" element={<SkeletonTest />} />

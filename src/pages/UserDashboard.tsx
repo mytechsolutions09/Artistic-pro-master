@@ -382,46 +382,72 @@ const UserDashboard: React.FC = () => {
     let currentLocation = 'Mumbai Hub';
     let estimatedDelivery = new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000);
     
+    // Check if order has physical products
+    const hasPhysicalProducts = order.items.some((item: any) => item.productType !== 'digital');
+    
     if (order.status === 'completed') {
-      trackingStatus = 'delivered';
-      currentLocation = order.shipping_address || 'Delivered';
-      trackingSteps = [
-        { 
-          status: 'Order Placed', 
-          description: 'Your order has been confirmed and payment received', 
-          location: 'Mumbai Hub',
-          timestamp: orderDate.toISOString(),
-          completed: true
-        },
-        { 
-          status: 'Processing', 
-          description: 'Your order is being prepared and quality checked', 
-          location: 'Mumbai Hub',
-          timestamp: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-          completed: true
-        },
-        { 
-          status: 'Shipped', 
-          description: 'Your order has been dispatched from our warehouse', 
-          location: 'Mumbai Hub',
-          timestamp: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-          completed: true
-        },
-        { 
-          status: 'Out for Delivery', 
-          description: 'Your order is out for delivery to your address', 
-          location: order.shipping_address || 'Local Delivery Hub',
-          timestamp: new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(),
-          completed: true
-        },
-        { 
-          status: 'Delivered', 
-          description: 'Your order has been successfully delivered', 
-          location: (order as any).shipping_address || 'Delivered',
-          timestamp: new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-          completed: true
-        }
-      ];
+      // For digital-only orders, completed means delivered immediately
+      if (!hasPhysicalProducts) {
+        trackingStatus = 'delivered';
+        currentLocation = 'Digital Download Available';
+        trackingSteps = [
+          { 
+            status: 'Order Placed', 
+            description: 'Your order has been confirmed and payment received', 
+            location: 'System',
+            timestamp: orderDate.toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Completed', 
+            description: 'Your digital products are ready for download', 
+            location: 'Digital Download Available',
+            timestamp: orderDate.toISOString(),
+            completed: true
+          }
+        ];
+      } else {
+        // For physical products, completed means order fulfilled but may still be delivering
+        trackingStatus = 'delivered';
+        currentLocation = order.shipping_address || 'Delivered';
+        trackingSteps = [
+          { 
+            status: 'Order Placed', 
+            description: 'Your order has been confirmed and payment received', 
+            location: 'Mumbai Hub',
+            timestamp: orderDate.toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Processing', 
+            description: 'Your order is being prepared and quality checked', 
+            location: 'Mumbai Hub',
+            timestamp: new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Shipped', 
+            description: 'Your order has been dispatched from our warehouse', 
+            location: 'Mumbai Hub',
+            timestamp: new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Out for Delivery', 
+            description: 'Your order is out for delivery to your address', 
+            location: order.shipping_address || 'Local Delivery Hub',
+            timestamp: new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: true
+          },
+          { 
+            status: 'Delivered', 
+            description: 'Your order has been successfully delivered', 
+            location: (order as any).shipping_address || 'Delivered',
+            timestamp: new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            completed: true
+          }
+        ];
+      }
     } else if (order.status === 'pending') {
       if (daysSinceOrder >= 3) {
         trackingStatus = 'in transit';
@@ -530,6 +556,47 @@ const UserDashboard: React.FC = () => {
           }
         ];
       }
+    } else if (order.status === 'processing') {
+      // For processing orders (physical products being prepared)
+      trackingStatus = 'processing';
+      currentLocation = 'Mumbai Hub';
+      trackingSteps = [
+        { 
+          status: 'Order Placed', 
+          description: 'Your order has been confirmed and payment received', 
+          location: 'Mumbai Hub',
+          timestamp: orderDate.toISOString(),
+          completed: true
+        },
+        { 
+          status: 'Processing', 
+          description: 'Your order is being prepared and quality checked', 
+          location: 'Mumbai Hub',
+          timestamp: orderDate.toISOString(),
+          completed: true
+        },
+        { 
+          status: 'Shipping', 
+          description: 'Your order will be shipped soon', 
+          location: 'Awaiting Shipment',
+          timestamp: null,
+          completed: false
+        },
+        { 
+          status: 'Out for Delivery', 
+          description: 'Your order will be out for delivery', 
+          location: order.shipping_address || 'Local Delivery Hub',
+          timestamp: null,
+          completed: false
+        },
+        { 
+          status: 'Delivered', 
+          description: 'Your order will be delivered to your address', 
+          location: order.shipping_address || 'Delivery Address',
+          timestamp: null,
+          completed: false
+        }
+      ];
     }
 
     return {
@@ -1358,8 +1425,9 @@ const UserDashboard: React.FC = () => {
                                     // Check if order is completed
                                     const isOrderCompleted = order.status === 'completed';
                                     
-                                    // Check if order has physical products
-                                    const hasPhysicalProducts = order.items.some((item: any) => item.productType !== 'digital');
+                                    // Check if order has physical products (excluding digital)
+                                    const firstPhysicalItem = order.items.find((item: any) => item.productType !== 'digital');
+                                    const hasPhysicalProducts = !!firstPhysicalItem;
                                     
                                     // Check if order is within 30 days
                                     const orderDate = new Date(order.date);
@@ -1367,20 +1435,17 @@ const UserDashboard: React.FC = () => {
                                     const daysDifference = Math.floor((currentDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
                                     const isWithin30Days = daysDifference <= 30;
                                     
-                                    // Show return button only if: completed + physical products + within 30 days
-                                    const shouldShowReturnButton = isOrderCompleted && hasPhysicalProducts && isWithin30Days;
+                                    // Check if this item already has an active return request
+                                    const hasActiveReturn = firstPhysicalItem ? hasActiveReturnRequest(order.id, firstPhysicalItem.orderItemId) : false;
+                                    
+                                    // Show return button only if: completed + physical products + within 30 days + no active return
+                                    const shouldShowReturnButton = isOrderCompleted && hasPhysicalProducts && isWithin30Days && !hasActiveReturn;
                                     
                                     return shouldShowReturnButton && (
                                       <button
                                         onClick={() => {
-                                          const firstPhysicalItem = order.items.find((item: any) => item.productType !== 'digital');
                                           if (firstPhysicalItem) {
-                                            const hasReturn = hasActiveReturnRequest(order.id, firstPhysicalItem.id);
-                                            if (hasReturn) {
-                                              showReturnNotification('Return request already exists for this order');
-                                            } else {
-                                              handleReturnRequest(order, { ...firstPhysicalItem, itemIndex: 0 });
-                                            }
+                                            handleReturnRequest(order, { ...firstPhysicalItem, itemIndex: 0 });
                                           }
                                         }}
                                         className="flex items-center space-x-1 px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded hover:bg-teal-100 transition-colors"
@@ -1393,7 +1458,7 @@ const UserDashboard: React.FC = () => {
                                   <button
                                     onClick={() => {
                                       const firstItem = order.items[0];
-                                      handleReviewProduct(firstItem, order.id, `${order.id}-0`);
+                                      handleReviewProduct(firstItem, order.id, firstItem.orderItemId);
                                     }}
                                     className="flex items-center space-x-1 px-2 py-1 text-gray-600 text-xs rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow"
                                   >
@@ -2372,8 +2437,6 @@ const UserDashboard: React.FC = () => {
         onClose={closeTrackingModal}
         order={selectedOrderForTracking}
         trackingData={selectedOrderForTracking ? trackingData[selectedOrderForTracking.id] : null}
-        onRefresh={refreshTrackingData}
-        isLoading={selectedOrderForTracking ? trackingLoading[selectedOrderForTracking.id] || false : false}
       />
 
       {/* Change Password Modal */}

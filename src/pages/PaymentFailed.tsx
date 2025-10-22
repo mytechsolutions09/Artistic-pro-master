@@ -51,8 +51,8 @@ const PaymentFailed: React.FC = () => {
   
   const handleRetryPayment = () => {
     setRetryCount(prev => prev + 1);
-    // In a real app, this would redirect to the checkout with the same items
-    navigate('/browse');
+    // Go back to the previous page to retry payment
+    navigate(-1);
   };
   
   return (
@@ -134,39 +134,6 @@ const PaymentFailed: React.FC = () => {
                 })}
               </div>
             </div>
-            
-            {/* Alternative Actions */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Try These Alternatives</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button
-                  onClick={() => navigate('/browse')}
-                  className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group"
-                >
-                  <CreditCard className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mb-2" />
-                  <span className="font-medium text-gray-700 group-hover:text-blue-700">Different Card</span>
-                  <span className="text-xs text-gray-500 text-center mt-1">Use another payment method</span>
-                </button>
-                
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 group"
-                >
-                  <ShoppingBag className="w-8 h-8 text-gray-400 group-hover:text-purple-500 mb-2" />
-                  <span className="font-medium text-gray-700 group-hover:text-purple-700">Save for Later</span>
-                  <span className="text-xs text-gray-500 text-center mt-1">Add to wishlist</span>
-                </button>
-                
-                <Link
-                  to="/contact"
-                  className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all duration-200 group"
-                >
-                  <Phone className="w-8 h-8 text-gray-400 group-hover:text-green-500 mb-2" />
-                  <span className="font-medium text-gray-700 group-hover:text-green-700">Get Help</span>
-                  <span className="text-xs text-gray-500 text-center mt-1">Contact support</span>
-                </Link>
-              </div>
-            </div>
           </div>
           
           {/* Sidebar */}
@@ -212,7 +179,7 @@ const PaymentFailed: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Phone className="w-4 h-4 text-blue-500" />
-                  <span className="text-gray-700">1-800-ART-HELP</span>
+                  <span className="text-gray-700">+91 9625788455</span>
                 </div>
                 <p className="text-xs text-gray-600 mt-3">
                   Our support team is available 24/7 to help you with payment issues.

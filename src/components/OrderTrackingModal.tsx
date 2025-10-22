@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { X, Truck, MapPin, Clock, CheckCircle, AlertCircle, Package, RefreshCw } from 'lucide-react';
+import { X, Truck, MapPin, Clock, CheckCircle, AlertCircle, Package } from 'lucide-react';
 
 interface OrderTrackingModalProps {
   isOpen: boolean;
   onClose: () => void;
   order: any;
   trackingData: any;
-  onRefresh: () => void;
-  isLoading: boolean;
 }
 
 interface TrackingStep {
@@ -22,9 +20,7 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
   isOpen,
   onClose,
   order,
-  trackingData,
-  onRefresh,
-  isLoading
+  trackingData
 }) => {
   const [expandedSteps, setExpandedSteps] = useState<{ [key: number]: boolean }>({});
 
@@ -110,21 +106,12 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
               <p className="text-sm text-gray-600">Order #{order?.id}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={onRefresh}
-              disabled={isLoading}
-              className="p-2 text-gray-400 hover:text-teal-600 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Content */}
@@ -474,51 +461,13 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
             </div>
           )}
 
-          {/* No tracking data */}
-          {!trackingData && (
-            <div className="text-center py-8">
-              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Tracking Information</h3>
-              <p className="text-gray-600 mb-4">
-                {order?.status === 'pending' 
-                  ? 'Your order is being processed. Tracking information will be available once your order is shipped.'
-                  : order?.status === 'completed'
-                  ? 'This order has been completed. Please check your downloads section for digital products.'
-                  : 'Tracking information is not available for this order yet.'
-                }
-              </p>
-              <div className="space-y-2">
-                <button
-                  onClick={onRefresh}
-                  disabled={isLoading}
-                  className="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                  {isLoading ? 'Refreshing...' : 'Refresh'}
-                </button>
-                {order?.status === 'completed' && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Contact support if you need assistance with your completed order.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Error state */}
           {trackingData?.error && (
             <div className="text-center py-8">
               <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Tracking Error</h3>
-              <p className="text-gray-600 mb-4">{trackingData.error}</p>
-              <button
-                onClick={onRefresh}
-                disabled={isLoading}
-                className="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Try Again
-              </button>
+              <p className="text-gray-600">{trackingData.error}</p>
             </div>
           )}
         </div>

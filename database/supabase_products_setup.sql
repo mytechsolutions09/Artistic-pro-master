@@ -142,7 +142,7 @@ CREATE TABLE orders (
     customer_email VARCHAR(255) NOT NULL,
     total_amount INTEGER NOT NULL, -- Changed to INTEGER to match products price
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'cancelled', 'refunded')),
-    payment_method VARCHAR(50) CHECK (payment_method IN ('card', 'paypal', 'bank_transfer')),
+    payment_method VARCHAR(50) CHECK (payment_method IN ('card', 'paypal', 'bank_transfer', 'razorpay', 'cod', 'store_credit')),
     payment_id VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

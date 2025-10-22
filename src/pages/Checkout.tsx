@@ -8,12 +8,14 @@ import {
   MapPin,
   Loader2,
   Trash2,
-  Lock
+  Lock,
+  Wallet
 } from 'lucide-react';
 import { CartManager } from '../services/orderService';
 import { CompleteOrderService, CompleteOrderData } from '../services/completeOrderService';
 import { createOrderBypassRLS, isServiceRoleAvailable } from '../services/orderServiceBypass';
 import razorpayService from '../services/razorpayService';
+import StoreCreditService from '../services/storeCreditService';
 import { Cart, Product } from '../types';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -46,8 +48,11 @@ const Checkout: React.FC = () => {
     billingCountry: 'India',
     sameAsShipping: true
   });
-  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay');
+  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod' | 'store_credit'>('razorpay');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [storeCreditBalance, setStoreCreditBalance] = useState<number>(0);
+  const [useStoreCredit, setUseStoreCredit] = useState<boolean>(false);
+  const [storeCreditToUse, setStoreCreditToUse] = useState<number>(0);
   
   // Check if it's a direct purchase
   const productId = searchParams.get('product');
@@ -60,7 +65,39 @@ const Checkout: React.FC = () => {
   const hasPhysicalProducts = cart.items.some(item => 
     item.selectedProductType === 'poster' || item.selectedProductType === 'clothing'
   );
+
+  // Calculate remaining amount after store credit
+  const remainingAmount = Math.max(0, cart.total - storeCreditToUse);
   
+  // Fetch store credit balance
+  useEffect(() => {
+    const fetchStoreCreditBalance = async () => {
+      if (user?.id) {
+        const balance = await StoreCreditService.getUserBalance(user.id);
+        setStoreCreditBalance(balance);
+      }
+    };
+    fetchStoreCreditBalance();
+  }, [user]);
+
+  // Calculate store credit to use
+  useEffect(() => {
+    if (useStoreCredit && storeCreditBalance > 0) {
+      const maxCredit = Math.min(storeCreditBalance, cart.total);
+      setStoreCreditToUse(maxCredit);
+      
+      // If store credit covers full amount, switch to store_credit payment
+      if (maxCredit >= cart.total) {
+        setPaymentMethod('store_credit');
+      }
+    } else {
+      setStoreCreditToUse(0);
+      if (paymentMethod === 'store_credit') {
+        setPaymentMethod('razorpay');
+      }
+    }
+  }, [useStoreCredit, storeCreditBalance, cart.total]);
+
   // Reset payment method to Razorpay if COD is selected but no physical products
   useEffect(() => {
     if (!hasPhysicalProducts && paymentMethod === 'cod') {
@@ -227,6 +264,51 @@ const Checkout: React.FC = () => {
           : `${formData.billingAddress}, ${formData.billingCity}, ${formData.billingState} ${formData.billingZipCode}, ${formData.billingCountry}`
       };
 
+      // Handle Store Credit-only orders
+      if (paymentMethod === 'store_credit' && user?.id) {
+        // Deduct store credit
+        const creditResult = await StoreCreditService.deductCredit(
+          user.id,
+          cart.total,
+          `Payment for order (Store Credit)`,
+          tempOrderId
+        );
+
+        if (!creditResult.success) {
+          throw new Error(creditResult.error || 'Failed to process store credit payment');
+        }
+
+        // Update order data
+        orderData.paymentId = `CREDIT_${tempOrderId}`;
+        orderData.paymentMethod = 'store_credit';
+        orderData.notes = `Paid with Store Credit: ₹${cart.total.toFixed(2)}`;
+
+        // Complete the order
+        let result = await CompleteOrderService.completeOrder(orderData);
+        
+        // If normal order fails with RLS error, try bypass method
+        if (!result.success && result.error?.includes('row-level security policy')) {
+          if (isServiceRoleAvailable()) {
+            result = await createOrderBypassRLS(orderData);
+          } else {
+            throw new Error('RLS policy error and service role not available.');
+          }
+        }
+        
+        if (result.success && result.orderId) {
+          // Clear cart if not direct purchase
+          if (!productId) {
+            CartManager.clearCart();
+          }
+          
+          // Redirect to success page
+          navigate(`/payment-success?orderId=${result.orderId}&paymentMethod=store_credit&creditUsed=${cart.total}`);
+        } else {
+          throw new Error(result.error || 'Order placement failed');
+        }
+        return;
+      }
+
       // Handle COD orders separately
       if (paymentMethod === 'cod') {
         // Complete the order directly without payment gateway
@@ -256,20 +338,41 @@ const Checkout: React.FC = () => {
       }
 
       // Initiate Razorpay payment for online payment
+      // Use remaining amount if store credit is applied
+      const amountToPay = useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total;
+      
       await razorpayService.initiatePayment(
         {
           orderId: tempOrderId,
-          amount: cart.total,
+          amount: amountToPay,
           currency: 'INR',
           customerName: `${formData.firstName} ${formData.lastName}`,
           customerEmail: formData.email,
           customerPhone: formData.phone || '+919999999999', // Use actual phone if available
           customerId: user?.id || 'guest',
-          description: `Order for ${cart.items.length} item(s)`
+          description: `Order for ${cart.items.length} item(s)${useStoreCredit && storeCreditToUse > 0 ? ' (Partial Store Credit Applied)' : ''}`
         },
         // Success callback
         async (response) => {
           try {
+            // If store credit was used, deduct it
+            if (useStoreCredit && storeCreditToUse > 0 && user?.id) {
+              const creditResult = await StoreCreditService.deductCredit(
+                user.id,
+                storeCreditToUse,
+                `Partial payment for order (Store Credit + Razorpay)`,
+                tempOrderId
+              );
+
+              if (!creditResult.success) {
+                console.error('Failed to deduct store credit:', creditResult.error);
+                // Continue with order anyway as Razorpay payment succeeded
+              }
+
+              // Update order notes to reflect both payment methods
+              orderData.notes = `Paid: ₹${amountToPay.toFixed(2)} via Razorpay + ₹${storeCreditToUse.toFixed(2)} Store Credit`;
+            }
+
             // Update order data with payment ID
             orderData.paymentId = response.razorpay_payment_id;
             
@@ -630,11 +733,61 @@ const Checkout: React.FC = () => {
                 </div>
               </div>
 
+              {/* Store Credit Section */}
+              {user && storeCreditBalance > 0 && (
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-lg border border-purple-200 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-bold text-gray-800 flex items-center">
+                      <Wallet className="w-5 h-5 text-purple-500 mr-2" />
+                      Store Credit Available
+                    </h2>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-purple-600">{formatUIPrice(storeCreditBalance, 'INR')}</p>
+                      <p className="text-xs text-gray-500">Available Balance</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg p-3 border border-purple-200">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={useStoreCredit}
+                        onChange={(e) => setUseStoreCredit(e.target.checked)}
+                        className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                      />
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800">Use Store Credit for this order</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {storeCreditBalance >= cart.total 
+                            ? `This will cover the full order amount of ${formatUIPrice(cart.total, 'INR')}`
+                            : `₹${storeCreditToUse.toFixed(2)} will be applied. Pay remaining ${formatUIPrice(remainingAmount, 'INR')}`
+                          }
+                        </p>
+                      </div>
+                    </label>
+                    
+                    {useStoreCredit && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Store Credit Applied:</span>
+                          <span className="font-bold text-purple-600">- {formatUIPrice(storeCreditToUse, 'INR')}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm mt-2">
+                          <span className="text-gray-600">Amount to Pay:</span>
+                          <span className="font-bold text-gray-800">{formatUIPrice(remainingAmount, 'INR')}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Payment Method Selection */}
+              {(!useStoreCredit || remainingAmount > 0) && (
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
                 <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                   <Lock className="w-5 h-5 text-purple-500 mr-2" />
-                  Payment Method
+                  Payment Method {useStoreCredit && remainingAmount > 0 && <span className="ml-2 text-sm text-gray-500">(for remaining {formatUIPrice(remainingAmount, 'INR')})</span>}
                 </h2>
                 
                 <div className="space-y-3">
@@ -671,8 +824,8 @@ const Checkout: React.FC = () => {
                     </div>
                   </label>
 
-                  {/* COD Option - Only show for physical products */}
-                  {hasPhysicalProducts ? (
+                  {/* COD Option - Only show for physical products and when not fully paid with store credit */}
+                  {hasPhysicalProducts && !(useStoreCredit && remainingAmount === 0) ? (
                     <label 
                       className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
                         paymentMethod === 'cod' 
@@ -703,6 +856,25 @@ const Checkout: React.FC = () => {
                         </div>
                       </div>
                     </label>
+                  ) : hasPhysicalProducts && useStoreCredit && remainingAmount === 0 ? (
+                    <div className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 opacity-60">
+                      <div className="flex items-start space-x-3">
+                        <input
+                          type="radio"
+                          disabled
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-gray-500">Cash on Delivery (COD)</span>
+                            <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded-full">Not Needed</span>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">
+                            COD is not available when paying with store credit. Your order is fully covered by your store credit balance.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <div className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 opacity-60">
                       <div className="flex items-start space-x-3">
@@ -725,6 +897,7 @@ const Checkout: React.FC = () => {
                   )}
                 </div>
               </div>
+              )}
               
               
             </form>
@@ -733,9 +906,14 @@ const Checkout: React.FC = () => {
           {/* Order Summary */}
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <ShoppingBag className="w-5 h-5 text-purple-500 mr-2" />
-                Order Summary
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <div className="flex items-center">
+                  <ShoppingBag className="w-5 h-5 text-purple-500 mr-2" />
+                  Order Summary
+                </div>
+                <span className="text-sm font-medium text-gray-500">
+                  {cart.items.reduce((total, item) => total + item.quantity, 0)} {cart.items.reduce((total, item) => total + item.quantity, 0) === 1 ? 'Item' : 'Items'}
+                </span>
               </h3>
               
               <div className="space-y-2">
@@ -760,6 +938,7 @@ const Checkout: React.FC = () => {
                             })()
                           : `Poster Size: ${item.selectedPosterSize || 'Standard'}`
                         }
+                        {item.quantity > 1 && ` × ${item.quantity}`}
                       </p>
                     </div>
                     <div className="text-right">
@@ -800,7 +979,7 @@ const Checkout: React.FC = () => {
                     const totalDiscount = originalTotal - cart.total;
                     
                     return (
-                      <>
+                      <div className="space-y-1">
                         {totalDiscount > 0 && (
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>Original Price</span>
@@ -821,11 +1000,32 @@ const Checkout: React.FC = () => {
                           <span>Processing Fee</span>
                           <span>{formatUIPrice(0, 'INR')}</span>
                         </div>
-                        <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-200">
-                          <span>Total</span>
-                          <span>{formatUIPrice(cart.total, 'INR')}</span>
-                        </div>
-                      </>
+                        {useStoreCredit && storeCreditToUse > 0 && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-200">
+                              <span>Order Total</span>
+                              <span>{formatUIPrice(cart.total, 'INR')}</span>
+                            </div>
+                            <div className="flex justify-between text-sm font-semibold text-purple-600">
+                              <span className="flex items-center">
+                                <Wallet className="w-4 h-4 mr-1" />
+                                Store Credit Applied
+                              </span>
+                              <span>-{formatUIPrice(storeCreditToUse, 'INR')}</span>
+                            </div>
+                            <div className="flex justify-between text-lg font-bold text-green-600 pt-2 border-t border-gray-200">
+                              <span>Amount to Pay</span>
+                              <span>{formatUIPrice(remainingAmount, 'INR')}</span>
+                            </div>
+                          </div>
+                        )}
+                        {(!useStoreCredit || storeCreditToUse === 0) && (
+                          <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-200">
+                            <span>Total</span>
+                            <span>{formatUIPrice(cart.total, 'INR')}</span>
+                          </div>
+                        )}
+                      </div>
                     );
                   })()}
                 </div>
@@ -833,7 +1033,24 @@ const Checkout: React.FC = () => {
             </div>
             
             {/* Payment Info */}
-            {paymentMethod === 'razorpay' ? (
+            {paymentMethod === 'store_credit' ? (
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+                <div className="flex items-start space-x-3">
+                  <Wallet className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-1">Store Credit Payment</h3>
+                    <p className="text-xs text-gray-600 mb-2">
+                      Your order will be processed immediately using your available store credit.
+                    </p>
+                    <ul className="text-xs text-gray-600 space-y-1 mt-2">
+                      <li>✓ No additional payment required</li>
+                      <li>✓ Instant order confirmation</li>
+                      <li>✓ Secure and hassle-free</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ) : paymentMethod === 'razorpay' ? (
               <>
                 <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-4 border border-teal-200">
                   <div className="flex items-start space-x-3">
@@ -892,7 +1109,9 @@ const Checkout: React.FC = () => {
               form="checkout-form"
               disabled={loading}
               className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
-                paymentMethod === 'razorpay'
+                paymentMethod === 'store_credit'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
+                  : paymentMethod === 'razorpay'
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
                   : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
               }`}
@@ -900,18 +1119,20 @@ const Checkout: React.FC = () => {
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>{paymentMethod === 'razorpay' ? 'Opening Payment Gateway...' : 'Placing Order...'}</span>
+                  <span>
+                    {paymentMethod === 'store_credit' 
+                      ? 'Processing Order...' 
+                      : paymentMethod === 'razorpay' 
+                      ? 'Opening Payment Gateway...' 
+                      : 'Placing Order...'}
+                  </span>
                 </>
+              ) : paymentMethod === 'store_credit' ? (
+                <span>Place Order - Pay with Store Credit</span>
               ) : paymentMethod === 'razorpay' ? (
-                <>
-                  <Lock className="w-5 h-5" />
-                  <span>Pay {formatUIPrice(cart.total, 'INR')} - Proceed to Payment</span>
-                </>
+                <span>Pay {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')} - Proceed to Payment</span>
               ) : (
-                <>
-                  <span className="text-xl">💵</span>
-                  <span>Place Order - {formatUIPrice(cart.total, 'INR')} COD</span>
-                </>
+                <span>Place Order - {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')}</span>
               )}
             </button>
           </div>

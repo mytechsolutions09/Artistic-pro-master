@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, RefreshCw, Eye, Edit2, UserX, Plus, X,
   Users as UsersIcon, Shield, Calendar, CheckCircle, XCircle, Crown,
-  Ban, Unlock, Trash2
+  Ban, Unlock, Trash2, Wallet, DollarSign
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { RealUserService, RealUser, UserStats } from '../../services/realUserService';
+import StoreCreditService from '../../services/storeCreditService';
 
 const Users: React.FC = () => {
   const [users, setUsers] = useState<RealUser[]>([]);
@@ -29,6 +30,27 @@ const Users: React.FC = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<RealUser | null>(null);
+  const [showStoreCreditModal, setShowStoreCreditModal] = useState(false);
+  const [storeCreditBalances, setStoreCreditBalances] = useState<Record<string, number>>({});
+  const [creditAmount, setCreditAmount] = useState<string>('');
+  const [creditDescription, setCreditDescription] = useState<string>('');
+  const [creditAction, setCreditAction] = useState<'add' | 'deduct'>('add');
+
+  // Load store credit balances for all users
+  const loadStoreCreditBalances = async (userList: RealUser[]) => {
+    try {
+      const balances: Record<string, number> = {};
+      await Promise.all(
+        userList.map(async (user) => {
+          const balance = await StoreCreditService.getUserBalance(user.id);
+          balances[user.id] = balance;
+        })
+      );
+      setStoreCreditBalances(balances);
+    } catch (error) {
+      console.error('Error loading store credit balances:', error);
+    }
+  };
 
   // Load users and stats
   const loadData = async () => {
@@ -40,6 +62,9 @@ const Users: React.FC = () => {
       ]);
       setUsers(usersData);
       setStats(statsData);
+      
+      // Load store credit balances
+      await loadStoreCreditBalances(usersData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -120,6 +145,58 @@ const Users: React.FC = () => {
         console.error('Error deleting user:', error);
         alert('Failed to delete user. Please try again.');
       }
+    }
+  };
+
+  // Open store credit modal
+  const handleOpenStoreCreditModal = (user: RealUser) => {
+    setSelectedUser(user);
+    setCreditAmount('');
+    setCreditDescription('');
+    setCreditAction('add');
+    setShowStoreCreditModal(true);
+  };
+
+  // Manage store credit
+  const handleManageStoreCredit = async () => {
+    if (!selectedUser || !creditAmount || parseFloat(creditAmount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    try {
+      const amount = parseFloat(creditAmount);
+      let result;
+
+      if (creditAction === 'add') {
+        result = await StoreCreditService.addCredit(
+          selectedUser.id,
+          amount,
+          creditDescription || `Admin credit adjustment`,
+          undefined,
+          'credit'
+        );
+      } else {
+        result = await StoreCreditService.deductCredit(
+          selectedUser.id,
+          amount,
+          creditDescription || `Admin deduction`
+        );
+      }
+
+      if (result.success) {
+        alert(`Store credit ${creditAction === 'add' ? 'added' : 'deducted'} successfully!`);
+        setShowStoreCreditModal(false);
+        setCreditAmount('');
+        setCreditDescription('');
+        // Reload balances
+        await loadStoreCreditBalances(users);
+      } else {
+        alert(result.error || `Failed to ${creditAction} store credit`);
+      }
+    } catch (error) {
+      console.error('Error managing store credit:', error);
+      alert(`Failed to ${creditAction} store credit`);
     }
   };
 
@@ -432,9 +509,10 @@ const Users: React.FC = () => {
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Status</th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Role</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Store Credit</th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Created</th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Last Sign In</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -484,6 +562,14 @@ const Users: React.FC = () => {
                           <span className="ml-1 capitalize">{user.role || 'customer'}</span>
                         </span>
                       </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div className="flex items-center space-x-1">
+                          <Wallet className="w-4 h-4 text-purple-500" />
+                          <span className="text-xs font-semibold text-gray-900">
+                            ₹{storeCreditBalances[user.id]?.toFixed(2) || '0.00'}
+                          </span>
+                        </div>
+                      </td>
                       <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-900">
                         {formatDate(user.created_at)}
                       </td>
@@ -519,6 +605,13 @@ const Users: React.FC = () => {
                             title="Delete User"
                           >
                             <Trash2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenStoreCreditModal(user)}
+                            className="text-purple-400 hover:text-purple-600"
+                            title="Manage Store Credit"
+                          >
+                            <DollarSign className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -559,6 +652,107 @@ const Users: React.FC = () => {
               setSelectedUser(null);
             }}
           />
+        )}
+
+        {/* Store Credit Management Modal */}
+        {showStoreCreditModal && selectedUser && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen px-4">
+              <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowStoreCreditModal(false)} />
+              <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <Wallet className="w-5 h-5 text-purple-500 mr-2" />
+                    Manage Store Credit
+                  </h3>
+                  <button onClick={() => setShowStoreCreditModal(false)} className="text-gray-400 hover:text-gray-600">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <p className="text-sm text-gray-700"><strong>User:</strong> {selectedUser.email}</p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    <strong>Current Balance:</strong> 
+                    <span className="text-purple-600 font-bold ml-2">
+                      ₹{storeCreditBalances[selectedUser.id]?.toFixed(2) || '0.00'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Action</label>
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setCreditAction('add')}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                          creditAction === 'add'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Add Credit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCreditAction('deduct')}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                          creditAction === 'deduct'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Deduct Credit
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
+                    <input
+                      type="number"
+                      value={creditAmount}
+                      onChange={(e) => setCreditAmount(e.target.value)}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                    <textarea
+                      value={creditDescription}
+                      onChange={(e) => setCreditDescription(e.target.value)}
+                      placeholder="Reason for credit adjustment..."
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-3 pt-2">
+                    <button
+                      onClick={handleManageStoreCredit}
+                      disabled={!creditAmount || parseFloat(creditAmount) <= 0}
+                      className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {creditAction === 'add' ? 'Add' : 'Deduct'} Credit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowStoreCreditModal(false)}
+                      className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </AdminLayout>

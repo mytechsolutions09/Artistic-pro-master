@@ -37,7 +37,7 @@ export interface CompleteOrderData {
     };
   }>;
   totalAmount: number;
-  paymentMethod: 'card' | 'paypal' | 'bank_transfer' | 'razorpay' | 'cod';
+  paymentMethod: 'card' | 'paypal' | 'bank_transfer' | 'razorpay' | 'cod' | 'store_credit';
   paymentId?: string;
   notes?: string;
   shippingAddress?: string;

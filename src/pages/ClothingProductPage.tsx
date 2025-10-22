@@ -20,6 +20,7 @@ const ClothingProductPage: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [hasGiftCard, setHasGiftCard] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [showFullImage, setShowFullImage] = useState(false);
@@ -93,12 +94,12 @@ const ClothingProductPage: React.FC = () => {
         content_ids: [product.id],
         content_name: product.title,
         content_type: 'product',
-        value: product.price,
+        value: product.price * quantity,
         currency: 'INR'
       });
       
       // Adding clothing item to cart
-      CartManager.addItem(product as any, 1, 'clothing', undefined, itemOptions);
+      CartManager.addItem(product as any, quantity, 'clothing', undefined, itemOptions);
     } catch (error) {
       console.error('Failed to add to cart:', error);
     }
@@ -420,6 +421,39 @@ const ClothingProductPage: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Quantity Selector */}
+            <div className="border-t pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
+                  Quantity
+                </label>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-900 font-bold transition-all"
+                  >
+                    −
+                  </button>
+                  <span className="text-base font-bold text-gray-900 min-w-[2rem] text-center">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold transition-all"
+                    style={{ backgroundColor: '#ff6e00' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#e56300';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#ff6e00';
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex gap-2">
