@@ -72,11 +72,11 @@ export class ReturnService {
 
       // Check if it's within 30 days
       const orderDate = new Date(order.created_at);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      if (orderDate < thirtyDaysAgo) {
-        return { eligible: false, reason: 'Return window has expired (30 days)' };
+      if (orderDate < sevenDaysAgo) {
+        return { eligible: false, reason: 'Return window has expired (7 days)' };
       }
 
       // Check if product type is digital (digital products are not returnable)

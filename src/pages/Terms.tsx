@@ -195,7 +195,7 @@ const Terms: React.FC = () => {
           <AccordionSection id="returns" icon={RotateCcw} title="6. Returns and Refunds">
             <div>
               <p className="font-semibold text-gray-900">6.1 Physical Products</p>
-              <p className="mt-1">Physical products may be returned within 30 days of delivery if they are defective, damaged, or not as described. For detailed return procedures, please visit our <Link to="/returns-and-refunds" className="text-teal-600 hover:text-teal-700 underline">Returns & Refunds page</Link>.</p>
+              <p className="mt-1">Physical products may be returned within 7 days of delivery if they are defective, damaged, or not as described. For detailed return procedures, please visit our <Link to="/returns-and-refunds" className="text-teal-600 hover:text-teal-700 underline">Returns & Refunds page</Link>.</p>
             </div>
             <div className="mt-2">
               <p className="font-semibold text-gray-900">6.2 Digital Products</p>

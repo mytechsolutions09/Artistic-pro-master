@@ -48,7 +48,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: "Can I return my purchase?",
-      answer: "Yes, we offer a 30-day return policy for most items. Please check our Returns & Refunds page for specific conditions.",
+      answer: "Yes, we offer a 7-day return policy for most items. Please check our Returns & Refunds page for specific conditions.",
       category: "Returns"
     }
   ];

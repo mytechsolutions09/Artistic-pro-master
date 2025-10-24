@@ -11,7 +11,7 @@ const Returns: React.FC = () => {
   const faqData = [
     {
       question: "How long do I have to return an item?",
-      answer: "You have 30 days from the delivery date to initiate a return for most physical items. Digital downloads are final sale."
+      answer: "You have 7 days from the delivery date to initiate a return for most physical items. Digital downloads are final sale."
     },
     {
       question: "Do I have to pay for return shipping?",
@@ -69,8 +69,8 @@ const Returns: React.FC = () => {
   const returnPolicy = [
     {
       icon: <Clock className="w-6 h-6" />,
-      title: "30-Day Return Window",
-      description: "You have 30 days from the delivery date to initiate a return for most items."
+      title: "7-Day Return Window",
+      description: "You have 7 days from the delivery date to initiate a return for most items."
     },
     {
       icon: <Package className="w-6 h-6" />,
@@ -149,7 +149,7 @@ const Returns: React.FC = () => {
     {
       icon: <Shield className="w-6 h-6" />,
       title: "Full Refund",
-      description: "Complete refund of the purchase price for eligible returns within 30 days",
+      description: "Complete refund of the purchase price for eligible returns within 7 days",
       conditions: "Original condition, unused items with tags attached"
     },
     {

@@ -124,7 +124,7 @@ const FAQ: React.FC = () => {
       questions: [
         {
           question: "What is your return policy?",
-          answer: "We offer a 30-day return policy for most physical items. Items must be unused, in original packaging, and with tags attached. Digital downloads are non-refundable."
+          answer: "We offer a 7-day return policy for most physical items. Items must be unused, in original packaging, and with tags attached. Digital downloads are non-refundable."
         },
         {
           question: "How do I initiate a return?",
