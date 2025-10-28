@@ -18,7 +18,8 @@ import {
   Table,
   Truck,
   MessageSquare,
-  RotateCcw
+  RotateCcw,
+  Brush
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -34,10 +35,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
   
   const menuItems = [
     { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/admin/tasks' },
-    { id: 'activities', label: 'Activities', icon: Activity, path: '/admin/activities' },
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/admin' },
     { id: 'orders', label: 'Orders', icon: ShoppingBag, path: '/admin/orders' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
+    { id: 'commissioned-art', label: 'Commissioned Art', icon: Brush, path: '/admin/commissioned-art' },
     { id: 'clothes', label: 'Clothes', icon: Table, path: '/admin/clothes' },
     { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },
     { id: 'returns', label: 'Returns', icon: RotateCcw, path: '/admin/returns' },
@@ -49,16 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'homepage', label: 'Homepage', icon: Home, path: '/admin/homepage' },
     { id: 'marketing', label: 'Marketing', icon: TrendingUp, path: '/admin/marketing' },
     { id: 'database', label: 'Database', icon: Database, path: '/admin/database' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
-    { id: 'skeleton-test', label: 'Skeleton Test', icon: Palette, path: '/skeleton-test' },
-    // Additional items to test scrolling
-    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports' },
-    { id: 'inventory', label: 'Inventory', icon: Package, path: '/admin/inventory' },
-    { id: 'customers', label: 'Customers', icon: Users, path: '/admin/customers' },
-    { id: 'integrations', label: 'Integrations', icon: Settings, path: '/admin/integrations' },
-    { id: 'backup', label: 'Backup', icon: Database, path: '/admin/backup' },
-    { id: 'logs', label: 'Logs', icon: Activity, path: '/admin/logs' },
-    { id: 'maintenance', label: 'Maintenance', icon: Settings, path: '/admin/maintenance' }
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' }
   ];
 
   return (

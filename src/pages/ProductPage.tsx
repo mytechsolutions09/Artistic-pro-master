@@ -800,7 +800,10 @@ const ProductPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Product Type Selection */}
+              {/* Product Type Selection - Hide for Commissioned Art */}
+              {!product.categories?.some((cat: string) => 
+                cat.toLowerCase().includes('commission')
+              ) && !product.category?.toLowerCase().includes('commission') && (
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -879,6 +882,7 @@ const ProductPage: React.FC = () => {
                   Frames are not included
                 </p>
               </div>
+              )}
 
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2">

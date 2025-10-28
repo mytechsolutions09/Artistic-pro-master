@@ -61,6 +61,7 @@ import DatabaseManagement from './pages/admin/Database';
 import Clothes from './pages/admin/Clothes';
 import Shipping from './pages/admin/Shipping';
 import AdminReturns from './pages/admin/Returns';
+import CommissionedArt from './pages/admin/CommissionedArt';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import EnvTest from './components/EnvTest';
 import SkeletonTest from './pages/SkeletonTest';
@@ -130,6 +131,7 @@ function AppContent() {
                   <Route path="/admin" element={<AdminProtectedRoute><Dashboard /></AdminProtectedRoute>} />
                   <Route path="/admin/orders" element={<AdminProtectedRoute><Orders /></AdminProtectedRoute>} />
                   <Route path="/admin/products" element={<AdminProtectedRoute><Products /></AdminProtectedRoute>} />
+                  <Route path="/admin/commissioned-art" element={<AdminProtectedRoute><CommissionedArt /></AdminProtectedRoute>} />
                   <Route path="/admin/clothes" element={<AdminProtectedRoute><Clothes /></AdminProtectedRoute>} />
                   <Route path="/admin/shipping" element={<AdminProtectedRoute><Shipping /></AdminProtectedRoute>} />
                   <Route path="/admin/returns" element={<AdminProtectedRoute><AdminReturns /></AdminProtectedRoute>} />
