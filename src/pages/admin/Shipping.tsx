@@ -618,33 +618,66 @@ const Shipping: React.FC = () => {
         }
       };
 
-      // Try to create shipment in Delhivery and get waybill (optional)
+      // Try to create shipment in Delhivery and get waybill
       let waybill = '';
       let delhiverySuccess = false;
+      let delhiveryError: any = null;
       
       try {
         const result = await delhiveryService.createShipment(shipmentData);
         
-        // Try to generate waybill from Delhivery
-        try {
-          const waybills = await delhiveryService.generateWaybills(1);
-          waybill = waybills[0] || '';
-        } catch (waybillError: any) {
-          console.warn('⚠️ Failed to get waybill from Delhivery:', waybillError.message);
-        }
+        console.log('📦 Delhivery createShipment response:', result);
         
-        if (waybill) {
+        // Extract waybill from Delhivery response
+        // Response format can vary, so check multiple possible locations
+        if (result && result.data) {
+          const shipments = result.data.shipments || result.data.packages || [];
+          if (shipments.length > 0 && shipments[0].waybill) {
+            waybill = shipments[0].waybill;
+            delhiverySuccess = true;
+            console.log('✅ Shipment created in Delhivery with waybill:', waybill);
+          } else if (result.data.waybill) {
+            waybill = result.data.waybill;
+            delhiverySuccess = true;
+            console.log('✅ Shipment created in Delhivery with waybill:', waybill);
+          }
+        } else if (result && result.waybill) {
+          waybill = result.waybill;
           delhiverySuccess = true;
           console.log('✅ Shipment created in Delhivery with waybill:', waybill);
         }
-      } catch (delhiveryError: any) {
-        console.warn('⚠️ Delhivery API not available, creating shipment in database only:', delhiveryError.message);
+        
+        // If no waybill in response, try to generate one
+        if (!waybill) {
+          try {
+            const waybills = await delhiveryService.generateWaybills(1);
+            waybill = waybills[0] || '';
+            if (waybill && !waybill.startsWith('MOCK') && !waybill.startsWith('DL')) {
+              delhiverySuccess = true;
+              console.log('✅ Generated waybill from Delhivery:', waybill);
+            }
+          } catch (waybillError: any) {
+            console.warn('⚠️ Failed to generate waybill from Delhivery:', waybillError.message);
+          }
+        }
+      } catch (error: any) {
+        delhiveryError = error;
+        console.error('❌ Delhivery API error:', error);
+        console.warn('⚠️ Delhivery API not available, will create shipment in database only');
       }
       
       // If no waybill from Delhivery, generate local waybill
       if (!waybill) {
         waybill = `LOCAL_${Date.now()}`;
         console.log('📋 Generated local waybill:', waybill);
+      }
+      
+      // Show warning if Delhivery failed but we're still creating shipment
+      if (delhiveryError && !delhiverySuccess) {
+        NotificationManager.warning(
+          `Delhivery API unavailable. Shipment will be saved locally with waybill: ${waybill}. ` +
+          `Please check Edge Function deployment and DELHIVERY_API_TOKEN secret.`
+        );
       }
       
       // ALWAYS save shipment to database (regardless of Delhivery status)
@@ -860,6 +893,42 @@ const Shipping: React.FC = () => {
           errorMsg += `\n\n${result.error}`;
         }
         
+        // Add specific guidance for 401 errors
+        if (result.status === 401 || result.message?.toLowerCase().includes('authentication')) {
+          const warehouseName = pickupRequest.pickup_location || 'Unknown';
+          errorMsg = `❌ Authentication Failed (401 Unauthorized)\n\n`;
+          errorMsg += `🔤 Warehouse Name Being Sent: "${warehouseName}"\n\n`;
+          errorMsg += `⚠️ CRITICAL: This name must match EXACTLY with Delhivery dashboard:\n`;
+          errorMsg += `   • Case-sensitive (uppercase/lowercase)\n`;
+          errorMsg += `   • Spaces must match exactly\n`;
+          errorMsg += `   • Hyphens must match exactly\n`;
+          errorMsg += `   • No extra spaces or characters\n\n`;
+          errorMsg += `📋 VERIFICATION STEPS:\n\n`;
+          errorMsg += `1. Check Edge Function Logs (MOST IMPORTANT):\n`;
+          errorMsg += `   • Go to: https://supabase.com/dashboard/project/varduayfdqivaofymfov/functions\n`;
+          errorMsg += `   • Click: delhivery-api → Logs tab\n`;
+          errorMsg += `   • Find the most recent pickup request\n`;
+          errorMsg += `   • Look for: "🔤 Warehouse name being sent: ..."\n`;
+          errorMsg += `   • Copy that EXACT name\n\n`;
+          errorMsg += `2. Verify in Delhivery Dashboard:\n`;
+          errorMsg += `   • Log in to: https://one.delhivery.com\n`;
+          errorMsg += `   • Go to: Warehouses section\n`;
+          errorMsg += `   • Find your warehouse\n`;
+          errorMsg += `   • Copy the EXACT name shown there\n\n`;
+          errorMsg += `3. Compare Character-by-Character:\n`;
+          errorMsg += `   • System name: "${warehouseName}"\n`;
+          errorMsg += `   • Delhivery name: [Copy from dashboard]\n`;
+          errorMsg += `   • If they don't match → Edit one to match the other\n\n`;
+          errorMsg += `4. Update Warehouse Name:\n`;
+          errorMsg += `   • Option A: Edit warehouse in your system (Shipping → Warehouse → Edit)\n`;
+          errorMsg += `   • Option B: Update name in Delhivery dashboard\n`;
+          errorMsg += `   • After updating, try pickup request again\n\n`;
+          errorMsg += `💡 If names match exactly, check:\n`;
+          errorMsg += `   • API token has pickup permissions (contact Delhivery support)\n`;
+          errorMsg += `   • Token is not expired\n`;
+          errorMsg += `   • Warehouse is active in Delhivery`;
+        }
+        
         // Show troubleshooting steps if available
         if (result.troubleshooting && result.troubleshooting.length > 0) {
           console.log('💡 Troubleshooting steps:');
@@ -870,7 +939,7 @@ const Shipping: React.FC = () => {
           errorMsg += '\n\n💡 Troubleshooting:\n' + result.troubleshooting.map((s: string, i: number) => `${i + 1}. ${s}`).join('\n');
         }
         
-        NotificationManager.error(errorMsg, 10000); // Show for 10 seconds
+        NotificationManager.error(errorMsg, 15000); // Show for 15 seconds (longer for important info)
         
         // Still try to update database for internal tracking
         console.log('ℹ️ Updating database for internal tracking...');
@@ -977,55 +1046,175 @@ const Shipping: React.FC = () => {
     }
   };
 
+  const handleRegisterWarehouseInDelhivery = async (warehouse: any) => {
+    try {
+      NotificationManager.info(`Registering "${warehouse.name}" in Delhivery...`);
+      
+      // Extract state from city if available, or default to Delhi for Janakpuri
+      let state = warehouse.state || '';
+      if (!state && warehouse.city) {
+        // Try to infer state from city name
+        const cityLower = warehouse.city.toLowerCase();
+        if (cityLower.includes('delhi') || cityLower.includes('janak')) {
+          state = 'Delhi';
+        } else if (cityLower.includes('mumbai') || cityLower.includes('pune')) {
+          state = 'Maharashtra';
+        } else if (cityLower.includes('bangalore') || cityLower.includes('bengaluru')) {
+          state = 'Karnataka';
+        } else {
+          state = 'Delhi'; // Default fallback
+        }
+      }
+      
+      const result = await delhiveryService.createWarehouseWithValidation({
+        name: warehouse.name,
+        phone: warehouse.phone,
+        email: warehouse.email,
+        city: warehouse.city,
+        pin: warehouse.pin,
+        address: warehouse.address,
+        state: state,
+        country: warehouse.country || 'India',
+        registered_name: warehouse.registered_name || '',
+        return_address: warehouse.return_address || '',
+        return_pin: warehouse.return_pin || '',
+        return_city: warehouse.return_city || '',
+        return_state: warehouse.return_state || state,
+        return_country: warehouse.return_country || 'India'
+      });
+      
+      if (result.success) {
+        NotificationManager.success(`✅ "${warehouse.name}" successfully registered in Delhivery! You can now use it for pickup requests.`);
+        console.log('✅ Warehouse registered in Delhivery:', result);
+      } else {
+        NotificationManager.error(`Failed to register "${warehouse.name}" in Delhivery: ${result.message || 'Unknown error'}`);
+      }
+    } catch (error: any) {
+      console.error('Error registering warehouse in Delhivery:', error);
+      
+      // Show field-level errors
+      if (error.fieldErrors) {
+        const fieldNames: Record<string, string> = {
+          name: 'Warehouse Name',
+          phone: 'Phone',
+          email: 'Email',
+          address: 'Address',
+          city: 'City',
+          pin: 'Pin Code'
+        };
+        
+        const errorFields = Object.keys(error.fieldErrors).map(field => 
+          `• ${fieldNames[field] || field}: ${error.fieldErrors[field]}`
+        ).join('\n');
+        
+        NotificationManager.error(
+          `Cannot register "${warehouse.name}" in Delhivery:\n\n${errorFields}\n\n💡 Please edit the warehouse and correct these fields before registering.`,
+          15000
+        );
+      } else {
+        // Show generic error message
+        let errorMessage = `Failed to register "${warehouse.name}" in Delhivery`;
+        
+        if (error.message) {
+          if (error.message.includes('Validation failed')) {
+            errorMessage += `\n\n${error.errors?.join('\n') || error.message}`;
+            errorMessage += `\n\n💡 Please edit the warehouse and ensure all required fields are filled correctly.`;
+          } else if (error.message.includes('LTL API requires a JWT token')) {
+            // Special handling for token type mismatch
+            errorMessage = `Cannot register warehouse via API:\n\n${error.message}\n\n💡 Solution: Register warehouses manually through the Delhivery dashboard at https://one.delhivery.com`;
+          } else if (error.message.includes('Invalid warehouse data')) {
+            // Check if it's a token decode error
+            if (error.message.includes('Token Decode Error') || error.message.includes('Not enough segments')) {
+              errorMessage = `Cannot register warehouse via API:\n\nYour API token is not compatible with warehouse registration. The LTL API requires a JWT token, but you have a simple API key.\n\n💡 Solution: Register warehouses manually through the Delhivery dashboard at https://one.delhivery.com`;
+            } else {
+              errorMessage += `\n\n${error.message}`;
+              errorMessage += `\n\n📋 Required fields: Name, Phone (10 digits), Email, Address, City, Pin Code (6 digits)`;
+            }
+          } else {
+            errorMessage += `: ${error.message}`;
+          }
+        }
+        
+        NotificationManager.error(errorMessage, 15000);
+      }
+    }
+  };
+
   const handleEditWarehouse = async (warehouseId: string) => {
     setWarehouseEdit(prev => ({ ...prev, loading: true }));
     try {
-      // Try to call Delhivery API (optional - won't block Supabase update)
+      // Validate first - don't save if validation fails
+      let validationPassed = false;
       let delhiverySuccess = false;
+      
       try {
         const result = await delhiveryService.editWarehouseWithValidation(warehouseEdit);
         setWarehouseEdit(prev => ({ ...prev, result }));
+        validationPassed = true;
         delhiverySuccess = result.success;
         if (result.success) {
           console.log('✅ Warehouse updated in Delhivery');
         }
-      } catch (delhiveryError: any) {
-        console.warn('⚠️ Delhivery API not available, updating in Supabase only:', delhiveryError.message);
-        // Continue to update in Supabase even if Delhivery fails
+      } catch (validationError: any) {
+        // Check if it's a validation error
+        if (validationError.fieldErrors) {
+          const fieldNames: Record<string, string> = {
+            name: 'Warehouse Name',
+            phone: 'Phone',
+            address: 'Address'
+          };
+          
+          const errorFields = Object.keys(validationError.fieldErrors).map(field => 
+            `• ${fieldNames[field] || field}: ${validationError.fieldErrors[field]}`
+          ).join('\n');
+          
+          NotificationManager.error(
+            `Cannot save warehouse:\n\n${errorFields}\n\n💡 Please correct these fields before saving.`,
+            15000
+          );
+          setWarehouseEdit(prev => ({ ...prev, loading: false }));
+          return; // Don't save to database if validation fails
+        } else {
+          // Other Delhivery API errors - still allow saving to database
+          console.warn('⚠️ Delhivery API validation/update failed:', validationError.message);
+          validationPassed = true; // Allow database save for non-validation errors
+        }
       }
       
-      // ALWAYS update warehouse in Supabase database (regardless of Delhivery status)
-      try {
-        await shippingService.updateWarehouse(warehouseId, {
-          name: warehouseEdit.name,
-          phone: warehouseEdit.phone,
-          email: warehouseEdit.email,
-          city: warehouseEdit.city,
-          pin: warehouseEdit.pin,
-          address: warehouseEdit.address,
-          registered_name: warehouseEdit.registered_name,
-          return_address: warehouseEdit.return_address,
-          return_city: warehouseEdit.return_city,
-          return_pin: warehouseEdit.return_pin,
-          is_active: warehouseEdit.is_active
-        });
-        
-        console.log('✅ Warehouse updated in Supabase database');
-        
-        if (delhiverySuccess) {
-          NotificationManager.success('Warehouse updated in Delhivery and database!');
-        } else {
-          NotificationManager.success('Warehouse updated in database successfully!');
+      // Only update warehouse in Supabase database if validation passed
+      if (validationPassed) {
+        try {
+          await shippingService.updateWarehouse(warehouseId, {
+            name: warehouseEdit.name,
+            phone: warehouseEdit.phone,
+            email: warehouseEdit.email,
+            city: warehouseEdit.city,
+            pin: warehouseEdit.pin,
+            address: warehouseEdit.address,
+            registered_name: warehouseEdit.registered_name,
+            return_address: warehouseEdit.return_address,
+            return_city: warehouseEdit.return_city,
+            return_pin: warehouseEdit.return_pin,
+            is_active: warehouseEdit.is_active
+          });
+          
+          console.log('✅ Warehouse updated in Supabase database');
+          
+          if (delhiverySuccess) {
+            NotificationManager.success('Warehouse updated in Delhivery and database!');
+          } else {
+            NotificationManager.success('Warehouse updated in database successfully!');
+          }
+          
+          // Reload warehouses list
+          await loadWarehouses();
+          // Close edit form
+          setShowWarehouseEdit(false);
+          setSelectedWarehouse(null);
+        } catch (dbError: any) {
+          console.error('Database update error:', dbError);
+          NotificationManager.error('Failed to update warehouse in database');
         }
-        
-        // Reload warehouses list
-        await loadWarehouses();
-        // Close edit form
-        setShowWarehouseEdit(false);
-        setSelectedWarehouse(null);
-      } catch (dbError: any) {
-        console.error('Database update error:', dbError);
-        NotificationManager.error('Failed to update warehouse in database');
       }
     } catch (error: any) {
       console.error('Warehouse update error:', error);
@@ -2127,30 +2316,40 @@ const Shipping: React.FC = () => {
                         <p className="text-xs text-gray-600">{warehouse.return_address}, {warehouse.return_city}, {warehouse.return_pin}</p>
                       </div>
                     )}
-                    <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                      <span>Created: {new Date(warehouse.created_at).toLocaleDateString()}</span>
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                        <span>Created: {new Date(warehouse.created_at).toLocaleDateString()}</span>
+                        <button
+                          onClick={() => {
+                            setSelectedWarehouse(warehouse);
+                            setWarehouseEdit({
+                              name: warehouse.name,
+                              phone: warehouse.phone,
+                              city: warehouse.city,
+                              pin: warehouse.pin,
+                              address: warehouse.address,
+                              email: warehouse.email,
+                              registered_name: warehouse.registered_name || '',
+                              return_address: warehouse.return_address || '',
+                              return_city: warehouse.return_city || '',
+                              return_pin: warehouse.return_pin || '',
+                              is_active: warehouse.is_active
+                            });
+                            setShowWarehouseEdit(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
+                        >
+                          <Edit className="w-3 h-3" />
+                          <span>Edit</span>
+                        </button>
+                      </div>
                       <button
-                        onClick={() => {
-                          setSelectedWarehouse(warehouse);
-                          setWarehouseEdit({
-                            name: warehouse.name,
-                            phone: warehouse.phone,
-                            city: warehouse.city,
-                            pin: warehouse.pin,
-                            address: warehouse.address,
-                            email: warehouse.email,
-                            registered_name: warehouse.registered_name || '',
-                            return_address: warehouse.return_address || '',
-                            return_city: warehouse.return_city || '',
-                            return_pin: warehouse.return_pin || '',
-                            is_active: warehouse.is_active
-                          });
-                          setShowWarehouseEdit(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
+                        onClick={() => handleRegisterWarehouseInDelhivery(warehouse)}
+                        className="w-full px-2 py-1.5 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center space-x-1"
+                        title="Register this warehouse in Delhivery to enable pickup requests"
                       >
-                        <Edit className="w-3 h-3" />
-                        <span>Edit</span>
+                        <span>📦</span>
+                        <span>Register in Delhivery</span>
                       </button>
                     </div>
                   </div>

@@ -19,8 +19,9 @@ serve(async (req) => {
     console.log('🔑 ApiKey header present:', req.headers.has('apikey'))
     
     // Get the API token from environment variables
-    const delhiveryToken = Deno.env.get('DELHIVERY_API_TOKEN')
+    let delhiveryToken = Deno.env.get('DELHIVERY_API_TOKEN')
     if (!delhiveryToken) {
+      console.error('❌ DELHIVERY_API_TOKEN not found in environment variables')
       return new Response(
         JSON.stringify({ error: 'Delhivery API token not configured' }),
         { 
@@ -28,6 +29,37 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
+    }
+    
+    // Trim whitespace and newlines from token
+    delhiveryToken = delhiveryToken.trim()
+    
+    // Validate token is not empty after trimming
+    if (!delhiveryToken || delhiveryToken.length === 0) {
+      console.error('❌ DELHIVERY_API_TOKEN is empty after trimming')
+      return new Response(
+        JSON.stringify({ error: 'Delhivery API token is empty' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+    
+    // Log token info (first and last 4 chars for security)
+    const tokenPreview = delhiveryToken.length > 8 
+      ? `${delhiveryToken.substring(0, 4)}...${delhiveryToken.substring(delhiveryToken.length - 4)}`
+      : '***'
+    console.log(`🔑 Token preview: ${tokenPreview} (length: ${delhiveryToken.length})`)
+    
+    // Check if token looks like a JWT (has 3 segments separated by dots)
+    const tokenSegments = delhiveryToken.split('.')
+    if (tokenSegments.length === 3) {
+      console.log('⚠️ Token appears to be a JWT (3 segments)')
+    } else if (tokenSegments.length === 1) {
+      console.log('ℹ️ Token appears to be a simple API key (1 segment)')
+    } else {
+      console.warn(`⚠️ Token has unexpected format: ${tokenSegments.length} segments`)
     }
 
     // Check content type to determine how to parse request
@@ -94,18 +126,25 @@ serve(async (req) => {
       baseURL = 'https://track.delhivery.com'
     } else if (endpoint === 'ltl') {
       // New LTL API for warehouse management
+      // Try Token format first (same as Express API)
       baseURL = 'https://ltl-clients-api-dev.delhivery.com'
-      authHeader = `Bearer ${delhiveryToken}`
+      authHeader = `Token ${delhiveryToken}`
     } else if (endpoint === 'ltl-prod') {
       // Production LTL API
       baseURL = 'https://ltl-clients-api.delhivery.com'
-      authHeader = `Bearer ${delhiveryToken}`
+      authHeader = `Token ${delhiveryToken}`
     } else if (endpoint === 'main') {
       baseURL = 'https://staging-express.delhivery.com'
     }
 
     // Prepare the request
-    const url = `${baseURL}${action}`
+    // Replace placeholder token in query string with actual token
+    let finalAction = action
+    if (finalAction.includes('token=edge-function-token')) {
+      finalAction = finalAction.replace('token=edge-function-token', `token=${delhiveryToken}`)
+    }
+    
+    const url = `${baseURL}${finalAction}`
     let headers: any = {
       'Authorization': authHeader,
     }
@@ -116,6 +155,8 @@ serve(async (req) => {
     }
 
     console.log(`📦 Delhivery API Request: ${method} ${url}`)
+    console.log(`🔑 Auth Header format: ${authHeader.split(' ')[0]} (token length: ${delhiveryToken.length})`)
+    console.log(`🔑 Full Auth Header: ${authHeader.substring(0, 30)}...`) // Log first 30 chars of auth header
     if (!isFormData) {
       console.log('📝 Request Data:', JSON.stringify(data))
     } else {
@@ -181,18 +222,69 @@ serve(async (req) => {
     }
 
     console.log(`✅ Delhivery API Response Status: ${response.status}`)
-    console.log('📄 Response Data:', JSON.stringify(jsonData).substring(0, 500))
+    console.log('📄 Response Headers:', JSON.stringify(Object.fromEntries(response.headers.entries())))
+    console.log('📄 Response Data:', JSON.stringify(jsonData))
+    
+    // Log detailed error info for 401 errors
+    if (response.status === 401) {
+      console.error('❌ Authentication Failed (401)')
+      console.error('📦 Request URL:', url)
+      console.error('📝 Request Method:', method)
+      console.error('📋 Request Data:', JSON.stringify(data))
+      console.error('🔑 Auth Header Format:', authHeader.split(' ')[0])
+      console.error('🔑 Token Length:', delhiveryToken.length)
+      console.error('🔑 Token Preview:', tokenPreview)
+      console.error('🔍 Full Response:', JSON.stringify(jsonData))
+      console.error('📄 Response Headers:', JSON.stringify(Object.fromEntries(response.headers.entries())))
+      console.error('💡 Possible causes:')
+      console.error('   1. API token does not have pickup permissions (MOST LIKELY)')
+      console.error('   2. Token is invalid or expired')
+      console.error('   3. Warehouse name does not match exactly (case-sensitive)')
+      console.error('   4. Wrong authentication format')
+      console.error('   5. Warehouse not registered in Delhivery')
+      if (data && typeof data === 'object' && 'warehouse_name' in data) {
+        console.error(`⚠️ Warehouse name being sent: "${data.warehouse_name}"`)
+        console.error(`📏 Warehouse name length: ${data.warehouse_name.length} characters`)
+        console.error('   → Verify this EXACT name exists in Delhivery dashboard')
+        console.error('   → Check: case, spaces, hyphens, special characters')
+      }
+      
+      // Extract specific error message from Delhivery
+      const delhiveryErrorMsg = jsonData?.raw || jsonData?.error?.message || jsonData?.message || jsonData?.error || 'No specific error message';
+      console.error('📄 Delhivery Error Message:', delhiveryErrorMsg)
+      
+      // Provide specific guidance based on error message
+      if (typeof delhiveryErrorMsg === 'string') {
+        if (delhiveryErrorMsg.toLowerCase().includes('warehouse') || delhiveryErrorMsg.toLowerCase().includes('client_warehouse')) {
+          console.error('💡 ERROR TYPE: Warehouse-related')
+          console.error('   → Warehouse name might not exist in Delhivery')
+          console.error('   → Or warehouse is not registered/active')
+        } else if (delhiveryErrorMsg.toLowerCase().includes('token') || delhiveryErrorMsg.toLowerCase().includes('auth')) {
+          console.error('💡 ERROR TYPE: Token-related')
+          console.error('   → Token might not have pickup permissions')
+          console.error('   → Token might be expired or invalid')
+          console.error('   → Contact Delhivery support to verify token permissions')
+        } else {
+          console.error('💡 ERROR TYPE: Unknown')
+          console.error('   → Check Delhivery dashboard for warehouse status')
+          console.error('   → Verify token permissions with Delhivery support')
+        }
+      }
+    }
 
-    // Return the response
+    // Always return 200 status to avoid Supabase treating it as an error
+    // Include the actual status and error info in the response body
     return new Response(
       JSON.stringify({
         success: response.ok,
         data: jsonData,
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
+        // Include error details if status is not ok
+        error: !response.ok ? (jsonData.error || jsonData.message || response.statusText || `HTTP ${response.status}`) : undefined
       }),
       { 
-        status: response.ok ? 200 : response.status,
+        status: 200, // Always return 200, check response.success instead
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )

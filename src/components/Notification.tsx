@@ -113,6 +113,9 @@ export class NotificationManager {
   }
 
   static remove(id: string): void {
+    if (!this.notifications) {
+      this.notifications = [];
+    }
     this.notifications = this.notifications.filter(n => n.id !== id);
     this.notifyListeners();
   }

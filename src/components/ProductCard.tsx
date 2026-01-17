@@ -43,14 +43,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     );
 
   // Generate appropriate URL
+  const isNormalItem = product.categories && product.categories.includes('Normal');
+  
+  // For normal items, use slug if available, otherwise generate from title
+  const normalSlug = (product as any).slug || product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  
   const productUrl = isClothing 
     ? `/clothes/${product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`
-    : generateProductUrl(
-        product.categories && product.categories.length > 0 
-          ? product.categories[0] 
-          : (product as any).category, 
-        product.title
-      );
+    : isNormalItem
+      ? `/normal/${normalSlug}`
+      : generateProductUrl(
+          product.categories && product.categories.length > 0 
+            ? product.categories[0] 
+            : (product as any).category || 'general', 
+          product.title
+        );
 
   return (
     <Link

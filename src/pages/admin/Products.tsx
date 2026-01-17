@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Eye, Search, Grid, List, Star, 
   Download, TrendingUp, Package, DollarSign, RefreshCw, CheckSquare, Image as ImageIcon,
@@ -1239,6 +1240,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ title, product, categories,
 };
 
 const Products: React.FC = () => {
+  const navigate = useNavigate();
   const { formatCurrency, currencySettings } = useCurrency();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1358,6 +1360,8 @@ const Products: React.FC = () => {
     setActiveTab(tabId);
     if (tabId === 'export') {
       setShowExportModal(true);
+    } else if (tabId === 'categories') {
+      navigate('/admin/categories');
     }
   };
 

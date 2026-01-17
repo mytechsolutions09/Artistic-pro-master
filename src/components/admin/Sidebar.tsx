@@ -19,7 +19,8 @@ import {
   Truck,
   MessageSquare,
   RotateCcw,
-  Brush
+  Brush,
+  Layers
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -38,11 +39,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/admin' },
     { id: 'orders', label: 'Orders', icon: ShoppingBag, path: '/admin/orders' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
+    { id: 'normal', label: 'Normal', icon: Layers, path: '/admin/normal' },
     { id: 'commissioned-art', label: 'Commissioned Art', icon: Brush, path: '/admin/commissioned-art' },
     { id: 'clothes', label: 'Clothes', icon: Table, path: '/admin/clothes' },
     { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },
     { id: 'returns', label: 'Returns', icon: RotateCcw, path: '/admin/returns' },
-    { id: 'categories', label: 'Categories', icon: Palette, path: '/admin/categories' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
     { id: 'customer-care', label: 'Customer Care', icon: MessageSquare, path: '/admin/customer-care' },
     { id: 'email', label: 'Email Management', icon: Mail, path: '/admin/email' },

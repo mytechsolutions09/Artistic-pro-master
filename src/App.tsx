@@ -62,6 +62,8 @@ import Clothes from './pages/admin/Clothes';
 import Shipping from './pages/admin/Shipping';
 import AdminReturns from './pages/admin/Returns';
 import CommissionedArt from './pages/admin/CommissionedArt';
+import Normal from './pages/admin/Normal';
+import NormalItemsPage from './pages/NormalItemsPage';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import EnvTest from './components/EnvTest';
 import SkeletonTest from './pages/SkeletonTest';
@@ -95,6 +97,8 @@ function AppContent() {
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/favorites" element={<FavoritesPage />} />
                   <Route path="/dashboard" element={<UserDashboard />} />
+                  <Route path="/normal" element={<NormalItemsPage />} />
+                  <Route path="/normal/:itemSlug" element={<NormalItemsPage />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -145,6 +149,7 @@ function AppContent() {
                   <Route path="/admin/reviews" element={<AdminProtectedRoute><Reviews /></AdminProtectedRoute>} />
                   <Route path="/admin/database" element={<AdminProtectedRoute><DatabaseManagement /></AdminProtectedRoute>} />
                   <Route path="/admin/settings" element={<AdminProtectedRoute><Settings /></AdminProtectedRoute>} />
+                  <Route path="/admin/normal" element={<AdminProtectedRoute><Normal /></AdminProtectedRoute>} />
       </Routes>
       {!shouldHideFooter && <Footer />}
     </div>

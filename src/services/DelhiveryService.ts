@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabaseService';
+import { diagnose401Error, analyzeWarehouseName, generateTroubleshootingGuide } from '../utils/delhiveryDiagnostics';
 
 // Use Supabase Edge Function for Delhivery API calls (avoids CORS)
 const USE_SUPABASE_PROXY = import.meta.env.VITE_USE_SUPABASE_DELHIVERY_PROXY !== 'false'; // Default to true
@@ -10,6 +11,7 @@ const DELHIVERY_CONFIG = {
   expressBaseURL: import.meta.env.VITE_DELHIVERY_EXPRESS_URL || 'https://express-dev-test.delhivery.com',
   trackBaseURL: import.meta.env.VITE_DELHIVERY_TRACK_URL || 'https://track.delhivery.com',
   token: import.meta.env.VITE_DELHIVERY_API_TOKEN || 'xxxxxxxxxxxxxxxx',
+  clientName: import.meta.env.VITE_DELHIVERY_CLIENT_NAME || '', // Required for B2B pickup requests
   timeout: parseInt(import.meta.env.VITE_DELHIVERY_TIMEOUT || '10000'),
   retryAttempts: parseInt(import.meta.env.VITE_DELHIVERY_RETRY_ATTEMPTS || '3'),
 };
@@ -160,7 +162,7 @@ export interface ExpectedTATResponse {
 }
 
 export interface WaybillRequest {
-  token: string;
+  token?: string; // Optional when using Edge Function (handled via Authorization header)
   count: string;
 }
 
@@ -345,6 +347,10 @@ interface DelhiveryPickupRequest {
   pickup_date: string;
   warehouse_name: string;
   quantity: number;
+  client_name?: string; // Required for B2B pickup requests
+  pickup_location?: {  // Alternative format for B2B (object instead of string)
+    name: string;
+  };
 }
 
 // Warehouse Management Types
@@ -354,6 +360,7 @@ export interface CreateWarehouseRequest {
   name: string;
   pin: string;
   address: string;
+  state?: string; // Optional, will default to 'Maharashtra' if not provided
   country: string;
   email: string;
   registered_name: string;
@@ -525,6 +532,12 @@ class DelhiveryService {
 
       if (error) {
         console.error('❌ Edge Function error:', error);
+        // Check if error has status code
+        if (error.status || error.statusCode) {
+          const status = error.status || error.statusCode;
+          const message = error.message || 'Unknown error';
+          throw new Error(`Edge Function error (${status}): ${message}`);
+        }
         throw new Error(`Edge Function error: ${error.message}`);
       }
 
@@ -533,20 +546,48 @@ class DelhiveryService {
         throw new Error('No response from Edge Function');
       }
 
-      // Check if response has error field
-      if (response.error) {
-        console.error('❌ API returned error:', response.error);
-        throw new Error(`API error: ${response.error}`);
-      }
-
+      // Check if response indicates failure (Edge Function now always returns 200, but sets success=false on errors)
       if (!response.success) {
         console.error('❌ API call unsuccessful:', response);
-        throw new Error(`API error: ${response.statusText || JSON.stringify(response)}`);
+        console.error('📄 Full response data:', JSON.stringify(response.data, null, 2));
+        console.error('📊 Response status:', response.status, response.statusText);
+        
+        // Extract error message from various possible locations
+        let errorMsg = 'Unknown error';
+        if (response.error) {
+          errorMsg = typeof response.error === 'string' ? response.error : JSON.stringify(response.error);
+        } else if (response.data?.error) {
+          errorMsg = typeof response.data.error === 'string' ? response.data.error : JSON.stringify(response.data.error);
+        } else if (response.data?.message) {
+          errorMsg = response.data.message;
+        } else if (response.statusText) {
+          errorMsg = response.statusText;
+        } else if (response.data && typeof response.data === 'string') {
+          errorMsg = response.data;
+        } else if (response.data && typeof response.data === 'object') {
+          // Try to extract meaningful error message from object
+          if (response.data.raw) {
+            errorMsg = response.data.raw;
+          } else {
+            errorMsg = JSON.stringify(response.data);
+          }
+        }
+        
+        const status = response.status || 'unknown';
+        // Include full response in error for debugging
+        const error = new Error(`Delhivery API error (${status}): ${errorMsg}`);
+        (error as any).response = response;
+        (error as any).status = status;
+        throw error;
       }
 
       return response.data;
     } catch (error: any) {
       console.error('❌ API call failed:', error);
+      // Re-throw with more context if it's a status code error
+      if (error.message?.includes('non-2xx')) {
+        throw new Error(`Delhivery API returned an error. Check Edge Function logs for details. Original error: ${error.message}`);
+      }
       throw error;
     }
   }
@@ -929,20 +970,50 @@ class DelhiveryService {
         data: JSON.stringify(shipmentData)
       }, 'main');
       
-      return response;
+      // Delhivery CMU API returns response in different formats
+      // Handle both direct response and wrapped response
+      if (response && typeof response === 'object') {
+        // If response has shipments array, return as-is
+        if (response.shipments && Array.isArray(response.shipments)) {
+          return {
+            success: true,
+            data: response
+          };
+        }
+        // If response is already in expected format
+        if (response.data) {
+          return response;
+        }
+        // If response has waybill directly
+        if (response.waybill) {
+          return {
+            success: true,
+            data: {
+              shipments: [{
+                ...shipmentData.shipments[0],
+                waybill: response.waybill,
+                status: 'Created'
+              }]
+            }
+          };
+        }
+      }
+      
+      return {
+        success: true,
+        data: response
+      };
     } catch (error: any) {
       console.error('Error creating shipment:', error);
       
-      // If it's a network error or CORS error, return mock data
-      if (error.code === 'ERR_NETWORK' || 
-          error.message === 'Network Error' || 
-          error.message?.includes('CORS') ||
-          error.message?.includes('Edge Function error') || 
-          error.message?.includes('API error')) {
+      // Only return mock data for actual network/CORS errors, not API errors
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || error.message?.includes('CORS')) {
         console.warn('Network/CORS error, returning mock shipment data');
         return this.getMockShipmentResponse(shipmentData);
       }
       
+      // For Edge Function errors or API errors, throw to let caller handle
+      // This allows the admin page to show proper error messages
       throw new Error(`Failed to create shipment: ${error.message}`);
     }
   }
@@ -1160,20 +1231,88 @@ class DelhiveryService {
 
   /**
    * Get waybill numbers in bulk
+   * According to Delhivery API docs: https://one.delhivery.com/developer-portal/document/b2c/detail/fetch-waybill
+   * Endpoint: https://track.delhivery.com/waybill/api/fetch/json/?cl=client_name
+   * OR: https://track.delhivery.com/waybill/api/bulk/json/?count=N (for bulk generation)
+   * Authentication via Authorization header (Token format), NOT query string
    */
   async getWaybills(request: WaybillRequest): Promise<WaybillResponse> {
     try {
-      // Build query string from params
-      const params = new URLSearchParams(request as any).toString();
-      // Use Edge Function to avoid CORS issues
-      const response = await this.makeApiCall(`/waybill/api/bulk/json/?${params}`, 'GET', undefined, 'main');
+      // Try bulk endpoint first (for generating waybills)
+      // If that doesn't work, we'll try fetch endpoint
+      // Token is handled via Authorization header by Edge Function (NOT in query string)
+      const params = new URLSearchParams({
+        count: request.count
+      }).toString();
+      // Use track endpoint (track.delhivery.com) - waybill API is on track domain
+      const response = await this.makeApiCall(`/waybill/api/bulk/json/?${params}`, 'GET', undefined, 'track');
+      
+      console.log('🔍 Raw waybill API response type:', typeof response, 'value:', response);
+      
+      // Delhivery API can return waybills in different formats:
+      // 1. Array format: { waybills: ["DL123", "DL456"] }
+      // 2. String format: "44334310000011" (single waybill as string)
+      // 3. Array of strings: ["44334310000011", "44334310000012"]
+      
+      // FIRST: Check if response is a string (single waybill) - most common format
+      if (typeof response === 'string' && response.trim().length > 0) {
+        console.log('✅ Received single waybill as string:', response);
+        return {
+          waybills: [response.trim()],
+          count: 1
+        };
+      }
+      
+      // SECOND: Check if response is an array of waybills
+      if (Array.isArray(response)) {
+        console.log('✅ Received waybills as array:', response);
+        return {
+          waybills: response,
+          count: response.length
+        };
+      }
+      
+      // THIRD: Check if response has waybills array
+      if (response && typeof response === 'object' && response.waybills && Array.isArray(response.waybills)) {
+        return response;
+      }
+      
+      // FOURTH: Check if response has waybill property that's a string
+      if (response && typeof response === 'object' && typeof response.waybill === 'string') {
+        console.log('✅ Received waybill property:', response.waybill);
+        return {
+          waybills: [response.waybill],
+          count: 1
+        };
+      }
+      
+      // If response doesn't have waybills, check for error
+      if (response && response.error) {
+        const errorMsg = typeof response.error === 'string' ? response.error : JSON.stringify(response.error);
+        console.error('❌ Delhivery waybill API error:', errorMsg);
+        throw new Error(`Delhivery API error: ${errorMsg}`);
+      }
+      
+      // Log full response for debugging if no waybills found
+      console.warn('⚠️ Unexpected waybill API response format:', JSON.stringify(response, null, 2));
+      
       return response;
     } catch (error: any) {
-      console.error('Error getting waybills:', error);
+      console.error('❌ Error getting waybills from Delhivery:', error);
       
-      // Return mock data on network errors
-      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || error.message?.includes('Edge Function error')) {
-        console.warn('Network error, returning mock waybills');
+      // Check if it's an Edge Function deployment issue
+      if (error.message?.includes('Edge Function error') || 
+          error.message?.includes('No response from Edge Function') ||
+          error.message?.includes('function not found')) {
+        console.error('💡 Edge Function may not be deployed or DELHIVERY_API_TOKEN not set');
+        console.error('   Run: supabase functions deploy delhivery-api');
+        console.error('   Set secret: supabase secrets set DELHIVERY_API_TOKEN=your-token');
+        throw new Error(`Edge Function error: ${error.message}. Please deploy the Edge Function and set DELHIVERY_API_TOKEN secret.`);
+      }
+      
+      // Only return mock data for actual network errors (not API/Edge Function errors)
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        console.warn('⚠️ Network error, returning mock waybills');
         const mockWaybills: string[] = [];
         for (let i = 0; i < parseInt(request.count); i++) {
           mockWaybills.push(`MOCK${Date.now()}${i + 1}`);
@@ -1378,6 +1517,9 @@ class DelhiveryService {
       // When using Supabase proxy, we still proceed (Edge Function has the token)
     }
 
+    // Prepare pickup request data (declare outside try block for error handling)
+    let expressPickupRequest: any = null;
+    
     try {
       // Ensure time is in HH:MM:SS format
       let pickupTime = request.pickup_time || '10:00:00';
@@ -1387,16 +1529,33 @@ class DelhiveryService {
       }
       
       // Transform to Express API format (standard pickup API)
-      const expressPickupRequest = {
+      // According to Delhivery documentation: 
+      // - B2C: https://one.delhivery.com/developer-portal/document/b2c/detail/pickup-scheduling
+      // - B2B: https://one.delhivery.com/developer-portal/document/b2b/detail/pickup-request
+      expressPickupRequest = {
         pickup_time: pickupTime,
         pickup_date: request.pickup_date,
-        warehouse_name: request.pickup_location,
+        warehouse_name: request.pickup_location, // Must match exactly with Delhivery warehouse name
         quantity: request.expected_package_count || 1
       };
+      
+      // Add client_name for B2B pickup requests (if configured)
+      // According to B2B documentation, client_name is required
+      if (DELHIVERY_CONFIG.clientName && DELHIVERY_CONFIG.clientName.trim() !== '') {
+        expressPickupRequest.client_name = DELHIVERY_CONFIG.clientName.trim();
+        console.log(`📋 B2B Pickup Request: client_name="${expressPickupRequest.client_name}"`);
+      } else {
+        console.log('⚠️ client_name not configured - using B2C format');
+        console.log('💡 To use B2B format, set VITE_DELHIVERY_CLIENT_NAME in .env file');
+      }
 
-      console.log('📦 Requesting pickup from Delhivery Express API with payload:', expressPickupRequest);
-      console.log('🔗 Using endpoint: main (https://staging-express.delhivery.com)');
-      console.log('📍 Action: /fm/request/new/');
+      console.log('📦 Requesting pickup from Delhivery Express API');
+      console.log('🔗 Endpoint: https://staging-express.delhivery.com/fm/request/new/');
+      console.log('📋 Payload:', JSON.stringify(expressPickupRequest, null, 2));
+      console.log('⚠️ IMPORTANT: Warehouse name must match exactly (case-sensitive) with Delhivery dashboard');
+      console.log(`🔤 Warehouse name being sent: "${expressPickupRequest.warehouse_name}"`);
+      console.log(`📏 Warehouse name length: ${expressPickupRequest.warehouse_name.length} characters`);
+      console.log(`🔍 Warehouse name characters: [${expressPickupRequest.warehouse_name.split('').map(c => c === ' ' ? 'SPACE' : c === '-' ? 'HYPHEN' : c).join(', ')}]`);
       
       // Use Edge Function with Express API endpoint (simpler, standard token)
       const responseData = await this.makeApiCall('/fm/request/new/', 'POST', expressPickupRequest, 'main');
@@ -1421,19 +1580,82 @@ class DelhiveryService {
       // Check if it's an Edge Function error response
       if (error.message) {
         const msg = error.message.toLowerCase();
+        const errorStatus = (error as any).status || (error as any).response?.status;
+        
+        // Log the actual error response for debugging
+        console.error('🔍 Error status:', errorStatus);
+        console.error('🔍 Error response:', (error as any).response);
         
         if (msg.includes('warehouse') || msg.includes('client_warehouse')) {
           errorMessage = 'Warehouse not found in Delhivery';
           errorDetails = 'The warehouse name does not exist in Delhivery system. Please ensure the warehouse is registered with Delhivery first.';
-        } else if (msg.includes('401') || msg.includes('unauthorized')) {
+        } else if (errorStatus === 401 || msg.includes('401') || msg.includes('unauthorized')) {
           errorMessage = 'Authentication failed';
-          errorDetails = 'Delhivery API token is invalid or expired. Please check DELHIVERY_API_TOKEN in Supabase Edge Function secrets.';
-        } else if (msg.includes('403') || msg.includes('forbidden')) {
+          const actualError = (error as any).response?.data?.error || (error as any).response?.data?.message || error.message;
+          const warehouseName = expressPickupRequest?.warehouse_name || request.pickup_location || 'Unknown';
+          
+          // Use diagnostic utility to analyze the error
+          const diagnostic = diagnose401Error(warehouseName, actualError);
+          const warehouseAnalysis = analyzeWarehouseName(warehouseName);
+          
+          // Build detailed error message with diagnostics
+          let detailedError = `Delhivery API returned 401 Unauthorized.\n\n`;
+          detailedError += `📦 Warehouse Name Analysis:\n`;
+          detailedError += `   • Name being sent: "${warehouseName}"\n`;
+          detailedError += `   • Length: ${warehouseName.length} characters\n`;
+          
+          if (warehouseAnalysis && warehouseAnalysis.potentialIssues.length > 0) {
+            detailedError += `\n⚠️ Warehouse Name Issues Detected:\n`;
+            warehouseAnalysis.potentialIssues.forEach(issue => {
+              detailedError += `   • ${issue}\n`;
+            });
+          }
+          
+          if (warehouseAnalysis) {
+            detailedError += `\n🔍 Character Breakdown:\n`;
+            warehouseAnalysis.characterBreakdown.slice(0, 50).forEach((char, idx) => {
+              const displayChar = char.char === ' ' ? '[SPACE]' : char.char === '-' ? '[HYPHEN]' : char.char;
+              detailedError += `   ${idx + 1}. "${displayChar}" (${char.description})\n`;
+            });
+            if (warehouseAnalysis.characterBreakdown.length > 50) {
+              detailedError += `   ... and ${warehouseAnalysis.characterBreakdown.length - 50} more characters\n`;
+            }
+          }
+          
+          detailedError += `\n💡 Most Likely Causes:\n`;
+          detailedError += `   1. API token doesn't have pickup permissions (MOST COMMON)\n`;
+          detailedError += `      → Contact Delhivery support to enable pickup permissions\n`;
+          detailedError += `      → Mention: Token works for waybills but not pickups\n`;
+          detailedError += `\n   2. Warehouse name doesn't match exactly in Delhivery\n`;
+          detailedError += `      → Check Delhivery dashboard for exact warehouse name\n`;
+          detailedError += `      → Compare character-by-character (case-sensitive)\n`;
+          detailedError += `      → Pay attention to spaces, hyphens, and special characters\n`;
+          detailedError += `\n   3. Warehouse not registered/active in Delhivery\n`;
+          detailedError += `      → Verify warehouse exists in Delhivery dashboard\n`;
+          detailedError += `      → Ensure warehouse is active (not disabled)\n`;
+          
+          detailedError += `\n📋 Next Steps:\n`;
+          detailedError += `   1. Check Edge Function logs for detailed error:\n`;
+          detailedError += `      → Supabase Dashboard → Functions → delhivery-api → Logs\n`;
+          detailedError += `   2. Verify warehouse name in Delhivery dashboard\n`;
+          detailedError += `   3. Contact Delhivery support with:\n`;
+          detailedError += `      • Your API token (mention it works for waybills)\n`;
+          detailedError += `      • Warehouse name: "${warehouseName}"\n`;
+          detailedError += `      • Error: 401 Unauthorized on /fm/request/new/\n`;
+          detailedError += `      • Request: Enable pickup scheduling permissions\n`;
+          
+          errorDetails = detailedError;
+          
+          // Log diagnostic information to console
+          console.error('🔍 401 Error Diagnostics:');
+          console.error(generateTroubleshootingGuide(warehouseName, { message: actualError }));
+        } else if (errorStatus === 403 || msg.includes('403') || msg.includes('forbidden')) {
           errorMessage = 'Access denied';
-          errorDetails = 'Your Delhivery API token does not have permission to create pickups.';
-        } else if (msg.includes('400') || msg.includes('bad request')) {
+          errorDetails = 'Your Delhivery API token does not have permission to create pickups. Please check your API token permissions with Delhivery.';
+        } else if (errorStatus === 400 || msg.includes('400') || msg.includes('bad request')) {
           errorMessage = 'Invalid request data';
-          errorDetails = 'The pickup request data is invalid. Please check all required fields.';
+          const actualError = (error as any).response?.data?.error || (error as any).response?.data?.message || error.message;
+          errorDetails = `The pickup request data is invalid: ${actualError}. Please check all required fields match Delhivery's requirements.`;
         } else if (msg.includes('edge function error')) {
           errorMessage = 'Edge Function error';
           errorDetails = 'The Supabase Edge Function encountered an error. Please check the deployment and logs.';
@@ -1450,17 +1672,46 @@ class DelhiveryService {
       console.error('   3. Ensure Edge Function is deployed: supabase functions deploy delhivery-api');
       console.error('   4. Check Edge Function logs: supabase functions logs delhivery-api');
       
-      return {
+      // Include diagnostic information for 401 errors
+      const warehouseName = expressPickupRequest?.warehouse_name || request.pickup_location || 'Unknown';
+      const errorStatus = (error as any).status || (error as any).response?.status;
+      const is401Error = errorStatus === 401 || error.message?.toLowerCase().includes('401') || error.message?.toLowerCase().includes('unauthorized');
+      
+      const troubleshooting = is401Error 
+        ? [
+            'Verify the warehouse name matches exactly what is registered in Delhivery (character-by-character, case-sensitive)',
+            'Check that DELHIVERY_API_TOKEN is set in Supabase Edge Function secrets',
+            'Verify API token has pickup permissions (contact Delhivery support if needed)',
+            'Ensure the Edge Function is deployed',
+            'Check Edge Function logs for detailed error information',
+            'Contact Delhivery support to enable pickup permissions for your API token'
+          ]
+        : [
+            'Verify the warehouse name matches exactly what is registered in Delhivery',
+            'Check that DELHIVERY_API_TOKEN is set in Supabase Edge Function secrets',
+            'Ensure the Edge Function is deployed',
+            'Check Edge Function logs for detailed error information'
+          ];
+      
+      const result: any = {
         success: false,
         message: errorMessage,
         error: errorDetails || error.message,
-        troubleshooting: [
-          'Verify the warehouse name matches exactly what is registered in Delhivery',
-          'Check that DELHIVERY_API_TOKEN is set in Supabase Edge Function secrets',
-          'Ensure the Edge Function is deployed',
-          'Check Edge Function logs for detailed error information'
-        ]
+        troubleshooting
       };
+      
+      // Add diagnostic data for 401 errors
+      if (is401Error) {
+        const diagnostic = diagnose401Error(warehouseName, errorDetails || error.message);
+        result.diagnostic = {
+          warehouseNameAnalysis: diagnostic.warehouseNameAnalysis,
+          issues: diagnostic.issues,
+          recommendations: diagnostic.recommendations
+        };
+        result.status = 401;
+      }
+      
+      return result;
     }
   }
 
@@ -1663,17 +1914,26 @@ class DelhiveryService {
     }
 
     try {
+      // When using Edge Function, token is handled via Authorization header (no need to pass token)
       const response = await this.getWaybills({
-        token: DELHIVERY_CONFIG.token,
         count: count.toString()
       });
-      return response.waybills || [];
-    } catch (error: any) {
-      console.error('Error generating waybills:', error);
       
-      // If network error, return mock waybills instead of throwing
+      const waybills = response.waybills || [];
+      
+      // Validate waybills are not mock
+      if (waybills.length > 0 && waybills[0].startsWith('MOCK')) {
+        console.warn('⚠️ Received mock waybills from API - Edge Function may not be configured correctly');
+        throw new Error('Received mock waybills. Please check Edge Function deployment and DELHIVERY_API_TOKEN secret.');
+      }
+      
+      return waybills;
+    } catch (error: any) {
+      console.error('❌ Error generating waybills:', error);
+      
+      // Only return mock waybills for actual network errors, not Edge Function/API errors
       if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-        console.log('🔧 Network error - generating mock waybills instead');
+        console.warn('⚠️ Network error - generating mock waybills as fallback');
         const mockWaybills: string[] = [];
         const prefix = 'DL';
         for (let i = 0; i < count; i++) {
@@ -1683,7 +1943,8 @@ class DelhiveryService {
         return mockWaybills;
       }
       
-      throw new Error('Failed to generate waybills');
+      // For Edge Function errors, throw to show proper error message
+      throw error;
     }
   }
 
@@ -1778,48 +2039,109 @@ class DelhiveryService {
         };
       }
 
-      // Transform to new LTL API format
-      const ltlRequestData = {
-        name: warehouseData.name,
-        pin_code: warehouseData.pin,
-        city: warehouseData.city,
-        state: warehouseData.state || 'Maharashtra',
-        country: warehouseData.country || 'India',
-        address_details: {
+      // Try Express API first (works with simple API key token)
+      // If that fails, we'll try LTL API
+      let response: any;
+      let expressApiError: any = null;
+      
+      try {
+        // Express API format (old endpoint that works with Express API token)
+        const expressRequestData = {
+          name: warehouseData.name,
+          pin: warehouseData.pin,
+          city: warehouseData.city,
+          state: warehouseData.state || 'Delhi',
+          country: warehouseData.country || 'India',
           address: warehouseData.address,
-          contact_person: warehouseData.registered_name || 'Manager',
-          phone_number: warehouseData.phone,
-          email: warehouseData.email || 'info@example.com'
-        },
-        business_hours: {
-          MON: { start_time: '09:00', close_time: '18:00' },
-          TUE: { start_time: '09:00', close_time: '18:00' },
-          WED: { start_time: '09:00', close_time: '18:00' },
-          THU: { start_time: '09:00', close_time: '18:00' },
-          FRI: { start_time: '09:00', close_time: '18:00' },
-          SAT: { start_time: '09:00', close_time: '14:00' }
-        },
-        pick_up_hours: {
-          MON: { start_time: '10:00', close_time: '17:00' },
-          TUE: { start_time: '10:00', close_time: '17:00' },
-          WED: { start_time: '10:00', close_time: '17:00' },
-          THU: { start_time: '10:00', close_time: '17:00' },
-          FRI: { start_time: '10:00', close_time: '17:00' },
-          SAT: { start_time: '10:00', close_time: '13:00' }
-        },
-        pick_up_days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-        business_days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-        ret_address: {
-          pin: warehouseData.return_pin || warehouseData.pin,
-          address: warehouseData.return_address || warehouseData.address,
-          city: warehouseData.return_city || warehouseData.city,
-          state: warehouseData.return_state || warehouseData.state || 'Maharashtra',
-          country: warehouseData.return_country || 'India'
+          phone: warehouseData.phone,
+          email: warehouseData.email,
+          registered_name: warehouseData.registered_name || warehouseData.name
+        };
+        
+        console.log('🔄 Trying Express API for warehouse creation...');
+        response = await this.makeApiCall('/api/backend/clientwarehouse/create/', 'PUT', expressRequestData, 'main');
+        
+        // Check if response indicates success
+        if (response && response.success !== false) {
+          console.log('✅ Express API warehouse creation successful');
+          return {
+            success: true,
+            message: 'Warehouse created successfully',
+            data: response.data
+          };
         }
-      };
+      } catch (expressError: any) {
+        expressApiError = expressError;
+        console.warn('⚠️ Express API failed:', expressError.message);
+        
+        // If Express API returns 404 (endpoint doesn't exist), don't try LTL API
+        const expressStatus = expressError.status || expressError.response?.status || expressError.data?.status;
+        if (expressStatus === 404) {
+          throw new Error('Warehouse creation endpoint not available. Express API endpoint not found. Please contact Delhivery support or use Delhivery dashboard to register warehouses.');
+        }
+        
+        // If Express API fails with authentication error, don't try LTL API (same token issue)
+        if (expressStatus === 401) {
+          throw new Error('Authentication failed for Express API. Please check your DELHIVERY_API_TOKEN in Supabase Edge Function secrets.');
+        }
+      }
+      
+      // Fallback to LTL API format (only if Express API didn't fail with 404/401)
+      try {
+        console.log('🔄 Trying LTL API for warehouse creation...');
+        const ltlRequestData = {
+          name: warehouseData.name,
+          pin_code: warehouseData.pin,
+          city: warehouseData.city,
+          state: warehouseData.state || 'Maharashtra',
+          country: warehouseData.country || 'India',
+          address_details: {
+            address: warehouseData.address,
+            contact_person: warehouseData.registered_name || 'Manager',
+            phone_number: warehouseData.phone,
+            email: warehouseData.email || 'info@example.com'
+          },
+          business_hours: {
+            MON: { start_time: '09:00', close_time: '18:00' },
+            TUE: { start_time: '09:00', close_time: '18:00' },
+            WED: { start_time: '09:00', close_time: '18:00' },
+            THU: { start_time: '09:00', close_time: '18:00' },
+            FRI: { start_time: '09:00', close_time: '18:00' },
+            SAT: { start_time: '09:00', close_time: '14:00' }
+          },
+          pick_up_hours: {
+            MON: { start_time: '10:00', close_time: '17:00' },
+            TUE: { start_time: '10:00', close_time: '17:00' },
+            WED: { start_time: '10:00', close_time: '17:00' },
+            THU: { start_time: '10:00', close_time: '17:00' },
+            FRI: { start_time: '10:00', close_time: '17:00' },
+            SAT: { start_time: '10:00', close_time: '13:00' }
+          },
+          pick_up_days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+          business_days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+          ret_address: {
+            pin: warehouseData.return_pin || warehouseData.pin,
+            address: warehouseData.return_address || warehouseData.address,
+            city: warehouseData.return_city || warehouseData.city,
+            state: warehouseData.return_state || warehouseData.state || 'Maharashtra',
+            country: warehouseData.return_country || 'India'
+          }
+        };
 
-      // Use Edge Function with new LTL API endpoint
-      const response = await this.makeApiCall('/client-warehouse/create/', 'POST', ltlRequestData, 'ltl');
+        // Use Edge Function with new LTL API endpoint
+        response = await this.makeApiCall('/client-warehouse/create/', 'POST', ltlRequestData, 'ltl');
+      } catch (ltlError: any) {
+        // Check if LTL API failed with token decode error
+        const ltlErrorData = ltlError.data || ltlError.response?.data || {};
+        const ltlErrorMessage = ltlErrorData.error?.message || ltlErrorData.message || ltlError.message || '';
+        
+        if (ltlErrorMessage.includes('Token Decode Error') || ltlErrorMessage.includes('Not enough segments')) {
+          throw new Error('LTL API requires a JWT token, but your current token is a simple API key. Warehouse registration via API is not available with your current token type. Please register warehouses manually through the Delhivery dashboard, or contact Delhivery support to get an LTL API JWT token.');
+        }
+        
+        // Re-throw the LTL error if it's not a token issue
+        throw ltlError;
+      }
       
       return {
         success: true,
@@ -1829,17 +2151,63 @@ class DelhiveryService {
     } catch (error: any) {
       console.error('Error creating warehouse:', error);
       
+      // Extract error details from Edge Function response format
+      const errorStatus = error.status || error.response?.status;
+      const errorResponse = error.response || {};
+      const errorData = errorResponse.data || error.data || {};
+      
       // Provide more specific error messages
-      if (error.response?.status === 401) {
+      if (errorStatus === 401) {
         throw new Error('Invalid API token. Please check your Delhivery API configuration.');
-      } else if (error.response?.status === 400) {
-        throw new Error(`Invalid warehouse data: ${error.response?.data?.message || 'Please check all required fields'}`);
-      } else if (error.response?.status === 403) {
+      } else if (errorStatus === 400) {
+        // Check if it's a token decode error (LTL API requires JWT)
+        const errorMessageText = errorData.error?.message || errorData.message || errorData.raw || error.message || '';
+        
+        if (errorMessageText.includes('Token Decode Error') || errorMessageText.includes('Not enough segments')) {
+          throw new Error('LTL API requires a JWT token, but your current token is a simple API key. Warehouse registration via API is not available with your current token type. Please register warehouses manually through the Delhivery dashboard, or contact Delhivery support to get an LTL API JWT token.');
+        }
+        
+        // Try to extract more details from the error response
+        let errorMessage = 'Invalid warehouse data: Please check all required fields';
+        
+        // Check various possible locations for error message
+        if (errorData.raw && typeof errorData.raw === 'string') {
+          errorMessage = `Invalid warehouse data: ${errorData.raw}`;
+        } else if (errorData.message && typeof errorData.message === 'string') {
+          errorMessage = `Invalid warehouse data: ${errorData.message}`;
+        } else if (errorData.error) {
+          if (typeof errorData.error === 'string') {
+            errorMessage = `Invalid warehouse data: ${errorData.error}`;
+          } else if (typeof errorData.error === 'object') {
+            // Try to extract message from error object
+            errorMessage = `Invalid warehouse data: ${errorData.error.message || JSON.stringify(errorData.error)}`;
+          }
+        } else if (errorData.detail && typeof errorData.detail === 'string') {
+          errorMessage = `Invalid warehouse data: ${errorData.detail}`;
+        } else if (typeof errorData === 'string') {
+          errorMessage = `Invalid warehouse data: ${errorData}`;
+        } else if (error.message && error.message.includes('Delhivery API error')) {
+          // Use the error message from makeApiCall
+          errorMessage = error.message.replace('Delhivery API error (400): ', 'Invalid warehouse data: ');
+        }
+        
+        // Log the full error for debugging
+        console.error('Delhivery API 400 error details:', {
+          status: errorStatus,
+          errorResponse: errorResponse,
+          errorData: errorData,
+          requestData: warehouseData
+        });
+        
+        throw new Error(errorMessage);
+      } else if (errorStatus === 403) {
         throw new Error('Access denied. Please check your API permissions.');
       } else if (error.code === 'ERR_NETWORK') {
         throw new Error('Network error. Please check your internet connection and try again.');
       } else {
-        throw new Error(`Failed to create warehouse: ${error.message || 'Unknown error'}`);
+        // Use the error message from makeApiCall if available
+        const finalMessage = error.message || 'Unknown error';
+        throw new Error(`Failed to create warehouse: ${finalMessage}`);
       }
     }
   }
@@ -1953,37 +2321,43 @@ class DelhiveryService {
    */
   async createWarehouseWithValidation(warehouseData: CreateWarehouseRequest): Promise<any> {
     try {
-      // Validate required fields
-      const errors: string[] = [];
+      // Validate required fields with field-level errors
+      const fieldErrors: Record<string, string> = {};
       
       if (!warehouseData.name || warehouseData.name.trim().length === 0) {
-        errors.push('Warehouse name is required');
+        fieldErrors.name = 'Warehouse name is required';
       }
       
       if (!warehouseData.phone || warehouseData.phone.trim().length === 0) {
-        errors.push('Phone number is required');
-      } else if (!/^[6-9]\d{9}$/.test(warehouseData.phone.replace(/\D/g, ''))) {
-        errors.push('Please enter a valid 10-digit Indian phone number');
+        fieldErrors.phone = 'Phone number is required';
+      } else {
+        const cleanedPhone = warehouseData.phone.replace(/\D/g, '');
+        if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+          fieldErrors.phone = 'Please enter a valid 10-digit Indian phone number';
+        }
       }
       
       if (!warehouseData.address || warehouseData.address.trim().length === 0) {
-        errors.push('Address is required');
+        fieldErrors.address = 'Address is required';
       }
       
       if (!warehouseData.city || warehouseData.city.trim().length === 0) {
-        errors.push('City is required');
+        fieldErrors.city = 'City is required';
       }
       
-      if (!warehouseData.pin || !/^\d{6}$/.test(warehouseData.pin)) {
-        errors.push('Valid 6-digit pin code is required');
+      if (!warehouseData.pin || !/^\d{6}$/.test(warehouseData.pin.trim())) {
+        fieldErrors.pin = 'Valid 6-digit pin code is required';
       }
       
-      if (!warehouseData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(warehouseData.email)) {
-        errors.push('Valid email address is required');
+      if (!warehouseData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(warehouseData.email.trim())) {
+        fieldErrors.email = 'Valid email address is required';
       }
 
-      if (errors.length > 0) {
-        throw new Error(`Validation failed: ${errors.join(', ')}`);
+      if (Object.keys(fieldErrors).length > 0) {
+        const error = new Error('Validation failed') as any;
+        error.fieldErrors = fieldErrors;
+        error.errors = Object.values(fieldErrors);
+        throw error;
       }
 
       // Clean and format the data
@@ -2009,25 +2383,31 @@ class DelhiveryService {
    */
   async editWarehouseWithValidation(warehouseData: EditWarehouseRequest): Promise<any> {
     try {
-      // Validate required fields
-      const errors: string[] = [];
+      // Validate required fields with field-level errors
+      const fieldErrors: Record<string, string> = {};
       
       if (!warehouseData.name || warehouseData.name.trim().length === 0) {
-        errors.push('Warehouse name is required');
+        fieldErrors.name = 'Warehouse name is required';
       }
       
       if (!warehouseData.phone || warehouseData.phone.trim().length === 0) {
-        errors.push('Phone number is required');
-      } else if (!/^[6-9]\d{9}$/.test(warehouseData.phone.replace(/\D/g, ''))) {
-        errors.push('Please enter a valid 10-digit Indian phone number');
+        fieldErrors.phone = 'Phone number is required';
+      } else {
+        const cleanedPhone = warehouseData.phone.replace(/\D/g, '');
+        if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+          fieldErrors.phone = 'Please enter a valid 10-digit Indian phone number';
+        }
       }
       
       if (!warehouseData.address || warehouseData.address.trim().length === 0) {
-        errors.push('Address is required');
+        fieldErrors.address = 'Address is required';
       }
 
-      if (errors.length > 0) {
-        throw new Error(`Validation failed: ${errors.join(', ')}`);
+      if (Object.keys(fieldErrors).length > 0) {
+        const error = new Error('Validation failed') as any;
+        error.fieldErrors = fieldErrors;
+        error.errors = Object.values(fieldErrors);
+        throw error;
       }
 
       // Clean and format the data

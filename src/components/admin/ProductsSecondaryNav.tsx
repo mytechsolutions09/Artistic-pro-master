@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
-  Plus, Upload, BarChart3, Settings, 
-  Package, Star, TrendingUp, Filter, Search, FileText, Download
+  Plus, Upload, 
+  Package, Star, FileText, Download, Palette
 } from 'lucide-react';
 
 export interface ProductsTab {
@@ -49,18 +49,6 @@ export const PRODUCTS_TABS: ProductsTab[] = [
     description: 'Export products to CSV file'
   },
   {
-    id: 'analytics',
-    label: 'Analytics',
-    icon: <BarChart3 className="w-5 h-5" />,
-    description: 'Product performance and insights'
-  },
-  {
-    id: 'categories',
-    label: 'Categories',
-    icon: <Filter className="w-5 h-5" />,
-    description: 'Manage product categories'
-  },
-  {
     id: 'templates',
     label: 'Templates',
     icon: <FileText className="w-5 h-5" />,
@@ -73,16 +61,10 @@ export const PRODUCTS_TABS: ProductsTab[] = [
     description: 'Manage featured products'
   },
   {
-    id: 'trending',
-    label: 'Trending',
-    icon: <TrendingUp className="w-5 h-5" />,
-    description: 'View trending products'
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    icon: <Settings className="w-5 h-5" />,
-    description: 'Product management preferences'
+    id: 'categories',
+    label: 'Categories',
+    icon: <Palette className="w-5 h-5" />,
+    description: 'Manage product categories'
   }
 ];
 
@@ -113,8 +95,6 @@ const ProductsSecondaryNav: React.FC<ProductsSecondaryNavProps> = ({
               badge = productCounts.total;
             } else if (tab.id === 'featured' && productCounts?.featured) {
               badge = productCounts.featured;
-            } else if (tab.id === 'trending' && productCounts?.trending) {
-              badge = productCounts.trending;
             }
 
             return (
