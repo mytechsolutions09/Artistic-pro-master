@@ -12,7 +12,6 @@ import { checkEnvironmentVariables, getLocalhostConfig, isLocalhost } from './ut
 import Header from './components/Header';
 import Footer from './components/Footer';
 import BottomTabs from './components/BottomTabs';
-import NotificationContainer from './components/Notification';
 import Homepage from './pages/Homepage';
 import CategoriesPage from './pages/CategoriesPage';
 import BrowsePage from './pages/BrowsePage';
@@ -64,6 +63,8 @@ import AdminReturns from './pages/admin/Returns';
 import CommissionedArt from './pages/admin/CommissionedArt';
 import Normal from './pages/admin/Normal';
 import NormalItemsPage from './pages/NormalItemsPage';
+import NormalItemRouteHandler from './pages/NormalItemRouteHandler';
+import ShopPage from './pages/ShopPage';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import EnvTest from './components/EnvTest';
 import SkeletonTest from './pages/SkeletonTest';
@@ -86,19 +87,18 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
       {!shouldHideHeader && <Header />}
-      <NotificationContainer />
       <BottomTabs />
       <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Homepage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/browse" element={<BrowsePage />} />
+                  <Route path="/shop" element={<ShopPage />} />
                   <Route path="/clothes" element={<MenClothingPage />} />
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/favorites" element={<FavoritesPage />} />
                   <Route path="/dashboard" element={<UserDashboard />} />
                   <Route path="/normal" element={<NormalItemsPage />} />
-                  <Route path="/normal/:itemSlug" element={<NormalItemsPage />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/payment-success" element={<PaymentSuccess />} />
@@ -126,7 +126,8 @@ function AppContent() {
                   {/* Category and Product Routes - Order matters! */}
                   {/* Clothing Product Route (must come before generic routes) */}
                   <Route path="/clothes/:productSlug" element={<ClothingProductPage />} />
-                  <Route path="/:categorySlug" element={<CategoryDetailPage />} />
+                  {/* Normal Item Route Handler - checks if slug is a normal item before category route */}
+                  <Route path="/:categorySlug" element={<NormalItemRouteHandler />} />
                   <Route path="/:categorySlug/:productSlug" element={<ProductPage />} />
                   
                   {/* Admin Routes */}

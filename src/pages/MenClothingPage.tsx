@@ -146,7 +146,7 @@ const MenClothingPage: React.FC = () => {
                 <select 
                   value={selectedSize}
                   onChange={(e) => setSelectedSize(e.target.value)}
-                  className="text-xs border-0 rounded px-3 py-1.5 pr-8 bg-white focus:outline-none appearance-none"
+                  className="text-xs border-0 rounded px-3 py-1.5 pr-8 bg-gray-50 focus:outline-none appearance-none"
                   style={{
                     outline: 'none',
                     boxShadow: 'none',
@@ -172,7 +172,7 @@ const MenClothingPage: React.FC = () => {
                 <select 
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="text-xs border-0 rounded px-3 py-1.5 pr-8 bg-white focus:outline-none appearance-none"
+                  className="text-xs border-0 rounded px-3 py-1.5 pr-8 bg-gray-50 focus:outline-none appearance-none"
                   style={{
                     outline: 'none',
                     boxShadow: 'none',
@@ -247,9 +247,9 @@ style.textContent = `
     border: none !important;
   }
   
-  /* Remove pink/blue colors from dropdown options */
+  /* Dropdown options match bar color */
   select option {
-    background-color: white !important;
+    background-color: #f9fafb !important;
     color: #374151 !important;
   }
   

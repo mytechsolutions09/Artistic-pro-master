@@ -5,6 +5,7 @@ import { NotificationManager } from '../../components/Notification';
 import NormalItemsService, { NormalItem } from '../../services/normalItemsService';
 import { ImageUploadService } from '../../services/imageUploadService';
 import { ProductService } from '../../services/supabaseService';
+import { generateSlug } from '../../utils/slugUtils';
 import { 
   Plus, Edit2, Trash2, Eye, X, Upload, Image as ImageIcon,
   Save, Search, RefreshCw
@@ -155,6 +156,11 @@ const Normal: React.FC = () => {
     }
 
     try {
+      // Regenerate slug if title changed
+      const newSlug = formData.title.trim() !== editingItem.title 
+        ? NormalItemsService.generateSlug(formData.title.trim())
+        : editingItem.slug;
+
       const updateData: Partial<NormalItem> = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -162,6 +168,7 @@ const Normal: React.FC = () => {
         original_price: formData.original_price ? parseInt(formData.original_price) : undefined,
         discount_percentage: formData.discount_percentage ? parseInt(formData.discount_percentage) : undefined,
         status: formData.status,
+        slug: newSlug,
         images: formData.images,
         main_image: formData.main_image || formData.images[0],
         tags: formData.tags,
@@ -345,7 +352,6 @@ const Normal: React.FC = () => {
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm font-medium text-gray-900">{item.title}</div>
-                            <div className="text-sm text-gray-500">{item.slug}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">₹{item.price}</div>
@@ -365,10 +371,11 @@ const Normal: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex items-center space-x-2">
                               <a
-                                href={`/normal/${item.slug}`}
+                                href={`/${generateSlug(item.title)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-900"
+                                title={`View ${item.title}`}
                               >
                                 <Eye className="w-4 h-4" />
                               </a>

@@ -23,7 +23,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({ tabs, activeTab, onTabChange 
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium transition-all duration-200 ${
+            className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === tab.id
                 ? 'bg-pink-50 text-pink-900 border-b-2 border-pink-500'
                 : 'text-gray-600 hover:text-pink-900 hover:bg-pink-50'
@@ -36,7 +36,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({ tabs, activeTab, onTabChange 
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-6 min-h-[300px]">
+      <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-3 min-h-[200px]">
         {tabs.find(tab => tab.id === activeTab)?.content}
       </div>
     </div>

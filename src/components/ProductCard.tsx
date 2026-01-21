@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { Product } from '../types';
-import { generateProductUrl } from '../utils/slugUtils';
+import { generateProductUrl, generateSlug } from '../utils/slugUtils';
 import OptimizedImage from './OptimizedImage';
 
 interface ProductCardProps {
@@ -45,13 +45,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   // Generate appropriate URL
   const isNormalItem = product.categories && product.categories.includes('Normal');
   
-  // For normal items, use slug if available, otherwise generate from title
-  const normalSlug = (product as any).slug || product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  // For normal items, always generate URL from title (not stored slug)
+  // Normal items use direct URL: /title-slug (not /normal/slug)
+  const normalTitleSlug = generateSlug(product.title);
   
   const productUrl = isClothing 
     ? `/clothes/${product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`
     : isNormalItem
-      ? `/normal/${normalSlug}`
+      ? `/${normalTitleSlug}`
       : generateProductUrl(
           product.categories && product.categories.length > 0 
             ? product.categories[0] 

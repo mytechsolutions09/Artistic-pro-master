@@ -16,14 +16,16 @@ import {
 } from 'lucide-react';
 import ProductTabs from '../components/ProductTabs';
 import { CartManager } from '../services/orderService';
-import { NotificationManager } from '../components/Notification';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import NormalItemsService, { NormalItem } from '../services/normalItemsService';
 import ProductCard from '../components/ProductCard';
+import { FavoritesService } from '../services/favoritesService';
 
 const NormalItemsPage: React.FC = () => {
-  const { itemSlug } = useParams<{ itemSlug: string }>();
+  // Support both /normal/:itemSlug and /:itemSlug routes
+  const { itemSlug, categorySlug } = useParams<{ itemSlug?: string; categorySlug?: string }>();
+  const slug = itemSlug || categorySlug;
   const navigate = useNavigate();
   const { formatUIPrice } = useCurrency();
   const { user } = useAuth();
@@ -33,9 +35,9 @@ const NormalItemsPage: React.FC = () => {
   const [selectedItemImage, setSelectedItemImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState('itemDetails');
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
 
   // Load items
   useEffect(() => {
@@ -45,8 +47,9 @@ const NormalItemsPage: React.FC = () => {
         const items = await NormalItemsService.getActiveItems();
         setAllItems(items);
         
-        if (itemSlug) {
-          const foundItem = await NormalItemsService.getItemBySlug(itemSlug);
+        if (slug) {
+          // Find item by title-generated slug (matches URL format)
+          const foundItem = await NormalItemsService.getItemByTitleSlug(slug);
           setItem(foundItem);
         }
       } catch (error) {
@@ -57,20 +60,33 @@ const NormalItemsPage: React.FC = () => {
     };
     
     loadItems();
-  }, [itemSlug]);
+  }, [slug]);
 
   // Scroll to top on item change
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [itemSlug]);
+  }, [slug]);
 
-  // Handle mouse movement for zoom positioning
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePosition({ x, y });
-  };
+  // Check if item is favorited
+  useEffect(() => {
+    const checkIfFavorited = async () => {
+      if (item && item.id && user) {
+        try {
+          // Normal items are now also products, so use 'product' type
+          const isItemFavorited = await FavoritesService.isFavorite(item.id, 'product');
+          setIsFavorited(isItemFavorited);
+        } catch (error) {
+          console.error('Error checking favorites:', error);
+          setIsFavorited(false);
+        }
+      } else {
+        setIsFavorited(false);
+      }
+    };
+
+    checkIfFavorited();
+  }, [item, user]);
+
 
   // Prevent right-click
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -104,26 +120,58 @@ const NormalItemsPage: React.FC = () => {
   const handleAddToCart = () => {
     if (!item) return;
     // Convert NormalItem to product-like format for cart
+    // Normal items are physical products, not digital
     const cartItem = {
       id: item.id,
       title: item.title,
       price: item.price,
       main_image: item.main_image || item.images[0],
       images: item.images,
-      category: 'Normal'
+      category: 'Normal',
+      originalPrice: item.original_price,
+      discountPercentage: item.discount_percentage
     };
-    CartManager.addItem(cartItem, quantity, 'digital', undefined);
-    NotificationManager.success('Item added to cart');
+    // Pass undefined for product type since normal items are physical products
+    // The cart will handle them as physical items
+    CartManager.addItem(cartItem, quantity, undefined, undefined);
   };
 
   const handleBuyNow = () => {
     if (!item) return;
     const params = new URLSearchParams({
       product: item.id,
-      type: 'digital',
       price: item.price.toString()
     });
+    // Don't pass type parameter - normal items are physical products
     navigate(`/checkout?${params.toString()}`);
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      // Redirect to login or show login modal
+      window.location.href = '/sign-in';
+      return;
+    }
+
+    if (!item || !item.id) return;
+
+    setFavoritesLoading(true);
+    try {
+      if (isFavorited) {
+        // Normal items are now also products, so use 'product' type
+        await FavoritesService.removeFromFavorites(item.id, 'product');
+        setIsFavorited(false);
+      } else {
+        // Normal items are now also products, so use 'product' type
+        await FavoritesService.addToFavorites(item.id, 'product');
+        setIsFavorited(true);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      // You could show a notification here
+    } finally {
+      setFavoritesLoading(false);
+    }
   };
 
   const handleShare = () => {
@@ -135,7 +183,6 @@ const NormalItemsPage: React.FC = () => {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      NotificationManager.success('Link copied to clipboard');
     }
   };
 
@@ -148,8 +195,8 @@ const NormalItemsPage: React.FC = () => {
     );
   }
 
-  // Show not found if itemSlug provided but item not found
-  if (itemSlug && !item) {
+  // Show not found if slug provided but item not found
+  if (slug && !item) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -162,8 +209,8 @@ const NormalItemsPage: React.FC = () => {
     );
   }
 
-  // If no itemSlug, show list of all items
-  if (!itemSlug) {
+  // If no slug, show list of all items
+  if (!slug) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -274,23 +321,12 @@ const NormalItemsPage: React.FC = () => {
           <div className="col-span-1 lg:col-span-6 flex justify-center">
             <div className="relative w-full max-w-[600px]">
               <div 
-                className="w-full aspect-[6/5] max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] max-w-[600px] overflow-hidden group cursor-zoom-in relative"
-                onMouseMove={handleMouseMove}
+                className="w-full aspect-[6/5] max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] max-w-[600px] overflow-hidden relative"
               >
                 <img
                   src={itemImages[selectedItemImage]}
                   alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-300 ease-in-out"
-                  style={{
-                    transform: `scale(1)`,
-                    transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = `scale(1.5)`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = `scale(1)`;
-                  }}
+                  className="w-full h-full object-contain"
                   onContextMenu={handleContextMenu}
                   onDragStart={handleDragStart}
                   draggable={false}
@@ -326,16 +362,17 @@ const NormalItemsPage: React.FC = () => {
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <button
-                    onClick={() => setIsFavorited(!isFavorited)}
-                    className="flex items-center space-x-2 hover:text-red-500 transition-colors"
+                    onClick={handleToggleFavorite}
+                    disabled={favoritesLoading}
+                    className="flex items-center space-x-2 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Heart 
                       className={`w-4 h-4 transition-colors ${
                         isFavorited ? 'text-red-500 fill-current' : 'text-gray-400'
-                      }`} 
+                      } ${favoritesLoading ? 'animate-pulse' : ''}`} 
                     />
                     <span className={`text-xs ${isFavorited ? 'text-red-500' : ''}`}>
-                      {isFavorited ? 'Favorited' : 'Add to favorites'}
+                      {favoritesLoading ? 'Loading...' : (isFavorited ? 'Favorited' : 'Add to favorites')}
                     </span>
                   </button>
                 </div>
@@ -437,25 +474,33 @@ const NormalItemsPage: React.FC = () => {
                       Object.entries(item.item_details).map(([key, value], index, arr) => (
                         <div 
                           key={key}
-                          className={`flex justify-between items-center py-3 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
+                          className={`flex justify-between items-center py-1.5 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
                         >
-                          <span className="font-medium text-gray-900 capitalize">{key.replace(/_/g, ' ')}:</span>
-                          <span className="text-gray-600">{String(value)}</span>
+                          <span className="font-medium text-gray-900 capitalize text-sm">{key.replace(/_/g, ' ')}:</span>
+                          <span className="text-gray-600 text-sm">{String(value)}</span>
                         </div>
                       ))
                     ) : (
                       <div className="space-y-0">
-                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                          <span className="font-medium text-gray-900">Material:</span>
-                          <span className="text-gray-600">Premium quality</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">Size:</span>
+                          <span className="text-gray-600 text-sm">470 mm x 810 mm</span>
                         </div>
-                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                          <span className="font-medium text-gray-900">Style:</span>
-                          <span className="text-gray-600">Modern</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">Material:</span>
+                          <span className="text-gray-600 text-sm">Wood</span>
                         </div>
-                        <div className="flex justify-between items-center py-3">
-                          <span className="font-medium text-gray-900">Quality:</span>
-                          <span className="text-gray-600">Premium grade</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">Style:</span>
+                          <span className="text-gray-600 text-sm">Modern</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">Quality:</span>
+                          <span className="text-gray-600 text-sm">Premium grade</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="font-medium text-gray-900 text-sm">Return:</span>
+                          <span className="text-gray-600 text-sm">Non-returnable and non-refundable</span>
                         </div>
                       </div>
                     )}
@@ -472,25 +517,29 @@ const NormalItemsPage: React.FC = () => {
                       Object.entries(item.delivery_info).map(([key, value], index, arr) => (
                         <div 
                           key={key}
-                          className={`flex justify-between items-center py-3 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
+                          className={`flex justify-between items-center py-1.5 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
                         >
-                          <span className="font-medium text-gray-900 capitalize">{key.replace(/_/g, ' ')}:</span>
-                          <span className="text-gray-600">{String(value)}</span>
+                          <span className="font-medium text-gray-900 capitalize text-sm">{key.replace(/_/g, ' ')}:</span>
+                          <span className="text-gray-600 text-sm">{String(value)}</span>
                         </div>
                       ))
                     ) : (
                       <div className="space-y-0">
-                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                          <span className="font-medium text-gray-900">Delivery Method:</span>
-                          <span className="text-gray-600">Standard Delivery</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">Delivery Method:</span>
+                          <span className="text-gray-600 text-sm">Physical Shipping</span>
                         </div>
-                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                          <span className="font-medium text-gray-900">Delivery Time:</span>
-                          <span className="text-gray-600">5-7 business days</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">Delivery Time:</span>
+                          <span className="text-gray-600 text-sm">30 days</span>
                         </div>
-                        <div className="flex justify-between items-center py-3">
-                          <span className="font-medium text-gray-900">Tracking:</span>
-                          <span className="text-gray-600">Tracking information provided</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">Shipping:</span>
+                          <span className="text-gray-600 text-sm">Standard shipping included</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="font-medium text-gray-900 text-sm">Tracking:</span>
+                          <span className="text-gray-600 text-sm">Tracking information provided</span>
                         </div>
                       </div>
                     )}
@@ -507,21 +556,21 @@ const NormalItemsPage: React.FC = () => {
                       Object.entries(item.did_you_know).map(([key, value], index, arr) => (
                         <div 
                           key={key}
-                          className={`flex justify-between items-center py-3 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
+                          className={`flex justify-between items-center py-1.5 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
                         >
-                          <span className="font-medium text-gray-900 capitalize">{key.replace(/_/g, ' ')}:</span>
-                          <span className="text-gray-600">{String(value)}</span>
+                          <span className="font-medium text-gray-900 capitalize text-sm">{key.replace(/_/g, ' ')}:</span>
+                          <span className="text-gray-600 text-sm">{String(value)}</span>
                         </div>
                       ))
                     ) : (
                       <div className="space-y-0">
-                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                          <span className="font-medium text-gray-900">Quality:</span>
-                          <span className="text-gray-600">Premium grade guarantee</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm">Quality:</span>
+                          <span className="text-gray-600 text-sm">Premium grade guarantee</span>
                         </div>
-                        <div className="flex justify-between items-center py-3">
-                          <span className="font-medium text-gray-900">Uniqueness:</span>
-                          <span className="text-gray-600">One-of-a-kind design</span>
+                        <div className="flex justify-between items-center py-1.5">
+                          <span className="font-medium text-gray-900 text-sm">Uniqueness:</span>
+                          <span className="text-gray-600 text-sm">One-of-a-kind design</span>
                         </div>
                       </div>
                     )}

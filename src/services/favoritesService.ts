@@ -50,7 +50,7 @@ export class FavoritesService {
   /**
    * Add a product to favorites
    */
-  static async addToFavorites(productId: string): Promise<Favorite> {
+  static async addToFavorites(productId: string, itemType: 'product' | 'normal_item' = 'product'): Promise<Favorite> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -62,7 +62,8 @@ export class FavoritesService {
         .from('favorites')
         .insert({
           user_id: user.id,
-          product_id: productId
+          product_id: productId,
+          item_type: itemType
         })
         .select()
         .single();
@@ -82,7 +83,7 @@ export class FavoritesService {
   /**
    * Remove a product from favorites
    */
-  static async removeFromFavorites(productId: string): Promise<void> {
+  static async removeFromFavorites(productId: string, itemType: 'product' | 'normal_item' = 'product'): Promise<void> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -94,7 +95,8 @@ export class FavoritesService {
         .from('favorites')
         .delete()
         .eq('user_id', user.id)
-        .eq('product_id', productId);
+        .eq('product_id', productId)
+        .eq('item_type', itemType);
 
       if (error) {
         console.error('Error removing from favorites:', error);
@@ -109,7 +111,7 @@ export class FavoritesService {
   /**
    * Check if a product is in user's favorites
    */
-  static async isFavorite(productId: string): Promise<boolean> {
+  static async isFavorite(productId: string, itemType: 'product' | 'normal_item' = 'product'): Promise<boolean> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -122,6 +124,7 @@ export class FavoritesService {
         .select('id')
         .eq('user_id', user.id)
         .eq('product_id', productId)
+        .eq('item_type', itemType)
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
