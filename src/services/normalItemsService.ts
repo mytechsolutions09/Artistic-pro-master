@@ -41,14 +41,16 @@ class NormalItemsService {
 
   /**
    * Get active normal items only
+   * Optimized to only fetch necessary columns for listing
    */
   static async getActiveItems(): Promise<NormalItem[]> {
     try {
       const { data, error } = await supabase
         .from('normal_items')
-        .select('*')
+        .select('id, title, description, images, main_image, price, original_price, discount_percentage, slug, status, created_at, updated_at, tags')
         .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100); // Limit to prevent loading too many items at once
 
       if (error) throw error;
       return data || [];

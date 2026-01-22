@@ -20,7 +20,8 @@ import {
   MessageSquare,
   RotateCcw,
   Brush,
-  Layers
+  Layers,
+  UtensilsCrossed
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -40,6 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'orders', label: 'Orders', icon: ShoppingBag, path: '/admin/orders' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'normal', label: 'Normal', icon: Layers, path: '/admin/normal' },
+    { id: 'fb', label: 'F & B', icon: UtensilsCrossed, path: '/admin/fb' },
     { id: 'commissioned-art', label: 'Commissioned Art', icon: Brush, path: '/admin/commissioned-art' },
     { id: 'clothes', label: 'Clothes', icon: Table, path: '/admin/clothes' },
     { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },

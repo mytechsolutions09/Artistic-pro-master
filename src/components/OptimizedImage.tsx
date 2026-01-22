@@ -22,39 +22,53 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   onClick
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isInView, setIsInView] = useState(true); // Always true for now - load immediately
+  const [isInView, setIsInView] = useState(priority); // Start with true for priority images
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
 
-  // Intersection Observer for lazy loading - DISABLED FOR NOW
-  // useEffect(() => {
-  //   if (priority || !imgRef.current) return;
+  // Intersection Observer for lazy loading - ENABLED for non-priority images
+  useEffect(() => {
+    if (priority) {
+      setIsInView(true); // Load immediately for priority images
+      return;
+    }
 
-  //   const observer = new IntersectionObserver(
-  //     (entries) => {
-  //       entries.forEach((entry) => {
-  //         if (entry.isIntersecting) {
-  //           setIsInView(true);
-  //           observer.disconnect();
-  //         }
-  //       });
-  //     },
-  //     {
-  //       rootMargin: '100px', // Start loading 100px before image enters viewport
-  //       threshold: 0.01
-  //     }
-  //   );
+    // Use a container div ref for intersection observer
+    const container = imgRef.current?.parentElement;
+    if (!container) return;
 
-  //   observer.observe(imgRef.current);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.disconnect();
+          }
+        });
+      },
+      {
+        rootMargin: '200px', // Start loading 200px before image enters viewport
+        threshold: 0.01
+      }
+    );
 
-  //   return () => {
-  //     observer.disconnect();
-  //   };
-  // }, [priority]);
+    observer.observe(container);
 
-  // Optimize image URL and load immediately
+    return () => {
+      observer.disconnect();
+    };
+  }, [priority]);
+
+  // Optimize image URL and load when in view
   useEffect(() => {
     if (!src) return;
+    
+    // For priority images, load immediately
+    // For non-priority, wait until in view
+    if (!priority && !isInView) {
+      setImageSrc('');
+      return;
+    }
 
     // Reset loaded state when src changes
     setIsLoaded(false);
@@ -62,9 +76,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     const quality = getOptimalImageQuality();
     const optimizedSrc = optimizeImageUrl(src, width, quality);
     
-    // Load image immediately - no preload complexity
     setImageSrc(optimizedSrc);
-  }, [src, width, priority]);
+  }, [src, width, priority, isInView]);
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -78,7 +91,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   };
 
   return (
-    <div className="relative overflow-hidden" style={{ width: '100%', height: '100%' }}>
+    <div ref={imgRef} className="relative overflow-hidden" style={{ width: '100%', height: '100%' }}>
       {/* Blur placeholder */}
       {!isLoaded && (
         <div 
@@ -93,7 +106,6 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       {/* Actual image */}
       {imageSrc && (
         <img
-          ref={imgRef}
           src={imageSrc}
           alt={alt}
           className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}

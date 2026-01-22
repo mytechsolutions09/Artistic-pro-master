@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Ruler } from 'lucide-react';
+import { Ruler, Star, MessageCircle, ThumbsUp, Eye } from 'lucide-react';
 import { useProducts } from '../contexts/ProductContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,8 @@ import ClothingProductPageSkeleton from '../components/ClothingProductPageSkelet
 import OpenGraphTags from '../components/OpenGraphTags';
 import { MetaPixelService } from '../services/metaPixelService';
 import OptimizedImage from '../components/OptimizedImage';
+import { ReviewService } from '../services/reviewService';
+import { Review } from '../types';
 
 const ClothingProductPage: React.FC = () => {
   const { productSlug } = useParams<{ productSlug: string }>();
@@ -24,6 +26,14 @@ const ClothingProductPage: React.FC = () => {
   const [hasGiftCard, setHasGiftCard] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [showFullImage, setShowFullImage] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 4;
+  const [selectedReviewImage, setSelectedReviewImage] = useState<string | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // Find the product by slug (clothing products)
   const product = allProducts.find(p => {
@@ -61,6 +71,107 @@ const ClothingProductPage: React.FC = () => {
       });
     }
   }, [product]);
+
+  // Load reviews for the current product
+  useEffect(() => {
+    const loadReviews = async () => {
+      if (product && product.id) {
+        setReviewsLoading(true);
+        try {
+          const productReviews = await ReviewService.getProductReviews(product.id);
+          setReviews(productReviews);
+        } catch (error) {
+          console.error('Error loading reviews:', error);
+          setReviews([]);
+        } finally {
+          setReviewsLoading(false);
+        }
+      }
+    };
+
+    loadReviews();
+  }, [product]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(reviews.length / reviewsPerPage);
+  const startIndex = (currentPage - 1) * reviewsPerPage;
+  const endIndex = startIndex + reviewsPerPage;
+  const currentReviews = reviews.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedReviewImage(imageUrl);
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+    setSelectedReviewImage(null);
+  };
+
+  const handleHelpfulVote = (reviewId: string) => {
+    setHelpfulVotes(prev => ({
+      ...prev,
+      [reviewId]: (prev[reviewId] || 0) + 1
+    }));
+  };
+
+  const handleWriteReview = () => {
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+  };
+
+  // Calculate average rating and total reviews
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length
+    : 0;
+  const totalReviews = reviews.length;
+
+  // Get related products - match by gender or clothing category
+  const getRelatedClothingProducts = () => {
+    if (!product) return [];
+    
+    const productGender = (product as any)?.gender;
+    
+    // Get all clothing products (those with gender field or clothing in categories)
+    const clothingProducts = allProducts.filter(p => {
+      const pData = p as any;
+      const hasGender = pData.gender === 'Men' || pData.gender === 'Women' || pData.gender === 'Unisex';
+      const hasClothingCategory = pData.categories?.some((cat: string) => 
+        cat.toLowerCase().includes('men') || 
+        cat.toLowerCase().includes('women') || 
+        cat.toLowerCase().includes('unisex') ||
+        cat.toLowerCase().includes('clothing')
+      );
+      const pStatus = (p as any).status;
+      return (hasGender || hasClothingCategory) && p.id !== product.id && (pStatus === 'active' || !pStatus);
+    });
+    
+    // If product has gender, prioritize same gender, otherwise return any clothing
+    if (productGender) {
+      const sameGender = clothingProducts.filter(p => (p as any).gender === productGender);
+      return sameGender.length > 0 ? sameGender.slice(0, 4) : clothingProducts.slice(0, 4);
+    }
+    
+    return clothingProducts.slice(0, 4);
+  };
+  
+  const relatedProducts = getRelatedClothingProducts();
+  
+  // Debug: Log related products (remove in production)
+  useEffect(() => {
+    if (product) {
+      console.log('Product:', product.title);
+      console.log('Related products found:', relatedProducts.length);
+      console.log('Related products:', relatedProducts.map(p => p.title));
+    }
+  }, [product, relatedProducts]);
 
   const handleAddToCart = async () => {
     // Validate size selection
@@ -135,8 +246,8 @@ const ClothingProductPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Product not found</h2>
-          <Link to="/clothes" className="text-sm underline" style={{ color: '#ff6e00' }}>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4 font-sans font-normal">Product not found</h2>
+          <Link to="/clothes" className="text-sm underline font-sans font-normal" style={{ color: '#ff6e00' }}>
             Back to Clothing
           </Link>
         </div>
@@ -263,7 +374,7 @@ const ClothingProductPage: React.FC = () => {
                   </div>
                   {/* Image number badge */}
                   {product.images && product.images.length > 1 && (
-                    <div className="absolute bottom-3 left-3 bg-black/60 text-white px-2 py-1 rounded text-xs font-medium">
+                    <div className="absolute bottom-3 left-3 bg-black/60 text-white px-2 py-1 rounded text-xs font-medium font-sans font-normal">
                       {selectedImage + 1} / {product.images.length}
                     </div>
                   )}
@@ -275,7 +386,7 @@ const ClothingProductPage: React.FC = () => {
           {/* Product Title and Price - Shows second on mobile, left side on desktop */}
           <div className="order-2 lg:order-1 mt-6 lg:mt-0 space-y-6 lg:space-y-8">
             <div>
-              <h1 className="text-xl font-bold uppercase tracking-tight mb-2">
+              <h1 className="text-xl font-semibold uppercase tracking-tight mb-2 font-sans font-normal">
                 {product.title}
               </h1>
               
@@ -283,28 +394,28 @@ const ClothingProductPage: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-3">
                 {/* Gender Badge */}
                 {product.gender && (
-                  <span className="inline-block px-3 py-1 text-xs font-bold uppercase tracking-wide border border-gray-300 rounded">
+                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide border border-gray-300 rounded font-sans font-normal">
                     {product.gender}
                   </span>
                 )}
                 
                 {/* Clothing Type */}
                 {product.clothingType && (
-                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide bg-gray-100 text-gray-700 rounded">
+                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide bg-gray-100 text-gray-700 rounded font-sans font-normal">
                     {product.clothingType}
                   </span>
                 )}
                 
                 {/* Material */}
                 {product.material && (
-                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 rounded">
+                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 rounded font-sans font-normal">
                     {product.material}
                   </span>
                 )}
                 
                 {/* Brand */}
                 {product.brand && (
-                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded" style={{ backgroundColor: '#F5F5DC', color: '#ff6e00' }}>
+                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded font-sans font-normal" style={{ backgroundColor: '#F5F5DC', color: '#ff6e00' }}>
                     {product.brand}
                   </span>
                 )}
@@ -313,20 +424,20 @@ const ClothingProductPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 {product.originalPrice && product.originalPrice > product.price ? (
                   <>
-                    <p className="text-lg text-gray-500 line-through">
+                    <p className="text-lg text-gray-500 line-through font-sans font-normal">
                       {formatUIPrice(product.originalPrice)}
                     </p>
-                    <p className="text-xl font-bold" style={{ color: '#ff6e00' }}>
+                    <p className="text-xl font-semibold font-sans font-normal" style={{ color: '#ff6e00' }}>
                       {formatUIPrice(product.price)}
                     </p>
                     {product.discountPercentage && (
-                      <span className="px-2 py-1 text-sm font-bold text-white rounded" style={{ backgroundColor: '#ff6e00' }}>
+                      <span className="px-2 py-1 text-sm font-semibold text-white rounded font-sans font-normal" style={{ backgroundColor: '#ff6e00' }}>
                         {product.discountPercentage}% OFF
                       </span>
                     )}
                   </>
                 ) : (
-                  <p className="text-xl font-semibold">
+                  <p className="text-xl font-semibold font-sans font-normal">
                     {formatUIPrice(product.price)}
                   </p>
                 )}
@@ -338,17 +449,17 @@ const ClothingProductPage: React.FC = () => {
                   {product.stockQuantity === 0 ? (
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
                       <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                      <span className="text-sm font-semibold text-red-700">Out of Stock</span>
+                      <span className="text-sm font-semibold text-red-700 font-sans font-normal">Out of Stock</span>
                     </div>
                   ) : product.stockQuantity && product.stockQuantity <= (product.lowStockThreshold || 10) ? (
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg">
                       <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                      <span className="text-sm font-semibold text-orange-700">Only {product.stockQuantity} left in stock!</span>
+                      <span className="text-sm font-semibold text-orange-700 font-sans font-normal">Only {product.stockQuantity} left in stock!</span>
                     </div>
                   ) : (
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
                       <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="text-sm font-semibold text-green-700">In Stock</span>
+                      <span className="text-sm font-semibold text-green-700 font-sans font-normal">In Stock</span>
                     </div>
                   )}
                 </div>
@@ -361,7 +472,7 @@ const ClothingProductPage: React.FC = () => {
             {/* Color Selection */}
             {availableColors.length > 0 && (
               <div>
-                <span className="text-xs font-bold uppercase tracking-wide block mb-2">
+                <span className="text-xs font-semibold uppercase tracking-wide block mb-2 font-sans font-normal">
                   COLOR: {selectedColor || 'Select a color'}
                 </span>
                 <div className="flex gap-1.5 flex-wrap">
@@ -387,12 +498,12 @@ const ClothingProductPage: React.FC = () => {
             {availableSizes.length > 0 && (
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wide">
+                  <span className="text-xs font-semibold uppercase tracking-wide font-sans font-normal">
                     SIZE: {selectedSize || 'Select a size'}
                   </span>
                   <button
                     onClick={() => setShowSizeChart(true)}
-                    className="text-xs font-bold uppercase tracking-wide flex items-center gap-1 hover:underline transition-colors"
+                    className="text-xs font-semibold uppercase tracking-wide flex items-center gap-1 hover:underline transition-colors font-sans font-normal"
                     style={{ color: '#ff6e00' }}
                   >
                     <Ruler className="w-3 h-3" />
@@ -404,7 +515,7 @@ const ClothingProductPage: React.FC = () => {
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`py-1.5 text-xs font-medium transition-all rounded ${
+                      className={`py-1.5 text-xs font-medium transition-all rounded font-sans font-normal ${
                         selectedSize === size
                           ? 'text-white scale-105'
                           : 'text-gray-900 bg-gray-100 hover:bg-gray-200'
@@ -425,22 +536,22 @@ const ClothingProductPage: React.FC = () => {
             {/* Quantity Selector */}
             <div className="border-t pt-3">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-gray-900 uppercase tracking-wide">
+                <label className="text-xs font-semibold text-gray-900 uppercase tracking-wide font-sans font-normal">
                   Quantity
                 </label>
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-900 font-bold transition-all"
+                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-900 font-semibold transition-all font-sans font-normal"
                   >
                     −
                   </button>
-                  <span className="text-base font-bold text-gray-900 min-w-[2rem] text-center">
+                  <span className="text-base font-semibold text-gray-900 min-w-[2rem] text-center font-sans font-normal">
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold transition-all"
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold transition-all font-sans font-normal"
                     style={{ backgroundColor: '#ff6e00' }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = '#e56300';
@@ -460,10 +571,10 @@ const ClothingProductPage: React.FC = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={product.trackInventory && product.stockQuantity === 0}
-                className={`flex-1 py-2.5 px-3 font-medium text-xs uppercase tracking-wide transition-all rounded ${
+                className={`flex-1 py-2.5 px-3 font-medium text-xs uppercase tracking-wide transition-all rounded font-sans font-normal ${
                   product.trackInventory && product.stockQuantity === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    : 'bg-teal-800 text-white hover:bg-teal-900'
                 }`}
               >
                 {product.trackInventory && product.stockQuantity === 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
@@ -471,7 +582,7 @@ const ClothingProductPage: React.FC = () => {
               <button
                 onClick={handleBuyNow}
                 disabled={product.trackInventory && product.stockQuantity === 0}
-                className="flex-1 py-2.5 px-3 text-white font-medium text-xs uppercase tracking-wide transition-all rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-2.5 px-3 text-white font-medium text-xs uppercase tracking-wide transition-all rounded disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                 style={{ backgroundColor: product.trackInventory && product.stockQuantity === 0 ? '#ccc' : '#ff6e00' }}
                 onMouseEnter={(e) => {
                   if (!(product.trackInventory && product.stockQuantity === 0)) {
@@ -490,7 +601,7 @@ const ClothingProductPage: React.FC = () => {
 
             {/* Validation Messages */}
             {(!selectedSize || (availableColors.length > 0 && !selectedColor)) && (
-              <div className="mt-2 text-xs text-red-600">
+              <div className="mt-2 text-xs text-red-600 font-sans font-normal">
                 {!selectedSize && 'Please select a size. '}
                 {availableColors.length > 0 && !selectedColor && 'Please select a color.'}
               </div>
@@ -499,8 +610,8 @@ const ClothingProductPage: React.FC = () => {
             {/* Extra Oversized Sizing Note */}
             {product.clothingType && product.clothingType.toLowerCase().includes('extra oversized') && (
               <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
-                <p className="text-xs font-medium" style={{ color: '#ea580c' }}>
-                  <span className="font-bold">Note:</span> If you usually wear M size, then go for S size. Do check size chart.
+                <p className="text-xs font-medium font-sans font-normal" style={{ color: '#ea580c' }}>
+                  <span className="font-semibold">Note:</span> If you usually wear M size, then go for S size. Do check size chart.
                 </p>
               </div>
             )}
@@ -513,8 +624,8 @@ const ClothingProductPage: React.FC = () => {
           {/* Description */}
           {product.description && (
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wide mb-4">DESCRIPTION</h2>
-              <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
+              <h2 className="text-sm font-semibold uppercase tracking-wide mb-4 font-sans font-normal">DESCRIPTION</h2>
+              <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line font-sans font-normal">
                 {product.description}
               </div>
             </div>
@@ -523,8 +634,8 @@ const ClothingProductPage: React.FC = () => {
           {/* Details */}
           {product.details && (
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wide mb-4">DETAILS</h2>
-              <div className="text-sm text-gray-700 whitespace-pre-line">
+              <h2 className="text-sm font-semibold uppercase tracking-wide mb-4 font-sans font-normal">DETAILS</h2>
+              <div className="text-sm text-gray-700 whitespace-pre-line font-sans font-normal">
                 {product.details}
               </div>
             </div>
@@ -533,8 +644,8 @@ const ClothingProductPage: React.FC = () => {
           {/* Wash Care */}
           {product.washCare && (
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wide mb-4">WASH CARE</h2>
-              <div className="text-sm text-gray-700 whitespace-pre-line">
+              <h2 className="text-sm font-semibold uppercase tracking-wide mb-4 font-sans font-normal">WASH CARE</h2>
+              <div className="text-sm text-gray-700 whitespace-pre-line font-sans font-normal">
                 {product.washCare}
               </div>
             </div>
@@ -543,13 +654,316 @@ const ClothingProductPage: React.FC = () => {
           {/* Shipping */}
           {product.shipping && (
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wide mb-4">SHIPPING</h2>
-              <div className="text-sm text-gray-700 whitespace-pre-line">
+              <h2 className="text-sm font-semibold uppercase tracking-wide mb-4 font-sans font-normal">SHIPPING</h2>
+              <div className="text-sm text-gray-700 whitespace-pre-line font-sans font-normal">
                 {product.shipping}
               </div>
             </div>
           )}
         </div>
+
+        {/* Reviews Section */}
+        {product && (
+          <div className="mt-8 sm:mt-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
+              {/* Left Column - Reviews */}
+              <div className="lg:col-span-8">
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                  {/* Decorative Header */}
+                  <div className="bg-gradient-to-r from-[#FAC6CF] to-[#F48FB1] h-1"></div>
+                  
+                  <div className="p-1 sm:p-2 lg:p-3">
+                    {/* Header with Rating and Write Review Button */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 sm:mb-2 space-y-1 sm:space-y-0">
+                      <div>
+                        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-[#333333] font-sans font-normal">
+                          Customer Reviews
+                        </h3>
+                      </div>
+                      
+                      <div className="flex items-center space-x-4">
+                        {/* Rating */}
+                        <div className="flex items-center space-x-2 bg-[#F5F5F5] rounded-lg px-2 py-1 border border-[#F5F5F5] shadow-sm">
+                          <div className="text-lg sm:text-xl font-semibold text-[#F48FB1] font-sans font-normal">
+                            {averageRating.toFixed(1)}
+                          </div>
+                          <div className="text-xs text-[#333333] font-sans font-normal">out of 5</div>
+                          <div className="flex items-center space-x-0.5">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-2 h-2 sm:w-3 sm:h-3 ${
+                                  i < Math.floor(averageRating) ? 'text-[#F48FB1] fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <div className="text-xs text-[#333333] font-semibold font-sans font-normal">
+                            ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
+                          </div>
+                        </div>
+                        
+                        <button 
+                          onClick={handleWriteReview}
+                          className="px-2 py-1 bg-gradient-to-r from-[#FAC6CF] to-[#F48FB1] hover:from-[#F48FB1] hover:to-[#E91E63] text-white rounded-md transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md text-xs font-sans font-normal"
+                        >
+                          ✨ Write a Review
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sort Options */}
+                    <div className="flex items-center justify-end mb-1 sm:mb-2">
+                      <div className="flex items-center space-x-1 sm:space-x-2">
+                        <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
+                        <select className="text-xs border border-[#F5F5F5] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#F48FB1] focus:border-[#F48FB1] bg-gray-50 shadow-sm font-sans font-normal">
+                          <option>Most Recent</option>
+                          <option>Suggested</option>
+                          <option>Highest Rated</option>
+                          <option>Lowest Rated</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Individual Reviews */}
+                    {reviewsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F48FB1]"></div>
+                        <span className="ml-3 text-gray-600 font-sans font-normal">Loading reviews...</span>
+                      </div>
+                    ) : reviews.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400 mb-3">
+                          <MessageCircle className="w-12 h-12 mx-auto" />
+                        </div>
+                        <p className="text-gray-600 font-sans font-normal">No reviews yet. Be the first to review this product!</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* 2x2 Grid Layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {currentReviews.filter((review: Review) => review && review.userName && review.comment).map((review: Review, index: number) => (
+                            <div key={review.id} className={`bg-white rounded-xl p-4 border border-[#F5F5F5] shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 ${
+                              index % 2 === 0 ? 'hover:border-[#FAC6CF]' : 'hover:border-[#F48FB1]'
+                            }`}>
+                              {/* Review Header */}
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
+                                    index % 2 === 0 ? 'bg-[#F48FB1]' : 'bg-[#FAC6CF]'
+                                  }`}>
+                                    <span className="text-white font-semibold text-sm font-sans font-normal">
+                                      {review.userName && review.userName.includes('@') 
+                                        ? review.userName.split('@')[0].charAt(0).toUpperCase()
+                                        : review.userName ? review.userName.charAt(0).toUpperCase() : '?'
+                                      }
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-[#333333] text-sm font-sans font-normal">
+                                      {review.userName && review.userName.includes('@') 
+                                        ? review.userName.split('@')[0].charAt(0).toUpperCase() + review.userName.split('@')[0].slice(1)
+                                        : review.userName || 'Anonymous User'
+                                      }
+                                    </p>
+                                    <div className="flex items-center space-x-1 mt-1">
+                                      <div className="flex items-center space-x-1">
+                                        <div className="w-3 h-3 bg-[#F5F5F5] rounded-full flex items-center justify-center border border-[#FAC6CF]">
+                                          <span className="text-[#F48FB1] text-xs font-semibold font-sans font-normal">✓</span>
+                                        </div>
+                                        <span className="text-xs text-[#F48FB1] font-semibold font-sans font-normal">Recommends</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end space-y-1">
+                                  <div className="flex items-center space-x-1">
+                                    {Array.from({ length: 5 }, (_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-3 h-3 ${
+                                          i < review.rating ? 'text-[#F48FB1] fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-xs font-medium text-[#333333] bg-[#F5F5F5] px-2 py-1 rounded-full font-sans font-normal">
+                                    {new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* Review Comment */}
+                              <p className="text-[#333333] text-sm leading-relaxed mb-3 overflow-hidden font-sans font-normal" style={{display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}}>{review.comment}</p>
+                              
+                              {/* Review Images */}
+                              {review.images && review.images.length > 0 && (
+                                <div className="mb-3">
+                                  <div className="flex gap-2">
+                                    {review.images.slice(0, 2).map((image, imgIndex) => (
+                                      <div 
+                                        key={imgIndex} 
+                                        className="relative group cursor-pointer flex-shrink-0"
+                                        onClick={() => handleImageClick(image)}
+                                      >
+                                        <img
+                                          src={image}
+                                          alt={`Review image ${imgIndex + 1}`}
+                                          className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:border-[#F48FB1] transition-all duration-200"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                            <Eye className="w-3 h-3 text-white" />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {review.images.length > 2 && (
+                                      <div 
+                                        className="w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+                                        onClick={() => review.images && handleImageClick(review.images[2])}
+                                      >
+                                        <span className="text-xs text-gray-500 font-sans font-normal">+{review.images.length - 2}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Review Actions */}
+                              <div className="flex items-center justify-between">
+                                <button 
+                                  onClick={() => handleHelpfulVote(review.id)}
+                                  className="flex items-center space-x-1 text-[#333333] hover:text-[#F48FB1] transition-colors font-medium text-xs font-sans font-normal"
+                                >
+                                  <ThumbsUp className="w-3 h-3" />
+                                  <span>Helpful ({helpfulVotes[review.id] || review.helpful || 0})</span>
+                                </button>
+                                {review.verified && (
+                                  <span className="px-2 py-1 bg-[#F48FB1] text-white text-xs rounded-full font-semibold shadow-sm font-sans font-normal">
+                                    ✓ Verified Purchase
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-center mt-6 pt-4 border-t border-[#F5F5F5]">
+                            <div className="flex items-center space-x-2">
+                              <button 
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                              >
+                                ←
+                              </button>
+                              
+                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                <button
+                                  key={page}
+                                  onClick={() => handlePageChange(page)}
+                                  className={`w-8 h-8 rounded-lg transition-all duration-300 font-medium text-sm font-sans font-normal ${
+                                    page === currentPage 
+                                      ? 'bg-[#F48FB1] text-white shadow-lg' 
+                                      : 'border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] hover:shadow-md'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              ))}
+                              
+                              <button 
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                              >
+                                →
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Review Images Gallery */}
+              <div className="lg:col-span-4">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center font-sans font-normal">
+                    <span className="w-2 h-2 bg-[#F48FB1] rounded-full mr-2"></span>
+                    Review Images
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(() => {
+                      // Collect all review images
+                      const allReviewImages = reviews
+                        .filter((review: Review) => review && review.images && review.images.length > 0)
+                        .flatMap((review: Review) => review.images || [])
+                        .slice(0, 3); // Take only first 3 images
+                      
+                      // If we have images, show them
+                      if (allReviewImages.length > 0) {
+                        return allReviewImages.map((image: string, index: number) => (
+                          <div key={index} className="relative group cursor-pointer" onClick={() => handleImageClick(image)}>
+                            <img
+                              src={image}
+                              alt={`Review image ${index + 1}`}
+                              className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:border-[#F48FB1] transition-all duration-200"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      }
+                      
+                      // If no images, show 3 placeholders
+                      return Array.from({ length: 3 }, (_, index) => (
+                        <div key={index} className="w-full h-16 sm:h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400 text-xs font-sans font-normal">No images yet</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                  {reviews.filter((review: Review) => review && review.images && review.images.length > 0).length > 0 && (
+                    <button className="w-full mt-3 sm:mt-4 py-2 text-[#F48FB1] hover:text-[#E91E63] text-xs sm:text-sm font-medium transition-colors font-sans font-normal">
+                      View all review images →
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Image Modal */}
+            {showImageModal && selectedReviewImage && (
+              <div 
+                className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-8"
+                onClick={closeImageModal}
+              >
+                <div className="relative max-w-6xl max-h-screen w-full h-full flex items-center justify-center">
+                  <img
+                    src={selectedReviewImage}
+                    alt="Review"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                  <button
+                    onClick={closeImageModal}
+                    className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white rounded-full text-gray-900 hover:bg-gray-200 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
       {/* Size Chart Modal */}
       {showSizeChart && (() => {
@@ -613,38 +1027,38 @@ const ClothingProductPage: React.FC = () => {
               className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-xl font-bold mb-6 uppercase text-center">SIZE CHART - {clothingType}</h3>
+              <h3 className="text-xl font-semibold mb-6 uppercase text-center font-sans font-normal">SIZE CHART - {clothingType}</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse border border-gray-300">
                   <thead>
                     <tr style={{ backgroundColor: '#ff6e00' }} className="text-white">
                       {columns.map((col: string) => (
-                        <th key={col} className="text-left py-3 px-4 font-bold border border-gray-300 whitespace-nowrap">{col}</th>
+                        <th key={col} className="text-left py-3 px-4 font-semibold border border-gray-300 whitespace-nowrap font-sans font-normal">{col}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {chartData.map((row: any, index: number) => (
                       <tr key={row.size} className={`hover:bg-orange-50 transition-colors ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
-                        <td className="py-3 px-4 font-bold border border-gray-300">{row.size}</td>
-                        <td className="py-3 px-4 border border-gray-300">{row.length}</td>
-                        <td className="py-3 px-4 border border-gray-300">{row.chest}</td>
-                        {row.shoulder && <td className="py-3 px-4 border border-gray-300">{row.shoulder}</td>}
-                        {row.sleeve && <td className="py-3 px-4 border border-gray-300">{row.sleeve}</td>}
-                        {row.armhole && <td className="py-3 px-4 border border-gray-300">{row.armhole}</td>}
+                        <td className="py-3 px-4 font-semibold border border-gray-300 font-sans font-normal">{row.size}</td>
+                        <td className="py-3 px-4 border border-gray-300 font-sans font-normal">{row.length}</td>
+                        <td className="py-3 px-4 border border-gray-300 font-sans font-normal">{row.chest}</td>
+                        {row.shoulder && <td className="py-3 px-4 border border-gray-300 font-sans font-normal">{row.shoulder}</td>}
+                        {row.sleeve && <td className="py-3 px-4 border border-gray-300 font-sans font-normal">{row.sleeve}</td>}
+                        {row.armhole && <td className="py-3 px-4 border border-gray-300 font-sans font-normal">{row.armhole}</td>}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className="mt-4 p-4 bg-orange-50 rounded border border-orange-200">
-                <p className="text-sm text-gray-700">
-                  <span className="font-bold">Note:</span> All measurements are in inches. For the best fit, measure a similar garment you own and compare with the chart above.
+                <p className="text-sm text-gray-700 font-sans font-normal">
+                  <span className="font-semibold">Note:</span> All measurements are in inches. For the best fit, measure a similar garment you own and compare with the chart above.
                 </p>
               </div>
               <button
                 onClick={() => setShowSizeChart(false)}
-                className="mt-4 px-6 py-2 text-white text-sm font-medium rounded transition-colors"
+                className="mt-4 px-6 py-2 text-white text-sm font-medium rounded transition-colors font-sans font-normal"
                 style={{ backgroundColor: '#ff6e00' }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e56300')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ff6e00')}
@@ -679,6 +1093,70 @@ const ClothingProductPage: React.FC = () => {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Related Products Section */}
+      {product && relatedProducts && relatedProducts.length > 0 && (
+        <div className="py-6 sm:py-8 mt-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 lg:p-8">
+              <div className="text-center mb-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1 font-sans font-normal">Related Products</h2>
+                <p className="text-sm text-gray-600 font-sans font-normal">Discover more amazing clothing you might love</p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {relatedProducts.map((relatedProduct) => {
+                  const productSlug = relatedProduct.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                  return (
+                    <Link
+                      key={relatedProduct.id}
+                      to={`/clothes/${productSlug}`}
+                      className="block bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
+                    >
+                      <div className="relative overflow-hidden rounded-t-xl">
+                        <OptimizedImage
+                          src={(relatedProduct.images && relatedProduct.images.length > 0) ? relatedProduct.images[0] : ((relatedProduct as any).main_image || 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=600')}
+                          alt={relatedProduct.title}
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          width={400}
+                        />
+                      </div>
+                      
+                      <div className="p-4">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-2 group-hover:text-[#F48FB1] transition-colors duration-200 truncate font-sans font-normal" title={relatedProduct.title}>
+                          {relatedProduct.title}
+                        </h3>
+                        
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-semibold text-gray-900 font-sans font-normal">{formatUIPrice(relatedProduct.price, 'INR')}</span>
+                            {'originalPrice' in relatedProduct && relatedProduct.originalPrice && relatedProduct.originalPrice > relatedProduct.price && (
+                              <span className="text-xs text-gray-500 line-through font-sans font-normal">{formatUIPrice(relatedProduct.originalPrice, 'INR')}</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="w-full bg-[#F48FB1] group-hover:bg-[#E91E63] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
+                          <span>View Product</span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              
+              <div className="text-center mt-8 sm:mt-10 lg:mt-12">
+                <Link 
+                  to="/clothes"
+                  className="inline-block bg-white border-2 border-[#F48FB1] text-[#F48FB1] hover:bg-[#F48FB1] hover:text-white font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base font-sans font-normal"
+                >
+                  View All Clothing Products
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       )}

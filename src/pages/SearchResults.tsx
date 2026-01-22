@@ -2,14 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Search, Filter, X, Grid, List, Star, Download, Eye } from 'lucide-react';
 import { ProductService } from '../services/supabaseService';
+import NormalItemsService, { NormalItem } from '../services/normalItemsService';
 import { Product } from '../types';
 import { useCurrency } from '../contexts/CurrencyContext';
 import FilterSidebar from '../components/FilterSidebar';
 import ProductCard from '../components/ProductCard';
 
+interface SearchResult extends Product {
+  itemType?: 'product' | 'normal_item' | 'fb_item';
+  isNormalItem?: boolean;
+}
+
 const SearchResults: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -45,10 +51,83 @@ const SearchResults: React.FC = () => {
         status: filters.status !== 'all' ? filters.status : undefined
       };
 
-      const results = await ProductService.searchProducts(query, searchFilters);
+      // Search across all product types in parallel
+      const [productResults, normalItemsResults, fbItemsResults] = await Promise.all([
+        ProductService.searchProducts(query, searchFilters),
+        searchNormalItems(query),
+        searchFBItems(query)
+      ]);
+
+      // Combine and normalize all results
+      const allResults: SearchResult[] = [];
+
+      // Identify F&B items to exclude from regular products
+      const fbCategories = ['Food & Beverage', 'F&B', 'Food', 'Beverage', 'Dry Fruits', 'Dried Fruits', 'Spices'];
+      const isFBProduct = (product: Product) => {
+        const categories = product.categories || [];
+        const category = (product as any).category || '';
+        return categories.some((cat: string) => 
+          fbCategories.some(fbCat => cat.toLowerCase().includes(fbCat.toLowerCase()))
+        ) || fbCategories.some(fbCat => category.toLowerCase().includes(fbCat.toLowerCase()));
+      };
+
+      // Add products (art, clothing) - exclude F&B items as they're handled separately
+      productResults.forEach(product => {
+        if (!isFBProduct(product)) {
+          allResults.push({
+            ...product,
+            itemType: 'product',
+            isNormalItem: false
+          });
+        }
+      });
+
+      // Add normal items (convert to Product format for ProductCard)
+      normalItemsResults.forEach(item => {
+        const normalizedItem: SearchResult = {
+          id: item.id,
+          title: item.title,
+          description: item.description || '',
+          price: item.price,
+          originalPrice: item.original_price,
+          discountPercentage: item.discount_percentage,
+          images: item.images || (item.main_image ? [item.main_image] : []),
+          main_image: item.main_image || item.images?.[0],
+          slug: item.slug,
+          category: 'Normal',
+          categories: ['Normal'],
+          rating: 0,
+          downloads: 0,
+          status: item.status === 'active' ? 'active' : 'inactive',
+          created_date: item.created_at,
+          createdDate: item.created_at,
+          itemType: 'normal_item',
+          isNormalItem: true,
+          productType: 'normal'
+        };
+        allResults.push(normalizedItem);
+      });
+
+      // Apply filters
+      let filteredResults = allResults.filter(result => {
+        // Price filter
+        if (filters.priceRange[0] > 0 && result.price < filters.priceRange[0]) return false;
+        if (filters.priceRange[1] < 10000 && result.price > filters.priceRange[1]) return false;
+        
+        // Status filter
+        if (filters.status !== 'all' && result.status !== filters.status) return false;
+        
+        // Product type filter (only for products, not normal items)
+        if (filters.productType !== 'all' && result.itemType === 'product') {
+          if (filters.productType === 'digital' && result.productType !== 'digital') return false;
+          if (filters.productType === 'poster' && result.productType !== 'poster') return false;
+        }
+        
+        return true;
+      });
       
       // Apply sorting
-      let sortedResults = [...results];
+      let sortedResults = [...filteredResults];
       switch (filters.sortBy) {
         case 'price-low':
           sortedResults.sort((a, b) => a.price - b.price);
@@ -57,7 +136,11 @@ const SearchResults: React.FC = () => {
           sortedResults.sort((a, b) => b.price - a.price);
           break;
         case 'newest':
-          sortedResults.sort((a, b) => new Date(b.created_date || b.createdDate).getTime() - new Date(a.created_date || a.createdDate).getTime());
+          sortedResults.sort((a, b) => {
+            const aDate = new Date(a.created_date || a.createdDate || 0).getTime();
+            const bDate = new Date(b.created_date || b.createdDate || 0).getTime();
+            return bDate - aDate;
+          });
           break;
         case 'downloads':
           sortedResults.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
@@ -76,6 +159,60 @@ const SearchResults: React.FC = () => {
       setProducts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const searchNormalItems = async (query: string): Promise<NormalItem[]> => {
+    try {
+      const allItems = await NormalItemsService.getActiveItems();
+      if (!query.trim()) return allItems;
+      
+      const queryLower = query.toLowerCase();
+      return allItems.filter(item =>
+        item.title.toLowerCase().includes(queryLower) ||
+        item.description?.toLowerCase().includes(queryLower) ||
+        item.tags?.some(tag => tag.toLowerCase().includes(queryLower))
+      );
+    } catch (error) {
+      console.error('Error searching normal items:', error);
+      return [];
+    }
+  };
+
+  const searchFBItems = async (query: string): Promise<Product[]> => {
+    try {
+      // F&B items are stored in products table with F&B-related categories
+      // Search for products with F&B categories
+      const fbCategories = ['Food & Beverage', 'F&B', 'Food', 'Beverage', 'Dry Fruits', 'Dried Fruits', 'Spices'];
+      
+      // Search all products first
+      const allProducts = await ProductService.searchProducts(query, { status: 'active' });
+      
+      // Filter for F&B items by checking categories
+      const fbProducts = allProducts.filter(product => {
+        const categories = product.categories || [];
+        const category = (product as any).category || '';
+        
+        // Check if product has F&B-related category
+        const hasFBCategory = categories.some((cat: string) => 
+          fbCategories.some(fbCat => cat.toLowerCase().includes(fbCat.toLowerCase()))
+        ) || fbCategories.some(fbCat => category.toLowerCase().includes(fbCat.toLowerCase()));
+        
+        // Also check if title/description matches F&B keywords
+        const queryLower = query.toLowerCase();
+        const fBKeywords = ['dry fruit', 'dried fruit', 'spice', 'almond', 'cashew', 'walnut', 'raisin', 'date', 'turmeric', 'cumin', 'pepper'];
+        const matchesFBKeywords = fBKeywords.some(keyword => 
+          product.title.toLowerCase().includes(keyword) ||
+          product.description?.toLowerCase().includes(keyword)
+        );
+        
+        return hasFBCategory || (query.trim() && matchesFBKeywords);
+      });
+      
+      return fbProducts;
+    } catch (error) {
+      console.error('Error searching F&B items:', error);
+      return [];
     }
   };
 
@@ -128,7 +265,7 @@ const SearchResults: React.FC = () => {
               <input
                 type="text"
                 defaultValue={query}
-                placeholder="Search for digital art..."
+                placeholder="Search entire website..."
                 className="w-64 pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {

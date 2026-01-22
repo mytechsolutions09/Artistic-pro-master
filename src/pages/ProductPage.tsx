@@ -318,11 +318,11 @@ const ProductPage: React.FC = () => {
             <div className="absolute -bottom-2 -right-2 w-3 h-3 bg-[#FAC6CF] rounded-full animate-pulse opacity-75" style={{ animationDelay: '0.7s' }}></div>
           </div>
           
-          <h2 className="text-2xl font-bold text-gray-800 mb-3 bg-gradient-to-r from-[#F48FB1] to-[#E91E63] bg-clip-text text-transparent">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-3 bg-gradient-to-r from-[#F48FB1] to-[#E91E63] bg-clip-text text-transparent font-sans font-normal">
             Creating Art...
           </h2>
-          <p className="text-gray-600 mb-2">Please wait while we prepare your masterpiece</p>
-          <p className="text-sm text-[#F48FB1] font-medium">Loading product details</p>
+          <p className="text-gray-600 mb-2 font-sans font-normal">Please wait while we prepare your masterpiece</p>
+          <p className="text-sm text-[#F48FB1] font-medium font-sans font-normal">Loading product details</p>
         </div>
       </div>
     );
@@ -333,28 +333,28 @@ const ProductPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Product Not Found</h1>
-          <div className="space-y-2 mb-6 text-sm text-gray-600">
+          <h1 className="text-2xl font-semibold text-gray-800 mb-4 font-sans font-normal">Product Not Found</h1>
+          <div className="space-y-2 mb-6 text-sm text-gray-600 font-sans font-normal">
             <p>Debug Info:</p>
             <p>Category: {categorySlug || 'undefined'}</p>
             <p>Product: {productSlug || 'undefined'}</p>
             <p>Available Products: {allProducts.length}</p>
             <details className="mt-4">
               <summary className="cursor-pointer text-[#F48FB1]">Show Available Products</summary>
-              <div className="mt-2 text-xs text-gray-500 max-h-32 overflow-y-auto">
+              <div className="mt-2 text-xs text-gray-500 max-h-32 overflow-y-auto font-sans font-normal">
                 {allProducts.length > 0 ? (
                   allProducts.map((p, i) => (
-                    <div key={i} className="mb-1">
+                    <div key={i} className="mb-1 font-sans font-normal">
                       • {p.title} ({(p as any).category || ((p as any).categories && (p as any).categories[0]) || 'General'})
                     </div>
                   ))
                 ) : (
-                  <span className="text-red-400">No products loaded!</span>
+                  <span className="text-red-400 font-sans font-normal">No products loaded!</span>
                 )}
               </div>
             </details>
           </div>
-          <Link to="/" className="text-[#F48FB1] hover:text-[#E91E63] font-medium">
+          <Link to="/" className="text-[#F48FB1] hover:text-[#E91E63] font-medium font-sans font-normal">
             ← Back to Home
           </Link>
         </div>
@@ -380,9 +380,71 @@ const ProductPage: React.FC = () => {
     : 0;
   const totalReviews = reviews.length;
 
-  // Get related products
-  const productCategory = (product as any).category || (product.categories && product.categories[0]) || 'General';
-  const relatedProducts = getRelatedProducts(product.id, productCategory, 4);
+  // Get related products - only art/digital products, exclude clothing, normal items, F&B
+  const productCategory = (product as any)?.category || (product?.categories && product.categories[0]) || 'General';
+  
+  // Get related art products - filter from allProducts directly
+  const getRelatedArtProducts = () => {
+    if (!product || !allProducts || allProducts.length === 0) return [];
+    
+    // Filter all products to get art products from same category first, then any art products
+    const artProducts = allProducts.filter(p => {
+      if (p.id === product.id) return false; // Exclude current product
+      
+      const pData = p as any;
+      
+      // Exclude clothing products (have gender field)
+      const isClothing = pData.gender === 'Men' || pData.gender === 'Women' || pData.gender === 'Unisex';
+      if (isClothing) return false;
+      
+      // Exclude normal items (have category 'Normal' or in categories array)
+      const isNormalItem = pData.categories?.includes('Normal') || pData.category === 'Normal';
+      if (isNormalItem) return false;
+      
+      // Exclude F&B items (have category 'F & B' or 'Food & Beverage')
+      const isFBItem = pData.categories?.some((cat: string) => 
+        cat.toLowerCase().includes('f & b') || 
+        cat.toLowerCase().includes('food & beverage') ||
+        cat.toLowerCase().includes('food and beverage')
+      ) || pData.category?.toLowerCase().includes('f & b');
+      if (isFBItem) return false;
+      
+      // Include products that are NOT clothing, normal, or F&B
+      // Art products typically don't have gender field and are not in Normal/F&B categories
+      const productType = pData.productType || pData.product_type;
+      const isArtProduct = !productType || productType === 'digital' || productType === 'poster';
+      
+      // Check status - include if active or status not set (for legacy products)
+      const status = pData.status;
+      const isActive = status === 'active' || !status;
+      
+      return isArtProduct && isActive;
+    });
+    
+    // Prioritize products from same category
+    const sameCategory = artProducts.filter(p => {
+      const pCat = (p as any).category || (p.categories && p.categories[0]);
+      return pCat === productCategory;
+    });
+    
+    // If we have same category products, use those, otherwise use any art products
+    const related = sameCategory.length > 0 ? sameCategory : artProducts;
+    
+    return related.slice(0, 4);
+  };
+  
+  const relatedProducts = getRelatedArtProducts();
+  
+  // Debug logging (remove in production)
+  useEffect(() => {
+    if (product) {
+      console.log('Product:', product.title);
+      console.log('Product Category:', productCategory);
+      console.log('All Products Count:', allProducts.length);
+      console.log('Related products found:', relatedProducts.length);
+      console.log('Related products:', relatedProducts.map(p => p.title));
+    }
+  }, [product, relatedProducts, productCategory, allProducts]);
 
   const handleAddToCart = () => {
     // Add to cart logic here
@@ -602,7 +664,7 @@ const ProductPage: React.FC = () => {
                       draggable={false}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Single Image</p>
+                  <p className="text-xs text-gray-500 mt-1 font-sans font-normal">Single Image</p>
                   {(product as any).video_url && (
                     <button
                       type="button"
@@ -705,7 +767,7 @@ const ProductPage: React.FC = () => {
             <div className="p-2 sm:p-3 space-y-2 sm:space-y-3">
               {/* Top Actions */}
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <div className="flex items-center space-x-2 text-sm text-gray-600 font-sans font-normal">
                   <button
                     onClick={handleToggleFavorite}
                     disabled={favoritesLoading}
@@ -716,7 +778,7 @@ const ProductPage: React.FC = () => {
                         isFavorited ? 'text-red-500 fill-current' : 'text-gray-400'
                       } ${favoritesLoading ? 'animate-pulse' : ''}`} 
                     />
-                    <span className={`text-xs ${isFavorited ? 'text-red-500' : ''}`}>
+                    <span className={`text-xs font-sans font-normal ${isFavorited ? 'text-red-500' : ''}`}>
                       {favoritesLoading ? 'Loading...' : (isFavorited ? 'Favorited' : 'Add to favorites')}
                     </span>
                   </button>
@@ -727,16 +789,16 @@ const ProductPage: React.FC = () => {
                     className="flex items-center space-x-1 text-gray-600 hover:text-[#F48FB1] transition-colors"
                   >
                     <Share2 className="w-3 h-3" />
-                    <span className="text-xs">Share</span>
+                    <span className="text-xs font-sans font-normal">Share</span>
                   </button>
-                  <span className="text-xs text-gray-400">•</span>
-                  <span className="text-xs text-gray-500">In 20+ carts</span>
+                  <span className="text-xs text-gray-400 font-sans font-normal">•</span>
+                  <span className="text-xs text-gray-500 font-sans font-normal">In 20+ carts</span>
                 </div>
               </div>
 
               {/* Product Title - moved above price */}
               <div className="mt-2">
-                <h1 className="text-sm sm:text-base font-semibold text-gray-800 leading-tight text-center capitalize">
+                <h1 className="text-sm sm:text-base font-semibold text-gray-800 leading-tight text-center capitalize font-sans font-normal">
                   {product.title}
                 </h1>
               </div>
@@ -749,20 +811,20 @@ const ProductPage: React.FC = () => {
                     {product.originalPrice && product.discountPercentage && product.discountPercentage > 0 ? (
                       <div className="space-y-1">
                         <div className="flex items-baseline space-x-2">
-                          <div className="text-lg sm:text-xl font-bold text-green-600">{formatUIPrice(getCurrentPrice(product), 'INR')}</div>
-                          <div className="text-xs text-gray-500 line-through">{formatUIPrice(getOriginalPrice(product), 'INR')}</div>
+                          <div className="text-lg sm:text-xl font-semibold text-green-600 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</div>
+                          <div className="text-xs text-gray-500 line-through font-sans font-normal">{formatUIPrice(getOriginalPrice(product), 'INR')}</div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs text-pink-600 font-medium">
+                          <span className="text-xs text-pink-600 font-medium font-sans font-normal">
                             {product.discountPercentage ? `${product.discountPercentage}% OFF` : 'Discounted'}
                           </span>
                           {product.originalPrice && product.originalPrice > product.price && (
-                            <span className="text-xs text-black font-medium">Limited Time Offer!</span>
+                            <span className="text-xs text-black font-medium font-sans font-normal">Limited Time Offer!</span>
                           )}
                         </div>
                       </div>
                     ) : (
-                      <span className="text-lg sm:text-xl font-bold text-green-600">{formatUIPrice(getCurrentPrice(product), 'INR')}</span>
+                      <span className="text-lg sm:text-xl font-semibold text-green-600 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</span>
                     )}
                   </div>
                   
@@ -779,12 +841,12 @@ const ProductPage: React.FC = () => {
                       ))}
                     </div>
                     <div className="flex items-center space-x-1">
-                      <span className="text-xs font-medium text-gray-700">{averageRating.toFixed(1)}</span>
-                      <span className="text-xs text-gray-500">({totalReviews} reviews)</span>
+                      <span className="text-xs font-medium text-gray-700 font-sans font-normal">{averageRating.toFixed(1)}</span>
+                      <span className="text-xs text-gray-500 font-sans font-normal">({totalReviews} reviews)</span>
                     </div>
                   </div>
                 </div>
-                <div className="text-xs text-gray-600 space-y-0.5">
+                <div className="text-xs text-gray-600 space-y-0.5 font-sans font-normal">
                   <p>Sale ends on {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { month: 'long', day: 'numeric' })}</p>
                 </div>
               </div>
@@ -793,7 +855,7 @@ const ProductPage: React.FC = () => {
               {product.category && (
                 <div className="pb-2 border-b border-gray-100">
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                    <span className="px-2 py-1 bg-[#FAC6CF] text-[#E91E63] text-xs font-medium rounded-full">
+                    <span className="px-2 py-1 bg-[#FAC6CF] text-[#E91E63] text-xs font-medium rounded-full font-sans font-normal">
                       {product.category}
                     </span>
                   </div>
@@ -807,11 +869,11 @@ const ProductPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Product Type</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1 font-sans font-normal">Product Type</label>
                     <select
                       value={selectedProductType}
                       onChange={(e) => setSelectedProductType(e.target.value as 'digital' | 'poster')}
-                      className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white text-sm"
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-gray-50 text-sm font-sans font-normal"
                     >
                       <option value="digital">Digital Download</option>
                       <option value="poster">Physical Poster</option>
@@ -821,12 +883,12 @@ const ProductPage: React.FC = () => {
                   {/* Poster Size Selection - Right next to Product Type */}
                   {selectedProductType === 'poster' && (
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Poster Size</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1 font-sans font-normal">Poster Size</label>
                       {product.posterPricing && Object.keys(product.posterPricing).length > 0 ? (
                         <select
                           value={selectedPosterSize}
                           onChange={(e) => setSelectedPosterSize(e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white text-sm"
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-gray-50 text-sm font-sans font-normal"
                         >
                           {Object.entries(product.posterPricing).map(([size, price]) => {
                             const originalPrice = Number(price);
@@ -842,9 +904,9 @@ const ProductPage: React.FC = () => {
                           })}
                         </select>
                       ) : (
-                        <div className="text-xs text-gray-500 p-2 border border-gray-200 rounded-md bg-gray-50">
+                        <div className="text-xs text-gray-500 p-2 border border-gray-200 rounded-md bg-gray-50 font-sans font-normal">
                           No poster sizes configured
-                          <div className="text-xs text-red-500 mt-1">
+                          <div className="text-xs text-red-500 mt-1 font-sans font-normal">
                             Debug: {JSON.stringify(product.posterPricing)}
                           </div>
                         </div>
@@ -856,8 +918,8 @@ const ProductPage: React.FC = () => {
                 {/* Quantity Selection - Only show for posters */}
                 {selectedProductType === 'poster' && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
-                    <div className="w-full px-3 py-1.5 border border-gray-300 rounded-md bg-white text-sm flex items-center justify-between">
+                    <label className="block text-xs font-medium text-gray-700 mb-1 font-sans font-normal">Quantity</label>
+                    <div className="w-full px-3 py-1.5 border border-gray-300 rounded-md bg-gray-50 text-sm flex items-center justify-between">
                       <button
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                         className="w-5 h-5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
@@ -865,7 +927,7 @@ const ProductPage: React.FC = () => {
                       >
                         −
                       </button>
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-gray-700 font-sans font-normal">
                         {quantity}
                       </span>
                       <button
@@ -878,7 +940,7 @@ const ProductPage: React.FC = () => {
                   </div>
                 )}
                 
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-red-500 font-sans font-normal">
                   Frames are not included
                 </p>
               </div>
@@ -888,14 +950,14 @@ const ProductPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-gray-900 text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-800 transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="w-full bg-teal-800 text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-teal-900 transition-all duration-200 shadow-md hover:shadow-lg font-sans font-normal"
                 >
                   Add to cart
                 </button>
                 <button
                   onClick={handleBuyNow}
                   disabled={!product || !product.id}
-                  className="w-full bg-[#F48FB1] text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-[#E91E63] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#F48FB1] text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-[#E91E63] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                 >
                   Buy Now
                 </button>
@@ -903,14 +965,14 @@ const ProductPage: React.FC = () => {
 
               {/* Product Description */}
               <div className="mt-2 pt-2 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-800 mb-2">Description</h3>
+                <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans font-normal">Description</h3>
                 <div className="mb-2">
-                  <p className={`text-xs text-gray-600 leading-relaxed ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+                  <p className={`text-xs text-gray-600 leading-relaxed font-sans font-normal ${!showFullDescription ? 'line-clamp-3' : ''}`}>
                     {'description' in product && product.description ? product.description : "Beautiful handcrafted artwork that brings nature's beauty into your home. Perfect for living rooms, bedrooms, or as a thoughtful gift."}
                   </p>
                   <button
                     onClick={() => setShowFullDescription(!showFullDescription)}
-                    className="text-xs text-[#F48FB1] hover:text-[#E91E63] font-medium mt-1 transition-colors"
+                    className="text-xs text-[#F48FB1] hover:text-[#E91E63] font-medium mt-1 transition-colors font-sans font-normal"
                   >
                     {showFullDescription ? 'Show less' : 'Show more'}
                   </button>
@@ -932,31 +994,31 @@ const ProductPage: React.FC = () => {
                 content: (
                   <div className="space-y-0">
                     <div className="space-y-0">
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Material:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Premium matte paper' : 'Digital file'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Material:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'Premium matte paper' : 'Digital file'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Style:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'High-quality print' : 'Digital artwork'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Style:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'High-quality print' : 'Digital artwork'}</span>
                       </div>
                       {selectedProductType === 'digital' && (
-                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                          <span className="font-medium text-gray-900">Size:</span>
-                          <span className="text-gray-600">High resolution (300 DPI), 3000px X 4500px</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Size:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">High resolution (300 DPI), 3000px X 4500px</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Origin:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Printed in India' : 'Created digitally'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Origin:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'Printed in India' : 'Created digitally'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Frame:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'No frame included' : 'No frame needed'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Frame:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'No frame included' : 'No frame needed'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3">
-                        <span className="font-medium text-gray-900">Quality:</span>
-                        <span className="text-gray-600">Premium grade</span>
+                      <div className="flex justify-between items-center py-1.5">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Quality:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">Premium grade</span>
                       </div>
                     </div>
                   </div>
@@ -969,37 +1031,37 @@ const ProductPage: React.FC = () => {
                 content: (
                   <div className="space-y-0">
                     <div className="space-y-0">
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Delivery Method:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Free Standard Delivery' : 'Instant Digital Download'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Delivery Method:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'Free Standard Delivery' : 'Instant Digital Download'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Delivery Time:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? '5-7 business days' : 'Immediately after purchase'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Delivery Time:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? '5-7 business days' : 'Immediately after purchase'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Tracking:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Tracking information provided' : 'Not applicable'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Tracking:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'Tracking information provided' : 'Not applicable'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Packaging:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Secure packaging guaranteed' : 'Digital files only'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Packaging:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'Secure packaging guaranteed' : 'Digital files only'}</span>
                       </div>
                       {selectedProductType === 'poster' && (
-                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                          <span className="font-medium text-gray-900">Returns:</span>
-                          <span className="text-gray-600">Accepted within 30 days</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Returns:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Accepted within 30 days</span>
                         </div>
                       )}
                       {selectedProductType === 'digital' && (
-                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                          <span className="font-medium text-gray-900">File Formats:</span>
-                          <span className="text-gray-600">PNG, PDF</span>
+                        <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">File Formats:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">PNG, PDF</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center py-3">
-                        <span className="font-medium text-gray-900">Support:</span>
-                        <span className="text-gray-600">Customer service available</span>
+                      <div className="flex justify-between items-center py-1.5">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Support:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">Customer service available</span>
                       </div>
                     </div>
                   </div>
@@ -1012,21 +1074,21 @@ const ProductPage: React.FC = () => {
                 content: (
                   <div className="space-y-0">
                     <div className="space-y-0">
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Eco-Friendly:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Sustainable materials used' : 'Zero environmental impact'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Eco-Friendly:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'Sustainable materials used' : 'Zero environmental impact'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Uniqueness:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'One-of-a-kind variations' : 'High-resolution digital file'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Uniqueness:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'One-of-a-kind variations' : 'High-resolution digital file'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                        <span className="font-medium text-gray-900">Compatibility:</span>
-                        <span className="text-gray-600">{selectedProductType === 'poster' ? 'Standard framing sizes' : 'All modern devices'}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Compatibility:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{selectedProductType === 'poster' ? 'Standard framing sizes' : 'All modern devices'}</span>
                       </div>
-                      <div className="flex justify-between items-center py-3">
-                        <span className="font-medium text-gray-900">Quality:</span>
-                        <span className="text-gray-600">Premium grade guarantee</span>
+                      <div className="flex justify-between items-center py-1.5">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Quality:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">Premium grade guarantee</span>
                       </div>
                     </div>
                   </div>
@@ -1044,13 +1106,13 @@ const ProductPage: React.FC = () => {
           <div className="lg:col-span-8">
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Decorative Header */}
-          <div className="bg-gradient-to-r from-[#FAC6CF] to-[#F48FB1] h-1"></div>
+          <div className="bg-teal-800 h-1"></div>
           
               <div className="p-1 sm:p-2 lg:p-3">
             {/* Header with Rating and Write Review Button */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 sm:mb-2 space-y-1 sm:space-y-0">
               <div>
-                    <h3 className="text-base sm:text-lg lg:text-xl font-bold text-[#333333]">
+                    <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-[#333333] font-sans font-normal">
                   Customer Reviews
                 </h3>
               </div>
@@ -1058,28 +1120,28 @@ const ProductPage: React.FC = () => {
               <div className="flex items-center space-x-4">
                 {/* Rating moved slightly to the right */}
                 <div className="flex items-center space-x-2 bg-[#F5F5F5] rounded-lg px-2 py-1 border border-[#F5F5F5] shadow-sm">
-                  <div className="text-lg sm:text-xl font-bold text-[#F48FB1]">
+                  <div className="text-lg sm:text-xl font-semibold text-teal-800 font-sans font-normal">
                     {averageRating.toFixed(1)}
                   </div>
-                  <div className="text-xs text-[#333333]">out of 5</div>
+                  <div className="text-xs text-[#333333] font-sans font-normal">out of 5</div>
                   <div className="flex items-center space-x-0.5">
                     {Array.from({ length: 5 }, (_, i) => (
                       <Star
                         key={i}
                         className={`w-2 h-2 sm:w-3 sm:h-3 ${
-                          i < Math.floor(averageRating) ? 'text-[#F48FB1] fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                          i < Math.floor(averageRating) ? 'text-teal-800 fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
                         }`}
                       />
                     ))}
                   </div>
-                  <div className="text-xs text-[#333333] font-semibold">
+                  <div className="text-xs text-[#333333] font-semibold font-sans font-normal">
                     ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
                   </div>
                 </div>
                 
                 <button 
                   onClick={handleWriteReview}
-                  className="px-2 py-1 bg-gradient-to-r from-[#FAC6CF] to-[#F48FB1] hover:from-[#F48FB1] hover:to-[#E91E63] text-white rounded-md transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md text-xs"
+                  className="px-2 py-1 bg-teal-800 hover:bg-teal-900 text-white rounded-md transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md text-xs"
                 >
                   ✨ Write a Review
                 </button>
@@ -1090,8 +1152,8 @@ const ProductPage: React.FC = () => {
             {/* Sort Options */}
                 <div className="flex items-center justify-end mb-1 sm:mb-2">
                   <div className="flex items-center space-x-1 sm:space-x-2">
-                    <span className="text-xs font-medium text-[#333333]">Sort by:</span>
-                    <select className="text-xs border border-[#F5F5F5] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#F48FB1] focus:border-[#F48FB1] bg-white shadow-sm">
+                    <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
+                    <select className="text-xs border border-[#F5F5F5] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-800 focus:border-teal-800 bg-gray-50 shadow-sm font-sans font-normal">
                   <option>Most Recent</option>
                   <option>Suggested</option>
                   <option>Highest Rated</option>
@@ -1103,15 +1165,15 @@ const ProductPage: React.FC = () => {
             {/* Individual Reviews - 2x2 Grid Layout */}
             {reviewsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F48FB1]"></div>
-                <span className="ml-3 text-gray-600">Loading reviews...</span>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-800"></div>
+                <span className="ml-3 text-gray-600 font-sans font-normal">Loading reviews...</span>
               </div>
             ) : reviews.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-gray-400 mb-3">
                   <MessageCircle className="w-12 h-12 mx-auto" />
                 </div>
-                <p className="text-gray-600">No reviews yet. Be the first to review this product!</p>
+                <p className="text-gray-600 font-sans font-normal">No reviews yet. Be the first to review this product!</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -1119,15 +1181,15 @@ const ProductPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {currentReviews.filter((review: Review) => review && review.userName && review.comment).map((review: Review, index: number) => (
                     <div key={review.id} className={`bg-white rounded-xl p-4 border border-[#F5F5F5] shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 ${
-                      index % 2 === 0 ? 'hover:border-[#FAC6CF]' : 'hover:border-[#F48FB1]'
+                      index % 2 === 0 ? 'hover:border-teal-700' : 'hover:border-teal-800'
                     }`}>
                       {/* Review Header */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
-                            index % 2 === 0 ? 'bg-[#F48FB1]' : 'bg-[#FAC6CF]'
+                            index % 2 === 0 ? 'bg-teal-800' : 'bg-teal-700'
                           }`}>
-                            <span className="text-white font-bold text-sm">
+                            <span className="text-white font-semibold text-sm font-sans font-normal">
                               {review.userName && review.userName.includes('@') 
                                 ? review.userName.split('@')[0].charAt(0).toUpperCase()
                                 : review.userName ? review.userName.charAt(0).toUpperCase() : '?'
@@ -1135,7 +1197,7 @@ const ProductPage: React.FC = () => {
                             </span>
                           </div>
                           <div>
-                            <p className="font-bold text-[#333333] text-sm">
+                            <p className="font-semibold text-[#333333] text-sm font-sans font-normal">
                               {review.userName && review.userName.includes('@') 
                                 ? review.userName.split('@')[0].charAt(0).toUpperCase() + review.userName.split('@')[0].slice(1)
                                 : review.userName || 'Anonymous User'
@@ -1143,10 +1205,10 @@ const ProductPage: React.FC = () => {
                             </p>
                             <div className="flex items-center space-x-1 mt-1">
                               <div className="flex items-center space-x-1">
-                                <div className="w-3 h-3 bg-[#F5F5F5] rounded-full flex items-center justify-center border border-[#FAC6CF]">
-                                  <span className="text-[#F48FB1] text-xs font-bold">✓</span>
+                                <div className="w-3 h-3 bg-[#F5F5F5] rounded-full flex items-center justify-center border border-teal-700">
+                                  <span className="text-teal-800 text-xs font-semibold font-sans font-normal">✓</span>
                                 </div>
-                                <span className="text-xs text-[#F48FB1] font-bold">Recommends</span>
+                                <span className="text-xs text-teal-800 font-semibold font-sans font-normal">Recommends</span>
                               </div>
                             </div>
                           </div>
@@ -1157,19 +1219,19 @@ const ProductPage: React.FC = () => {
                               <Star
                                 key={i}
                                 className={`w-3 h-3 ${
-                                  i < review.rating ? 'text-[#F48FB1] fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                                  i < review.rating ? 'text-teal-800 fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
                                 }`}
                               />
                             ))}
                           </div>
-                          <span className="text-xs font-medium text-[#333333] bg-[#F5F5F5] px-2 py-1 rounded-full">
+                          <span className="text-xs font-medium text-[#333333] bg-[#F5F5F5] px-2 py-1 rounded-full font-sans font-normal">
                             {new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
                       </div>
                       
                       {/* Review Comment */}
-                      <p className="text-[#333333] text-sm leading-relaxed mb-3 overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}}>{review.comment}</p>
+                      <p className="text-[#333333] text-sm leading-relaxed mb-3 overflow-hidden font-sans font-normal" style={{display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}}>{review.comment}</p>
                       
                       {/* Review Images */}
                       {review.images && review.images.length > 0 && (
@@ -1184,7 +1246,7 @@ const ProductPage: React.FC = () => {
                                 <img
                                   src={image}
                                   alt={`Review image ${imgIndex + 1}`}
-                                  className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:border-[#F48FB1] transition-all duration-200"
+                                  className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:border-teal-800 transition-all duration-200"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
                                   <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -1198,7 +1260,7 @@ const ProductPage: React.FC = () => {
                                 className="w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                                 onClick={() => review.images && handleImageClick(review.images[2])}
                               >
-                                <span className="text-xs text-gray-500">+{review.images.length - 2}</span>
+                                <span className="text-xs text-gray-500 font-sans font-normal">+{review.images.length - 2}</span>
                               </div>
                             )}
                           </div>
@@ -1209,13 +1271,13 @@ const ProductPage: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <button 
                           onClick={() => handleHelpfulVote(review.id)}
-                          className="flex items-center space-x-1 text-[#333333] hover:text-[#F48FB1] transition-colors font-medium text-xs"
+                          className="flex items-center space-x-1 text-[#333333] hover:text-teal-800 transition-colors font-medium text-xs font-sans font-normal"
                         >
                           <ThumbsUp className="w-3 h-3" />
                           <span>Helpful ({helpfulVotes[review.id] || review.helpful || 0})</span>
                         </button>
                         {review.verified && (
-                          <span className="px-2 py-1 bg-[#F48FB1] text-white text-xs rounded-full font-bold shadow-sm">
+                          <span className="px-2 py-1 bg-teal-800 text-white text-xs rounded-full font-semibold shadow-sm font-sans font-normal">
                             ✓ Verified Purchase
                           </span>
                         )}
@@ -1231,7 +1293,7 @@ const ProductPage: React.FC = () => {
                       <button 
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-teal-800 hover:border-teal-800 transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                       >
                         ←
                       </button>
@@ -1240,10 +1302,10 @@ const ProductPage: React.FC = () => {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`w-8 h-8 rounded-lg transition-all duration-300 font-medium text-sm ${
+                          className={`w-8 h-8 rounded-lg transition-all duration-300 font-medium text-sm font-sans font-normal ${
                             page === currentPage 
-                              ? 'bg-[#F48FB1] text-white shadow-lg' 
-                              : 'border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] hover:shadow-md'
+                              ? 'bg-teal-800 text-white shadow-lg' 
+                              : 'border border-[#F5F5F5] text-[#333333] hover:text-teal-800 hover:border-teal-800 hover:shadow-md'
                           }`}
                         >
                           {page}
@@ -1253,7 +1315,7 @@ const ProductPage: React.FC = () => {
                       <button 
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-teal-800 hover:border-teal-800 transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                       >
                         →
                       </button>
@@ -1271,8 +1333,8 @@ const ProductPage: React.FC = () => {
           <div className="lg:col-span-4 space-y-4 sm:space-y-6">
             {/* Review Images Gallery */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
-                <span className="w-2 h-2 bg-[#F48FB1] rounded-full mr-2"></span>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center font-sans font-normal">
+                <span className="w-2 h-2 bg-teal-800 rounded-full mr-2"></span>
                 Review Images
               </h3>
               <div className="grid grid-cols-3 gap-2">
@@ -1290,7 +1352,7 @@ const ProductPage: React.FC = () => {
                         <img 
                           src={image} 
                           alt={`Review image ${index + 1}`}
-                          className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:border-[#F48FB1] transition-all duration-200"
+                          className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:border-teal-800 transition-all duration-200"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -1304,71 +1366,17 @@ const ProductPage: React.FC = () => {
                   // If no images, show 3 placeholders
                   return Array.from({ length: 3 }, (_, index) => (
                     <div key={index} className="w-full h-16 sm:h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">No images yet</span>
+                      <span className="text-gray-400 text-xs font-sans font-normal">No images yet</span>
                     </div>
                   ));
                 })()}
               </div>
               {reviews.filter((review: Review) => review && review.images && review.images.length > 0).length > 0 && (
-                <button className="w-full mt-3 sm:mt-4 py-2 text-[#F48FB1] hover:text-[#E91E63] text-xs sm:text-sm font-medium transition-colors">
+                <button className="w-full mt-3 sm:mt-4 py-2 text-teal-800 hover:text-teal-900 text-xs sm:text-sm font-medium transition-colors font-sans font-normal">
                   View all review images →
                 </button>
               )}
             </div>
-
-            {/* Customer Photos Section */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
-                <span className="w-2 h-2 bg-[#FAC6CF] rounded-full mr-2"></span>
-                Customer Photos
-              </h3>
-              <div className="space-y-3 sm:space-y-4">
-                {(() => {
-                  // Get the 3 latest reviews with images
-                  const reviewsWithImages = reviews
-                    .filter((review: Review) => review && review.images && review.images.length > 0)
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date, latest first
-                    .slice(0, 3); // Take only first 3
-                  
-                  if (reviewsWithImages.length > 0) {
-                    return reviewsWithImages.map((review: Review, index: number) => {
-                      const userName = review.userName && review.userName.includes('@') 
-                        ? review.userName.split('@')[0].charAt(0).toUpperCase() + review.userName.split('@')[0].slice(1)
-                        : review.userName || 'Anonymous User';
-                      
-                      return (
-                        <div key={review.id} className="flex items-start space-x-2 sm:space-x-3">
-                          <img 
-                            src={review.images?.[0] || ''} 
-                            alt={`Customer photo from ${userName}`}
-                            className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0 cursor-pointer hover:border-[#F48FB1] transition-colors"
-                            onClick={() => review.images && handleImageClick(review.images[0])}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs sm:text-sm font-medium text-gray-800">{userName}</p>
-                            <p className="text-xs sm:text-sm text-gray-600 truncate">{review.comment}</p>
-                          </div>
-                        </div>
-                      );
-                    });
-                  }
-                  
-                  // Fallback: show placeholder if no reviews with images
-                  return (
-                    <div className="text-center py-4">
-                      <div className="text-gray-400 mb-2">
-                        <Eye className="w-8 h-8 mx-auto" />
-                      </div>
-                      <p className="text-gray-600 text-sm">No customer photos yet</p>
-                    </div>
-                  );
-                })()}
-              </div>
-              <button className="w-full mt-3 sm:mt-4 py-2 text-[#F48FB1] hover:text-[#E91E63] text-xs sm:text-sm font-medium transition-colors">
-                See more customer photos →
-              </button>
-            </div>
-
 
           </div>
         </div>
@@ -1376,16 +1384,17 @@ const ProductPage: React.FC = () => {
       </div>
 
       {/* Related Products Section */}
-      <div className="py-6 sm:py-8 mt-4">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 lg:p-8">
-            <div className="text-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Related Products</h2>
-              <p className="text-sm text-gray-600">Discover more amazing artwork you might love</p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {relatedProducts.length > 0 ? relatedProducts.map((relatedProduct) => (
+      {product && relatedProducts && relatedProducts.length > 0 && (
+        <div className="py-6 sm:py-8 mt-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 lg:p-8">
+              <div className="text-center mb-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1 font-sans font-normal">Related Products</h2>
+                <p className="text-sm text-gray-600 font-sans font-normal">Discover more amazing artwork you might love</p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {relatedProducts.map((relatedProduct) => (
               <Link
                 key={relatedProduct.id}
                 to={`/${generateSlug('categories' in relatedProduct ? (relatedProduct.categories && relatedProduct.categories.length > 0 ? relatedProduct.categories[0] : 'general') : ('category' in relatedProduct ? relatedProduct.category : 'general'))}/${generateSlug(relatedProduct.title)}`}
@@ -1422,19 +1431,19 @@ const ProductPage: React.FC = () => {
                 </div>
                 
                 <div className="p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2 group-hover:text-[#F48FB1] transition-colors duration-200 truncate" title={relatedProduct.title}>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2 group-hover:text-[#F48FB1] transition-colors duration-200 truncate font-sans font-normal" title={relatedProduct.title}>
                     {relatedProduct.title}
                   </h3>
                   
-                  <p className="text-xs text-gray-600 mb-2 truncate" title={'description' in relatedProduct ? relatedProduct.description : "Beautiful handcrafted artwork that brings nature's beauty into your home."}>
+                  <p className="text-xs text-gray-600 mb-2 truncate font-sans font-normal" title={'description' in relatedProduct ? relatedProduct.description : "Beautiful handcrafted artwork that brings nature's beauty into your home."}>
                     {'description' in relatedProduct ? relatedProduct.description : "Beautiful handcrafted artwork that brings nature's beauty into your home."}
                   </p>
                   
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-bold text-gray-900">{formatUIPrice(relatedProduct.price, 'INR')}</span>
+                      <span className="text-sm font-semibold text-gray-900 font-sans font-normal">{formatUIPrice(relatedProduct.price, 'INR')}</span>
                       {'originalPrice' in relatedProduct && 'discountPercentage' in relatedProduct && relatedProduct.originalPrice && relatedProduct.discountPercentage && (
-                        <span className="text-xs text-gray-500 line-through">{formatUIPrice(relatedProduct.originalPrice, 'INR')}</span>
+                        <span className="text-xs text-gray-500 line-through font-sans font-normal">{formatUIPrice(relatedProduct.originalPrice, 'INR')}</span>
                       )}
                     </div>
                   </div>
@@ -1453,30 +1462,27 @@ const ProductPage: React.FC = () => {
                     <span className="text-xs text-gray-500">({relatedProduct.rating || 0})</span>
                   </div>
                   
-                  <div className="w-full bg-[#F48FB1] group-hover:bg-[#E91E63] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
+                  <div className="w-full bg-[#F48FB1] group-hover:bg-[#E91E63] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
                     <ShoppingCart className="w-4 h-4" />
                     <span>View Product</span>
                   </div>
                 </div>
               </Link>
-              )) : (
-                <div className="col-span-full text-center py-8">
-                  <p className="text-gray-500">No related products found in this category.</p>
-                </div>
-              )}
+              ))}
             </div>
           
-          <div className="text-center mt-8 sm:mt-10 lg:mt-12">
-            <Link 
-              to={`/${generateSlug(productCategory)}`}
-              className="inline-block bg-white border-2 border-[#F48FB1] text-[#F48FB1] hover:bg-[#F48FB1] hover:text-white font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base"
-            >
-              View All {productCategory} Products
-            </Link>
+            <div className="text-center mt-8 sm:mt-10 lg:mt-12">
+              <Link 
+                to={`/${generateSlug(productCategory)}`}
+                className="inline-block bg-white border-2 border-[#F48FB1] text-[#F48FB1] hover:bg-[#F48FB1] hover:text-white font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base font-sans font-normal"
+              >
+                View All {productCategory} Products
+              </Link>
             </div>
           </div>
         </div>
       </div>
+      )}
 
       {/* Image Modal */}
       {showImageModal && selectedReviewImage && (
@@ -1508,30 +1514,30 @@ const ProductPage: React.FC = () => {
               <X className="w-5 h-5 text-gray-600" />
             </button>
             <div className="p-6">
-              <h3 className="text-lg font-bold text-[#333333] mb-4">Write a Review</h3>
+              <h3 className="text-lg font-semibold text-[#333333] mb-4 font-sans font-normal">Write a Review</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#333333] mb-2">Rating</label>
+                  <label className="block text-sm font-medium text-[#333333] mb-2 font-sans font-normal">Rating</label>
                   <div className="flex items-center space-x-1">
                     {Array.from({ length: 5 }, (_, i) => (
                       <Star
                         key={i}
-                        className="w-5 h-5 text-[#F5F5F5] hover:text-[#F48FB1] cursor-pointer transition-colors"
+                        className="w-5 h-5 text-[#F5F5F5] hover:text-teal-800 cursor-pointer transition-colors"
                       />
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#333333] mb-2">Your Review</label>
-                  <textarea
-                    className="w-full p-3 border border-[#F5F5F5] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F48FB1] focus:border-[#F48FB1] resize-none"
-                    rows={4}
-                    placeholder="Share your experience with this product..."
-                  />
-                </div>
-                <button className="w-full bg-[#F48FB1] hover:bg-[#E91E63] text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                  Submit Review
-                </button>
+                  <label className="block text-sm font-medium text-[#333333] mb-2 font-sans font-normal">Your Review</label>
+                    <textarea
+                      className="w-full p-3 border border-[#F5F5F5] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-800 focus:border-teal-800 resize-none font-sans font-normal"
+                      rows={4}
+                      placeholder="Share your experience with this product..."
+                    />
+                  </div>
+                  <button className="w-full bg-teal-800 hover:bg-teal-900 text-white font-medium py-2 px-4 rounded-lg transition-colors font-sans font-normal">
+                    Submit Review
+                  </button>
               </div>
             </div>
           </div>

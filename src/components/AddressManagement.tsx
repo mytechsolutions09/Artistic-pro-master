@@ -48,11 +48,23 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
     e.preventDefault();
     
     try {
+      // Split the name into first and last name
+      const nameParts = formData.firstName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      // Create form data with split name
+      const addressData = {
+        ...formData,
+        firstName: firstName,
+        lastName: lastName
+      };
+      
       let result;
       if (editingAddress) {
-        result = await AddressService.updateAddress(editingAddress.id, formData, false);
+        result = await AddressService.updateAddress(editingAddress.id, addressData, false);
       } else {
-        result = await AddressService.saveAddress(userId, formData, addresses.length === 0);
+        result = await AddressService.saveAddress(userId, addressData, addresses.length === 0);
       }
 
       if (result.success) {
@@ -70,8 +82,8 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
     setEditingAddress(address);
     setFormData({
       email: address.email,
-      firstName: address.first_name,
-      lastName: address.last_name,
+      firstName: `${address.first_name} ${address.last_name}`.trim(),
+      lastName: '',
       phone: address.phone,
       address: address.address,
       city: address.city,
@@ -154,16 +166,16 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
         >
-          <Plus className="w-4 h-4" />
-          <span>Add Address</span>
+          <Plus className="w-3.5 h-3.5" />
+          <span className="font-sans font-normal">Add Address</span>
         </button>
       </div>
 
       {/* Address Form */}
       {showForm && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
           <h4 className="text-md font-semibold text-gray-800 mb-4">
             {editingAddress ? 'Edit Address' : 'Add New Address'}
           </h4>
@@ -192,29 +204,16 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300 text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300 text-sm"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <input
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300 text-sm"
+                required
+              />
             </div>
 
             <div>
@@ -265,19 +264,19 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
-                Cancel
+                <span className="font-sans font-normal">Cancel</span>
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
               >
-                {editingAddress ? 'Update Address' : 'Save Address'}
+                <span className="font-sans font-normal">{editingAddress ? 'Update Address' : 'Save Address'}</span>
               </button>
             </div>
           </form>
@@ -292,9 +291,9 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
           <p className="text-gray-500 mb-4">Add your first address to get started</p>
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
           >
-            Add Address
+            <span className="font-sans font-normal">Add Address</span>
           </button>
         </div>
       ) : (
@@ -309,7 +308,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
                   <div className="flex items-center space-x-2 mb-2">
                     <User className="w-4 h-4 text-gray-400" />
                     <span className="font-medium text-gray-900">
-                      {address.first_name} {address.last_name}
+                      {`${address.first_name} ${address.last_name}`.trim()}
                     </span>
                     {address.is_default && (
                       <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full flex items-center space-x-1">
@@ -341,25 +340,25 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
                   {!address.is_default && (
                     <button
                       onClick={() => handleSetDefault(address.id)}
-                      className="p-2 text-gray-400 hover:text-yellow-500 transition-colors"
+                      className="p-1.5 text-gray-400 hover:text-yellow-500 transition-colors"
                       title="Set as default"
                     >
-                      <StarOff className="w-4 h-4" />
+                      <StarOff className="w-3.5 h-3.5" />
                     </button>
                   )}
                   <button
                     onClick={() => handleEdit(address)}
-                    className="p-2 text-gray-400 hover:text-teal-600 transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-teal-600 transition-colors"
                     title="Edit address"
                   >
-                    <Edit className="w-4 h-4" />
+                    <Edit className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDelete(address.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
                     title="Delete address"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

@@ -105,7 +105,7 @@ const MenClothingPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-white pt-20 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded font-sans font-normal">
             Error loading products: {error}
           </div>
         </div>
@@ -123,7 +123,7 @@ const MenClothingPage: React.FC = () => {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`text-xs font-medium tracking-wider whitespace-nowrap transition-colors pb-1 ${
+                className={`text-xs font-medium tracking-wider whitespace-nowrap transition-colors pb-1 font-sans font-normal ${
                   selectedCategory === category.id
                     ? 'text-gray-900 border-b-2 border-gray-900'
                     : 'text-gray-500 hover:text-gray-900'
@@ -167,12 +167,12 @@ const MenClothingPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-xs font-medium tracking-wider text-gray-900">SORT BY:</span>
+              <span className="text-xs font-medium tracking-wider text-gray-900 font-sans font-normal">SORT BY:</span>
               <div className="relative">
                 <select 
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="text-xs border-0 rounded px-3 py-1.5 pr-8 bg-gray-50 focus:outline-none appearance-none"
+                  className="text-xs border-0 rounded px-3 py-1.5 pr-8 bg-gray-50 focus:outline-none appearance-none font-sans font-normal"
                   style={{
                     outline: 'none',
                     boxShadow: 'none',
@@ -188,7 +188,7 @@ const MenClothingPage: React.FC = () => {
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 pointer-events-none" />
               </div>
-              <span className="text-xs text-gray-600">{filteredProducts.length} PRODUCTS</span>
+              <span className="text-xs text-gray-600 font-sans font-normal">{filteredProducts.length} PRODUCTS</span>
             </div>
           </div>
         </div>
@@ -199,8 +199,8 @@ const MenClothingPage: React.FC = () => {
         {/* Products Grid */}
         {filteredProducts.length === 0 ? (
           <div className="text-center py-20">
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No products found</h3>
-            <p className="text-gray-500">Check back soon for new arrivals</p>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2 font-sans font-normal">No products found</h3>
+            <p className="text-gray-500 font-sans font-normal">Check back soon for new arrivals</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

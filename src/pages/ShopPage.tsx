@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import NormalItemsService, { NormalItem } from '../services/normalItemsService';
 import ProductCard from '../components/ProductCard';
+import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import { generateSlug } from '../utils/slugUtils';
 
 const ShopPage: React.FC = () => {
@@ -10,26 +11,41 @@ const ShopPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadItems = async () => {
       try {
         setLoading(true);
         const data = await NormalItemsService.getActiveItems();
-        setItems(data);
+        if (isMounted) {
+          setItems(data);
+        }
       } catch (error) {
         console.error('Error loading normal items:', error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadItems();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Filter items based on search term
-  const filteredItems = items.filter(item =>
-    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Memoize filtered items to avoid re-filtering on every render
+  const filteredItems = useMemo(() => {
+    if (!searchTerm.trim()) return items;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return items.filter(item =>
+      item.title.toLowerCase().includes(searchLower) ||
+      item.description?.toLowerCase().includes(searchLower)
+    );
+  }, [items, searchTerm]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -53,8 +69,10 @@ const ShopPage: React.FC = () => {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-12">

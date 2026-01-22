@@ -31,8 +31,8 @@ const UserDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('settings');
   const [isEditing, setIsEditing] = useState(false);
   const [userProfile, setUserProfile] = useState({
-    firstName: user?.user_metadata?.first_name || user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || '',
-    lastName: user?.user_metadata?.last_name || user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+    firstName: user?.user_metadata?.full_name || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || user?.email?.split('@')[0] || '',
+    lastName: '',
     email: user?.email || '',
     bio: user?.user_metadata?.bio || 'Welcome to your dashboard!',
     location: user?.user_metadata?.location || '',
@@ -196,8 +196,8 @@ const UserDashboard: React.FC = () => {
       const nameParts = fullName.split(' ');
       
       setUserProfile({
-        firstName: user.user_metadata?.first_name || nameParts[0] || '',
-        lastName: user.user_metadata?.last_name || nameParts.slice(1).join(' ') || '',
+        firstName: user.user_metadata?.full_name || `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || nameParts.join(' ') || '',
+        lastName: '',
         email: user.email || '',
         bio: user.user_metadata?.bio || 'Welcome to your dashboard!',
         location: user.user_metadata?.location || '',
@@ -897,8 +897,8 @@ const UserDashboard: React.FC = () => {
                 </div>
                 <Calendar className="w-3 h-3 text-gray-500" />
               </div>
-              <p className="text-base font-bold mb-0.5 text-gray-900">{`${userProfile.firstName} ${userProfile.lastName}`.toUpperCase()}</p>
-              <p className="text-gray-600 text-xs">Member since {new Date(userProfile.joinDate).toLocaleDateString()}</p>
+              <p className="text-base font-bold mb-0.5 text-gray-900 font-sans font-normal">{userProfile.firstName.toUpperCase()}</p>
+              <p className="text-gray-600 text-xs font-sans font-normal">Member since {new Date(userProfile.joinDate).toLocaleDateString()}</p>
             </div>
           </div>
 
@@ -910,8 +910,8 @@ const UserDashboard: React.FC = () => {
                 </div>
                 <TrendingUp className="w-3 h-3 text-gray-500" />
               </div>
-              <p className="text-lg font-bold mb-0.5 text-gray-900">{userOrders.length}</p>
-              <p className="text-gray-600 text-xs">Total Orders</p>
+              <p className="text-lg font-bold mb-0.5 text-gray-900 font-sans font-normal">{userOrders.length}</p>
+              <p className="text-gray-600 text-xs font-sans font-normal">Total Orders</p>
             </div>
           </div>
 
@@ -923,8 +923,8 @@ const UserDashboard: React.FC = () => {
                 </div>
                 <Zap className="w-3 h-3 text-gray-500" />
               </div>
-              <p className="text-lg font-bold mb-0.5 text-gray-900">{userDownloads.length}</p>
-              <p className="text-gray-600 text-xs">Downloads</p>
+              <p className="text-lg font-bold mb-0.5 text-gray-900 font-sans font-normal">{userDownloads.length}</p>
+              <p className="text-gray-600 text-xs font-sans font-normal">Downloads</p>
             </div>
           </div>
 
@@ -936,8 +936,8 @@ const UserDashboard: React.FC = () => {
                 </div>
                 <Sparkles className="w-3 h-3 text-gray-500" />
               </div>
-              <p className="text-lg font-bold mb-0.5 text-gray-900">{userFavorites.length}</p>
-              <p className="text-gray-600 text-xs">Favorites</p>
+              <p className="text-lg font-bold mb-0.5 text-gray-900 font-sans font-normal">{userFavorites.length}</p>
+              <p className="text-gray-600 text-xs font-sans font-normal">Favorites</p>
             </div>
           </div>
         </div>
@@ -953,12 +953,12 @@ const UserDashboard: React.FC = () => {
                     <div className="w-6 h-6 rounded flex items-center justify-center bg-gray-100">
                       <Activity className="w-4 h-4 text-gray-700" />
                     </div>
-                    <h3 className="text-base font-bold text-gray-900">Recent Activity</h3>
+                    <h3 className="text-base font-bold text-gray-900 font-sans font-normal">Recent Activity</h3>
                   </div>
                   <button 
                     onClick={() => setActiveTab('orders')}
-                    className="font-medium text-xs hover:text-gray-900 transition-colors text-gray-600"
-                  >View All</button>
+                    className="font-medium text-xs hover:text-gray-900 transition-colors text-gray-600 font-sans font-normal"
+                  ><span className="font-sans font-normal">View All</span></button>
                 </div>
               </div>
               <div className="p-4">
@@ -966,15 +966,15 @@ const UserDashboard: React.FC = () => {
                   <div className="space-y-2">
                      {recentActivity.map((order, index) => (
                        <div key={order.id} className="flex items-center space-x-3 p-2 bg-white rounded-lg hover:shadow-sm hover:shadow-teal-100 transition-all duration-200">
-                         <div className="w-6 h-6 rounded flex items-center justify-center text-gray-900 font-bold text-xs bg-white shadow-sm">
+                         <div className="w-6 h-6 rounded flex items-center justify-center text-gray-900 font-bold text-xs bg-white shadow-sm font-sans font-normal">
                            #{index + 1}
                          </div>
                          <div className="flex-1">
-                           <p className="font-semibold text-gray-900 text-sm">Order #{order.id.slice(-4).toUpperCase()}</p>
-                           <p className="text-xs text-gray-700">{order.items.length} items • {formatUIPrice(order.total, 'INR')}</p>
-                           <p className="text-xs text-gray-500">{new Date(order.date).toLocaleDateString()}</p>
+                           <p className="font-semibold text-gray-900 text-sm font-sans font-normal">Order #{order.id.slice(-4).toUpperCase()}</p>
+                           <p className="text-xs text-gray-700 font-sans font-normal">{order.items.length} items • {formatUIPrice(order.total, 'INR')}</p>
+                           <p className="text-xs text-gray-500 font-sans font-normal">{new Date(order.date).toLocaleDateString()}</p>
                          </div>
-                         <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                         <div className={`px-2 py-1 rounded-full text-xs font-medium font-sans font-normal ${
                            order.status === 'completed' ? 'bg-green-100 text-green-800' : 
                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
                            order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
@@ -988,8 +988,8 @@ const UserDashboard: React.FC = () => {
                 ) : (
                   <div className="text-center py-6">
                     <Package className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                    <h4 className="text-sm font-semibold text-gray-900 mb-1">No Recent Activity</h4>
-                    <p className="text-gray-600 text-xs">Your recent orders will appear here</p>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-1 font-sans font-normal">No Recent Activity</h4>
+                    <p className="text-gray-600 text-xs font-sans font-normal">Your recent orders will appear here</p>
                   </div>
                 )}
               </div>
@@ -1000,7 +1000,7 @@ const UserDashboard: React.FC = () => {
           <div className="space-y-3">
             <div className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
               <div className="px-4 py-3 bg-white">
-                <h3 className="text-sm font-bold text-gray-900 flex items-center">
+                <h3 className="text-sm font-bold text-gray-900 flex items-center font-sans font-normal">
                   <Zap className="w-4 h-4 mr-2 text-gray-700" />
                   Quick Actions
                 </h3>
@@ -1020,10 +1020,10 @@ const UserDashboard: React.FC = () => {
                        window.location.href = '/browse';
                      }
                    }}
-                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm hover:shadow-teal-100"
+                   className="w-full bg-white text-gray-900 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:shadow-sm hover:shadow-teal-100"
                  >
-                   <ShoppingBag className="w-4 h-4 text-gray-700" />
-                   <span className="font-medium text-sm">Browse Artwork</span>
+                   <ShoppingBag className="w-3.5 h-3.5 text-gray-700" />
+                   <span className="font-medium text-xs font-sans font-normal">Browse Artwork</span>
                  </button>
                  <button
                    type="button"
@@ -1031,17 +1031,17 @@ const UserDashboard: React.FC = () => {
 
                      setActiveTab('downloads');
                    }}
-                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm hover:shadow-teal-100"
+                   className="w-full bg-white text-gray-900 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:shadow-sm hover:shadow-teal-100"
                  >
-                   <Download className="w-4 h-4 text-gray-700" />
-                   <span className="font-medium text-sm">My Downloads</span>
+                   <Download className="w-3.5 h-3.5 text-gray-700" />
+                   <span className="font-medium text-xs font-sans font-normal">My Downloads</span>
                  </button>
                  <button
                    onClick={() => setActiveTab('favorites')}
-                   className="w-full bg-white text-gray-900 p-2 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 hover:shadow-sm hover:shadow-teal-100"
+                   className="w-full bg-white text-gray-900 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:shadow-sm hover:shadow-teal-100"
                  >
-                   <Heart className="w-4 h-4 text-gray-700" />
-                   <span className="font-medium text-sm">Favorites</span>
+                   <Heart className="w-3.5 h-3.5 text-gray-700" />
+                   <span className="font-medium text-xs font-sans font-normal">Favorites</span>
                  </button>
               </div>
             </div>
@@ -1050,17 +1050,17 @@ const UserDashboard: React.FC = () => {
             <div className="p-3 rounded-lg text-gray-900 relative overflow-hidden bg-white shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
               <div className="relative z-10">
                 <div className="flex items-center space-x-2 mb-2">
-                  <h4 className="text-sm font-bold">{currentMemberLevel.name}</h4>
+                  <h4 className="text-sm font-bold font-sans font-normal">{currentMemberLevel.name}</h4>
                 </div>
-                <p className="text-gray-600 text-xs mb-2">
+                <p className="text-gray-600 text-xs mb-2 font-sans font-normal">
                   {currentMemberLevel.description}
                 </p>
                 
                 {nextMemberLevel ? (
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-gray-600">Progress to {nextMemberLevel.name}</span>
-                      <span className="font-semibold text-gray-900">{Math.min(memberProgress.ordersProgress, memberProgress.spentProgress).toFixed(0)}%</span>
+                      <span className="text-gray-600 font-sans font-normal">Progress to {nextMemberLevel.name}</span>
+                      <span className="font-semibold text-gray-900 font-sans font-normal">{Math.min(memberProgress.ordersProgress, memberProgress.spentProgress).toFixed(0)}%</span>
                     </div>
                      <div className="w-full bg-white rounded-full h-1 mb-1 border">
                        <div 
@@ -1068,7 +1068,7 @@ const UserDashboard: React.FC = () => {
                          style={{ width: `${Math.min(memberProgress.ordersProgress, memberProgress.spentProgress)}%` }}
                        ></div>
                      </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-gray-600 font-sans font-normal">
                       {memberProgress.ordersNeeded > 0 && `${memberProgress.ordersNeeded} more orders`}
                       {memberProgress.ordersNeeded > 0 && memberProgress.spentNeeded > 0 && ' • '}
                       {memberProgress.spentNeeded > 0 && `$${memberProgress.spentNeeded.toFixed(0)} more to spend`}
@@ -1076,8 +1076,8 @@ const UserDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="text-xs text-gray-600 mb-1">🎉 Maximum Level Achieved!</p>
-                    <p className="text-xs text-gray-600">You're a true Art Legend!</p>
+                    <p className="text-xs text-gray-600 mb-1 font-sans font-normal">🎉 Maximum Level Achieved!</p>
+                    <p className="text-xs text-gray-600 font-sans font-normal">You're a true Art Legend!</p>
                   </div>
                 )}
               </div>
@@ -1135,21 +1135,21 @@ const UserDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
               <Package className="w-5 h-5 text-teal-600" />
-              <h3 className="text-lg font-bold text-gray-800">Order History</h3>
+              <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">Order History</h3>
             </div>
             <button
               onClick={() => navigate('/browse')}
-              className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
             >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Browse More</span>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span className="font-sans font-normal">Browse More</span>
             </button>
           </div>
 
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-700">Total Orders</p>
+                <p className="text-sm font-medium text-gray-700 font-sans font-normal">Total Orders</p>
                 <p className="text-xs text-gray-500 mt-1">
                   {filteredOrders.length === userOrders.length 
                     ? `${totalOrders} orders`
@@ -1162,7 +1162,7 @@ const UserDashboard: React.FC = () => {
                 <div className="p-2 bg-teal-100 rounded-lg">
                   <ShoppingBag className="w-5 h-5 text-teal-600" />
                 </div>
-                <span className="text-2xl font-bold text-gray-900">{totalOrders}</span>
+                <span className="text-2xl font-bold text-gray-900 font-sans font-normal">{totalOrders}</span>
               </div>
             </div>
           </div>
@@ -1198,7 +1198,7 @@ const UserDashboard: React.FC = () => {
                 {returnNotification.type === 'error' && <X className="w-5 h-5" />}
                 {returnNotification.type === 'success' && <CheckCircle className="w-5 h-5" />}
                 {returnNotification.type === 'info' && <Clock className="w-5 h-5" />}
-                <span className="text-sm font-medium">{returnNotification.message}</span>
+                <span className="text-sm font-medium font-sans font-normal">{returnNotification.message}</span>
               </div>
               <button
                 onClick={() => setReturnNotification({ show: false, message: '', type: 'info' })}
@@ -1210,7 +1210,7 @@ const UserDashboard: React.FC = () => {
           )}
             
           {/* Date Filter */}
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
             <div className="flex items-center space-x-3 flex-wrap gap-2">
               <div className="flex items-center space-x-2">
                 <input
@@ -1225,13 +1225,13 @@ const UserDashboard: React.FC = () => {
                   })}
                   className="rounded text-teal-600 focus:ring-teal-500"
                 />
-                <label htmlFor="showAllOrders" className="text-sm font-medium text-gray-700">Show all orders</label>
+                <label htmlFor="showAllOrders" className="text-sm font-medium text-gray-700 font-sans font-normal">Show all orders</label>
               </div>
               
               {!dateFilter.showAll && (
                 <>
                   <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">From</label>
+                    <label className="text-sm font-medium text-gray-700 font-sans font-normal">From</label>
                     <input
                       type="date"
                       value={dateFilter.startDate}
@@ -1240,7 +1240,7 @@ const UserDashboard: React.FC = () => {
                     />
                   </div>
                   <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">To</label>
+                    <label className="text-sm font-medium text-gray-700 font-sans font-normal">To</label>
                     <input
                       type="date"
                       value={dateFilter.endDate}
@@ -1250,7 +1250,7 @@ const UserDashboard: React.FC = () => {
                   </div>
                   <button
                     onClick={() => setDateFilter({ startDate: '', endDate: '', showAll: true })}
-                    className="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-white transition-colors"
+                    className="px-2.5 py-1 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-white transition-colors font-sans font-normal"
                   >
                     Clear Filter
                   </button>
@@ -1284,7 +1284,7 @@ const UserDashboard: React.FC = () => {
                     {/* Order Items Skeleton */}
                     <div className="space-y-3">
                       {[1, 2].map((j) => (
-                        <div key={j} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                        <div key={j} className="flex items-center space-x-4 p-3 bg-white rounded-lg border border-gray-200">
                           <div className="w-16 h-16 bg-gray-200 rounded"></div>
                           <div className="flex-1 space-y-2">
                             <div className="h-4 w-3/4 bg-gray-200 rounded"></div>
@@ -1312,10 +1312,10 @@ const UserDashboard: React.FC = () => {
               <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <Package className="w-10 h-10 text-gray-400" />
               </div>
-              <h4 className="text-base font-semibold text-gray-900 mb-2">
+              <h4 className="text-base font-semibold text-gray-900 mb-2 font-sans font-normal">
                 {dateFilter.showAll ? 'No Orders Yet' : 'No Orders Found'}
               </h4>
-              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">
+              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto font-sans font-normal">
                 {dateFilter.showAll 
                   ? 'Start shopping to see your order history here. Browse our collection and place your first order!'
                   : 'No orders found for the selected date range. Try adjusting your filter or search query.'
@@ -1327,10 +1327,10 @@ const UserDashboard: React.FC = () => {
                   e.preventDefault();
                   navigate('/browse');
                 }}
-                className="inline-flex items-center space-x-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
               >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Browse Artwork</span>
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span className="font-sans font-normal">Browse Artwork</span>
               </button>
             </div>
           ) : (
@@ -1338,7 +1338,7 @@ const UserDashboard: React.FC = () => {
               {filteredOrders.map((order) => {
                 const isExpanded = expandedOrders[order.id];
                 return (
-                  <div key={order.id} className="rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors overflow-hidden h-fit">
+                  <div key={order.id} className="rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors overflow-hidden h-fit">
                       {/* Accordion Header */}
                       <button
                         onClick={() => toggleOrderAccordion(order.id)}
@@ -1348,14 +1348,14 @@ const UserDashboard: React.FC = () => {
                           <div className="flex items-center space-x-2">
                             <Package className="w-4 h-4 text-teal-600" />
                             <div>
-                              <h4 className="font-medium text-gray-900 text-xs">ORDER #{order.id.slice(-8).toUpperCase()}</h4>
+                              <h4 className="font-medium text-gray-900 text-xs font-sans font-normal">ORDER #{order.id.slice(-8).toUpperCase()}</h4>
                               <p className="text-xs text-gray-500">{new Date(order.date).toLocaleDateString()} • {order.items.length} item{order.items.length > 1 ? 's' : ''}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="text-right">
-                              <p className="font-semibold text-gray-900 text-xs">{formatUIPrice(order.total, 'INR')}</p>
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                              <p className="font-semibold text-gray-900 text-xs font-sans font-normal">{formatUIPrice(order.total, 'INR')}</p>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium font-sans font-normal ${
                                 order.status === 'completed' ? 'bg-green-100 text-green-800' : 
                                 order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
                                 order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
@@ -1383,8 +1383,8 @@ const UserDashboard: React.FC = () => {
                                   <div className="flex items-center space-x-2">
                                     <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-8 h-8 rounded object-cover" />
                                     <div className="flex-1 min-w-0">
-                                      <p className="font-medium text-gray-900 truncate text-xs">{item.title}</p>
-                                      <p className="text-xs text-gray-500">
+                                      <p className="font-medium text-gray-900 truncate text-xs font-sans font-normal">{item.title}</p>
+                                      <p className="text-xs text-gray-500 font-sans font-normal">
                                         {item.productType === 'poster' && item.posterSize 
                                           ? `Poster ${item.posterSize}`
                                           : item.productType === 'clothing'
@@ -1397,7 +1397,7 @@ const UserDashboard: React.FC = () => {
                                           : 'Digital'
                                         }
                                       </p>
-                                      <p className="text-xs text-gray-900 font-medium">{formatUIPrice(item.price, 'INR')}</p>
+                                      <p className="text-xs text-gray-900 font-medium font-sans font-normal">{formatUIPrice(item.price, 'INR')}</p>
                                     </div>
                                   </div>
                                   {order.status === 'completed' && (
@@ -1405,10 +1405,10 @@ const UserDashboard: React.FC = () => {
                                       {item.productType === 'digital' && (
                                         <button
                                           onClick={() => handleDownload(order.downloadLinks?.[itemIndex] || '', item.title)}
-                                          className="flex items-center space-x-1 px-2 py-1 bg-white text-gray-700 text-xs rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow"
+                                          className="flex items-center space-x-1 px-1.5 py-0.5 bg-white text-gray-700 text-[10px] rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow font-sans font-normal"
                                         >
-                                          <Download className="w-3 h-3" />
-                                          <span>Download</span>
+                                          <Download className="w-2.5 h-2.5" />
+                                          <span className="font-sans font-normal">Download</span>
                                         </button>
                                       )}
                                     </div>
@@ -1448,10 +1448,10 @@ const UserDashboard: React.FC = () => {
                                             handleReturnRequest(order, { ...firstPhysicalItem, itemIndex: 0 });
                                           }
                                         }}
-                                        className="flex items-center space-x-1 px-2 py-1 bg-teal-50 text-teal-700 text-xs rounded hover:bg-teal-100 transition-colors"
+                                        className="flex items-center space-x-1 px-1.5 py-0.5 bg-teal-50 text-teal-700 text-[10px] rounded hover:bg-teal-100 transition-colors font-sans font-normal"
                                       >
-                                        <RotateCcw className="w-3 h-3" />
-                                        <span>Return</span>
+                                        <RotateCcw className="w-2.5 h-2.5" />
+                                        <span className="font-sans font-normal">Return</span>
                                       </button>
                                     );
                                   })()}
@@ -1460,29 +1460,29 @@ const UserDashboard: React.FC = () => {
                                       const firstItem = order.items[0];
                                       handleReviewProduct(firstItem, order.id, firstItem.orderItemId);
                                     }}
-                                    className="flex items-center space-x-1 px-2 py-1 text-gray-600 text-xs rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow"
+                                    className="flex items-center space-x-1 px-1.5 py-0.5 text-gray-600 text-[10px] rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow font-sans font-normal"
                                   >
-                                    <Star className="w-3 h-3" />
-                                    <span>Review</span>
+                                    <Star className="w-2.5 h-2.5" />
+                                    <span className="font-sans font-normal">Review</span>
                                   </button>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <Truck className="w-4 h-4 text-teal-600" />
                                   {trackingData[order.id] && (
-                                    <span className="text-xs text-gray-500">#{trackingData[order.id].trackingNumber}</span>
+                                    <span className="text-xs text-gray-500 font-sans font-normal">#{trackingData[order.id].trackingNumber}</span>
                                   )}
                                   {trackingData[order.id]?.isFallback && (
-                                    <span className="text-xs text-orange-500 bg-orange-100 px-1 rounded">Fallback</span>
+                                    <span className="text-xs text-orange-500 bg-orange-100 px-1 rounded font-sans font-normal">Fallback</span>
                                   )}
                                   {trackingLoading[order.id] && (
                                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-teal-600"></div>
                                   )}
                                   <button
                                     onClick={() => openTrackingModal(order)}
-                                    className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                                    className="text-[10px] text-teal-600 hover:text-teal-700 font-medium font-sans font-normal"
                                     disabled={trackingLoading[order.id]}
                                   >
-                                    Track Order
+                                    <span className="font-sans font-normal">Track Order</span>
                                   </button>
                                 </div>
                               </div>
@@ -1490,7 +1490,7 @@ const UserDashboard: React.FC = () => {
                               {/* Error Message */}
                               {trackingErrors[order.id] && (
                                 <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
-                                  {trackingErrors[order.id]}
+                                  <span className="font-sans font-normal">{trackingErrors[order.id]}</span>
                                 </div>
                               )}
 
@@ -1515,7 +1515,7 @@ const UserDashboard: React.FC = () => {
                                         trackingData[order.id].status === 'shipped' ? 'bg-blue-500' :
                                         'bg-yellow-500'
                                       }`}></div>
-                                      <span className="text-xs font-medium text-gray-900 capitalize">
+                                      <span className="text-xs font-medium text-gray-900 capitalize font-sans font-normal">
                                         {trackingData[order.id].status === 'delivered' ? 'Delivered' :
                                          trackingData[order.id].status === 'shipped' ? 'Shipped' : 'Processing'}
                                       </span>
@@ -1539,9 +1539,9 @@ const UserDashboard: React.FC = () => {
                                       <button
                                         onClick={() => fetchTrackingData(order)}
                                         disabled={trackingLoading[order.id]}
-                                        className="text-xs text-teal-600 hover:text-teal-700 font-medium px-2 py-1 border border-teal-200 rounded hover:bg-teal-50"
+                                        className="text-[10px] text-teal-600 hover:text-teal-700 font-medium px-1.5 py-0.5 border border-teal-200 rounded hover:bg-teal-50 font-sans font-normal"
                                       >
-                                        {trackingLoading[order.id] ? 'Refreshing...' : 'Refresh Tracking'}
+                                        <span className="font-sans font-normal">{trackingLoading[order.id] ? 'Refreshing...' : 'Refresh Tracking'}</span>
                                       </button>
                                     </div>
                                   )}
@@ -1591,7 +1591,7 @@ const UserDashboard: React.FC = () => {
                                         href={`https://track.delhivery.com/${trackingData[order.id].trackingNumber}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                                        className="text-[10px] text-teal-600 hover:text-teal-700 font-medium font-sans font-normal"
                                       >
                                         View on Delhivery →
                                       </a>
@@ -1638,24 +1638,24 @@ const UserDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
               <Heart className="w-5 h-5 text-teal-600" />
-              <h3 className="text-lg font-bold text-gray-800">My Favorites</h3>
+              <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">My Favorites</h3>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFavoriteFilters(!showFavoriteFilters)}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-1.5 px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
-                <span>Filters</span>
+                <span className="font-sans font-normal text-xs">Filters</span>
               </button>
               <button
                 onClick={() => navigate('/browse')}
-                className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
               >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Browse More</span>
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span className="font-sans font-normal text-xs">Browse More</span>
               </button>
             </div>
           </div>
@@ -1663,14 +1663,14 @@ const UserDashboard: React.FC = () => {
           <div className="mb-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-700">Saved Items</p>
-                <p className="text-xs text-gray-500 mt-1">{filteredFavorites.length} of {userFavorites.length} favorites</p>
+                <p className="text-sm font-medium text-gray-700 font-sans font-normal">Saved Items</p>
+                <p className="text-xs text-gray-500 mt-1 font-sans font-normal">{filteredFavorites.length} of {userFavorites.length} favorites</p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="p-2 bg-teal-100 rounded-lg">
                   <Heart className="w-5 h-5 text-teal-600" />
                 </div>
-                <span className="text-2xl font-bold text-gray-900">{userFavorites.length}</span>
+                <span className="text-2xl font-bold text-gray-900 font-sans font-normal">{userFavorites.length}</span>
               </div>
             </div>
           </div>
@@ -1679,14 +1679,14 @@ const UserDashboard: React.FC = () => {
               <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <Heart className="w-10 h-10 text-gray-400" />
               </div>
-              <h4 className="text-base font-semibold text-gray-900 mb-2">No Favorites Yet</h4>
-              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">Save artwork you love to see them here. Click the heart icon on any product to add it to your favorites.</p>
+              <h4 className="text-base font-semibold text-gray-900 mb-2 font-sans font-normal">No Favorites Yet</h4>
+              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto font-sans font-normal">Save artwork you love to see them here. Click the heart icon on any product to add it to your favorites.</p>
               <button
                 onClick={() => navigate('/browse')}
-                className="inline-flex items-center space-x-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
               >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Browse Artwork</span>
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span className="font-sans font-normal text-xs">Browse Artwork</span>
               </button>
             </div>
           ) : filteredFavorites.length === 0 ? (
@@ -1694,8 +1694,8 @@ const UserDashboard: React.FC = () => {
               <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <Heart className="w-10 h-10 text-gray-400" />
               </div>
-              <h4 className="text-base font-semibold text-gray-900 mb-2">No Favorites Match Your Filters</h4>
-              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">Try adjusting your filters to see more results.</p>
+              <h4 className="text-base font-semibold text-gray-900 mb-2 font-sans font-normal">No Favorites Match Your Filters</h4>
+              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto font-sans font-normal">Try adjusting your filters to see more results.</p>
               <button
                 onClick={() => setFavoriteFilters({
                   priceRange: [0, 10000] as [number, number],
@@ -1707,15 +1707,15 @@ const UserDashboard: React.FC = () => {
                   tags: [],
                   status: 'all'
                 })}
-                className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
-                Clear all filters
+                <span className="font-sans font-normal text-xs">Clear all filters</span>
               </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredFavorites.map((artwork) => (
-                <div key={artwork.id} className="group bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => handleViewProduct(artwork)}>
+                <div key={artwork.id} className="group bg-white rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => handleViewProduct(artwork)}>
                   <div className="relative overflow-hidden">
                     <img
                       src={artwork.images?.[0] || '/api/placeholder/400/400'}
@@ -1728,32 +1728,32 @@ const UserDashboard: React.FC = () => {
                           e.stopPropagation();
                           handleViewProduct(artwork);
                         }}
-                        className="p-2 bg-white hover:bg-gray-50 rounded-lg shadow-md transition-colors"
+                        className="p-1.5 bg-white hover:bg-gray-50 rounded-lg shadow-md transition-colors"
                         title="View Product"
                       >
-                        <Eye className="w-4 h-4 text-gray-700" />
+                        <Eye className="w-3.5 h-3.5 text-gray-700" />
                       </button>
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRemoveFavorite(artwork.id);
                         }}
-                        className="p-2 bg-white hover:bg-red-50 rounded-lg shadow-md transition-colors"
+                        className="p-1.5 bg-white hover:bg-red-50 rounded-lg shadow-md transition-colors"
                         title="Remove from Favorites"
                       >
-                        <Heart className="w-4 h-4 text-red-500 fill-current" />
+                        <Heart className="w-3.5 h-3.5 text-red-500 fill-current" />
                       </button>
                     </div>
                   </div>
                   <div className="p-4">
-                    <h4 className="font-semibold text-gray-900 mb-2 truncate text-sm">
+                    <h4 className="font-semibold text-gray-900 mb-2 truncate text-sm font-sans font-normal">
                       {artwork.title}
                     </h4>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="font-bold text-gray-900 text-base">{formatUIPrice(artwork.price, 'INR')}</span>
+                      <span className="font-bold text-gray-900 text-base font-sans font-normal">{formatUIPrice(artwork.price, 'INR')}</span>
                       <div className="flex items-center text-xs text-gray-600">
                         <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
-                        <span className="font-medium">{artwork.rating}</span>
+                        <span className="font-medium font-sans font-normal">{artwork.rating}</span>
                       </div>
                     </div>
                     <div className="flex space-x-2">
@@ -1762,18 +1762,18 @@ const UserDashboard: React.FC = () => {
                           e.stopPropagation();
                           handleViewProduct(artwork);
                         }}
-                        className="flex-1 py-2 px-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-white transition-colors text-sm"
+                        className="flex-1 py-1.5 px-2.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-white transition-colors text-xs"
                       >
-                        View Details
+                        <span className="font-sans font-normal">View Details</span>
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/checkout?product=${artwork.id}`);
                         }}
-                        className="flex-1 py-2 px-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                        className="flex-1 py-1.5 px-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-xs"
                       >
-                        Buy Now
+                        <span className="font-sans font-normal">Buy Now</span>
                       </button>
                     </div>
                   </div>
@@ -1883,30 +1883,21 @@ const UserDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
               <FileDown className="w-5 h-5 text-teal-600" />
-              <h3 className="text-lg font-bold text-gray-800">My Downloads</h3>
+              <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">My Downloads</h3>
             </div>
-            {downloadableItems.length > 0 && (
-              <button
-                onClick={handleDownloadAll}
-                className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download All</span>
-              </button>
-            )}
           </div>
 
           <div className="mb-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-700">Available Downloads</p>
-                <p className="text-xs text-gray-500 mt-1">{downloadableItems.length} digital files ready</p>
+                <p className="text-sm font-medium text-gray-700 font-sans font-normal">Available Downloads</p>
+                <p className="text-xs text-gray-500 mt-1 font-sans font-normal">{downloadableItems.length} digital files ready</p>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="p-2 bg-teal-100 rounded-lg">
                   <FileDown className="w-5 h-5 text-teal-600" />
                 </div>
-                <span className="text-2xl font-bold text-gray-900">{downloadableItems.length}</span>
+                <span className="text-2xl font-bold text-gray-900 font-sans font-normal">{downloadableItems.length}</span>
               </div>
             </div>
           </div>
@@ -1915,33 +1906,33 @@ const UserDashboard: React.FC = () => {
               <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <FileDown className="w-10 h-10 text-gray-400" />
               </div>
-              <h4 className="text-base font-semibold text-gray-900 mb-2">No Digital Downloads Available</h4>
-              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">Purchase digital products to access PDF files and high-resolution images for download.</p>
+              <h4 className="text-base font-semibold text-gray-900 mb-2 font-sans font-normal">No Digital Downloads Available</h4>
+              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto font-sans font-normal">Purchase digital products to access PDF files and high-resolution images for download.</p>
               <button
                 onClick={() => navigate('/browse')}
-                className="inline-flex items-center space-x-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
               >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Browse Artwork</span>
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span className="font-sans font-normal text-xs">Browse Artwork</span>
               </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {downloadableItems.map((item) => (
-                <div key={`${item.orderId}-${item.id}`} className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors h-fit">
+                <div key={`${item.orderId}-${item.id}`} className="p-4 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors h-fit">
                   <div className="flex flex-col space-y-3">
                     <div className="flex items-start space-x-3">
                       <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-900 text-sm mb-1">{item.title}</h4>
-                        <p className="text-xs text-gray-500 mb-2">
+                        <h4 className="font-semibold text-gray-900 text-sm mb-1 font-sans font-normal">{item.title}</h4>
+                        <p className="text-xs text-gray-500 mb-2 font-sans font-normal">
                           {item.productType === 'poster' && item.posterSize 
                             ? `Poster Size: ${item.posterSize} • Poster Product`
                             : 'Digital Product'
                           }
                         </p>
                         <div className="flex items-center space-x-2 text-xs text-gray-500">
-                          <span>Purchased: {new Date(item.orderDate).toLocaleDateString()}</span>
+                          <span className="font-sans font-normal">Purchased: {new Date(item.orderDate).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
@@ -1949,11 +1940,11 @@ const UserDashboard: React.FC = () => {
                       <span className="font-semibold text-gray-900 text-sm">{formatUIPrice(item.price, 'INR')}</span>
                       <button
                         onClick={() => handleDownload(item.downloadUrl || '', item.title)}
-                        className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-xs"
                         title="Download Files"
                       >
-                        <Download className="w-4 h-4" />
-                        <span className="text-sm">Download</span>
+                        <Download className="w-3.5 h-3.5" />
+                        <span className="font-sans font-normal">Download</span>
                       </button>
                     </div>
                   </div>
@@ -1972,11 +1963,7 @@ const UserDashboard: React.FC = () => {
       const errors: Record<string, string> = {};
       
       if (!userProfile.firstName.trim()) {
-        errors.firstName = 'First name is required';
-      }
-      
-      if (!userProfile.lastName.trim()) {
-        errors.lastName = 'Last name is required';
+        errors.firstName = 'Name is required';
       }
       
       if (!userProfile.email.trim()) {
@@ -2000,14 +1987,17 @@ const UserDashboard: React.FC = () => {
         const { supabase } = await import('../services/supabaseService');
         
         // Update user metadata in Supabase
-        const fullName = `${userProfile.firstName.trim()} ${userProfile.lastName.trim()}`;
+        // Split the name into first and last name
+        const nameParts = userProfile.firstName.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        const fullName = `${firstName} ${lastName}`.trim();
         
         const { error } = await supabase.auth.updateUser({
           data: {
             full_name: fullName,
-            first_name: userProfile.firstName.trim(),
-            last_name: userProfile.lastName.trim(),
-            location: userProfile.location,
+            first_name: firstName,
+            last_name: lastName,
             bio: userProfile.bio
           }
         });
@@ -2033,10 +2023,9 @@ const UserDashboard: React.FC = () => {
         const userData = {
           profile: {
             firstName: userProfile.firstName,
-            lastName: userProfile.lastName,
-            fullName: `${userProfile.firstName} ${userProfile.lastName}`,
+            lastName: '',
+            fullName: userProfile.firstName,
             email: userProfile.email,
-            location: userProfile.location,
             bio: userProfile.bio,
             joinDate: userProfile.joinDate
           },
@@ -2102,7 +2091,7 @@ const UserDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
               <User className="w-5 h-5 text-teal-600" />
-              <h3 className="text-lg font-bold text-gray-800">Profile Management</h3>
+              <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">Profile Management</h3>
             </div>
             <div className="flex space-x-2">
               {isEditing ? (
@@ -2110,9 +2099,9 @@ const UserDashboard: React.FC = () => {
                   <button
                     onClick={handleSaveProfile}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                    className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
                   >
-                    {isSaving ? 'Saving...' : 'Save Profile'}
+                    <span className="font-sans font-normal">{isSaving ? 'Saving...' : 'Save Profile'}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -2123,8 +2112,8 @@ const UserDashboard: React.FC = () => {
                       const nameParts = fullName.split(' ');
                       
                       setUserProfile({
-                        firstName: user?.user_metadata?.first_name || nameParts[0] || '',
-                        lastName: user?.user_metadata?.last_name || nameParts.slice(1).join(' ') || '',
+                        firstName: user?.user_metadata?.full_name || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || nameParts.join(' ') || '',
+                        lastName: '',
                         email: user?.email || '',
                         location: user?.user_metadata?.location || '',
                         bio: user?.user_metadata?.bio || 'Welcome to your dashboard!',
@@ -2132,18 +2121,18 @@ const UserDashboard: React.FC = () => {
                         avatar: user?.user_metadata?.avatar || null
                       });
                     }}
-                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
                   >
-                    Cancel
+                    <span className="font-sans font-normal">Cancel</span>
                   </button>
                 </>
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
                 >
-                  <Edit className="w-4 h-4" />
-                  <span>Edit Profile</span>
+                  <Edit className="w-3.5 h-3.5" />
+                  <span className="font-sans font-normal">Edit Profile</span>
                 </button>
               )}
             </div>
@@ -2152,7 +2141,7 @@ const UserDashboard: React.FC = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-sans font-normal">Name</label>
                 <input
                   type="text"
                   value={userProfile.firstName}
@@ -2166,34 +2155,12 @@ const UserDashboard: React.FC = () => {
                       ? 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200' 
                       : 'border-gray-200 bg-gray-50 cursor-not-allowed'
                   }`}
-                  placeholder="First name"
+                  placeholder="Name"
                 />
                 {formErrors.firstName && <p className="text-red-500 text-xs mt-1">{formErrors.firstName}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                <input
-                  type="text"
-                  value={userProfile.lastName}
-                  onChange={(e) => {
-                    setUserProfile({ ...userProfile, lastName: e.target.value });
-                    if (formErrors.lastName) setFormErrors({ ...formErrors, lastName: '' });
-                  }}
-                  disabled={!isEditing}
-                  className={`w-full px-3 py-2 border rounded-lg transition-colors ${
-                    isEditing 
-                      ? 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200' 
-                      : 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                  } ${formErrors.lastName ? 'border-red-300 focus:ring-red-300' : ''}`}
-                  placeholder="Last name"
-                />
-                {formErrors.lastName && <p className="text-red-500 text-xs mt-1">{formErrors.lastName}</p>}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-sans font-normal">Email</label>
                 <input
                   type="email"
                   value={userProfile.email}
@@ -2214,18 +2181,7 @@ const UserDashboard: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input
-                type="text"
-                value={userProfile.location}
-                onChange={(e) => setUserProfile({ ...userProfile, location: e.target.value })}
-                disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-sans font-normal">Bio</label>
               <textarea
                 value={userProfile.bio}
                 onChange={(e) => setUserProfile({ ...userProfile, bio: e.target.value })}
@@ -2237,53 +2193,41 @@ const UserDashboard: React.FC = () => {
           </div>
       </div>
 
-      {/* Address Management */}
+      {/* Address Management & Privacy & Security - Side by Side */}
       {user && (
-        <div className="mt-6">
-          <AddressManagement userId={user.id} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div>
+            <AddressManagement userId={user.id} />
+          </div>
+          <div>
+            {/* Privacy & Security */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+              <div className="flex items-center space-x-2 mb-6">
+                <Shield className="w-5 h-5 text-teal-600" />
+                <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">Privacy & Security</h3>
+              </div>
+              
+              <div className="space-y-4">
+                <button 
+                  onClick={handleChangePassword}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="p-1.5 bg-teal-100 rounded-lg">
+                      <Key className="w-3.5 h-3.5 text-teal-600" />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-medium text-gray-900 text-xs font-sans font-normal">Change Password</h4>
+                      <p className="text-gray-600 text-[10px] font-sans font-normal">Update your account password</p>
+                    </div>
+                  </div>
+                </button>
+                
+              </div>
+            </div>
+          </div>
         </div>
       )}
-
-
-        {/* Privacy & Security */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center space-x-2 mb-6">
-            <Shield className="w-5 h-5 text-teal-600" />
-            <h3 className="text-lg font-bold text-gray-800">Privacy & Security</h3>
-          </div>
-          
-          <div className="space-y-4">
-            <button 
-              onClick={handleChangePassword}
-              className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-teal-100 rounded-lg">
-                  <Key className="w-4 h-4 text-teal-600" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-medium text-gray-900 text-sm">Change Password</h4>
-                  <p className="text-gray-600 text-xs">Update your account password</p>
-                </div>
-              </div>
-            </button>
-            
-            <button 
-              onClick={handleDownloadData}
-              className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-teal-100 rounded-lg">
-                  <Download className="w-4 h-4 text-teal-600" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-medium text-gray-900 text-sm">Download My Data</h4>
-                  <p className="text-gray-600 text-xs">Get a copy of your account data</p>
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
       </div>
     );
   };
@@ -2293,7 +2237,7 @@ const UserDashboard: React.FC = () => {
       return (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Request Return</h2>
+            <h2 className="text-xl font-bold text-gray-900 font-sans font-normal">Request Return</h2>
             <button
               onClick={handleReturnCancel}
               className="text-gray-500 hover:text-gray-700"
@@ -2321,7 +2265,7 @@ const UserDashboard: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Returns & Refunds</h2>
+            <h2 className="text-xl font-bold text-gray-900 font-sans font-normal">Returns & Refunds</h2>
             <p className="text-gray-600 text-sm mt-1">Track your return requests and refund status</p>
           </div>
           <button
@@ -2354,7 +2298,7 @@ const UserDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4">
           {/* Main Content */}
           <div className="w-full">
-            <div className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm shadow-gray-100 overflow-hidden">
               <div className="p-4">
                 {renderContent()}
               </div>
@@ -2382,7 +2326,7 @@ const UserDashboard: React.FC = () => {
                 <div className="w-6 h-6 rounded flex items-center justify-center">
                   <Icon className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-medium">{tab.label}</span>
+                <span className="text-xs font-medium font-sans font-normal">{tab.label}</span>
               </button>
             );
           })}
@@ -2401,7 +2345,7 @@ const UserDashboard: React.FC = () => {
             <div className="w-6 h-6 rounded flex items-center justify-center">
               <LogOut className="w-4 h-4" />
             </div>
-            <span className="text-xs font-medium">Logout</span>
+            <span className="text-xs font-medium font-sans font-normal">Logout</span>
           </button>
         </div>
       </div>
@@ -2448,7 +2392,7 @@ const UserDashboard: React.FC = () => {
                 <div className="p-2 bg-teal-100 rounded-lg">
                   <Key className="w-5 h-5 text-teal-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Change Password</h3>
+                <h3 className="text-xl font-bold text-gray-900 font-sans font-normal">Change Password</h3>
               </div>
               <button
                 onClick={() => {
@@ -2466,13 +2410,13 @@ const UserDashboard: React.FC = () => {
 
             {passwordErrors.general && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600 text-sm">{passwordErrors.general}</p>
+                <p className="text-red-600 text-sm font-sans font-normal">{passwordErrors.general}</p>
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-sans font-normal">
                   New Password
                 </label>
                 <div className="relative">
@@ -2494,12 +2438,12 @@ const UserDashboard: React.FC = () => {
                   </button>
                 </div>
                 {passwordErrors.newPassword && (
-                  <p className="mt-1 text-sm text-red-600">{passwordErrors.newPassword}</p>
+                  <p className="mt-1 text-sm text-red-600 font-sans font-normal">{passwordErrors.newPassword}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-sans font-normal">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -2521,7 +2465,7 @@ const UserDashboard: React.FC = () => {
                   </button>
                 </div>
                 {passwordErrors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{passwordErrors.confirmPassword}</p>
+                  <p className="mt-1 text-sm text-red-600 font-sans font-normal">{passwordErrors.confirmPassword}</p>
                 )}
               </div>
 
@@ -2531,7 +2475,7 @@ const UserDashboard: React.FC = () => {
                   disabled={isChangingPassword}
                   className="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isChangingPassword ? 'Updating...' : 'Update Password'}
+                  <span className="font-sans font-normal">{isChangingPassword ? 'Updating...' : 'Update Password'}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -2544,7 +2488,7 @@ const UserDashboard: React.FC = () => {
                   disabled={isChangingPassword}
                   className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
+                  <span className="font-sans font-normal">Cancel</span>
                 </button>
               </div>
             </div>

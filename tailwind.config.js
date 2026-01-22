@@ -20,7 +20,8 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        handwriting: ['Dancing Script', 'cursive', 'system-ui']
+        handwriting: ['Dancing Script', 'cursive', 'system-ui'],
+        display: ['Playfair Display', 'serif']
       },
       spacing: {
         '18': '4.5rem',

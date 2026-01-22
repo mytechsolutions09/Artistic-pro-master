@@ -62,9 +62,11 @@ import Shipping from './pages/admin/Shipping';
 import AdminReturns from './pages/admin/Returns';
 import CommissionedArt from './pages/admin/CommissionedArt';
 import Normal from './pages/admin/Normal';
+import FB from './pages/admin/FB';
 import NormalItemsPage from './pages/NormalItemsPage';
 import NormalItemRouteHandler from './pages/NormalItemRouteHandler';
 import ShopPage from './pages/ShopPage';
+import FBPage from './pages/FBPage';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import EnvTest from './components/EnvTest';
 import SkeletonTest from './pages/SkeletonTest';
@@ -94,6 +96,7 @@ function AppContent() {
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/browse" element={<BrowsePage />} />
                   <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/fb" element={<FBPage />} />
                   <Route path="/clothes" element={<MenClothingPage />} />
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/favorites" element={<FavoritesPage />} />
@@ -151,6 +154,7 @@ function AppContent() {
                   <Route path="/admin/database" element={<AdminProtectedRoute><DatabaseManagement /></AdminProtectedRoute>} />
                   <Route path="/admin/settings" element={<AdminProtectedRoute><Settings /></AdminProtectedRoute>} />
                   <Route path="/admin/normal" element={<AdminProtectedRoute><Normal /></AdminProtectedRoute>} />
+                  <Route path="/admin/fb" element={<AdminProtectedRoute><FB /></AdminProtectedRoute>} />
       </Routes>
       {!shouldHideFooter && <Footer />}
     </div>

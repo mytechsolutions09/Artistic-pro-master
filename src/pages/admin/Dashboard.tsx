@@ -332,9 +332,9 @@ const Dashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-3 py-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-base font-semibold text-gray-900">Admin Dashboard</h1>
+              <h1 className="text-base font-semibold text-gray-900 font-sans font-normal">Admin Dashboard</h1>
               <div className="flex items-center space-x-2 mt-1">
-                <span className="text-xs text-gray-600">Welcome back!</span>
+                <span className="text-xs text-gray-600 font-sans font-normal">Welcome back!</span>
                 {realtimeStats && (
                   <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse"></div>
@@ -342,8 +342,8 @@ const Dashboard: React.FC = () => {
                   </span>
                 )}
                 <DollarSign className="w-3 h-3 text-green-600" />
-                <span className="text-xs text-gray-500">
-                  All amounts in <strong>{currencySettings.defaultCurrency}</strong>
+                <span className="text-xs text-gray-500 font-sans font-normal">
+                  All amounts in <strong className="font-sans font-normal">{currencySettings.defaultCurrency}</strong>
                 </span>
               </div>
             </div>
@@ -413,13 +413,13 @@ const Dashboard: React.FC = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-gray-500 text-xs flex items-center truncate">
+                    <p className="text-gray-500 text-xs flex items-center truncate font-sans font-normal">
                       {stat.title}
                       {stat.isRealtime && (
                         <Zap className="w-2.5 h-2.5 ml-1 text-green-500 flex-shrink-0" />
                       )}
                     </p>
-                    <p className="text-sm font-bold text-gray-900 truncate">{stat.value}</p>
+                    <p className="text-sm font-bold text-gray-900 truncate font-sans font-normal">{stat.value}</p>
                   </div>
                 </div>
               </div>
@@ -430,15 +430,15 @@ const Dashboard: React.FC = () => {
         {/* Revenue Chart - Full Width */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Revenue & Orders</h3>
+            <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Revenue & Orders</h3>
             <div className="flex items-center space-x-4 text-sm">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-                <span className="text-gray-600">Revenue</span>
+                <span className="text-gray-600 font-sans font-normal">Revenue</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-gray-600">Orders</span>
+                <span className="text-gray-600 font-sans font-normal">Orders</span>
               </div>
             </div>
           </div>
@@ -469,7 +469,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-900">Category Sales</h3>
-            <span className="text-xs text-gray-500">{convertedCategoryData.length} categories</span>
+            <span className="text-xs text-gray-500 font-sans font-normal">{convertedCategoryData.length} categories</span>
           </div>
           
           {convertedCategoryData.length > 0 ? (
@@ -477,16 +477,16 @@ const Dashboard: React.FC = () => {
               {convertedCategoryData.map((category, index) => (
                 <div key={index} className="flex items-center space-x-1 px-2 py-1 bg-gray-50 rounded-md">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: category.color }}></div>
-                  <span className="text-xs text-gray-700">{category.name}</span>
-                  <span className="text-xs font-medium text-gray-900">{formatAmountInDefault(category.sales, 'INR')}</span>
-                  <span className="text-xs text-gray-500">({category.value}%)</span>
+                  <span className="text-xs text-gray-700 font-sans font-normal">{category.name}</span>
+                  <span className="text-xs font-medium text-gray-900 font-sans font-normal">{formatAmountInDefault(category.sales, 'INR')}</span>
+                  <span className="text-xs text-gray-500 font-sans font-normal">({category.value}%)</span>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-2">
               <Package className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-              <p className="text-xs text-gray-500">No data</p>
+              <p className="text-xs text-gray-500 font-sans font-normal">No data</p>
             </div>
           )}
         </div>
@@ -497,7 +497,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
+                <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Recent Orders</h3>
                 <button className="text-pink-600 hover:text-pink-700 text-sm font-medium">
                   View all
                 </button>
@@ -532,7 +532,7 @@ const Dashboard: React.FC = () => {
           {/* Recent Activities */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
+              <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Recent Activities</h3>
             </div>
             <div className="p-6">
               <div className="space-y-4">
@@ -544,7 +544,7 @@ const Dashboard: React.FC = () => {
                         <Icon className={`w-4 h-4 ${activity.color}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+                        <p className="text-sm font-medium text-gray-900 font-sans font-normal">{activity.message}</p>
                         <p className="text-sm text-gray-500">{activity.details}</p>
                         <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
                       </div>
@@ -559,7 +559,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Top Artworks</h3>
+                <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Top Artworks</h3>
                 <button className="text-pink-600 hover:text-pink-700 text-sm font-medium">
                   View all
                 </button>
@@ -582,7 +582,7 @@ const Dashboard: React.FC = () => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{artwork.title}</p>
+                        <p className="text-sm font-medium text-gray-900 truncate font-sans font-normal">{artwork.title}</p>
                         <p className="text-sm text-gray-500">{artwork.artist}</p>
                         <div className="flex items-center space-x-4 text-xs text-gray-400 mt-1">
                           <span>{artwork.views} views</span>
@@ -590,7 +590,7 @@ const Dashboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">{formatAmountInDefault(artwork.revenue, 'INR')}</p>
+                        <p className="text-sm font-medium text-gray-900 font-sans font-normal">{formatAmountInDefault(artwork.revenue, 'INR')}</p>
                         {currencySettings.defaultCurrency !== 'INR' && (
                           <div className="text-xs text-gray-400">INR ₹{artwork.originalRevenue.toLocaleString()}</div>
                         )}
@@ -638,7 +638,7 @@ const Dashboard: React.FC = () => {
                           <Icon className={`w-4 h-4 ${activity.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+                          <p className="text-sm font-medium text-gray-900 font-sans font-normal">{activity.message}</p>
                           <p className="text-sm text-gray-500">{activity.details}</p>
                           <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
                         </div>
@@ -653,7 +653,7 @@ const Dashboard: React.FC = () => {
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+              <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Quick Actions</h3>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 gap-4">

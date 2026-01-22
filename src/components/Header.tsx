@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X, Heart, Clock, TrendingUp, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Heart, Clock, TrendingUp, ChevronDown, Settings } from 'lucide-react';
 import { CartManager } from '../services/orderService';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../utils/adminUtils';
@@ -76,12 +76,12 @@ const Header: React.FC = () => {
     }
   };
 
-  const handleSearchInputChange = (value: string) => {
+  const handleSearchInputChange = async (value: string) => {
     setSearchQuery(value);
     setSelectedIndex(-1);
     if (value.trim().length > 1) {
-      // Generate search suggestions based on common art terms and history
-      const suggestions = generateSearchSuggestions(value);
+      // Generate search suggestions from all product types
+      const suggestions = await generateSearchSuggestions(value);
       setSearchSuggestions(suggestions);
       setShowSearchSuggestions(true);
     } else {
@@ -89,25 +89,67 @@ const Header: React.FC = () => {
     }
   };
 
-  const generateSearchSuggestions = (query: string): string[] => {
+  const generateSearchSuggestions = async (query: string): Promise<string[]> => {
+    const queryLower = query.toLowerCase();
+    
+    // Common terms across all product types
     const commonTerms = [
+      // Art terms
       'digital art', 'illustration', 'photography', 'graphics', 'vector',
       'watercolor', 'oil painting', 'sketch', 'portrait', 'landscape',
       'abstract', 'minimalist', 'vintage', 'modern', 'fantasy',
       'nature', 'cityscape', 'anime', 'cartoon', 'realistic',
-      'surreal', 'impressionist', 'expressionist', 'cubist', 'pop art'
+      // Clothing terms
+      't-shirt', 'shirt', 'dress', 'pants', 'jeans', 'jacket', 'hoodie',
+      'men', 'women', 'unisex', 'casual', 'formal', 'sportswear',
+      // Normal items / Shop terms
+      'home decor', 'furniture', 'accessories', 'gifts',
+      // F&B terms
+      'dry fruits', 'dried fruits', 'spices', 'nuts', 'almonds', 'cashews',
+      'walnuts', 'raisins', 'dates', 'turmeric', 'cumin', 'pepper'
     ];
     
-    const queryLower = query.toLowerCase();
     const matchingTerms = commonTerms
       .filter(term => term.includes(queryLower))
-      .slice(0, 3);
+      .slice(0, 5);
     
     const matchingHistory = searchHistory
       .filter(item => item.toLowerCase().includes(queryLower))
-      .slice(0, 2);
+      .slice(0, 3);
     
-    return [...matchingHistory, ...matchingTerms];
+    // Try to get suggestions from actual products/items
+    try {
+      const { ProductService } = await import('../services/supabaseService');
+      const NormalItemsService = (await import('../services/normalItemsService')).default;
+      
+      const [products, normalItems] = await Promise.all([
+        ProductService.searchProducts(query, { status: 'active' }).catch(() => []),
+        NormalItemsService.getActiveItems().catch(() => [])
+      ]);
+      
+      // Filter F&B items from products
+      const fbCategories = ['Food & Beverage', 'F&B', 'Food', 'Beverage', 'Dry Fruits', 'Dried Fruits', 'Spices'];
+      const fbProducts = products.filter((p: any) => {
+        const categories = p.categories || [];
+        const category = p.category || '';
+        return categories.some((cat: string) => 
+          fbCategories.some(fbCat => cat.toLowerCase().includes(fbCat.toLowerCase()))
+        ) || fbCategories.some(fbCat => category.toLowerCase().includes(fbCat.toLowerCase()));
+      });
+      
+      // Extract titles from products (excluding F&B), normal items, and F&B items
+      const regularProducts = products.filter((p: any) => !fbProducts.includes(p));
+      const productTitles = [
+        ...regularProducts.slice(0, 2).map((p: any) => p.title),
+        ...normalItems.slice(0, 2).map((item: any) => item.title),
+        ...fbProducts.slice(0, 2).map((p: any) => p.title)
+      ].filter(Boolean);
+      
+      return [...matchingHistory, ...productTitles, ...matchingTerms].slice(0, 8);
+    } catch (error) {
+      // Fallback to static suggestions if search fails
+      return [...matchingHistory, ...matchingTerms].slice(0, 8);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -146,7 +188,7 @@ const Header: React.FC = () => {
   };
 
   const getSuggestionItemClass = (index: number, isHistory: boolean = false) => {
-    const baseClass = "w-full text-left px-3 py-2 transition-colors rounded-md text-sm";
+    const baseClass = "w-full text-left px-3 py-2 transition-colors rounded-md text-sm font-sans font-normal";
     const isSelected = selectedIndex === (isHistory ? index : index + searchHistory.length);
     
     if (isSelected) {
@@ -181,9 +223,9 @@ const Header: React.FC = () => {
           >
             <Link 
               to="/categories" 
-              className="flex items-center gap-1 text-gray-200 hover:text-pink-300 transition-colors py-2"
+              className="flex items-center gap-1 text-gray-200 hover:text-pink-300 transition-colors py-2 font-sans font-normal"
             >
-              <span>Categories</span>
+              <span className="font-sans font-normal">Categories</span>
               <ChevronDown className="w-4 h-4" />
             </Link>
 
@@ -205,7 +247,7 @@ const Header: React.FC = () => {
                       <Link
                         key={category.id}
                         to={`/${category.slug}`}
-                        className="px-2.5 py-1.5 text-xs text-gray-200 hover:text-pink-300 rounded-md transition-all font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis"
+                        className="px-2.5 py-1.5 text-xs text-gray-200 hover:text-pink-300 rounded-md transition-all font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis font-sans font-normal"
                         style={{ boxShadow: 'none' }}
                         onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 0, 0, 0.15)'}
                         onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
@@ -219,7 +261,7 @@ const Header: React.FC = () => {
           </div>
 
           {/* Search Bar - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-xl mx-8">
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
             <div className="relative w-full" ref={searchRef}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -229,7 +271,7 @@ const Header: React.FC = () => {
                 onKeyDown={handleKeyDown}
                 onFocus={() => {}}
                 placeholder="search"
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent transition-all duration-200 font-sans font-normal"
               />
               
               {/* Search Suggestions Dropdown */}
@@ -239,13 +281,13 @@ const Header: React.FC = () => {
                   {searchHistory.length > 0 && (
                     <div className="p-2">
                       <div className="flex items-center justify-between mb-2 px-2">
-                        <div className="flex items-center space-x-2 text-xs text-gray-500">
+                        <div className="flex items-center space-x-2 text-xs text-gray-500 font-sans font-normal">
                           <Clock className="w-3 h-3" />
                           <span>Recent Searches</span>
                         </div>
                         <button
                           onClick={clearSearchHistory}
-                          className="text-xs text-pink-600 hover:text-pink-700 hover:underline"
+                          className="text-xs text-pink-600 hover:text-pink-700 hover:underline font-sans font-normal"
                         >
                           Clear
                         </button>
@@ -256,7 +298,7 @@ const Header: React.FC = () => {
                           onClick={() => handleSearch(item)}
                           className={getSuggestionItemClass(index, true)}
                         >
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 font-sans font-normal">
                             <Clock className="w-4 h-4 text-gray-400" />
                             <span>{item}</span>
                           </div>
@@ -268,9 +310,9 @@ const Header: React.FC = () => {
                   {/* Search Suggestions */}
                   {searchSuggestions.length > 0 && (
                     <div className="p-2">
-                      <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2 px-2">
+                      <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2 px-2 font-sans font-normal">
                         <TrendingUp className="w-3 h-3" />
-                        <span>Suggestions</span>
+                        <span className="font-sans font-normal">Suggestions</span>
                       </div>
                       {searchSuggestions.map((suggestion, index) => (
                         <button
@@ -278,7 +320,7 @@ const Header: React.FC = () => {
                           onClick={() => handleSearch(suggestion)}
                           className={getSuggestionItemClass(index)}
                         >
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 font-sans font-normal">
                             <Search className="w-4 h-4 text-gray-400" />
                             <span>{suggestion}</span>
                           </div>
@@ -296,24 +338,27 @@ const Header: React.FC = () => {
             <Link to="/favorites" className="p-2 text-gray-200 hover:text-pink-300 transition-colors">
               <Heart className="w-5 h-5" />
             </Link>
-            <Link to="/browse" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium">
+            <Link to="/browse" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium font-sans font-normal">
               Art
             </Link>
-            <Link to="/shop" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium">
+            <Link to="/shop" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium font-sans font-normal">
               Shop
             </Link>
-            <Link to="/clothes" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium">
+            <Link to="/clothes" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium font-sans font-normal">
               Clothes
             </Link>
+            <Link to="/fb" className="text-gray-200 hover:text-pink-300 transition-colors text-base font-medium font-sans font-normal">
+              F&B
+            </Link>
             {isAdmin(user?.email) && (
-              <Link to="/admin" className="text-gray-200 hover:text-pink-300 transition-colors">
-                Admin
+              <Link to="/admin" className="p-2 text-gray-200 hover:text-pink-300 transition-colors" title="Admin">
+                <Settings className="w-5 h-5" />
               </Link>
             )}
             <Link to="/cart" className="relative p-2 text-gray-200 hover:text-pink-300 transition-colors">
               <ShoppingCart className="w-5 h-5" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans font-normal">
                   {cartItemCount}
                 </span>
               )}
@@ -335,7 +380,7 @@ const Header: React.FC = () => {
             <Link to="/cart" className="relative p-2 text-gray-700 hover:text-pink-600 transition-colors">
               <ShoppingCart className="w-5 h-5" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans font-normal">
                   {cartItemCount}
                 </span>
               )}
@@ -367,7 +412,7 @@ const Header: React.FC = () => {
                   onKeyDown={handleKeyDown}
                   onFocus={() => {}}
                   placeholder="search"
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300 font-sans font-normal"
                 />
                 
                 {/* Mobile Search Suggestions */}
@@ -377,16 +422,16 @@ const Header: React.FC = () => {
                     {searchHistory.length > 0 && (
                       <div className="p-2">
                         <div className="flex items-center justify-between mb-2 px-2">
-                          <div className="flex items-center space-x-2 text-xs text-gray-500">
-                            <Clock className="w-3 h-3" />
-                            <span>Recent Searches</span>
-                          </div>
-                          <button
-                            onClick={clearSearchHistory}
-                            className="text-xs text-pink-600 hover:text-pink-700 hover:underline"
-                          >
-                            Clear
-                          </button>
+                        <div className="flex items-center space-x-2 text-xs text-gray-500 font-sans font-normal">
+                          <Clock className="w-3 h-3" />
+                          <span className="font-sans font-normal">Recent Searches</span>
+                        </div>
+                        <button
+                          onClick={clearSearchHistory}
+                          className="text-xs text-pink-600 hover:text-pink-700 hover:underline font-sans font-normal"
+                        >
+                          Clear
+                        </button>
                         </div>
                         {searchHistory.map((item, index) => (
                           <button
@@ -394,9 +439,9 @@ const Header: React.FC = () => {
                             onClick={() => handleSearch(item)}
                             className={getSuggestionItemClass(index, true)}
                           >
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-3 font-sans font-normal">
                               <Clock className="w-4 h-4 text-gray-400" />
-                              <span>{item}</span>
+                              <span className="font-sans font-normal">{item}</span>
                             </div>
                           </button>
                         ))}
@@ -406,7 +451,7 @@ const Header: React.FC = () => {
                     {/* Search Suggestions */}
                     {searchSuggestions.length > 0 && (
                       <div className="p-2">
-                        <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2 px-2">
+                        <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2 px-2 font-sans font-normal">
                           <TrendingUp className="w-3 h-3" />
                           <span>Suggestions</span>
                         </div>
@@ -416,9 +461,9 @@ const Header: React.FC = () => {
                             onClick={() => handleSearch(suggestion)}
                             className={getSuggestionItemClass(index)}
                           >
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-3 font-sans font-normal">
                               <Search className="w-4 h-4 text-gray-400" />
-                              <span>{suggestion}</span>
+                              <span className="font-sans font-normal">{suggestion}</span>
                             </div>
                           </button>
                         ))}
@@ -431,65 +476,73 @@ const Header: React.FC = () => {
             <nav className="flex flex-col space-y-3">
               <Link
                 to="/favorites"
-                className="flex items-center text-gray-200 hover:text-pink-300 transition-colors py-2"
+                className="flex items-center text-gray-200 hover:text-pink-300 transition-colors py-2 font-sans font-normal"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Heart className="w-5 h-5 mr-2" />
-                Favorites
+                <span className="font-sans font-normal">Favorites</span>
               </Link>
               <Link
                 to="/categories"
-                className="text-gray-200 hover:text-pink-300 transition-colors py-2"
+                className="text-gray-200 hover:text-pink-300 transition-colors py-2 font-sans font-normal"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Categories
+                <span className="font-sans font-normal">Categories</span>
               </Link>
               <Link
                 to="/browse"
-                className="text-gray-200 hover:text-pink-300 transition-colors py-2"
+                className="text-gray-200 hover:text-pink-300 transition-colors py-2 font-sans font-normal"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Art
+                <span className="font-sans font-normal">Art</span>
               </Link>
               <Link
                 to="/shop"
-                className="text-gray-200 hover:text-pink-300 transition-colors py-2"
+                className="text-gray-200 hover:text-pink-300 transition-colors py-2 font-sans font-normal"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Shop
+                <span className="font-sans font-normal">Shop</span>
               </Link>
               <Link
                 to="/clothes"
-                className="text-gray-200 hover:text-pink-300 transition-colors py-2"
+                className="text-gray-200 hover:text-pink-300 transition-colors py-2 font-sans font-normal"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Clothes
+                <span className="font-sans font-normal">Clothes</span>
+              </Link>
+              <Link
+                to="/fb"
+                className="text-gray-200 hover:text-pink-300 transition-colors py-2 font-sans font-normal"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <span className="font-sans font-normal">F&B</span>
               </Link>
               {isAdmin(user?.email) && (
                 <Link
                   to="/admin"
-                  className="text-gray-200 hover:text-pink-300 transition-colors py-2"
+                  className="flex items-center text-gray-200 hover:text-pink-300 transition-colors py-2 font-sans font-normal"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Admin
+                  <Settings className="w-5 h-5 mr-2" />
+                  <span className="font-sans font-normal">Admin</span>
                 </Link>
               )}
               <div className="flex items-center space-x-3 pt-2">
                 <Link 
                   to="/cart"
-                  className="flex items-center text-gray-200 hover:text-pink-300 transition-colors"
+                  className="flex items-center text-gray-200 hover:text-pink-300 transition-colors font-sans font-normal"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  Cart ({cartItemCount})
+                  <span className="font-sans font-normal">Cart ({cartItemCount})</span>
                 </Link>
                 <Link
                   to={user ? "/dashboard" : "/sign-in"}
-                  className="flex items-center text-gray-200 hover:text-pink-300 transition-colors"
+                  className="flex items-center text-gray-200 hover:text-pink-300 transition-colors font-sans font-normal"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <User className="w-5 h-5 mr-2" />
-                  {user ? "Dashboard" : "Sign In"}
+                  <span className="font-sans font-normal">{user ? "Dashboard" : "Sign In"}</span>
                 </Link>
               </div>
             </nav>

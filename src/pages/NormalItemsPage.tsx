@@ -21,6 +21,9 @@ import { useAuth } from '../contexts/AuthContext';
 import NormalItemsService, { NormalItem } from '../services/normalItemsService';
 import ProductCard from '../components/ProductCard';
 import { FavoritesService } from '../services/favoritesService';
+import { ReviewService } from '../services/reviewService';
+import { Review } from '../types';
+import { MessageCircle, ThumbsUp } from 'lucide-react';
 
 const NormalItemsPage: React.FC = () => {
   // Support both /normal/:itemSlug and /:itemSlug routes
@@ -38,6 +41,14 @@ const NormalItemsPage: React.FC = () => {
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState('itemDetails');
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 4;
+  const [selectedReviewImage, setSelectedReviewImage] = useState<string | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // Load items
   useEffect(() => {
@@ -86,6 +97,83 @@ const NormalItemsPage: React.FC = () => {
 
     checkIfFavorited();
   }, [item, user]);
+
+  // Load reviews for the current item
+  useEffect(() => {
+    const loadReviews = async () => {
+      if (item && item.id) {
+        setReviewsLoading(true);
+        try {
+          // Normal items are synced to products table, so we can use the same ID
+          const productReviews = await ReviewService.getProductReviews(item.id);
+          setReviews(productReviews);
+        } catch (error) {
+          console.error('Error loading reviews:', error);
+          setReviews([]);
+        } finally {
+          setReviewsLoading(false);
+        }
+      }
+    };
+
+    loadReviews();
+  }, [item]);
+
+  // Get related items (exclude current item)
+  // Show related items even if less than 4, as long as there's at least 1
+  const relatedItems = item ? allItems
+    .filter(i => i.id !== item.id && i.status === 'active')
+    .slice(0, 4) : [];
+  
+  // Debug: Log related items (remove in production)
+  useEffect(() => {
+    if (item) {
+      console.log('Normal Item:', item.title);
+      console.log('Related items found:', relatedItems.length);
+      console.log('Related items:', relatedItems.map(i => i.title));
+    }
+  }, [item, relatedItems]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(reviews.length / reviewsPerPage);
+  const startIndex = (currentPage - 1) * reviewsPerPage;
+  const endIndex = startIndex + reviewsPerPage;
+  const currentReviews = reviews.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedReviewImage(imageUrl);
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+    setSelectedReviewImage(null);
+  };
+
+  const handleHelpfulVote = (reviewId: string) => {
+    setHelpfulVotes(prev => ({
+      ...prev,
+      [reviewId]: (prev[reviewId] || 0) + 1
+    }));
+  };
+
+  const handleWriteReview = () => {
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+  };
+
+  // Calculate average rating and total reviews
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length
+    : 0;
+  const totalReviews = reviews.length;
 
 
   // Prevent right-click
@@ -200,8 +288,8 @@ const NormalItemsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Item Not Found</h1>
-          <Link to="/normal" className="text-pink-600 hover:text-pink-700 font-medium">
+          <h1 className="text-2xl font-semibold text-gray-800 mb-4 font-sans font-normal">Item Not Found</h1>
+          <Link to="/normal" className="text-pink-600 hover:text-pink-700 font-medium font-sans font-normal">
             ← Back to Normal Items
           </Link>
         </div>
@@ -214,10 +302,10 @@ const NormalItemsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Normal Items</h1>
+          <h1 className="text-3xl font-semibold text-gray-900 mb-8 font-sans font-normal">Normal Items</h1>
           {allItems.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-600">No items available yet.</p>
+              <p className="text-gray-600 font-sans font-normal">No items available yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -261,11 +349,6 @@ const NormalItemsPage: React.FC = () => {
     }
     return item.price;
   };
-
-  // Get related items (exclude current item)
-  const relatedItems = allItems
-    .filter(i => i.id !== item.id)
-    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-gray-50" onContextMenu={handleContextMenu}>
@@ -360,18 +443,18 @@ const NormalItemsPage: React.FC = () => {
             <div className="p-2 sm:p-3 space-y-2 sm:space-y-3">
               {/* Top Actions */}
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <div className="flex items-center space-x-2 text-sm text-gray-600 font-sans font-normal">
                   <button
                     onClick={handleToggleFavorite}
                     disabled={favoritesLoading}
-                    className="flex items-center space-x-2 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center space-x-2 hover:text-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                   >
                     <Heart 
                       className={`w-4 h-4 transition-colors ${
                         isFavorited ? 'text-red-500 fill-current' : 'text-gray-400'
                       } ${favoritesLoading ? 'animate-pulse' : ''}`} 
                     />
-                    <span className={`text-xs ${isFavorited ? 'text-red-500' : ''}`}>
+                    <span className={`text-xs font-sans font-normal ${isFavorited ? 'text-red-500' : ''}`}>
                       {favoritesLoading ? 'Loading...' : (isFavorited ? 'Favorited' : 'Add to favorites')}
                     </span>
                   </button>
@@ -379,17 +462,17 @@ const NormalItemsPage: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={handleShare}
-                    className="flex items-center space-x-1 text-gray-600 hover:text-[#F48FB1] transition-colors"
+                    className="flex items-center space-x-1 text-gray-600 hover:text-[#F48FB1] transition-colors font-sans font-normal"
                   >
                     <Share2 className="w-3 h-3" />
-                    <span className="text-xs">Share</span>
+                    <span className="text-xs font-sans font-normal">Share</span>
                   </button>
                 </div>
               </div>
 
               {/* Item Title */}
               <div className="mt-2">
-                <h1 className="text-sm sm:text-base font-semibold text-gray-800 leading-tight text-center capitalize">
+                <h1 className="text-sm sm:text-base font-semibold text-gray-800 leading-tight text-center capitalize font-sans font-normal">
                   {item.title}
                 </h1>
               </div>
@@ -401,21 +484,21 @@ const NormalItemsPage: React.FC = () => {
                     {item.original_price && item.discount_percentage && item.discount_percentage > 0 ? (
                       <div className="space-y-1">
                         <div className="flex items-baseline space-x-2">
-                          <div className="text-lg sm:text-xl font-bold text-green-600">
+                          <div className="text-lg sm:text-xl font-semibold text-green-600 font-sans font-normal">
                             {formatUIPrice(getCurrentPrice(), 'INR')}
                           </div>
-                          <div className="text-xs text-gray-500 line-through">
+                          <div className="text-xs text-gray-500 line-through font-sans font-normal">
                             {formatUIPrice(item.original_price, 'INR')}
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs text-pink-600 font-medium">
+                          <span className="text-xs text-pink-600 font-medium font-sans font-normal">
                             {item.discount_percentage}% OFF
                           </span>
                         </div>
                       </div>
                     ) : (
-                      <span className="text-lg sm:text-xl font-bold text-green-600">
+                      <span className="text-lg sm:text-xl font-semibold text-green-600 font-sans font-normal">
                         {formatUIPrice(getCurrentPrice(), 'INR')}
                       </span>
                     )}
@@ -425,15 +508,15 @@ const NormalItemsPage: React.FC = () => {
 
               {/* Description */}
               <div className="mt-2 pt-2 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-800 mb-2">Description</h3>
+                <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans font-normal">Description</h3>
                 <div className="mb-2">
-                  <p className={`text-xs text-gray-600 leading-relaxed ${!showFullDescription ? 'line-clamp-3' : ''}`}>
+                  <p className={`text-xs text-gray-600 leading-relaxed font-sans font-normal ${!showFullDescription ? 'line-clamp-3' : ''}`}>
                     {item.description || "Beautiful item that brings elegance into your space."}
                   </p>
                   {item.description && item.description.length > 100 && (
                     <button
                       onClick={() => setShowFullDescription(!showFullDescription)}
-                      className="text-xs text-[#F48FB1] hover:text-[#E91E63] font-medium mt-1 transition-colors"
+                      className="text-xs text-[#F48FB1] hover:text-[#E91E63] font-medium mt-1 transition-colors font-sans font-normal"
                     >
                       {showFullDescription ? 'Show less' : 'Show more'}
                     </button>
@@ -445,13 +528,13 @@ const NormalItemsPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-gray-900 text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-800 transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="w-full bg-teal-800 text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-teal-900 transition-all duration-200 shadow-md hover:shadow-lg font-sans font-normal"
                 >
                   Add to cart
                 </button>
                 <button
                   onClick={handleBuyNow}
-                  className="w-full bg-[#F48FB1] text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-[#E91E63] transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="w-full bg-[#F48FB1] text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-[#E91E63] transition-all duration-200 shadow-md hover:shadow-lg font-sans font-normal"
                 >
                   Buy Now
                 </button>
@@ -476,31 +559,31 @@ const NormalItemsPage: React.FC = () => {
                           key={key}
                           className={`flex justify-between items-center py-1.5 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
                         >
-                          <span className="font-medium text-gray-900 capitalize text-sm">{key.replace(/_/g, ' ')}:</span>
-                          <span className="text-gray-600 text-sm">{String(value)}</span>
+                          <span className="font-medium text-gray-900 capitalize text-sm font-sans font-normal">{key.replace(/_/g, ' ')}:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">{String(value)}</span>
                         </div>
                       ))
                     ) : (
                       <div className="space-y-0">
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm">Size:</span>
-                          <span className="text-gray-600 text-sm">470 mm x 810 mm</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Size:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">470 mm x 810 mm</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm">Material:</span>
-                          <span className="text-gray-600 text-sm">Wood</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Material:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Wood</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm">Style:</span>
-                          <span className="text-gray-600 text-sm">Modern</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Style:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Modern</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm">Quality:</span>
-                          <span className="text-gray-600 text-sm">Premium grade</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Quality:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Premium grade</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="font-medium text-gray-900 text-sm">Return:</span>
-                          <span className="text-gray-600 text-sm">Non-returnable and non-refundable</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Return:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Non-returnable and non-refundable</span>
                         </div>
                       </div>
                     )}
@@ -519,27 +602,27 @@ const NormalItemsPage: React.FC = () => {
                           key={key}
                           className={`flex justify-between items-center py-1.5 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
                         >
-                          <span className="font-medium text-gray-900 capitalize text-sm">{key.replace(/_/g, ' ')}:</span>
-                          <span className="text-gray-600 text-sm">{String(value)}</span>
+                          <span className="font-medium text-gray-900 capitalize text-sm font-sans font-normal">{key.replace(/_/g, ' ')}:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">{String(value)}</span>
                         </div>
                       ))
                     ) : (
                       <div className="space-y-0">
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm">Delivery Method:</span>
-                          <span className="text-gray-600 text-sm">Physical Shipping</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Delivery Method:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Physical Shipping</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm">Delivery Time:</span>
-                          <span className="text-gray-600 text-sm">30 days</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Delivery Time:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">30 days</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm">Shipping:</span>
-                          <span className="text-gray-600 text-sm">Standard shipping included</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Shipping:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Standard shipping included</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="font-medium text-gray-900 text-sm">Tracking:</span>
-                          <span className="text-gray-600 text-sm">Tracking information provided</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Tracking:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Tracking information provided</span>
                         </div>
                       </div>
                     )}
@@ -558,19 +641,19 @@ const NormalItemsPage: React.FC = () => {
                           key={key}
                           className={`flex justify-between items-center py-1.5 ${index < arr.length - 1 ? 'border-b border-gray-200' : ''}`}
                         >
-                          <span className="font-medium text-gray-900 capitalize text-sm">{key.replace(/_/g, ' ')}:</span>
-                          <span className="text-gray-600 text-sm">{String(value)}</span>
+                          <span className="font-medium text-gray-900 capitalize text-sm font-sans font-normal">{key.replace(/_/g, ' ')}:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">{String(value)}</span>
                         </div>
                       ))
                     ) : (
                       <div className="space-y-0">
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm">Quality:</span>
-                          <span className="text-gray-600 text-sm">Premium grade guarantee</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Quality:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">Premium grade guarantee</span>
                         </div>
                         <div className="flex justify-between items-center py-1.5">
-                          <span className="font-medium text-gray-900 text-sm">Uniqueness:</span>
-                          <span className="text-gray-600 text-sm">One-of-a-kind design</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Uniqueness:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">One-of-a-kind design</span>
                         </div>
                       </div>
                     )}
@@ -583,30 +666,350 @@ const NormalItemsPage: React.FC = () => {
           />
         </div>
 
+        {/* Reviews Section */}
+        {item && (
+          <div className="w-full px-3 sm:px-4 lg:px-6 mb-6 sm:mb-8 lg:mb-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
+              {/* Left Column - Reviews */}
+              <div className="lg:col-span-8">
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                  {/* Decorative Header */}
+                  <div className="bg-gradient-to-r from-[#FAC6CF] to-[#F48FB1] h-1"></div>
+                  
+                  <div className="p-1 sm:p-2 lg:p-3">
+                    {/* Header with Rating and Write Review Button */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 sm:mb-2 space-y-1 sm:space-y-0">
+                      <div>
+                        <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-[#333333] font-sans font-normal">
+                          Customer Reviews
+                        </h3>
+                      </div>
+                      
+                      <div className="flex items-center space-x-4">
+                        {/* Rating */}
+                        <div className="flex items-center space-x-2 bg-[#F5F5F5] rounded-lg px-2 py-1 border border-[#F5F5F5] shadow-sm">
+                          <div className="text-lg sm:text-xl font-semibold text-[#F48FB1] font-sans font-normal">
+                            {averageRating.toFixed(1)}
+                          </div>
+                          <div className="text-xs text-[#333333] font-sans font-normal">out of 5</div>
+                          <div className="flex items-center space-x-0.5">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-2 h-2 sm:w-3 sm:h-3 ${
+                                  i < Math.floor(averageRating) ? 'text-[#F48FB1] fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <div className="text-xs text-[#333333] font-semibold font-sans font-normal">
+                            ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
+                          </div>
+                        </div>
+                        
+                        <button 
+                          onClick={handleWriteReview}
+                          className="px-2 py-1 bg-gradient-to-r from-[#FAC6CF] to-[#F48FB1] hover:from-[#F48FB1] hover:to-[#E91E63] text-white rounded-md transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md text-xs font-sans font-normal"
+                        >
+                          ✨ Write a Review
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sort Options */}
+                    <div className="flex items-center justify-end mb-1 sm:mb-2">
+                      <div className="flex items-center space-x-1 sm:space-x-2">
+                        <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
+                        <select className="text-xs border border-[#F5F5F5] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#F48FB1] focus:border-[#F48FB1] bg-gray-50 shadow-sm font-sans font-normal">
+                          <option>Most Recent</option>
+                          <option>Suggested</option>
+                          <option>Highest Rated</option>
+                          <option>Lowest Rated</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Individual Reviews */}
+                    {reviewsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F48FB1]"></div>
+                        <span className="ml-3 text-gray-600 font-sans font-normal">Loading reviews...</span>
+                      </div>
+                    ) : reviews.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400 mb-3">
+                          <MessageCircle className="w-12 h-12 mx-auto" />
+                        </div>
+                        <p className="text-gray-600 font-sans font-normal">No reviews yet. Be the first to review this product!</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* 2x2 Grid Layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {currentReviews.filter((review: Review) => review && review.userName && review.comment).map((review: Review, index: number) => (
+                            <div key={review.id} className={`bg-white rounded-xl p-4 border border-[#F5F5F5] shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 ${
+                              index % 2 === 0 ? 'hover:border-[#FAC6CF]' : 'hover:border-[#F48FB1]'
+                            }`}>
+                              {/* Review Header */}
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
+                                    index % 2 === 0 ? 'bg-[#F48FB1]' : 'bg-[#FAC6CF]'
+                                  }`}>
+                                    <span className="text-white font-semibold text-sm font-sans font-normal">
+                                      {review.userName && review.userName.includes('@') 
+                                        ? review.userName.split('@')[0].charAt(0).toUpperCase()
+                                        : review.userName ? review.userName.charAt(0).toUpperCase() : '?'
+                                      }
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-[#333333] text-sm font-sans font-normal">
+                                      {review.userName && review.userName.includes('@') 
+                                        ? review.userName.split('@')[0].charAt(0).toUpperCase() + review.userName.split('@')[0].slice(1)
+                                        : review.userName || 'Anonymous User'
+                                      }
+                                    </p>
+                                    <div className="flex items-center space-x-1 mt-1">
+                                      <div className="flex items-center space-x-1">
+                                        <div className="w-3 h-3 bg-[#F5F5F5] rounded-full flex items-center justify-center border border-[#FAC6CF]">
+                                          <span className="text-[#F48FB1] text-xs font-semibold font-sans font-normal">✓</span>
+                                        </div>
+                                        <span className="text-xs text-[#F48FB1] font-semibold font-sans font-normal">Recommends</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end space-y-1">
+                                  <div className="flex items-center space-x-1">
+                                    {Array.from({ length: 5 }, (_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-3 h-3 ${
+                                          i < review.rating ? 'text-[#F48FB1] fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-xs font-medium text-[#333333] bg-[#F5F5F5] px-2 py-1 rounded-full font-sans font-normal">
+                                    {new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* Review Comment */}
+                              <p className="text-[#333333] text-sm leading-relaxed mb-3 overflow-hidden font-sans font-normal" style={{display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}}>{review.comment}</p>
+                              
+                              {/* Review Images */}
+                              {review.images && review.images.length > 0 && (
+                                <div className="mb-3">
+                                  <div className="flex gap-2">
+                                    {review.images.slice(0, 2).map((image, imgIndex) => (
+                                      <div 
+                                        key={imgIndex} 
+                                        className="relative group cursor-pointer flex-shrink-0"
+                                        onClick={() => handleImageClick(image)}
+                                      >
+                                        <img
+                                          src={image}
+                                          alt={`Review image ${imgIndex + 1}`}
+                                          className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:border-[#F48FB1] transition-all duration-200"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                            <Eye className="w-3 h-3 text-white" />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {review.images.length > 2 && (
+                                      <div 
+                                        className="w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+                                        onClick={() => review.images && handleImageClick(review.images[2])}
+                                      >
+                                        <span className="text-xs text-gray-500 font-sans font-normal">+{review.images.length - 2}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Review Actions */}
+                              <div className="flex items-center justify-between">
+                                <button 
+                                  onClick={() => handleHelpfulVote(review.id)}
+                                  className="flex items-center space-x-1 text-[#333333] hover:text-[#F48FB1] transition-colors font-medium text-xs font-sans font-normal"
+                                >
+                                  <ThumbsUp className="w-3 h-3" />
+                                  <span>Helpful ({helpfulVotes[review.id] || review.helpful || 0})</span>
+                                </button>
+                                {review.verified && (
+                                  <span className="px-2 py-1 bg-[#F48FB1] text-white text-xs rounded-full font-semibold shadow-sm font-sans font-normal">
+                                    ✓ Verified Purchase
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-center mt-6 pt-4 border-t border-[#F5F5F5]">
+                            <div className="flex items-center space-x-2">
+                              <button 
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                              >
+                                ←
+                              </button>
+                              
+                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                <button
+                                  key={page}
+                                  onClick={() => handlePageChange(page)}
+                                  className={`w-8 h-8 rounded-lg transition-all duration-300 font-medium text-sm font-sans font-normal ${
+                                    page === currentPage 
+                                      ? 'bg-[#F48FB1] text-white shadow-lg' 
+                                      : 'border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] hover:shadow-md'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              ))}
+                              
+                              <button 
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                              >
+                                →
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Review Images Gallery */}
+              <div className="lg:col-span-4">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center font-sans font-normal">
+                    <span className="w-2 h-2 bg-[#F48FB1] rounded-full mr-2"></span>
+                    Review Images
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(() => {
+                      // Collect all review images
+                      const allReviewImages = reviews
+                        .filter((review: Review) => review && review.images && review.images.length > 0)
+                        .flatMap((review: Review) => review.images || [])
+                        .slice(0, 3); // Take only first 3 images
+                      
+                      // If we have images, show them
+                      if (allReviewImages.length > 0) {
+                        return allReviewImages.map((image: string, index: number) => (
+                          <div key={index} className="relative group cursor-pointer" onClick={() => handleImageClick(image)}>
+                            <img
+                              src={image}
+                              alt={`Review image ${index + 1}`}
+                              className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:border-[#F48FB1] transition-all duration-200"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      }
+                      
+                      // If no images, show 3 placeholders
+                      return Array.from({ length: 3 }, (_, index) => (
+                        <div key={index} className="w-full h-16 sm:h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400 text-xs font-sans font-normal">No images yet</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                  {reviews.filter((review: Review) => review && review.images && review.images.length > 0).length > 0 && (
+                    <button className="w-full mt-3 sm:mt-4 py-2 text-[#F48FB1] hover:text-[#E91E63] text-xs sm:text-sm font-medium transition-colors font-sans font-normal">
+                      View all review images →
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Image Modal */}
+            {showImageModal && selectedReviewImage && (
+              <div 
+                className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-8"
+                onClick={closeImageModal}
+              >
+                <div className="relative max-w-6xl max-h-screen w-full h-full flex items-center justify-center">
+                  <img
+                    src={selectedReviewImage}
+                    alt="Review"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                  <button
+                    onClick={closeImageModal}
+                    className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-white rounded-full text-gray-900 hover:bg-gray-200 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Related Items Section */}
-        {relatedItems.length > 0 && (
-          <div className="mt-8 sm:mt-12">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Related Items</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {relatedItems.map((relatedItem) => (
-                <ProductCard
-                  key={relatedItem.id}
-                  product={{
-                    id: relatedItem.id,
-                    title: relatedItem.title,
-                    price: relatedItem.price,
-                    main_image: relatedItem.main_image || relatedItem.images[0],
-                    images: relatedItem.images,
-                    categories: ['Normal'],
-                    category: 'Normal',
-                    originalPrice: relatedItem.original_price,
-                    discountPercentage: relatedItem.discount_percentage,
-                    rating: 0,
-                    downloads: 0,
-                    slug: relatedItem.slug
-                  } as any}
-                />
-              ))}
+        {item && relatedItems && relatedItems.length > 0 && (
+          <div className="py-6 sm:py-8 mt-4">
+            <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 lg:p-8">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1 font-sans font-normal">Related Products</h2>
+                  <p className="text-sm text-gray-600 font-sans font-normal">Discover more amazing products you might love</p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {relatedItems.map((relatedItem) => (
+                    <ProductCard
+                      key={relatedItem.id}
+                      product={{
+                        id: relatedItem.id,
+                        title: relatedItem.title,
+                        price: relatedItem.price,
+                        main_image: relatedItem.main_image || relatedItem.images[0],
+                        images: relatedItem.images,
+                        categories: ['Normal'],
+                        category: 'Normal',
+                        originalPrice: relatedItem.original_price,
+                        discountPercentage: relatedItem.discount_percentage,
+                        rating: 0,
+                        downloads: 0,
+                        slug: relatedItem.slug
+                      } as any}
+                    />
+                  ))}
+                </div>
+                
+                <div className="text-center mt-8 sm:mt-10 lg:mt-12">
+                  <Link 
+                    to="/shop"
+                    className="inline-block bg-white border-2 border-[#F48FB1] text-[#F48FB1] hover:bg-[#F48FB1] hover:text-white font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base font-sans font-normal"
+                  >
+                    View All Products
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         )}
