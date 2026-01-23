@@ -118,20 +118,26 @@ const MenClothingPage: React.FC = () => {
       {/* Category Navigation Bar */}
       <div className="border-b border-gray-200 sticky top-0 bg-white z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-8 overflow-x-auto py-4 scrollbar-hide">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`text-xs font-medium tracking-wider whitespace-nowrap transition-colors pb-1 font-sans font-normal ${
-                  selectedCategory === category.id
-                    ? 'text-gray-900 border-b-2 border-gray-900'
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                {category.label}
-              </button>
-            ))}
+          <div className="flex items-center justify-between gap-8 overflow-x-auto py-4 scrollbar-hide">
+            <div className="flex items-center gap-8">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`text-xs font-medium tracking-wider whitespace-nowrap transition-colors pb-1 font-sans font-normal ${
+                    selectedCategory === category.id
+                      ? 'text-gray-900 border-b-2 border-gray-900'
+                      : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </div>
+            {/* NECESSARY MILAN Badge - Right aligned with filters */}
+            <span className="font-bold text-xs tracking-wider font-sans font-normal whitespace-nowrap" style={{ color: '#FF8000', fontWeight: 700 }}>
+              NECESSARY MILAN
+            </span>
           </div>
         </div>
       </div>

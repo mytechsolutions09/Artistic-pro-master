@@ -170,7 +170,14 @@ serve(async (req) => {
     if (isFormData) {
       body = data  // FormData is used as-is
     } else if (method !== 'GET' && method !== 'DELETE') {
-      body = JSON.stringify(data)
+      // CMU API requires URL-encoded format: format=json&data={...}
+      if (action === '/api/cmu/create.json' && data && typeof data === 'object' && 'format' in data && 'data' in data) {
+        // Convert to URL-encoded format
+        body = `format=${encodeURIComponent(data.format)}&data=${encodeURIComponent(data.data)}`
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+      } else {
+        body = JSON.stringify(data)
+      }
     }
 
     // Make the appropriate request based on method from body

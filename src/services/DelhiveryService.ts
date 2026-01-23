@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { supabase } from './supabaseService';
-import { diagnose401Error, analyzeWarehouseName, generateTroubleshootingGuide } from '../utils/delhiveryDiagnostics';
 
 // Use Supabase Edge Function for Delhivery API calls (avoids CORS)
 const USE_SUPABASE_PROXY = import.meta.env.VITE_USE_SUPABASE_DELHIVERY_PROXY !== 'false'; // Default to true
@@ -216,7 +215,7 @@ export interface EditShipmentRequest {
   cod?: number;
   shipment_height?: number;
   weight?: number;
-  cancellation?: boolean;
+  cancellation?: boolean | string; // API accepts 'true' as string or boolean true
 }
 
 export interface ManifestRequest {
@@ -1333,8 +1332,14 @@ class DelhiveryService {
    */
   async editShipment(request: EditShipmentRequest): Promise<any> {
     try {
+      // Prepare request data - convert cancellation boolean to string if needed
+      const requestData: any = { ...request };
+      if (requestData.cancellation === true) {
+        requestData.cancellation = 'true';
+      }
+      
       // Use Edge Function to avoid CORS issues
-      const response = await this.makeApiCall('/api/p/edit', 'POST', request, 'main');
+      const response = await this.makeApiCall('/api/p/edit', 'POST', requestData, 'main');
       return response.data;
     } catch (error) {
       console.error('Error editing shipment:', error);
@@ -1360,9 +1365,10 @@ class DelhiveryService {
 
     try {
       // Use Edge Function to avoid CORS issues
+      // API expects cancellation as string 'true'
       const response = await this.makeApiCall('/api/p/edit', 'POST', {
         waybill,
-        cancellation: true
+        cancellation: 'true'
       }, 'main');
       return response.data;
     } catch (error: any) {
@@ -1552,10 +1558,6 @@ class DelhiveryService {
       console.log('📦 Requesting pickup from Delhivery Express API');
       console.log('🔗 Endpoint: https://staging-express.delhivery.com/fm/request/new/');
       console.log('📋 Payload:', JSON.stringify(expressPickupRequest, null, 2));
-      console.log('⚠️ IMPORTANT: Warehouse name must match exactly (case-sensitive) with Delhivery dashboard');
-      console.log(`🔤 Warehouse name being sent: "${expressPickupRequest.warehouse_name}"`);
-      console.log(`📏 Warehouse name length: ${expressPickupRequest.warehouse_name.length} characters`);
-      console.log(`🔍 Warehouse name characters: [${expressPickupRequest.warehouse_name.split('').map(c => c === ' ' ? 'SPACE' : c === '-' ? 'HYPHEN' : c).join(', ')}]`);
       
       // Use Edge Function with Express API endpoint (simpler, standard token)
       const responseData = await this.makeApiCall('/fm/request/new/', 'POST', expressPickupRequest, 'main');
@@ -1591,64 +1593,16 @@ class DelhiveryService {
           errorDetails = 'The warehouse name does not exist in Delhivery system. Please ensure the warehouse is registered with Delhivery first.';
         } else if (errorStatus === 401 || msg.includes('401') || msg.includes('unauthorized')) {
           errorMessage = 'Authentication failed';
-          const actualError = (error as any).response?.data?.error || (error as any).response?.data?.message || error.message;
-          const warehouseName = expressPickupRequest?.warehouse_name || request.pickup_location || 'Unknown';
           
-          // Use diagnostic utility to analyze the error
-          const diagnostic = diagnose401Error(warehouseName, actualError);
-          const warehouseAnalysis = analyzeWarehouseName(warehouseName);
-          
-          // Build detailed error message with diagnostics
+          // Build error message
           let detailedError = `Delhivery API returned 401 Unauthorized.\n\n`;
-          detailedError += `📦 Warehouse Name Analysis:\n`;
-          detailedError += `   • Name being sent: "${warehouseName}"\n`;
-          detailedError += `   • Length: ${warehouseName.length} characters\n`;
-          
-          if (warehouseAnalysis && warehouseAnalysis.potentialIssues.length > 0) {
-            detailedError += `\n⚠️ Warehouse Name Issues Detected:\n`;
-            warehouseAnalysis.potentialIssues.forEach(issue => {
-              detailedError += `   • ${issue}\n`;
-            });
-          }
-          
-          if (warehouseAnalysis) {
-            detailedError += `\n🔍 Character Breakdown:\n`;
-            warehouseAnalysis.characterBreakdown.slice(0, 50).forEach((char, idx) => {
-              const displayChar = char.char === ' ' ? '[SPACE]' : char.char === '-' ? '[HYPHEN]' : char.char;
-              detailedError += `   ${idx + 1}. "${displayChar}" (${char.description})\n`;
-            });
-            if (warehouseAnalysis.characterBreakdown.length > 50) {
-              detailedError += `   ... and ${warehouseAnalysis.characterBreakdown.length - 50} more characters\n`;
-            }
-          }
-          
-          detailedError += `\n💡 Most Likely Causes:\n`;
-          detailedError += `   1. API token doesn't have pickup permissions (MOST COMMON)\n`;
-          detailedError += `      → Contact Delhivery support to enable pickup permissions\n`;
-          detailedError += `      → Mention: Token works for waybills but not pickups\n`;
-          detailedError += `\n   2. Warehouse name doesn't match exactly in Delhivery\n`;
-          detailedError += `      → Check Delhivery dashboard for exact warehouse name\n`;
-          detailedError += `      → Compare character-by-character (case-sensitive)\n`;
-          detailedError += `      → Pay attention to spaces, hyphens, and special characters\n`;
-          detailedError += `\n   3. Warehouse not registered/active in Delhivery\n`;
-          detailedError += `      → Verify warehouse exists in Delhivery dashboard\n`;
-          detailedError += `      → Ensure warehouse is active (not disabled)\n`;
-          
-          detailedError += `\n📋 Next Steps:\n`;
-          detailedError += `   1. Check Edge Function logs for detailed error:\n`;
-          detailedError += `      → Supabase Dashboard → Functions → delhivery-api → Logs\n`;
-          detailedError += `   2. Verify warehouse name in Delhivery dashboard\n`;
-          detailedError += `   3. Contact Delhivery support with:\n`;
-          detailedError += `      • Your API token (mention it works for waybills)\n`;
-          detailedError += `      • Warehouse name: "${warehouseName}"\n`;
-          detailedError += `      • Error: 401 Unauthorized on /fm/request/new/\n`;
-          detailedError += `      • Request: Enable pickup scheduling permissions\n`;
+          detailedError += `Most likely causes:\n`;
+          detailedError += `   1. API token doesn't have pickup permissions (contact Delhivery support)\n`;
+          detailedError += `   2. Warehouse name doesn't match exactly in Delhivery dashboard\n`;
+          detailedError += `   3. Warehouse not registered/active in Delhivery\n\n`;
+          detailedError += `Check Edge Function logs for detailed error information.`;
           
           errorDetails = detailedError;
-          
-          // Log diagnostic information to console
-          console.error('🔍 401 Error Diagnostics:');
-          console.error(generateTroubleshootingGuide(warehouseName, { message: actualError }));
         } else if (errorStatus === 403 || msg.includes('403') || msg.includes('forbidden')) {
           errorMessage = 'Access denied';
           errorDetails = 'Your Delhivery API token does not have permission to create pickups. Please check your API token permissions with Delhivery.';
@@ -1672,26 +1626,15 @@ class DelhiveryService {
       console.error('   3. Ensure Edge Function is deployed: supabase functions deploy delhivery-api');
       console.error('   4. Check Edge Function logs: supabase functions logs delhivery-api');
       
-      // Include diagnostic information for 401 errors
-      const warehouseName = expressPickupRequest?.warehouse_name || request.pickup_location || 'Unknown';
       const errorStatus = (error as any).status || (error as any).response?.status;
       const is401Error = errorStatus === 401 || error.message?.toLowerCase().includes('401') || error.message?.toLowerCase().includes('unauthorized');
       
-      const troubleshooting = is401Error 
-        ? [
-            'Verify the warehouse name matches exactly what is registered in Delhivery (character-by-character, case-sensitive)',
-            'Check that DELHIVERY_API_TOKEN is set in Supabase Edge Function secrets',
-            'Verify API token has pickup permissions (contact Delhivery support if needed)',
-            'Ensure the Edge Function is deployed',
-            'Check Edge Function logs for detailed error information',
-            'Contact Delhivery support to enable pickup permissions for your API token'
-          ]
-        : [
-            'Verify the warehouse name matches exactly what is registered in Delhivery',
-            'Check that DELHIVERY_API_TOKEN is set in Supabase Edge Function secrets',
-            'Ensure the Edge Function is deployed',
-            'Check Edge Function logs for detailed error information'
-          ];
+      const troubleshooting = [
+        'Check that DELHIVERY_API_TOKEN is set in Supabase Edge Function secrets',
+        'Verify API token has pickup permissions (contact Delhivery support if needed)',
+        'Ensure the Edge Function is deployed',
+        'Check Edge Function logs for detailed error information'
+      ];
       
       const result: any = {
         success: false,
@@ -1700,14 +1643,7 @@ class DelhiveryService {
         troubleshooting
       };
       
-      // Add diagnostic data for 401 errors
       if (is401Error) {
-        const diagnostic = diagnose401Error(warehouseName, errorDetails || error.message);
-        result.diagnostic = {
-          warehouseNameAnalysis: diagnostic.warehouseNameAnalysis,
-          issues: diagnostic.issues,
-          recommendations: diagnostic.recommendations
-        };
         result.status = 401;
       }
       

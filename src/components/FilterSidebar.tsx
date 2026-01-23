@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { Product } from '../types';
 
@@ -32,6 +32,7 @@ interface FilterSidebarProps {
 const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, products, onClose, displayedCount, filteredCount }) => {
   const { currentCurrency, formatCurrency } = useCurrency();
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Calculate dynamic price range from products
   const productPrices = products.map(p => p.price);
@@ -65,6 +66,22 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
       document.body.style.overflow = 'unset';
     };
   }, []);
+
+  // Handle click outside to close sidebar
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        if (onClose) {
+          onClose();
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
 
   const handlePriceChange = (index: number, value: number) => {
     const newRange: [number, number] = [...filters.priceRange] as [number, number];
@@ -103,11 +120,14 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
 
   return (
     <div className="fixed inset-0 z-50">
-      <div className="fixed left-0 top-16 w-1/3 h-[calc(100vh-4rem)] bg-white shadow-xl border-r border-gray-200 overflow-y-auto overflow-x-hidden">
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black bg-opacity-30" onClick={onClose}></div>
+      {/* Sidebar */}
+      <div ref={sidebarRef} className="fixed left-0 top-16 w-80 max-w-sm h-[calc(100vh-4rem)] bg-white shadow-xl border-r border-gray-200 overflow-y-auto overflow-x-hidden">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-8 py-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-2xl font-serif text-gray-800">Filters</h3>
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xl font-serif text-gray-800 font-sans font-normal">Filters</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -119,14 +139,14 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
           </div>
           {/* Item Count Display */}
           {displayedCount !== undefined && filteredCount !== undefined && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 font-sans font-normal">
               Showing {displayedCount} of {filteredCount} items
             </div>
           )}
         </div>
 
         {/* Filter Content */}
-        <div className="px-8 py-6 space-y-8 pb-24">
+        <div className="px-6 py-4 space-y-6 pb-20">
           {/* Filter by Category */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-100 pb-2">Categories</h4>
@@ -134,7 +154,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
               <select 
                 value={filters.category || 'all'}
                 onChange={(e) => onFilterChange({ category: e.target.value === 'all' ? undefined : e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent appearance-none bg-white shadow-sm"
+                className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent appearance-none bg-white shadow-sm"
+                style={{ backgroundImage: 'none' }}
               >
                 <option value="all">All Categories</option>
                 {productCategories.map((category) => (
@@ -255,9 +276,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
                 {/* Static gray background track */}
                 <div className="absolute w-full h-full bg-gray-200 rounded-lg"></div>
                 
-                {/* Pink fill for the selected range */}
+                {/* Teal fill for the selected range */}
                 <div
-                  className="absolute h-full bg-pink-500 rounded-lg z-[5]"
+                  className="absolute h-full bg-teal-800 rounded-lg z-[5]"
                   style={{
                     left: `${((filters.priceRange[0] - minPrice) / (maxPrice - minPrice)) * 100}%`,
                     width: `${((filters.priceRange[1] - filters.priceRange[0]) / (maxPrice - minPrice)) * 100}%`,
@@ -429,25 +450,13 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
           </div>
         </div>
 
-        {/* Footer Buttons */}
-        <div className="bg-white border-t border-gray-200 px-8 py-5 flex space-x-3">
+        {/* Footer - Clear All Button */}
+        <div className="bg-white border-t border-gray-200 px-6 py-3">
           <button
             onClick={clearAllFilters}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 text-sm font-sans font-normal"
           >
-            Clear All
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors duration-200"
-          >
-            Apply
+            Clear All Filters
           </button>
         </div>
       </div>
@@ -469,19 +478,39 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: #ec4899;
+          background: #115e59;
           cursor: pointer;
           border: 2px solid white;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          transition: background-color 0.2s ease;
+        }
+        .slider:hover::-webkit-slider-thumb {
+          background: #0f524d;
         }
         .slider::-moz-range-thumb {
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: #ec4899;
+          background: #115e59;
           cursor: pointer;
           border: 2px solid white;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          transition: background-color 0.2s ease;
+        }
+        .slider:hover::-moz-range-thumb {
+          background: #0f524d;
+        }
+        
+        /* Hide default select arrow completely */
+        select {
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
+          background-image: none !important;
+        }
+        
+        select::-ms-expand {
+          display: none !important;
         }
       `}</style>
     </div>

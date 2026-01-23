@@ -476,20 +476,28 @@ const ClothingProductPage: React.FC = () => {
                   COLOR: {selectedColor || 'Select a color'}
                 </span>
                 <div className="flex gap-1.5 flex-wrap">
-                  {availableColors.map((color: any) => (
-                    <button
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`w-8 h-8 rounded-full transition-all ${
-                        selectedColor === color ? 'opacity-100 scale-110' : 'opacity-60 hover:opacity-100'
-                      }`}
-                      style={{
-                        backgroundColor: colorHexMap[color] || '#000'
-                      }}
-                      title={color}
-                      aria-label={color}
-                    />
-                  ))}
+                  {availableColors.map((color: any) => {
+                    const colorHex = colorHexMap[color] || '#000';
+                    const isWhite = colorHex.toLowerCase() === '#ffffff' || 
+                                   colorHex.toLowerCase() === '#fff' || 
+                                   colorHex.toLowerCase() === 'white' ||
+                                   colorHex.toLowerCase() === 'rgb(255, 255, 255)';
+                    
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedColor(color)}
+                        className={`w-8 h-8 rounded-full transition-all ${
+                          selectedColor === color ? 'opacity-100 scale-110' : 'opacity-60 hover:opacity-100'
+                        } ${isWhite ? 'border border-gray-300' : ''}`}
+                        style={{
+                          backgroundColor: colorHex
+                        }}
+                        title={color}
+                        aria-label={color}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -574,7 +582,7 @@ const ClothingProductPage: React.FC = () => {
                 className={`flex-1 py-2.5 px-3 font-medium text-xs uppercase tracking-wide transition-all rounded font-sans font-normal ${
                   product.trackInventory && product.stockQuantity === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-teal-800 text-white hover:bg-teal-900'
+                    : 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
                 {product.trackInventory && product.stockQuantity === 0 ? 'OUT OF STOCK' : 'ADD TO CART'}

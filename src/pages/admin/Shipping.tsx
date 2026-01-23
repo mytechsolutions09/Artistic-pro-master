@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ShippingSecondaryNav from '../../components/admin/ShippingSecondaryNav';
 import { NotificationManager } from '../../components/Notification';
+import { PickupErrorDisplay } from '../../components/PickupErrorDisplay';
 import { 
   Truck, 
   MapPin, 
@@ -159,7 +160,7 @@ const Shipping: React.FC = () => {
   const [pickupRequest, setPickupRequest] = useState({
     pickup_time: '11:00:00',
     pickup_date: new Date().toISOString().split('T')[0],
-    pickup_location: 'warehouse_name',
+    pickup_location: '', // Empty string - will be populated from warehouse dropdown
     expected_package_count: 1,
     result: null as any,
     loading: false
@@ -233,7 +234,7 @@ const Shipping: React.FC = () => {
     return_phone: '+91 555 123 4567',
     qc_type: 'param',
     custom_qc: [] as CustomQCItem[],
-    pickup_location_name: 'warehouse_name',
+    pickup_location_name: '', // Will be populated from warehouse selection
     result: null as any,
     loading: false
   });
@@ -589,6 +590,13 @@ const Shipping: React.FC = () => {
       return;
     }
 
+    // Validate warehouse exists
+    const activeWarehouse = warehouses.find(w => w.is_active);
+    if (!activeWarehouse || !activeWarehouse.name) {
+      NotificationManager.error('No active warehouse found. Please create and activate a warehouse first.');
+      return;
+    }
+
     setLoading(true);
     try {
       const shipmentData = {
@@ -614,7 +622,7 @@ const Shipping: React.FC = () => {
           pickup_date: new Date().toISOString().split('T')[0]
         }],
         pickup_location: {
-          name: 'warehouse_name'
+          name: activeWarehouse.name
         }
       };
 
@@ -828,8 +836,16 @@ const Shipping: React.FC = () => {
     console.log('📦 Pickup request data:', pickupRequest);
     console.log('📋 Selected shipments:', selectedShipmentsForPickup);
     
-    if (!pickupRequest.pickup_location || !pickupRequest.pickup_date) {
-      NotificationManager.error('Please fill in all required fields');
+    // Validate warehouse selection
+    if (!pickupRequest.pickup_location || 
+        pickupRequest.pickup_location.trim() === '' || 
+        pickupRequest.pickup_location === 'warehouse_name') {
+      NotificationManager.error('Please select a warehouse from the dropdown');
+      return;
+    }
+
+    if (!pickupRequest.pickup_date) {
+      NotificationManager.error('Please select a pickup date');
       return;
     }
 
@@ -895,38 +911,12 @@ const Shipping: React.FC = () => {
         
         // Add specific guidance for 401 errors
         if (result.status === 401 || result.message?.toLowerCase().includes('authentication')) {
-          const warehouseName = pickupRequest.pickup_location || 'Unknown';
           errorMsg = `❌ Authentication Failed (401 Unauthorized)\n\n`;
-          errorMsg += `🔤 Warehouse Name Being Sent: "${warehouseName}"\n\n`;
-          errorMsg += `⚠️ CRITICAL: This name must match EXACTLY with Delhivery dashboard:\n`;
-          errorMsg += `   • Case-sensitive (uppercase/lowercase)\n`;
-          errorMsg += `   • Spaces must match exactly\n`;
-          errorMsg += `   • Hyphens must match exactly\n`;
-          errorMsg += `   • No extra spaces or characters\n\n`;
-          errorMsg += `📋 VERIFICATION STEPS:\n\n`;
-          errorMsg += `1. Check Edge Function Logs (MOST IMPORTANT):\n`;
-          errorMsg += `   • Go to: https://supabase.com/dashboard/project/varduayfdqivaofymfov/functions\n`;
-          errorMsg += `   • Click: delhivery-api → Logs tab\n`;
-          errorMsg += `   • Find the most recent pickup request\n`;
-          errorMsg += `   • Look for: "🔤 Warehouse name being sent: ..."\n`;
-          errorMsg += `   • Copy that EXACT name\n\n`;
-          errorMsg += `2. Verify in Delhivery Dashboard:\n`;
-          errorMsg += `   • Log in to: https://one.delhivery.com\n`;
-          errorMsg += `   • Go to: Warehouses section\n`;
-          errorMsg += `   • Find your warehouse\n`;
-          errorMsg += `   • Copy the EXACT name shown there\n\n`;
-          errorMsg += `3. Compare Character-by-Character:\n`;
-          errorMsg += `   • System name: "${warehouseName}"\n`;
-          errorMsg += `   • Delhivery name: [Copy from dashboard]\n`;
-          errorMsg += `   • If they don't match → Edit one to match the other\n\n`;
-          errorMsg += `4. Update Warehouse Name:\n`;
-          errorMsg += `   • Option A: Edit warehouse in your system (Shipping → Warehouse → Edit)\n`;
-          errorMsg += `   • Option B: Update name in Delhivery dashboard\n`;
-          errorMsg += `   • After updating, try pickup request again\n\n`;
-          errorMsg += `💡 If names match exactly, check:\n`;
-          errorMsg += `   • API token has pickup permissions (contact Delhivery support)\n`;
-          errorMsg += `   • Token is not expired\n`;
-          errorMsg += `   • Warehouse is active in Delhivery`;
+          errorMsg += `Most likely causes:\n`;
+          errorMsg += `   • API token doesn't have pickup permissions (contact Delhivery support)\n`;
+          errorMsg += `   • Warehouse name doesn't match exactly in Delhivery dashboard\n`;
+          errorMsg += `   • Warehouse not registered/active in Delhivery\n\n`;
+          errorMsg += `Check Edge Function logs for detailed error information.`;
         }
         
         // Show troubleshooting steps if available
@@ -2267,11 +2257,25 @@ const Shipping: React.FC = () => {
           </div>
 
           {pickupRequest.result && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-gray-900 mb-2">Pickup Request Result:</h3>
-              <pre className="text-sm text-gray-600 overflow-auto">
-                {JSON.stringify(pickupRequest.result, null, 2)}
-              </pre>
+            <div className="mt-4">
+              {pickupRequest.result.success ? (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h3 className="font-medium text-green-900 mb-2">✅ Pickup Request Successful!</h3>
+                  <div className="text-sm text-green-800">
+                    {pickupRequest.result.pickup_id && (
+                      <p className="mb-2">
+                        <strong>Pickup ID:</strong> {pickupRequest.result.pickup_id}
+                      </p>
+                    )}
+                    <p>{pickupRequest.result.message || 'Pickup has been scheduled successfully.'}</p>
+                  </div>
+                </div>
+              ) : (
+                <PickupErrorDisplay
+                  error={pickupRequest.result}
+                  onClose={() => setPickupRequest(prev => ({ ...prev, result: null }))}
+                />
+              )}
             </div>
           )}
           </div>

@@ -202,7 +202,7 @@ const Header: React.FC = () => {
   }
 
   return (
-    <header className="bg-teal-800 sticky top-0 z-50 shadow-lg border-0">
+    <header className="bg-teal-800 sticky top-0 z-50 shadow-lg border-0 font-sans font-normal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -283,7 +283,7 @@ const Header: React.FC = () => {
                       <div className="flex items-center justify-between mb-2 px-2">
                         <div className="flex items-center space-x-2 text-xs text-gray-500 font-sans font-normal">
                           <Clock className="w-3 h-3" />
-                          <span>Recent Searches</span>
+                          <span className="font-sans font-normal">Recent Searches</span>
                         </div>
                         <button
                           onClick={clearSearchHistory}
@@ -300,7 +300,7 @@ const Header: React.FC = () => {
                         >
                           <div className="flex items-center space-x-3 font-sans font-normal">
                             <Clock className="w-4 h-4 text-gray-400" />
-                            <span>{item}</span>
+                            <span className="font-sans font-normal">{item}</span>
                           </div>
                         </button>
                       ))}
@@ -322,7 +322,7 @@ const Header: React.FC = () => {
                         >
                           <div className="flex items-center space-x-3 font-sans font-normal">
                             <Search className="w-4 h-4 text-gray-400" />
-                            <span>{suggestion}</span>
+                            <span className="font-sans font-normal">{suggestion}</span>
                           </div>
                         </button>
                       ))}
@@ -453,7 +453,7 @@ const Header: React.FC = () => {
                       <div className="p-2">
                         <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2 px-2 font-sans font-normal">
                           <TrendingUp className="w-3 h-3" />
-                          <span>Suggestions</span>
+                          <span className="font-sans font-normal">Suggestions</span>
                         </div>
                         {searchSuggestions.map((suggestion, index) => (
                           <button
