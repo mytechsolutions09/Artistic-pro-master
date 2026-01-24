@@ -678,7 +678,7 @@ const ClothingProductPage: React.FC = () => {
               <div className="lg:col-span-8">
                 <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
                   {/* Decorative Header */}
-                  <div className="bg-gradient-to-r from-[#FAC6CF] to-[#F48FB1] h-1"></div>
+                  <div className="bg-teal-800 h-1"></div>
                   
                   <div className="p-1 sm:p-2 lg:p-3">
                     {/* Header with Rating and Write Review Button */}
@@ -692,7 +692,7 @@ const ClothingProductPage: React.FC = () => {
                       <div className="flex items-center space-x-4">
                         {/* Rating */}
                         <div className="flex items-center space-x-2 bg-[#F5F5F5] rounded-lg px-2 py-1 border border-[#F5F5F5] shadow-sm">
-                          <div className="text-lg sm:text-xl font-semibold text-[#F48FB1] font-sans font-normal">
+                          <div className="text-lg sm:text-xl font-semibold text-teal-800 font-sans font-normal">
                             {averageRating.toFixed(1)}
                           </div>
                           <div className="text-xs text-[#333333] font-sans font-normal">out of 5</div>
@@ -701,7 +701,7 @@ const ClothingProductPage: React.FC = () => {
                               <Star
                                 key={i}
                                 className={`w-2 h-2 sm:w-3 sm:h-3 ${
-                                  i < Math.floor(averageRating) ? 'text-[#F48FB1] fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                                  i < Math.floor(averageRating) ? 'text-teal-800 fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
                                 }`}
                               />
                             ))}
@@ -713,7 +713,7 @@ const ClothingProductPage: React.FC = () => {
                         
                         <button 
                           onClick={handleWriteReview}
-                          className="px-2 py-1 bg-gradient-to-r from-[#FAC6CF] to-[#F48FB1] hover:from-[#F48FB1] hover:to-[#E91E63] text-white rounded-md transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md text-xs font-sans font-normal"
+                          className="px-2 py-1 bg-teal-800 hover:bg-teal-700 text-white rounded-md transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md text-xs font-sans font-normal"
                         >
                           ✨ Write a Review
                         </button>
@@ -724,7 +724,7 @@ const ClothingProductPage: React.FC = () => {
                     <div className="flex items-center justify-end mb-1 sm:mb-2">
                       <div className="flex items-center space-x-1 sm:space-x-2">
                         <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
-                        <select className="text-xs border border-[#F5F5F5] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#F48FB1] focus:border-[#F48FB1] bg-gray-50 shadow-sm font-sans font-normal">
+                        <select className="text-sm border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-black focus:border-black bg-white shadow-sm font-sans font-normal text-black [&>option]:bg-white [&>option]:text-black [&>option:hover]:bg-gray-100 [&>option:hover]:text-black [&>option:checked]:bg-gray-100 [&>option:checked]:text-black">
                           <option>Most Recent</option>
                           <option>Suggested</option>
                           <option>Highest Rated</option>
@@ -751,15 +751,11 @@ const ClothingProductPage: React.FC = () => {
                         {/* 2x2 Grid Layout */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {currentReviews.filter((review: Review) => review && review.userName && review.comment).map((review: Review, index: number) => (
-                            <div key={review.id} className={`bg-white rounded-xl p-4 border border-[#F5F5F5] shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 ${
-                              index % 2 === 0 ? 'hover:border-[#FAC6CF]' : 'hover:border-[#F48FB1]'
-                            }`}>
+                            <div key={review.id} className={`bg-white rounded-xl p-4 border border-[#F5F5F5] shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 hover:border-teal-800`}>
                               {/* Review Header */}
                               <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center space-x-3">
-                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
-                                    index % 2 === 0 ? 'bg-[#F48FB1]' : 'bg-[#FAC6CF]'
-                                  }`}>
+                                  <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg bg-teal-800">
                                     <span className="text-white font-semibold text-sm font-sans font-normal">
                                       {review.userName && review.userName.includes('@') 
                                         ? review.userName.split('@')[0].charAt(0).toUpperCase()
@@ -776,10 +772,10 @@ const ClothingProductPage: React.FC = () => {
                                     </p>
                                     <div className="flex items-center space-x-1 mt-1">
                                       <div className="flex items-center space-x-1">
-                                        <div className="w-3 h-3 bg-[#F5F5F5] rounded-full flex items-center justify-center border border-[#FAC6CF]">
-                                          <span className="text-[#F48FB1] text-xs font-semibold font-sans font-normal">✓</span>
+                                        <div className="w-3 h-3 bg-[#F5F5F5] rounded-full flex items-center justify-center border border-teal-800">
+                                          <span className="text-teal-800 text-xs font-semibold font-sans font-normal">✓</span>
                                         </div>
-                                        <span className="text-xs text-[#F48FB1] font-semibold font-sans font-normal">Recommends</span>
+                                        <span className="text-xs text-teal-800 font-semibold font-sans font-normal">Recommends</span>
                                       </div>
                                     </div>
                                   </div>
@@ -790,7 +786,7 @@ const ClothingProductPage: React.FC = () => {
                                       <Star
                                         key={i}
                                         className={`w-3 h-3 ${
-                                          i < review.rating ? 'text-[#F48FB1] fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                                          i < review.rating ? 'text-teal-800 fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
                                         }`}
                                       />
                                     ))}
@@ -903,7 +899,6 @@ const ClothingProductPage: React.FC = () => {
               <div className="lg:col-span-4">
                 <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
                   <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center font-sans font-normal">
-                    <span className="w-2 h-2 bg-[#F48FB1] rounded-full mr-2"></span>
                     Review Images
                   </h3>
                   <div className="grid grid-cols-3 gap-2">
@@ -1134,7 +1129,7 @@ const ClothingProductPage: React.FC = () => {
                       </div>
                       
                       <div className="p-4">
-                        <h3 className="text-sm font-semibold text-gray-900 mb-2 group-hover:text-[#F48FB1] transition-colors duration-200 truncate font-sans font-normal" title={relatedProduct.title}>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-2 truncate font-sans font-normal" title={relatedProduct.title}>
                           {relatedProduct.title}
                         </h3>
                         
@@ -1147,7 +1142,7 @@ const ClothingProductPage: React.FC = () => {
                           </div>
                         </div>
                         
-                        <div className="w-full bg-[#F48FB1] group-hover:bg-[#E91E63] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
+                        <div className="w-full bg-teal-800 group-hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
                           <span>View Product</span>
                         </div>
                       </div>

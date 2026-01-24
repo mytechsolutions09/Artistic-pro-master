@@ -211,6 +211,7 @@ const Header: React.FC = () => {
               src={logoUrl} 
               alt="Lurevi" 
               className="h-12 w-auto"
+              style={{ filter: 'brightness(0) invert(1)' }}
             />
           </Link>
 

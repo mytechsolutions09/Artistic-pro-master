@@ -457,7 +457,7 @@ const Checkout: React.FC = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-sans">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
@@ -735,25 +735,25 @@ const Checkout: React.FC = () => {
 
               {/* Store Credit Section */}
               {user && storeCreditBalance > 0 && (
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-lg border border-purple-200 p-4">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-lg font-bold text-gray-800 flex items-center">
-                      <Wallet className="w-5 h-5 text-purple-500 mr-2" />
+                      <Wallet className="w-5 h-5 text-black mr-2" />
                       Store Credit Available
                     </h2>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-purple-600">{formatUIPrice(storeCreditBalance, 'INR')}</p>
+                      <p className="text-2xl font-bold text-black">{formatUIPrice(storeCreditBalance, 'INR')}</p>
                       <p className="text-xs text-gray-500">Available Balance</p>
                     </div>
                   </div>
                   
-                  <div className="bg-white rounded-lg p-3 border border-purple-200">
+                  <div className="bg-white rounded-lg p-3 border border-gray-200">
                     <label className="flex items-center space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={useStoreCredit}
                         onChange={(e) => setUseStoreCredit(e.target.checked)}
-                        className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                        className="w-5 h-5 text-black rounded focus:ring-gray-500"
                       />
                       <div className="flex-1">
                         <p className="font-semibold text-gray-800">Use Store Credit for this order</p>
@@ -770,11 +770,11 @@ const Checkout: React.FC = () => {
                       <div className="mt-3 pt-3 border-t border-gray-200">
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-600">Store Credit Applied:</span>
-                          <span className="font-bold text-purple-600">- {formatUIPrice(storeCreditToUse, 'INR')}</span>
+                          <span className="text-black">- {formatUIPrice(storeCreditToUse, 'INR')}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm mt-2">
                           <span className="text-gray-600">Amount to Pay:</span>
-                          <span className="font-bold text-gray-800">{formatUIPrice(remainingAmount, 'INR')}</span>
+                          <span className="text-gray-800">{formatUIPrice(remainingAmount, 'INR')}</span>
                         </div>
                       </div>
                     )}
@@ -786,7 +786,7 @@ const Checkout: React.FC = () => {
               {(!useStoreCredit || remainingAmount > 0) && (
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
                 <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                  <Lock className="w-5 h-5 text-purple-500 mr-2" />
+                  <Lock className="w-5 h-5 text-black mr-2" />
                   Payment Method {useStoreCredit && remainingAmount > 0 && <span className="ml-2 text-sm text-gray-500">(for remaining {formatUIPrice(remainingAmount, 'INR')})</span>}
                 </h2>
                 
@@ -908,7 +908,7 @@ const Checkout: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
               <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
                 <div className="flex items-center">
-                  <ShoppingBag className="w-5 h-5 text-purple-500 mr-2" />
+                  <ShoppingBag className="w-5 h-5 text-black mr-2" />
                   Order Summary
                 </div>
                 <span className="text-sm font-medium text-gray-500">
@@ -1006,7 +1006,7 @@ const Checkout: React.FC = () => {
                               <span>Order Total</span>
                               <span>{formatUIPrice(cart.total, 'INR')}</span>
                             </div>
-                            <div className="flex justify-between text-sm font-semibold text-purple-600">
+                            <div className="flex justify-between text-sm text-black">
                               <span className="flex items-center">
                                 <Wallet className="w-4 h-4 mr-1" />
                                 Store Credit Applied
@@ -1034,9 +1034,9 @@ const Checkout: React.FC = () => {
             
             {/* Payment Info */}
             {paymentMethod === 'store_credit' ? (
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <div className="flex items-start space-x-3">
-                  <Wallet className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <Wallet className="w-5 h-5 text-black mt-0.5 flex-shrink-0" />
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900 mb-1">Store Credit Payment</h3>
                     <p className="text-xs text-gray-600 mb-2">
@@ -1108,9 +1108,9 @@ const Checkout: React.FC = () => {
               type="submit"
               form="checkout-form"
               disabled={loading}
-              className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
+              className={`w-full py-2 px-4 rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
                 paymentMethod === 'store_credit'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
                   : paymentMethod === 'razorpay'
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
                   : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
@@ -1128,7 +1128,7 @@ const Checkout: React.FC = () => {
                   </span>
                 </>
               ) : paymentMethod === 'store_credit' ? (
-                <span>Place Order - Pay with Store Credit</span>
+                <span>pay now</span>
               ) : paymentMethod === 'razorpay' ? (
                 <span>Pay {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')} - Proceed to Payment</span>
               ) : (
