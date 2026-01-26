@@ -778,7 +778,7 @@ const ProductPage: React.FC = () => {
                         isFavorited ? 'text-red-500 fill-current' : 'text-gray-400'
                       } ${favoritesLoading ? 'animate-pulse' : ''}`} 
                     />
-                    <span className={`text-xs font-sans font-normal ${isFavorited ? 'text-red-500' : ''}`}>
+                    <span className={`text-xs font-sans font-normal ${isFavorited ? 'text-gray-600' : ''}`}>
                       {favoritesLoading ? 'Loading...' : (isFavorited ? 'Favorited' : 'Add to favorites')}
                     </span>
                   </button>
@@ -797,34 +797,34 @@ const ProductPage: React.FC = () => {
               </div>
 
               {/* Product Title - moved above price */}
-              <div className="mt-2">
+              <div className="mt-2 mb-4">
                 <h1 className="text-sm sm:text-base font-semibold text-gray-800 leading-tight text-center capitalize font-sans font-normal">
                   {product.title}
                 </h1>
               </div>
 
               {/* Price Section */}
-              <div className="space-y-1">
+              <div className="space-y-2 mb-4">
                 <div className="flex items-center justify-between">
                   {/* Price on the left */}
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     {product.originalPrice && product.discountPercentage && product.discountPercentage > 0 ? (
                       <div className="space-y-1">
                         <div className="flex items-baseline space-x-2">
-                          <div className="text-lg sm:text-xl font-semibold text-green-600 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</div>
+                          <div className="text-lg sm:text-xl font-semibold text-teal-800 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</div>
                           <div className="text-xs text-gray-500 line-through font-sans font-normal">{formatUIPrice(getOriginalPrice(product), 'INR')}</div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs text-pink-600 font-medium font-sans font-normal">
+                          <span className="text-xs text-gray-600 font-medium font-sans font-normal">
                             {product.discountPercentage ? `${product.discountPercentage}% OFF` : 'Discounted'}
                           </span>
                           {product.originalPrice && product.originalPrice > product.price && (
-                            <span className="text-xs text-black font-medium font-sans font-normal">Limited Time Offer!</span>
+                            <span className="text-xs text-gray-600 font-medium font-sans font-normal">Limited Time Offer!</span>
                           )}
                         </div>
                       </div>
                     ) : (
-                      <span className="text-lg sm:text-xl font-semibold text-green-600 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</span>
+                      <span className="text-lg sm:text-xl font-semibold text-gray-600 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</span>
                     )}
                   </div>
                   
@@ -853,8 +853,8 @@ const ProductPage: React.FC = () => {
 
               {/* Product Category */}
               {product.category && (
-                <div className="pb-2 border-b border-gray-100">
-                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                <div className="pb-3 mb-4 border-b border-gray-100">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <span className="px-2 py-1 bg-[#FAC6CF] text-[#E91E63] text-xs font-medium rounded-full font-sans font-normal">
                       {product.category}
                     </span>
@@ -866,14 +866,22 @@ const ProductPage: React.FC = () => {
               {!product.categories?.some((cat: string) => 
                 cat.toLowerCase().includes('commission')
               ) && !product.category?.toLowerCase().includes('commission') && (
-              <div className="space-y-2">
+              <div className="space-y-3 mb-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1 font-sans font-normal">Product Type</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-2 font-sans font-normal">Product Type</label>
                     <select
                       value={selectedProductType}
                       onChange={(e) => setSelectedProductType(e.target.value as 'digital' | 'poster')}
-                      className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-gray-50 text-sm font-sans font-normal"
+                      className="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-xs text-gray-600 font-sans font-normal text-left [&>option]:bg-white [&>option]:text-gray-600 [&>option]:text-left [&>option:hover]:bg-gray-100 [&>option:hover]:text-gray-600 [&>option:checked]:bg-gray-100 [&>option:checked]:text-gray-600"
+                      style={{
+                        backgroundColor: 'transparent',
+                        backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23718196' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                        backgroundPosition: 'right 0.5rem center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: '1.5em 1.5em',
+                        textAlign: 'left'
+                      }}
                     >
                       <option value="digital">Digital Download</option>
                       <option value="poster">Physical Poster</option>
@@ -888,7 +896,13 @@ const ProductPage: React.FC = () => {
                         <select
                           value={selectedPosterSize}
                           onChange={(e) => setSelectedPosterSize(e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-gray-50 text-sm font-sans font-normal"
+                          className="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-gray-50 text-xs text-gray-600 font-sans font-normal [&>option]:bg-white [&>option]:text-gray-600"
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23718196' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                            backgroundPosition: 'right 0.5rem center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundSize: '1.5em 1.5em'
+                          }}
                         >
                           {Object.entries(product.posterPricing).map(([size, price]) => {
                             const originalPrice = Number(price);
@@ -940,39 +954,39 @@ const ProductPage: React.FC = () => {
                   </div>
                 )}
                 
-                <p className="text-xs text-red-500 font-sans font-normal">
+                <p className="text-xs text-red-500 mt-2 mb-2 font-sans font-normal">
                   Frames are not included
                 </p>
               </div>
               )}
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-teal-800 text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-teal-900 transition-all duration-200 shadow-md hover:shadow-lg font-sans font-normal"
+                  className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-md hover:shadow-lg font-sans font-normal"
                 >
                   Add to cart
                 </button>
                 <button
                   onClick={handleBuyNow}
                   disabled={!product || !product.id}
-                  className="w-full bg-[#F48FB1] text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-[#E91E63] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                  className="w-full bg-teal-800 text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-teal-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                 >
                   Buy Now
                 </button>
               </div>
 
               {/* Product Description */}
-              <div className="mt-2 pt-2 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans font-normal">Description</h3>
-                <div className="mb-2">
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3 font-sans font-normal">Description</h3>
+                <div className="mb-3">
                   <p className={`text-xs text-gray-600 leading-relaxed font-sans font-normal ${!showFullDescription ? 'line-clamp-3' : ''}`}>
                     {'description' in product && product.description ? product.description : "Beautiful handcrafted artwork that brings nature's beauty into your home. Perfect for living rooms, bedrooms, or as a thoughtful gift."}
                   </p>
                   <button
                     onClick={() => setShowFullDescription(!showFullDescription)}
-                    className="text-xs text-[#F48FB1] hover:text-[#E91E63] font-medium mt-1 transition-colors font-sans font-normal"
+                    className="text-xs text-gray-600 hover:text-gray-700 font-medium mt-1 transition-colors font-sans font-normal"
                   >
                     {showFullDescription ? 'Show less' : 'Show more'}
                   </button>
@@ -1462,7 +1476,7 @@ const ProductPage: React.FC = () => {
                     <span className="text-xs text-gray-500">({relatedProduct.rating || 0})</span>
                   </div>
                   
-                  <div className="w-full bg-[#F48FB1] group-hover:bg-[#E91E63] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
+                  <div className="w-full bg-white border border-gray-300 group-hover:border-gray-400 group-hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
                     <ShoppingCart className="w-4 h-4" />
                     <span>View Product</span>
                   </div>
@@ -1474,7 +1488,7 @@ const ProductPage: React.FC = () => {
             <div className="text-center mt-8 sm:mt-10 lg:mt-12">
               <Link 
                 to={`/${generateSlug(productCategory)}`}
-                className="inline-block bg-white border-2 border-[#F48FB1] text-[#F48FB1] hover:bg-[#F48FB1] hover:text-white font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base font-sans font-normal"
+                className="inline-block bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base font-sans font-normal"
               >
                 View All {productCategory} Products
               </Link>

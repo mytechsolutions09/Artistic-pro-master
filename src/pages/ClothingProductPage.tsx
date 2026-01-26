@@ -1142,7 +1142,7 @@ const ClothingProductPage: React.FC = () => {
                           </div>
                         </div>
                         
-                        <div className="w-full bg-teal-800 group-hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
+                        <div className="w-full bg-white border border-gray-300 group-hover:border-gray-400 group-hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
                           <span>View Product</span>
                         </div>
                       </div>
@@ -1154,7 +1154,7 @@ const ClothingProductPage: React.FC = () => {
               <div className="text-center mt-8 sm:mt-10 lg:mt-12">
                 <Link 
                   to="/clothes"
-                  className="inline-block bg-white border-2 border-[#F48FB1] text-[#F48FB1] hover:bg-[#F48FB1] hover:text-white font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base font-sans font-normal"
+                  className="inline-block bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base font-sans font-normal"
                 >
                   View All Clothing Products
                 </Link>

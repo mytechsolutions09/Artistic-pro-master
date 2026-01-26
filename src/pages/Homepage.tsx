@@ -320,21 +320,43 @@ const Homepage: React.FC = () => {
           .sort((a, b) => (b.rating || 0) - (a.rating || 0))
           .slice(0, 4);
     
-    return artworkProducts.map(product => ({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      originalPrice: product.originalPrice,
-      discountPercentage: product.discountPercentage,
-      images: product.images || (product.main_image ? [product.main_image] : ['/placeholder-image.jpg']),
-      rating: product.rating || 4.5,
-      downloads: product.downloads || 0,
-      favoritesCount: product.favoritesCount || 0,
-      category: product.categories?.[0] || 'Art',
-      badge: 'Featured',
-      badgeColor: 'blue',
-      link: generateProductUrl(product.categories?.[0] || product.category, product.title)
-    }));
+    return artworkProducts.map(product => {
+      const category = product.categories?.[0] || product.category || 'Art';
+      
+      // Check if product is clothing by category or properties
+      const clothingCategories = ['unisex', 'men', 'women', 'mens', 'womens', 'clothing', 'tshirt', 't-shirt', 'shirt', 'sweatshirt', 'hoodie'];
+      const isCategoryClothing = clothingCategories.some(cat => 
+        category?.toLowerCase().includes(cat)
+      );
+      const hasClothingProperties = !!(product.sizes || product.colors || product.type === 'clothing' || (product as any).gender);
+      const isClothing = isCategoryClothing || hasClothingProperties;
+      
+      // Generate appropriate URL based on product type
+      let productLink;
+      if (isClothing) {
+        // For clothing products, use /clothes/ prefix
+        productLink = `/clothes/${generateSlug(product.title)}`;
+      } else {
+        // For art products, use category/product format
+        productLink = generateProductUrl(category, product.title);
+      }
+      
+      return {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        discountPercentage: product.discountPercentage,
+        images: product.images || (product.main_image ? [product.main_image] : ['/placeholder-image.jpg']),
+        rating: product.rating || 4.5,
+        downloads: product.downloads || 0,
+        favoritesCount: product.favoritesCount || 0,
+        category: category,
+        badge: 'Featured',
+        badgeColor: 'blue',
+        link: productLink
+      };
+    });
   };
 
   const featuredArtwork = homepageSettings?.featured_artwork || {
@@ -415,13 +437,37 @@ const Homepage: React.FC = () => {
     ]
   };
 
-  // Ensure featured artwork products have valid images array
+  // Ensure featured artwork products have valid images array and correct links
   const safeFeaturedArtwork = {
     ...featuredArtwork,
-    selectedProducts: getFeaturedArtworkProducts().map((product: any) => ({
-      ...product,
-      images: product.images || (product.image ? [product.image] : ['/placeholder-image.jpg'])
-    }))
+    selectedProducts: getFeaturedArtworkProducts().map((product: any) => {
+      // Regenerate link to ensure correct format (fix /artwork/ links)
+      const category = product.category || product.categories?.[0] || 'Art';
+      
+      // Check if product is clothing by category or properties
+      const clothingCategories = ['unisex', 'men', 'women', 'mens', 'womens', 'clothing', 'tshirt', 't-shirt', 'shirt', 'sweatshirt', 'hoodie'];
+      const isCategoryClothing = clothingCategories.some(cat => 
+        category?.toLowerCase().includes(cat)
+      );
+      const hasClothingProperties = !!(product.sizes || product.colors || product.type === 'clothing' || product.gender);
+      const isClothing = isCategoryClothing || hasClothingProperties;
+      
+      // Generate appropriate URL based on product type
+      let productLink;
+      if (isClothing) {
+        // For clothing products, use /clothes/ prefix
+        productLink = `/clothes/${generateSlug(product.title)}`;
+      } else {
+        // For art products, use category/product format
+        productLink = generateProductUrl(category, product.title);
+      }
+      
+      return {
+        ...product,
+        images: product.images || (product.image ? [product.image] : ['/placeholder-image.jpg']),
+        link: productLink // Always regenerate link to ensure correct format
+      };
+    })
   };
 
   const categoriesSection = homepageSettings?.categories || {
