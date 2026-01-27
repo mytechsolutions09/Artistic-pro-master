@@ -100,11 +100,20 @@ const Returns: React.FC = () => {
       ]
     },
     {
-      category: "Digital Art",
+      category: "Digital Art & Commissioned Art",
       conditions: [
         "Digital downloads are final sale",
-        "No returns or refunds for digital products",
-        "All sales are final once downloaded"
+        "Commissioned/custom art orders are final sale",
+        "No returns or refunds for digital or commissioned art products",
+        "All sales are final once delivered or downloaded"
+      ]
+    },
+    {
+      category: "Food & Beverages (F&B)",
+      conditions: [
+        "Due to hygiene and safety reasons, F&B items are non-returnable",
+        "No returns or refunds for perishable or consumable products",
+        "All F&B sales are final"
       ]
     },
     {

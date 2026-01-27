@@ -26,8 +26,19 @@ const FBPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Filter products for F&B items - be very strict to exclude art products
-    const fbCategories = ['Food & Beverage', 'F&B', 'Food & Beverages', 'Dry Fruits', 'Dried Fruits', 'Spices'];
+    // Filter products for F&B items - be strict to exclude art products
+    const fbCategories = [
+      'Food & Beverage',
+      'F&B',
+      'F & B',
+      'food & beverage',
+      'f&b',
+      'f & b',
+      'Food & Beverages',
+      'Dry Fruits',
+      'Dried Fruits',
+      'Spices',
+    ];
     
     // Categories that indicate art products (to exclude)
     const artCategories = ['Art', 'Digital Art', 'Illustration', 'Poster', 'Print', 'Minimalist', 'Abstract', 'Photography'];
@@ -40,10 +51,12 @@ const FBPage: React.FC = () => {
       const category = (product as any).category || '';
       const allCategories = [...categories, category].map(c => c?.toLowerCase() || '').join(' ');
       
-      // Explicitly exclude art products
-      const isArtProduct = artCategories.some(artCat => 
+      // Explicitly exclude art products based on their categories/keywords.
+      // Do NOT auto-exclude by productType, because we reuse 'poster' for
+      // some non-art physical products (e.g. F&B items).
+      const isArtProduct = artCategories.some(artCat =>
         allCategories.includes(artCat.toLowerCase())
-      ) || product.productType === 'digital' || product.productType === 'poster';
+      );
       
       if (isArtProduct) return false;
       

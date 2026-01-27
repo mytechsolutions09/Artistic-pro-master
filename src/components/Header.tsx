@@ -129,7 +129,19 @@ const Header: React.FC = () => {
       ]);
       
       // Filter F&B items from products
-      const fbCategories = ['Food & Beverage', 'F&B', 'Food', 'Beverage', 'Dry Fruits', 'Dried Fruits', 'Spices'];
+      const fbCategories = [
+        'Food & Beverage',
+        'F&B',
+        'F & B',
+        'food & beverage',
+        'f&b',
+        'f & b',
+        'Food',
+        'Beverage',
+        'Dry Fruits',
+        'Dried Fruits',
+        'Spices',
+      ];
       const fbProducts = products.filter((p: any) => {
         const categories = p.categories || [];
         const category = p.category || '';
@@ -314,12 +326,11 @@ const Header: React.FC = () => {
             <div 
               className="relative"
               ref={categoriesRef}
-              onMouseEnter={() => setShowCategoriesDropdown(true)}
-              onMouseLeave={() => setShowCategoriesDropdown(false)}
             >
               <Link 
                 to="/categories" 
                 className="flex items-center gap-1 text-black hover:text-gray-600 text-sm font-normal font-sans uppercase"
+                onMouseEnter={() => setShowCategoriesDropdown(true)}
               >
                 Categories
                 <ChevronDown className="w-3 h-3" />

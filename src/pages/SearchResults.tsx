@@ -62,7 +62,19 @@ const SearchResults: React.FC = () => {
       const allResults: SearchResult[] = [];
 
       // Identify F&B items to exclude from regular products
-      const fbCategories = ['Food & Beverage', 'F&B', 'Food', 'Beverage', 'Dry Fruits', 'Dried Fruits', 'Spices'];
+      const fbCategories = [
+        'Food & Beverage',
+        'F&B',
+        'F & B',
+        'food & beverage',
+        'f&b',
+        'f & b',
+        'Food',
+        'Beverage',
+        'Dry Fruits',
+        'Dried Fruits',
+        'Spices',
+      ];
       const isFBProduct = (product: Product) => {
         const categories = product.categories || [];
         const category = (product as any).category || '';
@@ -183,7 +195,19 @@ const SearchResults: React.FC = () => {
     try {
       // F&B items are stored in products table with F&B-related categories
       // Search for products with F&B categories
-      const fbCategories = ['Food & Beverage', 'F&B', 'Food', 'Beverage', 'Dry Fruits', 'Dried Fruits', 'Spices'];
+      const fbCategories = [
+        'Food & Beverage',
+        'F&B',
+        'F & B',
+        'food & beverage',
+        'f&b',
+        'f & b',
+        'Food',
+        'Beverage',
+        'Dry Fruits',
+        'Dried Fruits',
+        'Spices',
+      ];
       
       // Search all products first
       const allProducts = await ProductService.searchProducts(query, { status: 'active' });

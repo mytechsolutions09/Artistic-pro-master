@@ -189,7 +189,7 @@ const NotificationContainer: React.FC = () => {
         <NotificationItem
           key={notification.id}
           notification={notification}
-          onClose={NotificationManager.remove}
+          onClose={(id) => NotificationManager.remove(id)}
         />
       ))}
     </div>

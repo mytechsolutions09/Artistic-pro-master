@@ -378,6 +378,14 @@ const ProductPage: React.FC = () => {
 
   // Get related products - only art/digital products, exclude clothing, normal items, F&B
   const productCategory = (product as any)?.category || (product?.categories && product.categories[0]) || 'General';
+  const productCategoryLower = productCategory.toLowerCase();
+  const isFBCategory =
+    productCategoryLower.includes('f & b') ||
+    productCategoryLower.includes('f&b') ||
+    productCategoryLower.includes('food & beverage') ||
+    productCategoryLower.includes('food and beverage');
+  const isCommissionedCategory =
+    productCategoryLower.includes('commission') || productCategoryLower.includes('commissioned');
   
   // Get related art products - filter from allProducts directly
   const getRelatedArtProducts = () => {
@@ -1048,8 +1056,12 @@ const ProductPage: React.FC = () => {
                       </div>
                       {selectedProductType === 'poster' && (
                         <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
-                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Returns:</span>
-                          <span className="text-gray-600 text-sm font-sans font-normal">Accepted within 30 days</span>
+                          <span className="font-medium text-gray-900 text-sm font-sans font-normal">Returns / Refunds:</span>
+                          <span className="text-gray-600 text-sm font-sans font-normal">
+                            {(isFBCategory || isCommissionedCategory)
+                              ? 'Not accepted for F&B and commissioned art orders'
+                              : 'Accepted within 30 days'}
+                          </span>
                         </div>
                       )}
                       {selectedProductType === 'digital' && (

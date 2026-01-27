@@ -8,6 +8,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import FBSecondaryNav, { FB_TABS } from '../../components/admin/FBSecondaryNav';
 import { ProductService } from '../../services/supabaseService';
 import { NotificationManager } from '../../components/Notification';
+import { useProducts } from '../../contexts/ProductContext';
 
 interface FBItem {
   id?: string;
@@ -42,6 +43,7 @@ const FB: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState<FBItem | null>(null);
   const [uploading, setUploading] = useState(false);
+  const { addProduct, updateProduct, adminProducts } = useProducts();
   const [formData, setFormData] = useState<FBItem>({
     title: '',
     category: 'dry-fruits',
@@ -65,23 +67,79 @@ const FB: React.FC = () => {
   });
 
   useEffect(() => {
-    if (activeTab === 'all' || activeTab === 'create') {
+    if (activeTab === 'all') {
       loadItems();
     }
-  }, [activeTab]);
+  }, [activeTab, adminProducts]);
 
-  const loadItems = async () => {
+  const loadItems = () => {
     setLoading(true);
     try {
-      // TODO: Implement actual data fetching from database
-      // For now, using mock data
-      setTimeout(() => {
-        setItems([]);
-        setLoading(false);
-      }, 500);
+      const fbKeywords = [
+        'food & beverage',
+        'f&b',
+        'f & b',
+        'dry fruit',
+        'dried fruit',
+        'spice',
+      ];
+
+      const fbProducts = adminProducts.filter((product: any) => {
+        const categories = product.categories || [];
+        const category = (product as any).category || '';
+        const combined = [...categories, category].join(' ').toLowerCase();
+        return fbKeywords.some((kw) => combined.includes(kw));
+      });
+
+      const mapped: FBItem[] = fbProducts.map((product: any) => {
+        const categories = product.categories || [];
+        const combined = categories.join(' ').toLowerCase();
+
+        let fbCategory: FBItem['category'] = 'dry-fruits';
+        if (combined.includes('dried')) {
+          fbCategory = 'dried-fruits';
+        } else if (combined.includes('spice')) {
+          fbCategory = 'spices';
+        }
+
+        return {
+          id: product.id,
+          title: product.title || '',
+          category: fbCategory,
+          description: product.description || '',
+          price: String(product.price ?? ''),
+          original_price:
+            product.originalPrice !== undefined && product.originalPrice !== null
+              ? String(product.originalPrice)
+              : '',
+          discount_percentage:
+            product.discountPercentage !== undefined && product.discountPercentage !== null
+              ? String(product.discountPercentage)
+              : '',
+          weight: '',
+          weight_unit: 'g',
+          stock_quantity:
+            product.stockQuantity !== undefined && product.stockQuantity !== null
+              ? String(product.stockQuantity)
+              : '',
+          brand: product.brand || '',
+          origin: '',
+          expiry_date: '',
+          storage_instructions: '',
+          nutritional_info: '',
+          ingredients: '',
+          images: product.images || [],
+          main_image: product.main_image || '',
+          status: (product.status as FBItem['status']) || 'active',
+          tags: product.tags || [],
+        };
+      });
+
+      setItems(mapped);
     } catch (error) {
       console.error('Error loading F & B items:', error);
       NotificationManager.error('Failed to load items');
+    } finally {
       setLoading(false);
     }
   };
@@ -176,11 +234,83 @@ const FB: React.FC = () => {
     }
 
     try {
-      // TODO: Implement actual creation logic
+      const price = parseFloat(formData.price);
+      const originalPrice = formData.original_price
+        ? parseFloat(formData.original_price)
+        : undefined;
+      const discountPercentage = formData.discount_percentage
+        ? parseFloat(formData.discount_percentage)
+        : undefined;
+
+      const baseCategoryLabel =
+        formData.category === 'dried-fruits'
+          ? 'Dried Fruits'
+          : formData.category === 'spices'
+          ? 'Spices'
+          : 'Dry Fruits';
+
+      const categories = ['Food & Beverage', baseCategoryLabel];
+
+      const images =
+        formData.images && formData.images.length > 0
+          ? formData.images
+          : formData.main_image
+          ? [formData.main_image]
+          : [];
+
+      await addProduct({
+        title: formData.title.trim(),
+        price,
+        originalPrice,
+        discountPercentage,
+        categories,
+        images,
+        main_image: formData.main_image || images[0],
+        pdf_url: undefined,
+        video_url: undefined,
+        image_url: undefined,
+        // Use 'poster' here because the database `products.product_type` check
+        // constraint currently only allows values like 'digital' and 'poster'.
+        // Other parts of the app (e.g. clothing) also use 'poster' for
+        // physical SKUs, so we follow the same pattern for F&B items.
+        productType: 'poster',
+        posterSize: undefined,
+        posterPricing: {},
+        featured: false,
+        tags: formData.tags || ['F&B'],
+        status: formData.status,
+        description: formData.description || '',
+        slug: undefined,
+        views: 0,
+        favoritesCount: 0,
+        itemDetails: {
+          material: formData.brand || 'Food & Beverage',
+          size: `${formData.weight || ''} ${formData.weight_unit || 'g'}`.trim(),
+          frame: '',
+          style: baseCategoryLabel,
+          origin: formData.origin || '',
+        },
+        delivery: {
+          standardDelivery: 'Standard shipping',
+          expressDelivery: '',
+          sameDayDelivery: '',
+          additionalInfo: formData.storage_instructions || '',
+        },
+        didYouKnow: {
+          artistStory: '',
+          ecoFriendly: '',
+          uniqueFeatures: formData.nutritional_info || '',
+        },
+        stockQuantity: formData.stock_quantity
+          ? parseFloat(formData.stock_quantity)
+          : undefined,
+        lowStockThreshold: undefined,
+        trackInventory: true,
+      });
+
       NotificationManager.success('F & B item created successfully');
       setShowCreateModal(false);
       resetForm();
-      await loadItems();
       setActiveTab('all');
     } catch (error: any) {
       console.error('Error creating item:', error);
@@ -200,12 +330,76 @@ const FB: React.FC = () => {
     }
 
     try {
-      // TODO: Implement actual update logic
+      if (!editingItem.id) {
+        NotificationManager.error('Missing product ID for update');
+        return;
+      }
+
+      const price = parseFloat(formData.price);
+      const originalPrice = formData.original_price
+        ? parseFloat(formData.original_price)
+        : undefined;
+      const discountPercentage = formData.discount_percentage
+        ? parseFloat(formData.discount_percentage)
+        : undefined;
+
+      const baseCategoryLabel =
+        formData.category === 'dried-fruits'
+          ? 'Dried Fruits'
+          : formData.category === 'spices'
+          ? 'Spices'
+          : 'Dry Fruits';
+
+      const categories = ['Food & Beverage', baseCategoryLabel];
+
+      const images =
+        formData.images && formData.images.length > 0
+          ? formData.images
+          : formData.main_image
+          ? [formData.main_image]
+          : [];
+
+      await updateProduct(editingItem.id, {
+        title: formData.title.trim(),
+        price,
+        originalPrice,
+        discountPercentage,
+        categories,
+        images,
+        main_image: formData.main_image || images[0],
+        featured: false,
+        tags: formData.tags || ['F&B'],
+        status: formData.status,
+        description: formData.description || '',
+        itemDetails: {
+          material: formData.brand || 'Food & Beverage',
+          size: `${formData.weight || ''} ${formData.weight_unit || 'g'}`.trim(),
+          frame: '',
+          style: baseCategoryLabel,
+          origin: formData.origin || '',
+        },
+        delivery: {
+          standardDelivery: 'Standard shipping',
+          expressDelivery: '',
+          sameDayDelivery: '',
+          additionalInfo: formData.storage_instructions || '',
+        },
+        didYouKnow: {
+          artistStory: '',
+          ecoFriendly: '',
+          uniqueFeatures: formData.nutritional_info || '',
+        },
+        stockQuantity: formData.stock_quantity
+          ? parseFloat(formData.stock_quantity)
+          : undefined,
+        trackInventory: true,
+      } as any);
+
       NotificationManager.success('F & B item updated successfully');
       setShowEditModal(false);
       setEditingItem(null);
       resetForm();
-      await loadItems();
+      setActiveTab('all');
     } catch (error: any) {
       console.error('Error updating item:', error);
       NotificationManager.error(error.message || 'Failed to update item');
