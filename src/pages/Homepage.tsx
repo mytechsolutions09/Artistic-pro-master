@@ -578,24 +578,6 @@ const Homepage: React.FC = () => {
   };
 
 
-  const getIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'Palette': return <Palette className="w-6 h-6" />;
-      case 'Users': return <Users className="w-6 h-6" />;
-      case 'TrendingUp': return <TrendingUp className="w-6 h-6" />;
-      case 'Award': return <Award className="w-6 h-6" />;
-      case 'Grid3X3': return <Grid3X3 className="w-6 h-6" />;
-      default: return <Palette className="w-6 h-6" />;
-    }
-  };
-
-  // Compute live stats (compact cards): Artworks, Categories, Downloads, Avg Rating
-  const computedStats = [
-    { id: 'artworks', icon: 'Palette', value: `${realProducts?.length || 0}`, label: 'Artworks' },
-    { id: 'categories', icon: 'Grid3X3', value: `${realCategories?.length || 0}`, label: 'Categories' },
-    { id: 'downloads', icon: 'TrendingUp', value: '195636', label: 'Downloads' },
-    { id: 'rating', icon: 'Award', value: '4.8', label: 'Avg Rating' }
-  ];
 
   // Show loading state while data is being fetched
   if (loading) {
@@ -613,7 +595,7 @@ const Homepage: React.FC = () => {
               className={`bg-gradient-to-br ${heroSection.mainCard.gradientColors?.[0] || 'from-orange-200'} ${heroSection.mainCard.gradientColors?.[1] || 'to-orange-300'} rounded-2xl p-8 flex flex-col justify-center relative`} 
               style={{ minHeight: `${heroSection.height}px` }}
             >
-              <h1 className="text-2xl font-semibold text-gray-800 mb-2 font-sans font-normal">
+              <h1 className="text-xl font-semibold text-gray-800 mb-2 font-sans font-normal">
                 {heroSection.mainCard.title}
               </h1>
               <p className="text-gray-700 mb-6 text-sm font-sans font-normal">
@@ -621,7 +603,7 @@ const Homepage: React.FC = () => {
               </p>
               <Link 
                 to={heroSection.mainCard.buttonLink}
-                className="inline-block px-4 py-2 bg-teal-800 hover:bg-teal-900 text-white font-medium rounded-full transition-colors w-fit text-sm font-sans font-normal"
+                className="inline-block px-4 py-2 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors w-fit text-sm font-sans font-normal"
               >
                 {heroSection.mainCard.buttonText}
               </Link>
@@ -638,8 +620,8 @@ const Homepage: React.FC = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-lg font-semibold mb-1 text-white font-sans font-normal">{heroSection.featuredCard.title}</h3>
-                <p className="text-white/90 text-sm font-sans font-normal">{heroSection.featuredCard.subtitle}</p>
+                <h3 className="text-base font-semibold mb-1 text-white font-sans font-normal">{heroSection.featuredCard.title}</h3>
+                <p className="text-white/90 text-xs font-sans font-normal">{heroSection.featuredCard.subtitle}</p>
               </div>
             </Link>
 
@@ -654,8 +636,8 @@ const Homepage: React.FC = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-lg font-semibold mb-1 text-white font-sans font-normal">{heroSection.categoriesCard.title}</h3>
-                <p className="text-white/90 text-sm font-sans font-normal">{heroSection.categoriesCard.subtitle}</p>
+                <h3 className="text-base font-semibold mb-1 text-white font-sans font-normal">{heroSection.categoriesCard.title}</h3>
+                <p className="text-white/90 text-xs font-sans font-normal">{heroSection.categoriesCard.subtitle}</p>
               </div>
             </Link>
           </div>
@@ -699,20 +681,20 @@ const Homepage: React.FC = () => {
 
               {/* Text Description Section */}
               <div className="p-4 sm:p-6 lg:p-8 flex flex-col justify-center h-full">
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800 mb-3 lg:mb-4 font-sans font-normal">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 mb-3 lg:mb-4 font-sans font-normal">
                   {safeImageSlider.slides[currentSlide].title}
                 </h2>
                 {safeImageSlider.slides[currentSlide].subtitle && (
-                  <p className="text-base sm:text-lg text-gray-600 mb-3 lg:mb-4 font-sans font-normal">
+                  <p className="text-sm sm:text-base text-gray-600 mb-3 lg:mb-4 font-sans font-normal">
                     {safeImageSlider.slides[currentSlide].subtitle}
                   </p>
                 )}
-                <p className="text-sm sm:text-base text-gray-500 mb-4 lg:mb-6 font-sans font-normal">
+                <p className="text-xs sm:text-sm text-gray-500 mb-4 lg:mb-6 font-sans font-normal">
                   {safeImageSlider.slides[currentSlide].description}
                 </p>
                 <Link
                   to={safeImageSlider.slides[currentSlide].link}
-                  className="inline-block px-4 sm:px-6 py-2 sm:py-3 bg-teal-800 hover:bg-teal-900 text-white font-medium rounded-full transition-colors w-fit text-sm sm:text-base font-sans font-normal"
+                  className="inline-block px-4 sm:px-6 py-2 sm:py-3 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors w-fit text-xs sm:text-sm font-sans font-normal"
                 >
                   View Artwork
                 </Link>
@@ -744,8 +726,8 @@ const Homepage: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-xl font-semibold text-white mb-1 font-sans font-normal">{item.title}</h3>
-                    <p className="text-white/90 text-sm font-sans font-normal">{item.subtitle}</p>
+                    <h3 className="text-base font-semibold text-white mb-1 font-sans font-normal">{item.title}</h3>
+                    <p className="text-white/90 text-xs font-sans font-normal">{item.subtitle}</p>
                   </div>
                 </div>
               </Link>
@@ -756,7 +738,7 @@ const Homepage: React.FC = () => {
             <div className="text-center mt-8">
               <Link
                 to={safeFeaturedGrid.buttonLink}
-                className="inline-block px-6 py-3 bg-teal-800 hover:bg-teal-900 text-white font-medium rounded-full transition-colors font-sans font-normal"
+                className="inline-block px-6 py-3 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors text-sm font-sans font-normal"
               >
                 {safeFeaturedGrid.buttonText}
               </Link>
@@ -788,26 +770,26 @@ const Homepage: React.FC = () => {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-2 truncate font-sans font-normal" title={product.title}>{product.title}</h3>
+                    <h3 className="text-xs font-semibold text-gray-800 mb-2 truncate font-sans font-normal" title={product.title}>{product.title}</h3>
                     
                     {/* Price Section */}
                     <div className="mb-2">
                       {product.originalPrice && product.originalPrice > product.price ? (
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
-                            <div className="text-lg font-semibold text-pink-600 font-sans font-normal">
+                            <div className="text-base font-semibold text-black font-sans font-normal">
                               {formatUIPrice(product.price, 'INR')}
                             </div>
                             <div className="text-xs text-green-600 font-semibold font-sans font-normal">
                               {product.discountPercentage}% OFF
                             </div>
                           </div>
-                          <div className="text-sm text-gray-400 line-through font-sans font-normal">
+                          <div className="text-xs text-gray-400 line-through font-sans font-normal">
                             {formatUIPrice(product.originalPrice, 'INR')}
                           </div>
                         </div>
                       ) : (
-                        <div className="text-lg font-semibold text-pink-600 font-sans font-normal">
+                        <div className="text-base font-semibold text-black font-sans font-normal">
                           {formatUIPrice(product.price, 'INR')}
                         </div>
                       )}
@@ -844,7 +826,7 @@ const Homepage: React.FC = () => {
             <div className="text-center mt-8">
               <Link
                 to={safeBestSellers.buttonLink}
-                className="inline-block px-6 py-3 bg-teal-800 hover:bg-teal-900 text-white font-medium rounded-full transition-colors font-sans font-normal"
+                className="inline-block px-6 py-3 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors text-sm font-sans font-normal"
               >
                 {safeBestSellers.buttonText}
               </Link>
@@ -876,26 +858,26 @@ const Homepage: React.FC = () => {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-2 truncate font-sans font-normal" title={product.title}>{product.title}</h3>
+                    <h3 className="text-xs font-semibold text-gray-800 mb-2 truncate font-sans font-normal" title={product.title}>{product.title}</h3>
                     
                     {/* Price Section */}
                     <div className="mb-2">
                       {product.originalPrice && product.originalPrice > product.price ? (
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
-                            <div className="text-lg font-semibold text-pink-600 font-sans font-normal">
+                            <div className="text-base font-semibold text-black font-sans font-normal">
                               {formatUIPrice(product.price, 'INR')}
                             </div>
                             <div className="text-xs text-green-600 font-semibold font-sans font-normal">
                               {product.discountPercentage}% OFF
                             </div>
                           </div>
-                          <div className="text-sm text-gray-400 line-through font-sans font-normal">
+                          <div className="text-xs text-gray-400 line-through font-sans font-normal">
                             {formatUIPrice(product.originalPrice, 'INR')}
                           </div>
                         </div>
                       ) : (
-                        <div className="text-lg font-semibold text-pink-600 font-sans font-normal">
+                        <div className="text-base font-semibold text-black font-sans font-normal">
                           {formatUIPrice(product.price, 'INR')}
                         </div>
                       )}
@@ -932,7 +914,7 @@ const Homepage: React.FC = () => {
             <div className="text-center mt-8">
               <Link
                 to={safeFeaturedArtwork.buttonLink}
-                className="inline-block px-6 py-3 bg-teal-800 hover:bg-teal-900 text-white font-medium rounded-full transition-colors font-sans font-normal"
+                className="inline-block px-6 py-3 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors text-sm font-sans font-normal"
               >
                 {safeFeaturedArtwork.buttonText}
               </Link>
@@ -964,12 +946,12 @@ const Homepage: React.FC = () => {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-1 font-sans font-normal">{category.name}</h3>
+                    <h3 className="text-xs font-semibold text-gray-800 mb-1 font-sans font-normal">{category.name}</h3>
                     <p className="text-gray-600 text-xs mb-2 line-clamp-2 font-sans font-normal">{category.description}</p>
                     {categoriesSection.showProductCount && (
                       <div className="flex items-center justify-between font-sans font-normal">
                         <span className="text-xs text-gray-500">{category.count} artworks</span>
-                        <span className="text-pink-600 text-xs font-medium group-hover:text-pink-700">
+                        <span className="text-black text-xs font-medium group-hover:text-gray-700">
                           Explore →
                         </span>
                       </div>
@@ -984,7 +966,7 @@ const Homepage: React.FC = () => {
             <div className="text-center mt-6">
               <Link
                 to={categoriesSection.buttonLink}
-                className="inline-block px-5 py-2 bg-teal-800 hover:bg-teal-900 text-white font-medium rounded-full transition-colors text-sm font-sans font-normal"
+                className="inline-block px-5 py-2 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors text-sm font-sans font-normal"
               >
                 {categoriesSection.buttonText}
               </Link>
@@ -997,7 +979,7 @@ const Homepage: React.FC = () => {
       <section className="py-12 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-semibold text-gray-800 mb-4 font-sans font-normal">{trendingCollections.title}</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4 font-sans font-normal">{trendingCollections.title}</h2>
             <p className="text-gray-600 max-w-2xl mx-auto font-sans font-normal">{trendingCollections.subtitle}</p>
           </div>
           
@@ -1018,14 +1000,14 @@ const Homepage: React.FC = () => {
                     </div>
                   </div>
                   <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2 font-sans font-normal">{collection.title}</h3>
-                    <p className="text-gray-600 text-sm mb-3 font-sans font-normal">{collection.description}</p>
+                    <h3 className="text-base font-semibold text-gray-800 mb-2 font-sans font-normal">{collection.title}</h3>
+                    <p className="text-gray-600 text-xs mb-3 font-sans font-normal">{collection.description}</p>
                     <div className="flex items-center justify-between mb-3 font-sans font-normal">
-                      <span className="text-sm text-gray-500">{collection.artworkCount} artworks</span>
+                      <span className="text-xs text-gray-500">{collection.artworkCount} artworks</span>
                       <span className="text-xs text-gray-400">{collection.updateFrequency}</span>
                     </div>
                     <div className="flex items-center justify-between font-sans font-normal">
-                      <span className="text-pink-600 text-sm font-medium group-hover:text-pink-700">
+                      <span className="text-black text-xs font-medium group-hover:text-gray-700">
                         Explore Collection →
                       </span>
                     </div>
@@ -1039,31 +1021,12 @@ const Homepage: React.FC = () => {
             <div className="text-center mt-8">
               <Link
                 to={trendingCollections.buttonLink}
-                className="inline-block px-6 py-3 bg-teal-800 hover:bg-teal-900 text-white font-medium rounded-full transition-colors font-sans font-normal"
+                className="inline-block px-6 py-3 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors text-sm font-sans font-normal"
               >
                 {trendingCollections.buttonText}
               </Link>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Statistics Section - Compact Cards */}
-      <section className="py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {computedStats.map((stat: any) => (
-              <div key={stat.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center space-x-3 shadow-sm">
-                <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-                  {getIcon(stat.icon)}
-                </div>
-                <div>
-                  <div className="text-lg font-semibold text-gray-900 leading-tight font-sans font-normal">{stat.value}</div>
-                  <div className="text-xs text-gray-600 leading-tight font-sans font-normal">{stat.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

@@ -54,10 +54,6 @@ const ProductPage: React.FC = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState('itemDetails');
 
-  // Scroll to top on product change (stable hook order)
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [categorySlug, productSlug]);
   const [selectedProductType, setSelectedProductType] = useState<'digital' | 'poster'>('digital');
   const [selectedPosterSize, setSelectedPosterSize] = useState<string>('A4');
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
@@ -70,8 +66,8 @@ const ProductPage: React.FC = () => {
   const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
   const [showReviewModal, setShowReviewModal] = useState(false);
 
-  // Always start at top when product changes (must be before any early returns)
-  React.useEffect(() => {
+  // Scroll to top on product change (must be before any early returns)
+  useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [categorySlug, productSlug]);
 
@@ -434,17 +430,6 @@ const ProductPage: React.FC = () => {
   };
   
   const relatedProducts = getRelatedArtProducts();
-  
-  // Debug logging (remove in production)
-  useEffect(() => {
-    if (product) {
-      console.log('Product:', product.title);
-      console.log('Product Category:', productCategory);
-      console.log('All Products Count:', allProducts.length);
-      console.log('Related products found:', relatedProducts.length);
-      console.log('Related products:', relatedProducts.map(p => p.title));
-    }
-  }, [product, relatedProducts, productCategory, allProducts]);
 
   const handleAddToCart = () => {
     // Add to cart logic here
@@ -971,7 +956,7 @@ const ProductPage: React.FC = () => {
                 <button
                   onClick={handleBuyNow}
                   disabled={!product || !product.id}
-                  className="w-full bg-teal-800 text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-teal-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                  className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                 >
                   Buy Now
                 </button>
@@ -1119,22 +1104,19 @@ const ProductPage: React.FC = () => {
           {/* Left Column - Reviews */}
           <div className="lg:col-span-8">
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          {/* Decorative Header */}
-          <div className="bg-teal-800 h-1"></div>
-          
-              <div className="p-1 sm:p-2 lg:p-3">
+              <div className="p-2">
             {/* Header with Rating and Write Review Button */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 sm:mb-2 space-y-1 sm:space-y-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 space-y-1 sm:space-y-0">
               <div>
-                    <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-[#333333] font-sans font-normal">
+                    <h3 className="text-sm font-semibold text-[#333333] font-sans font-normal">
                   Customer Reviews
                 </h3>
               </div>
               
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 {/* Rating moved slightly to the right */}
-                <div className="flex items-center space-x-2 bg-[#F5F5F5] rounded-lg px-2 py-1 border border-[#F5F5F5] shadow-sm">
-                  <div className="text-lg sm:text-xl font-semibold text-teal-800 font-sans font-normal">
+                <div className="flex items-center space-x-1.5 bg-[#F5F5F5] rounded-lg px-1.5 py-0.5 border border-[#F5F5F5] shadow-sm">
+                  <div className="text-sm font-semibold text-black font-sans font-normal">
                     {averageRating.toFixed(1)}
                   </div>
                   <div className="text-xs text-[#333333] font-sans font-normal">out of 5</div>
@@ -1142,8 +1124,8 @@ const ProductPage: React.FC = () => {
                     {Array.from({ length: 5 }, (_, i) => (
                       <Star
                         key={i}
-                        className={`w-2 h-2 sm:w-3 sm:h-3 ${
-                          i < Math.floor(averageRating) ? 'text-teal-800 fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                        className={`w-2 h-2 ${
+                          i < Math.floor(averageRating) ? 'text-black fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
                         }`}
                       />
                     ))}
@@ -1155,7 +1137,7 @@ const ProductPage: React.FC = () => {
                 
                 <button 
                   onClick={handleWriteReview}
-                  className="px-2 py-1 bg-teal-800 hover:bg-teal-900 text-white rounded-md transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md text-xs"
+                  className="px-1.5 py-0.5 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 rounded-md transition-all duration-300 shadow-sm hover:shadow-md text-xs"
                 >
                   ✨ Write a Review
                 </button>
@@ -1164,10 +1146,10 @@ const ProductPage: React.FC = () => {
 
 
             {/* Sort Options */}
-                <div className="flex items-center justify-end mb-1 sm:mb-2">
-                  <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="flex items-center justify-end mb-2">
+                  <div className="flex items-center space-x-1">
                     <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
-                    <select className="text-xs border border-[#F5F5F5] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-800 focus:border-teal-800 bg-gray-50 shadow-sm font-sans font-normal">
+                    <select className="text-xs border border-[#F5F5F5] rounded-lg px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-black focus:border-black bg-gray-50 shadow-sm font-sans font-normal" style={{ backgroundImage: 'none', paddingRight: '0.375rem' }}>
                   <option>Most Recent</option>
                   <option>Suggested</option>
                   <option>Highest Rated</option>
@@ -1179,7 +1161,7 @@ const ProductPage: React.FC = () => {
             {/* Individual Reviews - 2x2 Grid Layout */}
             {reviewsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-800"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
                 <span className="ml-3 text-gray-600 font-sans font-normal">Loading reviews...</span>
               </div>
             ) : reviews.length === 0 ? (
@@ -1190,20 +1172,20 @@ const ProductPage: React.FC = () => {
                 <p className="text-gray-600 font-sans font-normal">No reviews yet. Be the first to review this product!</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {/* 2x2 Grid Layout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {currentReviews.filter((review: Review) => review && review.userName && review.comment).map((review: Review, index: number) => (
-                    <div key={review.id} className={`bg-white rounded-xl p-4 border border-[#F5F5F5] shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 ${
-                      index % 2 === 0 ? 'hover:border-teal-700' : 'hover:border-teal-800'
+                    <div key={review.id} className={`bg-white rounded-lg p-2 border border-[#F5F5F5] shadow-sm hover:shadow-md transition-all duration-300 ${
+                      index % 2 === 0 ? 'hover:border-gray-700' : 'hover:border-black'
                     }`}>
                       {/* Review Header */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
-                            index % 2 === 0 ? 'bg-teal-800' : 'bg-teal-700'
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md ${
+                            index % 2 === 0 ? 'bg-black' : 'bg-gray-800'
                           }`}>
-                            <span className="text-white font-semibold text-sm font-sans font-normal">
+                            <span className="text-white font-semibold text-xs font-sans font-normal">
                               {review.userName && review.userName.includes('@') 
                                 ? review.userName.split('@')[0].charAt(0).toUpperCase()
                                 : review.userName ? review.userName.charAt(0).toUpperCase() : '?'
@@ -1211,46 +1193,46 @@ const ProductPage: React.FC = () => {
                             </span>
                           </div>
                           <div>
-                            <p className="font-semibold text-[#333333] text-sm font-sans font-normal">
+                            <p className="font-semibold text-[#333333] text-xs font-sans font-normal">
                               {review.userName && review.userName.includes('@') 
                                 ? review.userName.split('@')[0].charAt(0).toUpperCase() + review.userName.split('@')[0].slice(1)
                                 : review.userName || 'Anonymous User'
                               }
                             </p>
-                            <div className="flex items-center space-x-1 mt-1">
-                              <div className="flex items-center space-x-1">
-                                <div className="w-3 h-3 bg-[#F5F5F5] rounded-full flex items-center justify-center border border-teal-700">
-                                  <span className="text-teal-800 text-xs font-semibold font-sans font-normal">✓</span>
+                            <div className="flex items-center space-x-1 mt-0.5">
+                              <div className="flex items-center space-x-0.5">
+                                <div className="w-2.5 h-2.5 bg-[#F5F5F5] rounded-full flex items-center justify-center border border-gray-700">
+                                  <span className="text-black text-xs font-semibold font-sans font-normal">✓</span>
                                 </div>
-                                <span className="text-xs text-teal-800 font-semibold font-sans font-normal">Recommends</span>
+                                <span className="text-xs text-black font-semibold font-sans font-normal">Recommends</span>
                               </div>
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end space-y-1">
-                          <div className="flex items-center space-x-1">
+                        <div className="flex flex-col items-end space-y-0.5">
+                          <div className="flex items-center space-x-0.5">
                             {Array.from({ length: 5 }, (_, i) => (
                               <Star
                                 key={i}
-                                className={`w-3 h-3 ${
-                                  i < review.rating ? 'text-teal-800 fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
+                                className={`w-2 h-2 ${
+                                  i < review.rating ? 'text-black fill-current drop-shadow-sm' : 'text-[#F5F5F5]'
                                 }`}
                               />
                             ))}
                           </div>
-                          <span className="text-xs font-medium text-[#333333] bg-[#F5F5F5] px-2 py-1 rounded-full font-sans font-normal">
+                          <span className="text-xs font-medium text-[#333333] bg-[#F5F5F5] px-1.5 py-0.5 rounded-full font-sans font-normal">
                             {new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
                       </div>
                       
                       {/* Review Comment */}
-                      <p className="text-[#333333] text-sm leading-relaxed mb-3 overflow-hidden font-sans font-normal" style={{display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}}>{review.comment}</p>
+                      <p className="text-[#333333] text-xs leading-relaxed mb-2 overflow-hidden font-sans font-normal" style={{display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical'}}>{review.comment}</p>
                       
                       {/* Review Images */}
                       {review.images && review.images.length > 0 && (
-                        <div className="mb-3">
-                          <div className="flex gap-2">
+                        <div className="mb-2">
+                          <div className="flex gap-1.5">
                             {review.images.slice(0, 2).map((image, imgIndex) => (
                               <div 
                                 key={imgIndex} 
@@ -1260,18 +1242,18 @@ const ProductPage: React.FC = () => {
                                 <img
                                   src={image}
                                   alt={`Review image ${imgIndex + 1}`}
-                                  className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:border-teal-800 transition-all duration-200"
+                                  className="w-12 h-12 object-cover rounded-lg border border-gray-200 hover:border-black transition-all duration-200"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
                                   <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    <Eye className="w-3 h-3 text-white" />
+                                    <Eye className="w-2.5 h-2.5 text-white" />
                                   </div>
                                 </div>
                               </div>
                             ))}
                             {review.images.length > 2 && (
                               <div 
-                                className="w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+                                className="w-12 h-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
                                 onClick={() => review.images && handleImageClick(review.images[2])}
                               >
                                 <span className="text-xs text-gray-500 font-sans font-normal">+{review.images.length - 2}</span>
@@ -1285,13 +1267,13 @@ const ProductPage: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <button 
                           onClick={() => handleHelpfulVote(review.id)}
-                          className="flex items-center space-x-1 text-[#333333] hover:text-teal-800 transition-colors font-medium text-xs font-sans font-normal"
+                          className="flex items-center space-x-1 text-[#333333] hover:text-black transition-colors font-medium text-xs font-sans font-normal"
                         >
-                          <ThumbsUp className="w-3 h-3" />
+                          <ThumbsUp className="w-2.5 h-2.5" />
                           <span>Helpful ({helpfulVotes[review.id] || review.helpful || 0})</span>
                         </button>
                         {review.verified && (
-                          <span className="px-2 py-1 bg-teal-800 text-white text-xs rounded-full font-semibold shadow-sm font-sans font-normal">
+                          <span className="px-1.5 py-0.5 bg-black text-white text-xs rounded-full font-semibold shadow-sm font-sans font-normal">
                             ✓ Verified Purchase
                           </span>
                         )}
@@ -1307,7 +1289,7 @@ const ProductPage: React.FC = () => {
                       <button 
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-teal-800 hover:border-teal-800 transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                        className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-black hover:border-black transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                       >
                         ←
                       </button>
@@ -1318,8 +1300,8 @@ const ProductPage: React.FC = () => {
                           onClick={() => handlePageChange(page)}
                           className={`w-8 h-8 rounded-lg transition-all duration-300 font-medium text-sm font-sans font-normal ${
                             page === currentPage 
-                              ? 'bg-teal-800 text-white shadow-lg' 
-                              : 'border border-[#F5F5F5] text-[#333333] hover:text-teal-800 hover:border-teal-800 hover:shadow-md'
+                              ? 'bg-black text-white shadow-lg' 
+                              : 'border border-[#F5F5F5] text-[#333333] hover:text-black hover:border-black hover:shadow-md'
                           }`}
                         >
                           {page}
@@ -1329,7 +1311,7 @@ const ProductPage: React.FC = () => {
                       <button 
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-teal-800 hover:border-teal-800 transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                        className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-black hover:border-black transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                       >
                         →
                       </button>
@@ -1346,12 +1328,12 @@ const ProductPage: React.FC = () => {
           {/* Right Column - Review Images and Pictures */}
           <div className="lg:col-span-4 space-y-4 sm:space-y-6">
             {/* Review Images Gallery */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center font-sans font-normal">
-                <span className="w-2 h-2 bg-teal-800 rounded-full mr-2"></span>
+            <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-2">
+              <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center font-sans font-normal">
+                <span className="w-1.5 h-1.5 bg-black rounded-full mr-1.5"></span>
                 Review Images
               </h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 {(() => {
                   // Collect all review images
                   const allReviewImages = reviews
@@ -1366,11 +1348,11 @@ const ProductPage: React.FC = () => {
                         <img 
                           src={image} 
                           alt={`Review image ${index + 1}`}
-                          className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:border-teal-800 transition-all duration-200"
+                          className="w-full h-12 object-cover rounded-lg border border-gray-200 hover:border-black transition-all duration-200"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                            <Eye className="w-2.5 h-2.5 text-white" />
                           </div>
                         </div>
                       </div>
@@ -1379,14 +1361,14 @@ const ProductPage: React.FC = () => {
                   
                   // If no images, show 3 placeholders
                   return Array.from({ length: 3 }, (_, index) => (
-                    <div key={index} className="w-full h-16 sm:h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                    <div key={index} className="w-full h-12 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
                       <span className="text-gray-400 text-xs font-sans font-normal">No images yet</span>
                     </div>
                   ));
                 })()}
               </div>
               {reviews.filter((review: Review) => review && review.images && review.images.length > 0).length > 0 && (
-                <button className="w-full mt-3 sm:mt-4 py-2 text-teal-800 hover:text-teal-900 text-xs sm:text-sm font-medium transition-colors font-sans font-normal">
+                <button className="w-full mt-2 py-1 text-black hover:text-gray-700 text-xs font-medium transition-colors font-sans font-normal">
                   View all review images →
                 </button>
               )}
@@ -1549,7 +1531,7 @@ const ProductPage: React.FC = () => {
                       placeholder="Share your experience with this product..."
                     />
                   </div>
-                  <button className="w-full bg-teal-800 hover:bg-teal-900 text-white font-medium py-2 px-4 rounded-lg transition-colors font-sans font-normal">
+                  <button className="w-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors font-sans font-normal">
                     Submit Review
                   </button>
               </div>
