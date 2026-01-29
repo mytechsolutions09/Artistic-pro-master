@@ -1,7 +1,6 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
-import NotificationContainer from '../Notification';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -50,8 +49,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, noHeader = f
           {children}
         </div>
       </div>
-      {/* Notifications */}
-      <NotificationContainer />
     </div>
   );
 };

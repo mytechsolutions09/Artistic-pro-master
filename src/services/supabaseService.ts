@@ -871,6 +871,9 @@ export class ProductService {
           item_details: productData.itemDetails || {},
           delivery_info: productData.delivery || {},
           did_you_know: productData.didYouKnow || {},
+          stock_quantity: productData.stockQuantity ?? null,
+          track_inventory: productData.trackInventory ?? true,
+          low_stock_threshold: productData.lowStockThreshold ?? null,
           // Clothing-specific fields
           productid: productData.productId,
           gender: productData.gender,
@@ -947,7 +950,10 @@ export class ProductService {
       if (updates.itemDetails !== undefined) updateData.item_details = updates.itemDetails;
       if (updates.delivery !== undefined) updateData.delivery_info = updates.delivery;
       if (updates.didYouKnow !== undefined) updateData.did_you_know = updates.didYouKnow;
-      
+      if (updates.stockQuantity !== undefined) updateData.stock_quantity = updates.stockQuantity;
+      if (updates.trackInventory !== undefined) updateData.track_inventory = updates.trackInventory;
+      if (updates.lowStockThreshold !== undefined) updateData.low_stock_threshold = updates.lowStockThreshold;
+
       // Clothing-specific fields
       if (updates.productId !== undefined) updateData.productid = updates.productId;
       if (updates.gender !== undefined) updateData.gender = updates.gender;

@@ -109,7 +109,10 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
       shipping: dbProduct.shipping,
       clothingType: dbProduct.clothingtype || dbProduct.clothingType,
       material: dbProduct.material,
-      brand: dbProduct.brand
+      brand: dbProduct.brand,
+      stockQuantity: dbProduct.stock_quantity ?? dbProduct.stockQuantity,
+      lowStockThreshold: dbProduct.low_stock_threshold ?? dbProduct.lowStockThreshold,
+      trackInventory: dbProduct.track_inventory ?? dbProduct.trackInventory
     };
 
     // Enhance with sample images if needed

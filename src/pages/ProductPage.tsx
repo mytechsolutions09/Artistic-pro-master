@@ -657,7 +657,6 @@ const ProductPage: React.FC = () => {
                       draggable={false}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 font-sans font-normal">Single Image</p>
                   {(product as any).video_url && (
                     <button
                       type="button"
@@ -706,22 +705,11 @@ const ProductPage: React.FC = () => {
               ) : (
                 <div 
                   className="w-full aspect-[6/5] max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] max-w-[600px] overflow-hidden group cursor-zoom-in relative"
-                  onMouseMove={handleMouseMove}
                 >
                   <img
                     src={productImages[selectedProductImage]}
                     alt={product.title}
-                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out"
-                    style={{
-                      transform: `scale(1)`,
-                      transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = `scale(1.5)`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = `scale(1)`;
-                    }}
+                    className="w-full h-full object-contain transition-transform duration-300 ease-in-out group-hover:scale-105 origin-center bg-gray-50"
                     onContextMenu={handleContextMenu}
                     onDragStart={handleDragStart}
                     draggable={false}
@@ -735,7 +723,7 @@ const ProductPage: React.FC = () => {
               {productImages.length > 1 && (
                 <button
                   onClick={previousImage}
-                  className="hidden lg:flex absolute -left-10 top-1/4 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow-md border border-gray-200 items-center justify-center transition-all duration-200 hover:shadow-lg hover:scale-105 z-10"
+                  className="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow-md border border-gray-200 items-center justify-center transition-all duration-200 hover:shadow-lg hover:scale-105 z-10"
                 >
                   <ArrowLeftIcon className="w-4 h-4" />
                 </button>
@@ -745,7 +733,7 @@ const ProductPage: React.FC = () => {
               {productImages.length > 1 && (
                 <button
                   onClick={nextImage}
-                  className="hidden lg:flex absolute -right-10 top-1/4 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow-md border border-gray-200 items-center justify-center transition-all duration-200 hover:shadow-lg hover:scale-105 z-10"
+                  className="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white text-gray-700 rounded-full shadow-md border border-gray-200 items-center justify-center transition-all duration-200 hover:shadow-lg hover:scale-105 z-10"
                 >
                   <ArrowRightIcon className="w-4 h-4" />
                 </button>
@@ -789,9 +777,9 @@ const ProductPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Product Title - moved above price */}
+              {/* Product Title - moved above price (F&B: all caps) */}
               <div className="mt-2 mb-4">
-                <h1 className="text-sm sm:text-base font-semibold text-gray-800 leading-tight text-center capitalize font-sans font-normal">
+                <h1 className={`text-sm sm:text-base font-semibold text-gray-800 leading-tight text-center font-sans font-normal ${isFBCategory ? 'uppercase' : 'capitalize'}`}>
                   {product.title}
                 </h1>
               </div>
@@ -855,8 +843,8 @@ const ProductPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Product Type Selection - Hide for Commissioned Art */}
-              {!product.categories?.some((cat: string) => 
+              {/* Product Type & Poster Size - Hide for F&B and Commissioned Art */}
+              {!isFBCategory && !product.categories?.some((cat: string) => 
                 cat.toLowerCase().includes('commission')
               ) && !product.category?.toLowerCase().includes('commission') && (
               <div className="space-y-3 mb-4">
@@ -953,6 +941,33 @@ const ProductPage: React.FC = () => {
               </div>
               )}
 
+              {/* Quantity - show for F&B products (same height as Add to cart button) */}
+              {isFBCategory && (
+                <div className="mb-4 flex items-center gap-2">
+                  <label className="text-xs font-medium text-gray-700 font-sans font-normal whitespace-nowrap">Quantity</label>
+                  <div className="inline-flex items-center gap-1 px-2 h-9 border border-gray-300 rounded-lg bg-gray-50 text-xs sm:text-sm font-sans font-normal">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-6 h-6 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      disabled={quantity <= 1}
+                    >
+                      −
+                    </button>
+                    <span className="min-w-[1.25rem] text-center font-medium text-gray-700">
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-6 h-6 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded flex items-center justify-center transition-colors flex-shrink-0"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2 mb-4">
                 <button
@@ -993,7 +1008,102 @@ const ProductPage: React.FC = () => {
         {/* Tabbed Information Section */}
         <div className="w-full px-3 sm:px-4 lg:px-6 mb-6 sm:mb-8 lg:mb-10">
           <ProductTabs
-            tabs={[
+            tabs={isFBCategory ? [
+              {
+                id: 'itemDetails',
+                label: 'Item Details',
+                icon: <FileText className="w-4 h-4" />,
+                content: (
+                  <div className="space-y-0">
+                    {product.itemDetails?.material && (
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Brand:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{product.itemDetails.material}</span>
+                      </div>
+                    )}
+                    {product.itemDetails?.size && (
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Weight / Size:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{product.itemDetails.size}</span>
+                      </div>
+                    )}
+                    {product.itemDetails?.style && (
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Category:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{product.itemDetails.style}</span>
+                      </div>
+                    )}
+                    {product.itemDetails?.origin && (
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Origin:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{product.itemDetails.origin}</span>
+                      </div>
+                    )}
+                    {(product.itemDetails as any)?.ingredients && (
+                      <div className="flex flex-col py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal mb-1">Ingredients:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{(product.itemDetails as any).ingredients}</span>
+                      </div>
+                    )}
+                    {(product.itemDetails as any)?.expiryDate && (
+                      <div className="flex justify-between items-center py-1.5">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Best before:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{(product.itemDetails as any).expiryDate}</span>
+                      </div>
+                    )}
+                    {!product.itemDetails?.material && !product.itemDetails?.size && !product.itemDetails?.origin && !(product.itemDetails as any)?.ingredients && (
+                      <p className="text-gray-500 text-sm font-sans font-normal py-1.5">No item details available.</p>
+                    )}
+                  </div>
+                )
+              },
+              {
+                id: 'delivery',
+                label: 'Delivery',
+                icon: <Truck className="w-4 h-4" />,
+                content: (
+                  <div className="space-y-0">
+                    {product.delivery?.standardDelivery && (
+                      <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal">Delivery:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{product.delivery.standardDelivery}</span>
+                      </div>
+                    )}
+                    {product.delivery?.additionalInfo && (
+                      <div className="flex flex-col py-1.5 border-b border-gray-200">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal mb-1">Storage:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal">{product.delivery.additionalInfo}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center py-1.5 border-b border-gray-200">
+                      <span className="font-medium text-gray-900 text-sm font-sans font-normal">Returns / Refunds:</span>
+                      <span className="text-gray-600 text-sm font-sans font-normal">Not accepted for F&B orders</span>
+                    </div>
+                    {!product.delivery?.standardDelivery && !product.delivery?.additionalInfo && (
+                      <p className="text-gray-500 text-sm font-sans font-normal py-1.5">Standard shipping applies.</p>
+                    )}
+                  </div>
+                )
+              },
+              {
+                id: 'didYouKnow',
+                label: 'Did You Know?',
+                icon: <Info className="w-4 h-4" />,
+                content: (
+                  <div className="space-y-0">
+                    {product.didYouKnow?.uniqueFeatures && (
+                      <div className="flex flex-col py-1.5">
+                        <span className="font-medium text-gray-900 text-sm font-sans font-normal mb-1">Nutritional / Info:</span>
+                        <span className="text-gray-600 text-sm font-sans font-normal whitespace-pre-wrap">{product.didYouKnow.uniqueFeatures}</span>
+                      </div>
+                    )}
+                    {!product.didYouKnow?.uniqueFeatures && (
+                      <p className="text-gray-500 text-sm font-sans font-normal py-1.5">No additional info.</p>
+                    )}
+                  </div>
+                )
+              }
+            ] : [
               {
                 id: 'itemDetails',
                 label: 'Item Details',

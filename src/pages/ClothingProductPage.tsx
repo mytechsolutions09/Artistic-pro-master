@@ -35,17 +35,30 @@ const ClothingProductPage: React.FC = () => {
   const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
   const [showReviewModal, setShowReviewModal] = useState(false);
 
-  // Find the product by slug (clothing products)
+  // Find the product by slug (clothing products) and explicitly exclude F&B
   const product = allProducts.find(p => {
     const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     if (slug !== productSlug) return false;
+
+    const categories = ((p as any).categories || []).map((c: string) => c.toLowerCase());
+    const tags = ((p as any).tags || []).map((t: string) => t.toLowerCase());
+    const combined = [...categories, ...tags].join(' ');
+
+    // Exclude any F&B-style products from clothing page
+    const isFB = combined.includes('food & beverage') ||
+                 combined.includes('f&b') ||
+                 combined.includes('f & b') ||
+                 combined.includes('dry fruit') ||
+                 combined.includes('dried fruit') ||
+                 combined.includes('spice');
+    if (isFB) return false;
     
     // Check both gender (new field) and categories (for backward compatibility)
     const productData = p as any;
     const hasGender = productData.gender === 'Men' || productData.gender === 'Women' || productData.gender === 'Unisex';
     const hasClothingCategory = productData.categories?.some((cat: string) => 
       cat.toLowerCase().includes('men') || 
-      cat.toLowerCase().includes('women') || 
+      cat.toLowerCase().includes('women') ||
       cat.toLowerCase().includes('unisex') ||
       cat.toLowerCase().includes('clothing')
     );

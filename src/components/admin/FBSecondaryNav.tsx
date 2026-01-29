@@ -43,12 +43,6 @@ export const FB_TABS: FBTab[] = [
     description: 'Manage F & B categories'
   },
   {
-    id: 'featured',
-    label: 'Featured',
-    icon: <Star className="w-5 h-5" />,
-    description: 'Manage featured items'
-  },
-  {
     id: 'orders',
     label: 'Orders',
     icon: <ShoppingCart className="w-5 h-5" />,
@@ -99,8 +93,6 @@ const FBSecondaryNav: React.FC<FBSecondaryNavProps> = ({
             let badge = tab.badge;
             if (tab.id === 'all' && itemCounts?.total) {
               badge = itemCounts.total;
-            } else if (tab.id === 'featured' && itemCounts?.featured) {
-              badge = itemCounts.featured;
             } else if (tab.id === 'trending' && itemCounts?.trending) {
               badge = itemCounts.trending;
             }

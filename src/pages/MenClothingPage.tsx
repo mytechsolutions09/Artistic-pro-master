@@ -27,10 +27,23 @@ const MenClothingPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Filter products for Men's/Women's clothing category
+    // Filter products for Men's/Women's clothing category and explicitly exclude F&B
     let clothingProducts = adminProducts.filter(product => {
+      const categories = (product.categories || []).map(c => c.toLowerCase());
+      const tags = (product.tags || []).map((t: string) => t.toLowerCase());
+      const combined = [...categories, ...tags].join(' ');
+
+      // Exclude any F&B-style products
+      const isFB = combined.includes('food & beverage') ||
+                   combined.includes('f&b') ||
+                   combined.includes('f & b') ||
+                   combined.includes('dry fruit') ||
+                   combined.includes('dried fruit') ||
+                   combined.includes('spice');
+      if (isFB) return false;
+
       // Check if product has gender field or clothing-related categories
-      if (product.gender) return true;
+      if ((product as any).gender) return true;
       
       if (product.categories && Array.isArray(product.categories)) {
         return product.categories.some(cat => 

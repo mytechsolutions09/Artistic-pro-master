@@ -7,7 +7,11 @@ import { orderService, Order, OrderStats } from '../../services/orderService';
 import { useCurrency } from '../../contexts/CurrencyContext';
 
 
-const OrderManagement: React.FC = () => {
+interface OrderManagementProps {
+  isFBOnly?: boolean;
+}
+
+const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) => {
   const { formatCurrency, currencySettings, convertAmount } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<OrderStats>({
@@ -28,8 +32,29 @@ const OrderManagement: React.FC = () => {
     try {
       setLoading(true);
       const ordersData = await orderService.getAllOrders();
-      setOrders(ordersData);
-      calculateStats(ordersData);
+
+      // If F&B-only mode, filter orders to those that include F&B items
+      const filtered = isFBOnly
+        ? ordersData.filter(order =>
+            order.order_items?.some(item => {
+              const title = (item.product_title || '').toLowerCase();
+              const productTitle = (item.products?.title || '').toLowerCase();
+              // Match common F&B terms and categories in title
+              const combined = `${title} ${productTitle}`;
+              return (
+                combined.includes('food & beverage') ||
+                combined.includes('f&b') ||
+                combined.includes('f & b') ||
+                combined.includes('dry fruit') ||
+                combined.includes('dried fruit') ||
+                combined.includes('spice')
+              );
+            })
+          )
+        : ordersData;
+
+      setOrders(filtered);
+      calculateStats(filtered);
     } catch (error) {
       console.error('Error loading orders:', error);
     } finally {

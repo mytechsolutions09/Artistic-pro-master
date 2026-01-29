@@ -21,7 +21,8 @@ import {
   RotateCcw,
   Brush,
   Layers,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Shirt
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -42,8 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'normal', label: 'Normal', icon: Layers, path: '/admin/normal' },
     { id: 'fb', label: 'F & B', icon: UtensilsCrossed, path: '/admin/fb' },
-    { id: 'commissioned-art', label: 'Commissioned Art', icon: Brush, path: '/admin/commissioned-art' },
-    { id: 'clothes', label: 'Clothes', icon: Table, path: '/admin/clothes' },
+    { id: 'clothes', label: 'Clothes', icon: Shirt, path: '/admin/clothes' },
     { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },
     { id: 'returns', label: 'Returns', icon: RotateCcw, path: '/admin/returns' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
                         : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'
                     }`}
                   >
-                    <Icon className={`${collapsed ? 'w-5 h-5' : 'w-5 h-5'} ${isActive ? 'text-pink-600' : 'text-gray-500 group-hover:text-pink-500'}`} />
+                    <Icon className={`${collapsed ? 'w-4 h-4' : 'w-4 h-4'} ${isActive ? 'text-pink-600' : 'text-gray-500 group-hover:text-pink-500'}`} />
                     {!collapsed && <span className="font-medium">{item.label}</span>}
                   </Link>
                   
@@ -119,7 +119,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
               onClick={onLogout}
               className="flex items-center justify-center w-full py-2 px-3 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200"
             >
-              <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-500" />
+              <LogOut className="w-4 h-4 text-gray-500 group-hover:text-red-500" />
             </button>
             
             {/* Tooltip for collapsed state - positioned below */}
@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
             onClick={onLogout}
             className="flex items-center space-x-3 w-full px-4 py-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200 group"
           >
-            <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-500" />
+            <LogOut className="w-4 h-4 text-gray-500 group-hover:text-red-500" />
             <span className="font-medium">Logout</span>
           </button>
         )}

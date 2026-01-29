@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Plus, Edit2, Trash2, Eye, Search, Grid, List, Star, 
+  Plus, Edit2, Trash2, Copy, Eye, Search, Grid, List, Star, 
   Package, RefreshCw, X, FileText, TrendingUp, Settings,
   Save, Upload, Image as ImageIcon, Calendar, MapPin, Scale
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import FBSecondaryNav, { FB_TABS } from '../../components/admin/FBSecondaryNav';
+import OrderManagement from '../../components/admin/OrderManagement';
 import { ProductService } from '../../services/supabaseService';
 import { NotificationManager } from '../../components/Notification';
 import { useProducts } from '../../contexts/ProductContext';
@@ -39,11 +40,12 @@ const FB: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'dry-fruits' | 'dried-fruits' | 'spices'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState<FBItem | null>(null);
   const [uploading, setUploading] = useState(false);
-  const { addProduct, updateProduct, adminProducts } = useProducts();
+  const { addProduct, updateProduct, deleteProduct, adminProducts } = useProducts();
   const [formData, setFormData] = useState<FBItem>({
     title: '',
     category: 'dry-fruits',
@@ -102,6 +104,20 @@ const FB: React.FC = () => {
           fbCategory = 'spices';
         }
 
+        const itemDetails = product.itemDetails || product.item_details || {};
+        const delivery = product.delivery || product.delivery_info || {};
+        const didYouKnow = product.didYouKnow || product.did_you_know || {};
+        const sizeStr = (itemDetails.size || '').trim();
+        let weight = '';
+        let weight_unit: 'g' | 'kg' = 'g';
+        if (sizeStr) {
+          const match = sizeStr.match(/^([\d.]+)\s*(g|kg)?$/i);
+          if (match) {
+            weight = match[1];
+            weight_unit = (match[2]?.toLowerCase() === 'kg' ? 'kg' : 'g') as 'g' | 'kg';
+          }
+        }
+
         return {
           id: product.id,
           title: product.title || '',
@@ -116,18 +132,18 @@ const FB: React.FC = () => {
             product.discountPercentage !== undefined && product.discountPercentage !== null
               ? String(product.discountPercentage)
               : '',
-          weight: '',
-          weight_unit: 'g',
+          weight,
+          weight_unit,
           stock_quantity:
             product.stockQuantity !== undefined && product.stockQuantity !== null
               ? String(product.stockQuantity)
               : '',
-          brand: product.brand || '',
-          origin: '',
-          expiry_date: '',
-          storage_instructions: '',
-          nutritional_info: '',
-          ingredients: '',
+          brand: product.brand || itemDetails.material || '',
+          origin: itemDetails.origin || '',
+          expiry_date: (itemDetails as any).expiryDate || (itemDetails as any).expiry_date || '',
+          storage_instructions: delivery.additionalInfo || '',
+          nutritional_info: didYouKnow.uniqueFeatures || '',
+          ingredients: (itemDetails as any).ingredients || '',
           images: product.images || [],
           main_image: product.main_image || '',
           status: (product.status as FBItem['status']) || 'active',
@@ -185,7 +201,11 @@ const FB: React.FC = () => {
     try {
       const tempId = `fb_main_${Date.now()}_${Math.random().toString(36).substring(2)}`;
       const url = await ProductService.uploadProductImage(file, tempId);
-      setFormData(prev => ({ ...prev, main_image: url }));
+      setFormData(prev => ({
+        ...prev,
+        main_image: url,
+        images: prev.images.includes(url) ? prev.images : [url, ...prev.images]
+      }));
       NotificationManager.success('Main image uploaded successfully');
     } catch (error: any) {
       console.error('Error uploading main image:', error);
@@ -251,12 +271,10 @@ const FB: React.FC = () => {
 
       const categories = ['Food & Beverage', baseCategoryLabel];
 
-      const images =
-        formData.images && formData.images.length > 0
-          ? formData.images
-          : formData.main_image
-          ? [formData.main_image]
-          : [];
+      const images: string[] = [...(formData.images || [])];
+      if (formData.main_image && !images.includes(formData.main_image)) {
+        images.unshift(formData.main_image);
+      }
 
       await addProduct({
         title: formData.title.trim(),
@@ -289,7 +307,9 @@ const FB: React.FC = () => {
           frame: '',
           style: baseCategoryLabel,
           origin: formData.origin || '',
-        },
+          ...(formData.ingredients && { ingredients: formData.ingredients }),
+          ...(formData.expiry_date && { expiryDate: formData.expiry_date }),
+        } as any,
         delivery: {
           standardDelivery: 'Standard shipping',
           expressDelivery: '',
@@ -352,12 +372,10 @@ const FB: React.FC = () => {
 
       const categories = ['Food & Beverage', baseCategoryLabel];
 
-      const images =
-        formData.images && formData.images.length > 0
-          ? formData.images
-          : formData.main_image
-          ? [formData.main_image]
-          : [];
+      const images: string[] = [...(formData.images || [])];
+      if (formData.main_image && !images.includes(formData.main_image)) {
+        images.unshift(formData.main_image);
+      }
 
       await updateProduct(editingItem.id, {
         title: formData.title.trim(),
@@ -377,7 +395,9 @@ const FB: React.FC = () => {
           frame: '',
           style: baseCategoryLabel,
           origin: formData.origin || '',
-        },
+          ...(formData.ingredients && { ingredients: formData.ingredients }),
+          ...(formData.expiry_date && { expiryDate: formData.expiry_date }),
+        } as any,
         delivery: {
           standardDelivery: 'Standard shipping',
           expressDelivery: '',
@@ -410,12 +430,60 @@ const FB: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
 
     try {
-      // TODO: Implement actual deletion logic
-      NotificationManager.success('Item deleted successfully');
-      await loadItems();
+      await deleteProduct(id);
+      NotificationManager.success('F & B item deleted successfully');
     } catch (error: any) {
       console.error('Error deleting item:', error);
       NotificationManager.error(error.message || 'Failed to delete item');
+    }
+  };
+
+  const handleDuplicateItem = async (item: FBItem) => {
+    if (!item.id) return;
+    const product = adminProducts.find((p: any) => p.id === item.id);
+    if (!product) {
+      NotificationManager.error('Product not found');
+      return;
+    }
+    try {
+      const p = product as any;
+      const categories = Array.isArray(p.categories) ? [...p.categories] : ['Food & Beverage', 'Dry Fruits'];
+      const images = Array.isArray(p.images) ? [...p.images] : p.main_image ? [p.main_image] : [];
+      await addProduct({
+        title: (p.title || item.title) + ' (Copy)',
+        price: p.price ?? parseFloat(item.price),
+        originalPrice: p.originalPrice ?? (item.original_price ? parseFloat(item.original_price) : undefined),
+        discountPercentage: p.discountPercentage ?? (item.discount_percentage ? parseFloat(item.discount_percentage) : undefined),
+        categories,
+        images,
+        main_image: p.main_image || images[0],
+        pdf_url: p.pdf_url,
+        video_url: p.video_url,
+        productType: 'poster',
+        posterSize: p.posterSize,
+        posterPricing: p.posterPricing || {},
+        featured: false,
+        tags: p.tags && p.tags.length ? [...p.tags] : ['F&B'],
+        status: (p.status as 'active' | 'inactive' | 'draft') || item.status || 'active',
+        description: p.description || item.description || '',
+        itemDetails: p.itemDetails ? { ...p.itemDetails } : {},
+        delivery: p.delivery ? { ...p.delivery } : {},
+        didYouKnow: p.didYouKnow ? { ...p.didYouKnow } : {},
+        stockQuantity: p.stockQuantity ?? (item.stock_quantity ? parseFloat(item.stock_quantity) : undefined),
+        lowStockThreshold: p.lowStockThreshold,
+        trackInventory: p.trackInventory !== false,
+        brand: p.brand,
+        gender: p.gender,
+        details: p.details,
+        washCare: p.washCare,
+        shipping: p.shipping,
+        clothingType: p.clothingType,
+        material: p.material,
+      } as any);
+      NotificationManager.success('F & B item duplicated successfully');
+    } catch (error: any) {
+      console.error('Error duplicating item:', error);
+      NotificationManager.error(error.message || 'Failed to duplicate item');
     }
   };
 
@@ -435,13 +503,36 @@ const FB: React.FC = () => {
                 <h2 className="text-xl font-bold text-gray-900 font-sans font-normal">All F & B Items</h2>
                 <p className="text-sm text-gray-500 mt-0.5">Manage all food and beverage items</p>
               </div>
-              <button
-                onClick={() => setActiveTab('create')}
-                className="flex items-center space-x-2 px-3 py-1.5 text-sm bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Item</span>
-              </button>
+              <div className="flex items-center space-x-4">
+                {/* Category filter tabs */}
+                <div className="hidden md:flex items-center space-x-2">
+                  {[
+                    { id: 'all', label: 'All' },
+                    { id: 'dry-fruits', label: 'Dry Fruits' },
+                    { id: 'dried-fruits', label: 'Dried Fruits' },
+                    { id: 'spices', label: 'Spices' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setCategoryFilter(cat.id as any)}
+                      className={`px-2 py-1 text-xs rounded-full border ${
+                        categoryFilter === cat.id
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setActiveTab('create')}
+                  className="flex items-center space-x-2 px-3 py-1.5 text-sm bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Item</span>
+                </button>
+              </div>
             </div>
 
             {/* Search and Filters */}
@@ -505,7 +596,10 @@ const FB: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {items.map((item) => (
+                    {(categoryFilter === 'all'
+                      ? items
+                      : items.filter((item) => item.category === categoryFilter)
+                    ).map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50">
                         <td className="px-4 py-2">
                           <img
@@ -547,12 +641,21 @@ const FB: React.FC = () => {
                             <button
                               onClick={() => openEditModal(item)}
                               className="text-pink-600 hover:text-pink-900"
+                              title="Edit"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
+                              onClick={() => handleDuplicateItem(item)}
+                              className="text-gray-600 hover:text-gray-900"
+                              title="Duplicate"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            <button
                               onClick={() => item.id && handleDeleteItem(item.id)}
                               className="text-red-600 hover:text-red-900"
+                              title="Delete"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -585,10 +688,48 @@ const FB: React.FC = () => {
           <div className="p-6">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">F & B Categories</h2>
-              <p className="text-gray-500 mt-1">Manage food and beverage categories</p>
+              <p className="text-gray-500 mt-1">
+                Manage food and beverage categories used across F & B items. Click a category to see its items.
+              </p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <p className="text-gray-500">Categories management will be implemented here</p>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+              {[
+                { id: 'dry-fruits', label: 'Dry Fruits', description: 'Standard dried nuts and fruits.' },
+                { id: 'dried-fruits', label: 'Dried Fruits', description: 'Specialty dried fruits and mixes.' },
+                { id: 'spices', label: 'Spices', description: 'Whole and ground spices.' },
+              ].map((cat) => {
+                const count = items.filter((item) => item.category === cat.id).length;
+                return (
+                  <div
+                    key={cat.id}
+                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      setCategoryFilter(cat.id as any);
+                      setActiveTab('all');
+                    }}
+                  >
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">{cat.label}</h3>
+                      <p className="text-xs text-gray-500">{cat.description}</p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xs text-gray-600">
+                        {count} item{count === 1 ? '' : 's'}
+                      </span>
+                      <button
+                        className="px-2 py-1 text-xs rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                        type="button"
+                      >
+                        View Items
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              <p className="text-xs text-gray-400">
+                Note: Categories are derived from each product&apos;s categories in the catalog. To change an item&apos;s
+                category, edit the item in the &quot;All F & B Items&quot; tab.
+              </p>
             </div>
           </div>
         );
@@ -609,12 +750,8 @@ const FB: React.FC = () => {
       case 'orders':
         return (
           <div className="p-6">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 font-sans font-normal">F & B Orders</h2>
-              <p className="text-gray-500 mt-1">View and manage F & B orders</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <p className="text-gray-500">Orders management will be implemented here</p>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <OrderManagement isFBOnly />
             </div>
           </div>
         );
