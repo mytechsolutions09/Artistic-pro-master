@@ -64,20 +64,29 @@ const BrowsePage: React.FC = () => {
     
     let filtered = [...adminProducts];
 
-    // Exclude clothing products from browse page
+    // Exclude clothing and F&B products from browse page (art only)
     filtered = filtered.filter(product => {
       // Exclude if product has gender field (clothing indicator)
       if (product.gender) return false;
       
+      const categories = (product.categories || []).map((c: string) => c.toLowerCase());
+      const tags = ((product as any).tags || []).map((t: string) => t.toLowerCase());
+      const combined = [...categories, ...tags].join(' ');
+      
       // Exclude if categories contain clothing-related keywords
-      if (product.categories && Array.isArray(product.categories)) {
-        const hasClothingCategory = product.categories.some((cat: string) => 
-          ['men', 'women', 'clothing'].some(keyword => 
-            cat.toLowerCase().includes(keyword)
-          )
-        );
-        if (hasClothingCategory) return false;
-      }
+      const hasClothingCategory = ['men', 'women', 'clothing'].some(keyword => 
+        combined.includes(keyword)
+      );
+      if (hasClothingCategory) return false;
+      
+      // Exclude F&B products
+      const isFB = combined.includes('food & beverage') ||
+                   combined.includes('f&b') ||
+                   combined.includes('f & b') ||
+                   combined.includes('dry fruit') ||
+                   combined.includes('dried fruit') ||
+                   combined.includes('spice');
+      if (isFB) return false;
       
       return true;
     });

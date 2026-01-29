@@ -12,7 +12,7 @@ import { Order } from '../types';
 import { getProgressToNextLevel } from '../constants/memberLevels';
 import { useProducts } from '../contexts/ProductContext';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { generateProductUrl } from '../utils/slugUtils';
+import { generateProductUrl, generateSlug } from '../utils/slugUtils';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewInput from '../components/ReviewInput';
 import FilterSidebar from '../components/FilterSidebar';
@@ -25,7 +25,7 @@ import { ReturnService } from '../services/returnService';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { featuredArtworks } = useProducts();
+  const { featuredArtworks, allProducts } = useProducts();
   const { formatUIPrice } = useCurrency();
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('settings');
@@ -70,6 +70,10 @@ const UserDashboard: React.FC = () => {
     showAll: true
   });
 
+  // Pagination state for orders
+  const [ordersPerPage, setOrdersPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Order tracking state
   const [trackingData, setTrackingData] = useState<Record<string, any>>({});
   const [expandedTracking, setExpandedTracking] = useState<Record<string, boolean>>({});
@@ -79,6 +83,10 @@ const UserDashboard: React.FC = () => {
   // Tracking modal state
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<Order | null>(null);
+  
+  // Order detail modal (for orders with more than 1 product)
+  const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+  const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<Order | null>(null);
   
   // Change Password modal state
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -718,6 +726,18 @@ const UserDashboard: React.FC = () => {
     setShowTrackingModal(true);
   };
 
+  const openOrderDetailModal = (order: Order) => {
+    if (order.items.length > 1) {
+      setSelectedOrderForDetail(order);
+      setShowOrderDetailModal(true);
+    }
+  };
+
+  const closeOrderDetailModal = () => {
+    setSelectedOrderForDetail(null);
+    setShowOrderDetailModal(false);
+  };
+
   const closeTrackingModal = () => {
     setShowTrackingModal(false);
     setSelectedOrderForTracking(null);
@@ -889,7 +909,7 @@ const UserDashboard: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-teal-100 text-gray-900 hover:shadow-lg hover:shadow-teal-200 transition-all duration-200 cursor-pointer">
+          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-gray-100 text-gray-900 hover:shadow-lg hover:shadow-gray-200 transition-all duration-200 cursor-pointer">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-1">
                 <div className="w-5 h-5 rounded flex items-center justify-center">
@@ -902,7 +922,7 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-teal-100 text-gray-900 hover:shadow-lg hover:shadow-teal-200 transition-all duration-200 cursor-pointer">
+          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-gray-100 text-gray-900 hover:shadow-lg hover:shadow-gray-200 transition-all duration-200 cursor-pointer">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-1">
                 <div className="w-5 h-5 rounded flex items-center justify-center">
@@ -915,7 +935,7 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-teal-100 text-gray-900 hover:shadow-lg hover:shadow-teal-200 transition-all duration-200 cursor-pointer">
+          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-gray-100 text-gray-900 hover:shadow-lg hover:shadow-gray-200 transition-all duration-200 cursor-pointer">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-1">
                 <div className="w-5 h-5 rounded flex items-center justify-center">
@@ -928,7 +948,7 @@ const UserDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-teal-100 text-gray-900 hover:shadow-lg hover:shadow-teal-200 transition-all duration-200 cursor-pointer">
+          <div className="group relative overflow-hidden p-3 rounded-lg bg-white shadow-sm shadow-gray-100 text-gray-900 hover:shadow-lg hover:shadow-gray-200 transition-all duration-200 cursor-pointer">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-1">
                 <div className="w-5 h-5 rounded flex items-center justify-center">
@@ -946,7 +966,7 @@ const UserDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Recent Activity */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
+            <div className="bg-white rounded-lg shadow-sm shadow-gray-100 overflow-hidden hover:shadow-md hover:shadow-gray-200 transition-shadow duration-200">
               <div className="px-4 py-3 bg-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -957,7 +977,7 @@ const UserDashboard: React.FC = () => {
                   </div>
                   <button 
                     onClick={() => setActiveTab('orders')}
-                    className="font-medium text-xs hover:text-gray-900 transition-colors text-gray-600 font-sans font-normal"
+                    className="font-medium text-xs text-gray-600 bg-white border border-gray-300 px-2 py-1 rounded hover:bg-gray-50 transition-colors font-sans font-normal"
                   ><span className="font-sans font-normal">View All</span></button>
                 </div>
               </div>
@@ -965,7 +985,7 @@ const UserDashboard: React.FC = () => {
                 {recentActivity.length > 0 ? (
                   <div className="space-y-2">
                      {recentActivity.map((order, index) => (
-                       <div key={order.id} className="flex items-center space-x-3 p-2 bg-white rounded-lg hover:shadow-sm hover:shadow-teal-100 transition-all duration-200">
+                       <div key={order.id} className="flex items-center space-x-3 p-2 bg-white rounded-lg hover:shadow-sm hover:shadow-gray-100 transition-all duration-200">
                          <div className="w-6 h-6 rounded flex items-center justify-center text-gray-900 font-bold text-xs bg-white shadow-sm font-sans font-normal">
                            #{index + 1}
                          </div>
@@ -998,7 +1018,7 @@ const UserDashboard: React.FC = () => {
 
           {/* Quick Actions */}
           <div className="space-y-3">
-            <div className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
+            <div className="bg-white rounded-lg shadow-sm shadow-gray-100 overflow-hidden hover:shadow-md hover:shadow-gray-200 transition-shadow duration-200">
               <div className="px-4 py-3 bg-white">
                 <h3 className="text-sm font-bold text-gray-900 flex items-center font-sans font-normal">
                   <Zap className="w-4 h-4 mr-2 text-gray-700" />
@@ -1020,7 +1040,7 @@ const UserDashboard: React.FC = () => {
                        window.location.href = '/browse';
                      }
                    }}
-                   className="w-full bg-white text-gray-900 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:shadow-sm hover:shadow-teal-100"
+                   className="w-full bg-white text-gray-900 border border-gray-300 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:bg-gray-50"
                  >
                    <ShoppingBag className="w-3.5 h-3.5 text-gray-700" />
                    <span className="font-medium text-xs font-sans font-normal">Browse Artwork</span>
@@ -1031,14 +1051,14 @@ const UserDashboard: React.FC = () => {
 
                      setActiveTab('downloads');
                    }}
-                   className="w-full bg-white text-gray-900 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:shadow-sm hover:shadow-teal-100"
+                   className="w-full bg-white text-gray-900 border border-gray-300 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:bg-gray-50"
                  >
                    <Download className="w-3.5 h-3.5 text-gray-700" />
                    <span className="font-medium text-xs font-sans font-normal">My Downloads</span>
                  </button>
                  <button
                    onClick={() => setActiveTab('favorites')}
-                   className="w-full bg-white text-gray-900 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:shadow-sm hover:shadow-teal-100"
+                   className="w-full bg-white text-gray-900 border border-gray-300 px-2 py-1 rounded-lg transition-all duration-200 flex items-center justify-center space-x-1.5 hover:bg-gray-50"
                  >
                    <Heart className="w-3.5 h-3.5 text-gray-700" />
                    <span className="font-medium text-xs font-sans font-normal">Favorites</span>
@@ -1047,7 +1067,7 @@ const UserDashboard: React.FC = () => {
             </div>
 
             {/* Achievement Badge */}
-            <div className="p-3 rounded-lg text-gray-900 relative overflow-hidden bg-white shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
+            <div className="p-3 rounded-lg text-gray-900 relative overflow-hidden bg-white shadow-sm shadow-gray-100 hover:shadow-md hover:shadow-gray-200 transition-shadow duration-200">
               <div className="relative z-10">
                 <div className="flex items-center space-x-2 mb-2">
                   <h4 className="text-sm font-bold font-sans font-normal">{currentMemberLevel.name}</h4>
@@ -1064,7 +1084,7 @@ const UserDashboard: React.FC = () => {
                     </div>
                      <div className="w-full bg-white rounded-full h-1 mb-1 border">
                        <div 
-                         className="bg-teal-500 rounded-full h-1 transition-all duration-300"
+                         className="bg-gray-500 rounded-full h-1 transition-all duration-300"
                          style={{ width: `${Math.min(memberProgress.ordersProgress, memberProgress.spentProgress)}%` }}
                        ></div>
                      </div>
@@ -1125,491 +1145,303 @@ const UserDashboard: React.FC = () => {
       return matchesDate && matchesSearch;
     });
 
-    const totalOrders = filteredOrders.length;
-    const pendingOrders = filteredOrders.filter(order => order.status === 'pending').length;
+    const getStatusStyle = (status: string) => {
+      switch (status) {
+        case 'completed':
+        case 'delivered':
+          return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+        case 'processing':
+        case 'shipped':
+          return 'bg-blue-50 text-blue-700 border border-blue-200';
+        case 'pending':
+          return 'bg-amber-50 text-amber-700 border border-amber-200';
+        case 'cancelled':
+          return 'bg-red-50 text-red-700 border border-red-200';
+        default:
+          return 'bg-gray-50 text-gray-700 border border-gray-200';
+      }
+    };
 
     return (
-      <div className="space-y-4">
-        {/* Orders Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-2">
-              <Package className="w-5 h-5 text-teal-600" />
-              <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">Order History</h3>
-            </div>
-            <button
-              onClick={() => navigate('/browse')}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
-            >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              <span className="font-sans font-normal">Browse More</span>
-            </button>
-          </div>
-
-          <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700 font-sans font-normal">Total Orders</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {filteredOrders.length === userOrders.length 
-                    ? `${totalOrders} orders`
-                    : `${filteredOrders.length} of ${userOrders.length} orders`
-                  }
-                  {pendingOrders > 0 && ` • ${pendingOrders} pending`}
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-teal-100 rounded-lg">
-                  <ShoppingBag className="w-5 h-5 text-teal-600" />
-                </div>
-                <span className="text-2xl font-bold text-gray-900 font-sans font-normal">{totalOrders}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className="space-y-3">
+        {/* Single Row Header */}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by order ID, product name, or status..."
+              placeholder="Search..."
               value={orderSearchQuery}
-              onChange={(e) => setOrderSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+              onChange={(e) => { setOrderSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="w-32 pl-7 pr-2 py-1 text-xs bg-gray-50 border-0 rounded focus:outline-none focus:ring-1 focus:ring-gray-200"
             />
-            {orderSearchQuery && (
-              <button
-                onClick={() => setOrderSearchQuery('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
           </div>
 
-          {/* Return Notification */}
-          {returnNotification.show && (
-            <div className={`mb-4 p-4 rounded-lg border flex items-center justify-between ${
-              returnNotification.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
-              returnNotification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
-              'bg-blue-50 border-blue-200 text-blue-800'
-            }`}>
-              <div className="flex items-center space-x-2">
-                {returnNotification.type === 'error' && <X className="w-5 h-5" />}
-                {returnNotification.type === 'success' && <CheckCircle className="w-5 h-5" />}
-                {returnNotification.type === 'info' && <Clock className="w-5 h-5" />}
-                <span className="text-sm font-medium font-sans font-normal">{returnNotification.message}</span>
-              </div>
-              <button
-                onClick={() => setReturnNotification({ show: false, message: '', type: 'info' })}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
+          {!dateFilter.showAll && (
+            <div className="flex items-center gap-1">
+              <input
+                type="date"
+                value={dateFilter.startDate}
+                onChange={(e) => { setDateFilter({ ...dateFilter, startDate: e.target.value }); setCurrentPage(1); }}
+                className="px-1.5 py-1 text-xs bg-gray-50 border-0 rounded focus:outline-none focus:ring-1 focus:ring-gray-200"
+              />
+              <span className="text-gray-300 text-xs">–</span>
+              <input
+                type="date"
+                value={dateFilter.endDate}
+                onChange={(e) => { setDateFilter({ ...dateFilter, endDate: e.target.value }); setCurrentPage(1); }}
+                className="px-1.5 py-1 text-xs bg-gray-50 border-0 rounded focus:outline-none focus:ring-1 focus:ring-gray-200"
+              />
             </div>
           )}
-            
-          {/* Date Filter */}
-          <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3 flex-wrap gap-2">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="showAllOrders"
-                  checked={dateFilter.showAll}
-                  onChange={(e) => setDateFilter({
-                    ...dateFilter,
-                    showAll: e.target.checked,
-                    startDate: e.target.checked ? '' : dateFilter.startDate,
-                    endDate: e.target.checked ? '' : dateFilter.endDate
-                  })}
-                  className="rounded text-teal-600 focus:ring-teal-500"
-                />
-                <label htmlFor="showAllOrders" className="text-sm font-medium text-gray-700 font-sans font-normal">Show all orders</label>
-              </div>
-              
-              {!dateFilter.showAll && (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700 font-sans font-normal">From</label>
-                    <input
-                      type="date"
-                      value={dateFilter.startDate}
-                      onChange={(e) => setDateFilter({ ...dateFilter, startDate: e.target.value })}
-                      className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700 font-sans font-normal">To</label>
-                    <input
-                      type="date"
-                      value={dateFilter.endDate}
-                      onChange={(e) => setDateFilter({ ...dateFilter, endDate: e.target.value })}
-                      className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setDateFilter({ startDate: '', endDate: '', showAll: true })}
-                    className="px-2.5 py-1 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-white transition-colors font-sans font-normal"
-                  >
-                    Clear Filter
-                  </button>
-                </>
-              )}
+          
+          <button
+            onClick={() => { setDateFilter(prev => ({ ...prev, showAll: !prev.showAll, startDate: '', endDate: '' })); setCurrentPage(1); }}
+            className={`px-2 py-1 text-xs rounded border transition-colors ${
+              dateFilter.showAll 
+                ? 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' 
+                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            {dateFilter.showAll ? 'Filter' : 'Clear'}
+          </button>
+
+          <div className="flex-1" />
+
+          <span className="text-xs text-gray-500 font-medium">Orders ({filteredOrders.length})</span>
+          <span className="text-xs text-gray-400">{Math.min((currentPage - 1) * ordersPerPage + 1, filteredOrders.length)}–{Math.min(currentPage * ordersPerPage, filteredOrders.length)}</span>
+          
+          <select
+            value={ordersPerPage}
+            onChange={(e) => { setOrdersPerPage(Number(e.target.value)); setCurrentPage(1); }}
+            className="pl-2 pr-5 py-1 text-xs bg-gray-50 border-0 rounded focus:outline-none text-gray-600 cursor-pointer appearance-none"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.25rem center', backgroundSize: '0.65rem' }}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+
+        {/* Return Notification */}
+        {returnNotification.show && (
+          <div className={`p-4 rounded-lg flex items-center justify-between ${
+            returnNotification.type === 'error' ? 'bg-red-50 text-red-700' :
+            returnNotification.type === 'success' ? 'bg-emerald-50 text-emerald-700' :
+            'bg-blue-50 text-blue-700'
+          }`}>
+            <div className="flex items-center gap-2">
+              {returnNotification.type === 'success' && <CheckCircle className="w-4 h-4" />}
+              {returnNotification.type === 'error' && <X className="w-4 h-4" />}
+              {returnNotification.type === 'info' && <Clock className="w-4 h-4" />}
+              <span className="text-sm font-medium">{returnNotification.message}</span>
             </div>
+            <button onClick={() => setReturnNotification({ show: false, message: '', type: 'info' })} className="p-1 rounded bg-white border border-gray-300 hover:bg-gray-50">
+              <X className="w-4 h-4 text-gray-600" />
+            </button>
           </div>
-          {ordersLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden animate-pulse">
-                  <div className="p-6">
-                    {/* Header Skeleton */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-                        <div className="space-y-2">
-                          <div className="h-4 w-32 bg-gray-200 rounded"></div>
-                          <div className="h-3 w-24 bg-gray-200 rounded"></div>
-                        </div>
-                      </div>
-                      <div className="h-8 w-20 bg-gray-200 rounded-full"></div>
-                    </div>
-                    
-                    {/* Order Details Skeleton */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                    </div>
-                    
-                    {/* Order Items Skeleton */}
-                    <div className="space-y-3">
-                      {[1, 2].map((j) => (
-                        <div key={j} className="flex items-center space-x-4 p-3 bg-white rounded-lg border border-gray-200">
-                          <div className="w-16 h-16 bg-gray-200 rounded"></div>
-                          <div className="flex-1 space-y-2">
-                            <div className="h-4 w-3/4 bg-gray-200 rounded"></div>
-                            <div className="h-3 w-1/2 bg-gray-200 rounded"></div>
-                          </div>
-                          <div className="h-4 w-16 bg-gray-200 rounded"></div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Actions Skeleton */}
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between">
-                      <div className="flex space-x-2">
-                        <div className="h-8 w-20 bg-gray-200 rounded"></div>
-                        <div className="h-8 w-20 bg-gray-200 rounded"></div>
-                      </div>
-                      <div className="h-8 w-28 bg-gray-200 rounded"></div>
-                    </div>
+        )}
+
+        {/* Orders List */}
+        {ordersLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-xl p-5 animate-pulse">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 bg-gray-200 rounded-lg"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-32 bg-gray-200 rounded"></div>
+                    <div className="h-3 w-24 bg-gray-200 rounded"></div>
                   </div>
+                  <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
                 </div>
-              ))}
-            </div>
-          ) : filteredOrders.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                <Package className="w-10 h-10 text-gray-400" />
               </div>
-              <h4 className="text-base font-semibold text-gray-900 mb-2 font-sans font-normal">
-                {dateFilter.showAll ? 'No Orders Yet' : 'No Orders Found'}
-              </h4>
-              <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto font-sans font-normal">
-                {dateFilter.showAll 
-                  ? 'Start shopping to see your order history here. Browse our collection and place your first order!'
-                  : 'No orders found for the selected date range. Try adjusting your filter or search query.'
-                }
-              </p>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate('/browse');
-                }}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
-              >
-                <ShoppingBag className="w-3.5 h-3.5" />
-                <span className="font-sans font-normal">Browse Artwork</span>
-              </button>
+            ))}
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="text-center py-16 bg-gray-50 rounded-2xl">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Package className="w-8 h-8 text-gray-400" />
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredOrders.map((order) => {
-                const isExpanded = expandedOrders[order.id];
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
+            <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+              {orderSearchQuery || !dateFilter.showAll 
+                ? 'Try adjusting your search or filters'
+                : 'Your order history will appear here once you make a purchase'}
+            </p>
+            <button
+              onClick={() => navigate('/browse')}
+              className="px-5 py-2.5 bg-white text-gray-900 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Start Shopping
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Orders List - Grid on large screens */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredOrders
+                .slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage)
+                .map((order) => {
+                const firstItem = order.items[0];
+                const remainingCount = order.items.length - 1;
+                
                 return (
-                  <div key={order.id} className="rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors overflow-hidden h-fit">
-                      {/* Accordion Header */}
-                      <button
-                        onClick={() => toggleOrderAccordion(order.id)}
-                        className="w-full p-3 text-left hover:bg-gray-50 transition-colors focus:outline-none"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Package className="w-4 h-4 text-teal-600" />
-                            <div>
-                              <h4 className="font-medium text-gray-900 text-xs font-sans font-normal">ORDER #{order.id.slice(-8).toUpperCase()}</h4>
-                              <p className="text-xs text-gray-500">{new Date(order.date).toLocaleDateString()} • {order.items.length} item{order.items.length > 1 ? 's' : ''}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="text-right">
-                              <p className="font-semibold text-gray-900 text-xs font-sans font-normal">{formatUIPrice(order.total, 'INR')}</p>
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium font-sans font-normal ${
-                                order.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                              </span>
-                            </div>
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4 text-gray-400" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 text-gray-400" />
-                            )}
-                          </div>
-                        </div>
-                      </button>
-
-                      {/* Accordion Content */}
-                      {isExpanded && (
-                        <div className="px-3 pb-3 border-t border-gray-100">
-                          <div className="pt-3 space-y-2">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {order.items.map((item, itemIndex) => (
-                                <div key={`${order.id}-${itemIndex}-${item.id || `item-${itemIndex}`}`} className="flex items-center justify-between p-2 rounded">
-                                  <div className="flex items-center space-x-2">
-                                    <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-8 h-8 rounded object-cover" />
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-medium text-gray-900 truncate text-xs font-sans font-normal">{item.title}</p>
-                                      <p className="text-xs text-gray-500 font-sans font-normal">
-                                        {item.productType === 'poster' && item.posterSize 
-                                          ? `Poster ${item.posterSize}`
-                                          : item.productType === 'clothing'
-                                          ? (() => {
-                                              const parts = [];
-                                              if (item.color) parts.push(`Color: ${item.color}`);
-                                              if (item.size) parts.push(`Size: ${item.size}`);
-                                              return parts.length > 0 ? parts.join(', ') : 'Clothing';
-                                            })()
-                                          : 'Digital'
-                                        }
-                                      </p>
-                                      <p className="text-xs text-gray-900 font-medium font-sans font-normal">{formatUIPrice(item.price, 'INR')}</p>
-                                    </div>
-                                  </div>
-                                  {order.status === 'completed' && (
-                                    <div className="flex items-center space-x-1">
-                                      {item.productType === 'digital' && (
-                                        <button
-                                          onClick={() => handleDownload(order.downloadLinks?.[itemIndex] || '', item.title)}
-                                          className="flex items-center space-x-1 px-1.5 py-0.5 bg-white text-gray-700 text-[10px] rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow font-sans font-normal"
-                                        >
-                                          <Download className="w-2.5 h-2.5" />
-                                          <span className="font-sans font-normal">Download</span>
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Order Actions Section */}
-                            <div className="mt-3 pt-3 border-t border-gray-100">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center space-x-2">
-                                  {(() => {
-                                    // Check if order is completed
-                                    const isOrderCompleted = order.status === 'completed';
-                                    
-                                    // Check if order has physical products (excluding digital)
-                                    const firstPhysicalItem = order.items.find((item: any) => item.productType !== 'digital');
-                                    const hasPhysicalProducts = !!firstPhysicalItem;
-                                    
-                                    // Check if order is within 30 days
-                                    const orderDate = new Date(order.date);
-                                    const currentDate = new Date();
-                                    const daysDifference = Math.floor((currentDate.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
-                                    const isWithin30Days = daysDifference <= 30;
-                                    
-                                    // Check if this item already has an active return request
-                                    const hasActiveReturn = firstPhysicalItem ? hasActiveReturnRequest(order.id, firstPhysicalItem.orderItemId) : false;
-                                    
-                                    // Show return button only if: completed + physical products + within 30 days + no active return
-                                    const shouldShowReturnButton = isOrderCompleted && hasPhysicalProducts && isWithin30Days && !hasActiveReturn;
-                                    
-                                    return shouldShowReturnButton && (
-                                      <button
-                                        onClick={() => {
-                                          if (firstPhysicalItem) {
-                                            handleReturnRequest(order, { ...firstPhysicalItem, itemIndex: 0 });
-                                          }
-                                        }}
-                                        className="flex items-center space-x-1 px-1.5 py-0.5 bg-teal-50 text-teal-700 text-[10px] rounded hover:bg-teal-100 transition-colors font-sans font-normal"
-                                      >
-                                        <RotateCcw className="w-2.5 h-2.5" />
-                                        <span className="font-sans font-normal">Return</span>
-                                      </button>
-                                    );
-                                  })()}
-                                  <button
-                                    onClick={() => {
-                                      const firstItem = order.items[0];
-                                      handleReviewProduct(firstItem, order.id, firstItem.orderItemId);
-                                    }}
-                                    className="flex items-center space-x-1 px-1.5 py-0.5 text-gray-600 text-[10px] rounded hover:shadow-sm hover:shadow-teal-100 transition-shadow font-sans font-normal"
-                                  >
-                                    <Star className="w-2.5 h-2.5" />
-                                    <span className="font-sans font-normal">Review</span>
-                                  </button>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Truck className="w-4 h-4 text-teal-600" />
-                                  {trackingData[order.id] && (
-                                    <span className="text-xs text-gray-500 font-sans font-normal">#{trackingData[order.id].trackingNumber}</span>
-                                  )}
-                                  {trackingData[order.id]?.isFallback && (
-                                    <span className="text-xs text-orange-500 bg-orange-100 px-1 rounded font-sans font-normal">Fallback</span>
-                                  )}
-                                  {trackingLoading[order.id] && (
-                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-teal-600"></div>
-                                  )}
-                                  <button
-                                    onClick={() => openTrackingModal(order)}
-                                    className="text-[10px] text-teal-600 hover:text-teal-700 font-medium font-sans font-normal"
-                                    disabled={trackingLoading[order.id]}
-                                  >
-                                    <span className="font-sans font-normal">Track Order</span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Error Message */}
-                              {trackingErrors[order.id] && (
-                                <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
-                                  <span className="font-sans font-normal">{trackingErrors[order.id]}</span>
-                                </div>
-                              )}
-
-                              {/* Loading State */}
-                              {trackingLoading[order.id] && !trackingData[order.id] && (
-                                <div className="space-y-2">
-                                  <div className="animate-pulse">
-                                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                    <div className="h-3 bg-gray-200 rounded w-1/2 mt-1"></div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Tracking Details */}
-                              {expandedTracking[order.id] && trackingData[order.id] && (
-                                <div className="space-y-3">
-                                  {/* Tracking Status */}
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                      <div className={`w-2 h-2 rounded-full ${
-                                        trackingData[order.id].status === 'delivered' ? 'bg-green-500' :
-                                        trackingData[order.id].status === 'shipped' ? 'bg-blue-500' :
-                                        'bg-yellow-500'
-                                      }`}></div>
-                                      <span className="text-xs font-medium text-gray-900 capitalize font-sans font-normal">
-                                        {trackingData[order.id].status === 'delivered' ? 'Delivered' :
-                                         trackingData[order.id].status === 'shipped' ? 'Shipped' : 'Processing'}
-                                      </span>
-                                      {trackingData[order.id].isFallback && (
-                                        <span className="text-xs text-orange-500">(Estimated)</span>
-                                      )}
-                                    </div>
-                                    <div className="text-right">
-                                      <p className="text-xs text-gray-500">Carrier: {trackingData[order.id].carrier}</p>
-                                      {trackingData[order.id].estimatedDelivery && (
-                                        <p className="text-xs text-gray-500">
-                                          Est. Delivery: {trackingData[order.id].estimatedDelivery.toLocaleDateString()}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Refresh Button for Fallback Data */}
-                                  {trackingData[order.id].isFallback && (
-                                    <div className="flex justify-center">
-                                      <button
-                                        onClick={() => fetchTrackingData(order)}
-                                        disabled={trackingLoading[order.id]}
-                                        className="text-[10px] text-teal-600 hover:text-teal-700 font-medium px-1.5 py-0.5 border border-teal-200 rounded hover:bg-teal-50 font-sans font-normal"
-                                      >
-                                        <span className="font-sans font-normal">{trackingLoading[order.id] ? 'Refreshing...' : 'Refresh Tracking'}</span>
-                                      </button>
-                                    </div>
-                                  )}
-
-                                  {/* Tracking Steps */}
-                                  <div className="space-y-2">
-                                    {trackingData[order.id].steps.map((step: any, stepIndex: number) => (
-                                      <div key={stepIndex} className="flex items-start space-x-3">
-                                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                                          step.status === 'completed' ? 'bg-green-500' :
-                                          step.status === 'current' ? 'bg-blue-500' :
-                                          'bg-gray-300'
-                                        }`}>
-                                          {step.status === 'completed' ? (
-                                            <CheckCircle className="w-3 h-3 text-white" />
-                                          ) : step.status === 'current' ? (
-                                            <Clock className="w-3 h-3 text-white" />
-                                          ) : (
-                                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                                          )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center justify-between">
-                                            <p className={`text-xs font-medium ${
-                                              step.status === 'completed' ? 'text-gray-900' :
-                                              step.status === 'current' ? 'text-blue-600' :
-                                              'text-gray-500'
-                                            }`}>
-                                              {step.title}
-                                            </p>
-                                            {step.date && (
-                                              <p className="text-xs text-gray-500">
-                                                {step.date.toLocaleDateString()}
-                                              </p>
-                                            )}
-                                          </div>
-                                          <p className="text-xs text-gray-600 mt-0.5">{step.description}</p>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-
-                                  {/* Delhivery Tracking Link */}
-                                  {trackingData[order.id].trackingNumber && !trackingData[order.id].isFallback && (
-                                    <div className="pt-2 border-t border-gray-100">
-                                      <a
-                                        href={`https://track.delhivery.com/${trackingData[order.id].trackingNumber}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-[10px] text-teal-600 hover:text-teal-700 font-medium font-sans font-normal"
-                                      >
-                                        View on Delhivery →
-                                      </a>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                  <div
+                    key={order.id}
+                    role={order.items.length > 1 ? 'button' : undefined}
+                    tabIndex={order.items.length > 1 ? 0 : undefined}
+                    onClick={order.items.length > 1 ? () => openOrderDetailModal(order) : undefined}
+                    onKeyDown={order.items.length > 1 ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openOrderDetailModal(order); } } : undefined}
+                    className={`bg-white rounded-xl border border-gray-100 overflow-hidden hover:border-gray-200 hover:shadow-sm transition-all flex flex-col aspect-square ${order.items.length > 1 ? 'cursor-pointer' : ''}`}
+                  >
+                    {/* TOP HALF: Product Image */}
+                    <div className="h-1/2 bg-gray-100 relative overflow-hidden group/img">
+                      <img 
+                        src={firstItem?.images?.[0] || '/api/placeholder/400/400'} 
+                        alt={firstItem?.title}
+                        className="w-full h-full object-cover group-hover/img:object-contain group-hover/img:bg-white transition-all duration-200"
+                        onContextMenu={(e) => e.preventDefault()}
+                        draggable={false}
+                      />
+                      {remainingCount > 0 && (
+                        <div className="absolute bottom-2 right-2 w-5 h-5 bg-gray-900 text-white text-[9px] font-medium rounded-full flex items-center justify-center z-10">
+                          +{remainingCount}
                         </div>
                       )}
+                      <span className={`absolute top-2 right-2 px-2 py-0.5 text-[9px] font-medium rounded-full z-10 ${getStatusStyle(order.status)}`}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </span>
                     </div>
-                  );
-                })}
+
+                    {/* BOTTOM HALF: Info & Actions */}
+                    <div className="h-1/2 p-3 flex flex-col">
+                      {/* Order ID */}
+                      <span className="text-[10px] text-gray-400 font-medium">#{order.id.slice(-8).toUpperCase()}</span>
+                      
+                      {/* Product Info */}
+                      <h3 
+                        className="font-medium text-gray-900 text-sm truncate mt-1 hover:text-gray-600 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (firstItem?.title) {
+                            const item = firstItem as any;
+                            const categoriesArr = item.categories || [];
+                            const categoriesLower = categoriesArr.map((c: string) => c.toLowerCase()).join(' ');
+                            const isClothing = item.productType === 'clothing' || item.gender || 
+                              categoriesLower.includes('men') || categoriesLower.includes('women') || categoriesLower.includes('clothing');
+                            const isFB = categoriesLower.includes('food & beverage') || categoriesLower.includes('f&b') || 
+                              categoriesLower.includes('food-beverage') || categoriesLower.includes('dry fruit') || 
+                              categoriesLower.includes('dried fruit') || categoriesLower.includes('spice');
+                            
+                            const slug = generateSlug(firstItem.title);
+                            
+                            if (isClothing) {
+                              navigate(`/clothes/${slug}`);
+                            } else if (isFB) {
+                              navigate(`/${slug}`);  // F&B products use direct URL
+                            } else {
+                              // Use actual category from product lookup (e.g. /minimalist/terracotta-harmony), never default to 'art'
+                              const product = allProducts.find((p: any) => generateSlug(p.title) === slug);
+                              const category = product?.categories?.[0] || (product as any)?.category || categoriesArr[0] || item.category;
+                              const categorySlug = category ? generateSlug(category) : '';
+                              if (categorySlug) navigate(`/${categorySlug}/${slug}`);
+                            }
+                          }
+                        }}
+                      >
+                        {firstItem?.title}
+                      </h3>
+                      <p className="text-[11px] text-gray-500">
+                        {firstItem?.productType === 'poster' && firstItem?.posterSize 
+                          ? `Poster ${firstItem.posterSize}`
+                          : firstItem?.productType === 'clothing'
+                          ? 'Clothing'
+                          : 'Digital'} • {new Date(order.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                      <p className="font-semibold text-gray-900 text-sm mt-1">{formatUIPrice(order.total, 'INR')}</p>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 mt-auto">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openTrackingModal(order); }}
+                          disabled={trackingLoading[order.id]}
+                          className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-gray-900 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                          {trackingLoading[order.id] ? (
+                            <div className="w-2.5 h-2.5 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <Truck className="w-2.5 h-2.5" />
+                          )}
+                          Track
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleReviewProduct(firstItem, order.id, (firstItem as any).orderItemId); }}
+                          className="flex items-center gap-1 px-2.5 py-1 text-[11px] text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                        >
+                          <Star className="w-2.5 h-2.5" />
+                          Review
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Compact Pagination */}
+            {filteredOrders.length > ordersPerPage && (
+              <div className="flex items-center justify-center gap-1 pt-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded disabled:opacity-30"
+                >
+                  ←
+                </button>
+                
+                <div className="flex items-center gap-0.5">
+                  {(() => {
+                    const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+                    const pages = [];
+                    let startPage = Math.max(1, currentPage - 1);
+                    let endPage = Math.min(totalPages, currentPage + 1);
+                    
+                    if (currentPage === 1) endPage = Math.min(3, totalPages);
+                    if (currentPage === totalPages) startPage = Math.max(1, totalPages - 2);
+                    
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <button
+                          key={i}
+                          onClick={() => setCurrentPage(i)}
+                          className={`w-6 h-6 text-xs rounded border ${
+                            currentPage === i
+                              ? 'bg-white text-gray-900 border-gray-400'
+                              : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {i}
+                        </button>
+                      );
+                    }
+                    return pages;
+                  })()}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredOrders.length / ordersPerPage), p + 1))}
+                  disabled={currentPage >= Math.ceil(filteredOrders.length / ordersPerPage)}
+                  className="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded disabled:opacity-30"
+                >
+                  →
+                </button>
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
+      </div>
     );
   };
 
@@ -1637,13 +1469,13 @@ const UserDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <Heart className="w-5 h-5 text-teal-600" />
+              <Heart className="w-5 h-5 text-gray-700" />
               <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">My Favorites</h3>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFavoriteFilters(!showFavoriteFilters)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                className="flex items-center space-x-1.5 px-3 py-1.5 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -1652,7 +1484,7 @@ const UserDashboard: React.FC = () => {
               </button>
               <button
                 onClick={() => navigate('/browse')}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
                 <span className="font-sans font-normal text-xs">Browse More</span>
@@ -1667,8 +1499,8 @@ const UserDashboard: React.FC = () => {
                 <p className="text-xs text-gray-500 mt-1 font-sans font-normal">{filteredFavorites.length} of {userFavorites.length} favorites</p>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="p-2 bg-teal-100 rounded-lg">
-                  <Heart className="w-5 h-5 text-teal-600" />
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <Heart className="w-5 h-5 text-gray-700" />
                 </div>
                 <span className="text-2xl font-bold text-gray-900 font-sans font-normal">{userFavorites.length}</span>
               </div>
@@ -1683,7 +1515,7 @@ const UserDashboard: React.FC = () => {
               <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto font-sans font-normal">Save artwork you love to see them here. Click the heart icon on any product to add it to your favorites.</p>
               <button
                 onClick={() => navigate('/browse')}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
                 <span className="font-sans font-normal text-xs">Browse Artwork</span>
@@ -1707,7 +1539,7 @@ const UserDashboard: React.FC = () => {
                   tags: [],
                   status: 'all'
                 })}
-                className="px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                className="px-3 py-1.5 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
                 <span className="font-sans font-normal text-xs">Clear all filters</span>
               </button>
@@ -1728,7 +1560,7 @@ const UserDashboard: React.FC = () => {
                           e.stopPropagation();
                           handleViewProduct(artwork);
                         }}
-                        className="p-1.5 bg-white hover:bg-gray-50 rounded-lg shadow-md transition-colors"
+                        className="p-1.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
                         title="View Product"
                       >
                         <Eye className="w-3.5 h-3.5 text-gray-700" />
@@ -1738,7 +1570,7 @@ const UserDashboard: React.FC = () => {
                           e.stopPropagation();
                           handleRemoveFavorite(artwork.id);
                         }}
-                        className="p-1.5 bg-white hover:bg-red-50 rounded-lg shadow-md transition-colors"
+                        className="p-1.5 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
                         title="Remove from Favorites"
                       >
                         <Heart className="w-3.5 h-3.5 text-red-500 fill-current" />
@@ -1762,7 +1594,7 @@ const UserDashboard: React.FC = () => {
                           e.stopPropagation();
                           handleViewProduct(artwork);
                         }}
-                        className="flex-1 py-1.5 px-2.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-white transition-colors text-xs"
+                        className="flex-1 py-1.5 px-2.5 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-xs"
                       >
                         <span className="font-sans font-normal">View Details</span>
                       </button>
@@ -1771,7 +1603,7 @@ const UserDashboard: React.FC = () => {
                           e.stopPropagation();
                           navigate(`/checkout?product=${artwork.id}`);
                         }}
-                        className="flex-1 py-1.5 px-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-xs"
+                        className="flex-1 py-1.5 px-2.5 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-xs"
                       >
                         <span className="font-sans font-normal">Buy Now</span>
                       </button>
@@ -1882,7 +1714,7 @@ const UserDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <FileDown className="w-5 h-5 text-teal-600" />
+              <FileDown className="w-5 h-5 text-gray-700" />
               <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">My Downloads</h3>
             </div>
           </div>
@@ -1894,8 +1726,8 @@ const UserDashboard: React.FC = () => {
                 <p className="text-xs text-gray-500 mt-1 font-sans font-normal">{downloadableItems.length} digital files ready</p>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="p-2 bg-teal-100 rounded-lg">
-                  <FileDown className="w-5 h-5 text-teal-600" />
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <FileDown className="w-5 h-5 text-gray-700" />
                 </div>
                 <span className="text-2xl font-bold text-gray-900 font-sans font-normal">{downloadableItems.length}</span>
               </div>
@@ -1910,7 +1742,7 @@ const UserDashboard: React.FC = () => {
               <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto font-sans font-normal">Purchase digital products to access PDF files and high-resolution images for download.</p>
               <button
                 onClick={() => navigate('/browse')}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
                 <span className="font-sans font-normal text-xs">Browse Artwork</span>
@@ -1940,7 +1772,7 @@ const UserDashboard: React.FC = () => {
                       <span className="font-semibold text-gray-900 text-sm">{formatUIPrice(item.price, 'INR')}</span>
                       <button
                         onClick={() => handleDownload(item.downloadUrl || '', item.title)}
-                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-xs"
+                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-xs"
                         title="Download Files"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -2090,7 +1922,7 @@ const UserDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <User className="w-5 h-5 text-teal-600" />
+              <User className="w-5 h-5 text-gray-700" />
               <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">Profile Management</h3>
             </div>
             <div className="flex space-x-2">
@@ -2099,7 +1931,7 @@ const UserDashboard: React.FC = () => {
                   <button
                     onClick={handleSaveProfile}
                     disabled={isSaving}
-                    className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                    className="px-3 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
                   >
                     <span className="font-sans font-normal">{isSaving ? 'Saving...' : 'Save Profile'}</span>
                   </button>
@@ -2121,7 +1953,7 @@ const UserDashboard: React.FC = () => {
                         avatar: user?.user_metadata?.avatar || null
                       });
                     }}
-                    className="px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                    className="px-3 py-1.5 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
                   >
                     <span className="font-sans font-normal">Cancel</span>
                   </button>
@@ -2129,7 +1961,7 @@ const UserDashboard: React.FC = () => {
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
                 >
                   <Edit className="w-3.5 h-3.5" />
                   <span className="font-sans font-normal">Edit Profile</span>
@@ -2152,7 +1984,7 @@ const UserDashboard: React.FC = () => {
                   disabled={!isEditing}
                   className={`w-full px-3 py-2 border rounded-lg transition-colors ${
                     isEditing 
-                      ? 'border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200' 
+                      ? 'border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-200' 
                       : 'border-gray-200 bg-gray-50 cursor-not-allowed'
                   }`}
                   placeholder="Name"
@@ -2169,7 +2001,7 @@ const UserDashboard: React.FC = () => {
                     if (formErrors.email) setFormErrors({ ...formErrors, email: '' });
                   }}
                   disabled={!isEditing}
-                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm ${
+                  className={`w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-500 text-sm ${
                     formErrors.email 
                       ? 'border-red-300 focus:ring-red-300' 
                       : ''
@@ -2187,7 +2019,7 @@ const UserDashboard: React.FC = () => {
                 onChange={(e) => setUserProfile({ ...userProfile, bio: e.target.value })}
                 disabled={!isEditing}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-500 text-sm"
               />
             </div>
           </div>
@@ -2203,18 +2035,18 @@ const UserDashboard: React.FC = () => {
             {/* Privacy & Security */}
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
               <div className="flex items-center space-x-2 mb-6">
-                <Shield className="w-5 h-5 text-teal-600" />
+                <Shield className="w-5 h-5 text-gray-700" />
                 <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">Privacy & Security</h3>
               </div>
               
               <div className="space-y-4">
                 <button 
                   onClick={handleChangePassword}
-                  className="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center space-x-2">
-                    <div className="p-1.5 bg-teal-100 rounded-lg">
-                      <Key className="w-3.5 h-3.5 text-teal-600" />
+                    <div className="p-1.5 bg-gray-100 rounded-lg">
+                      <Key className="w-3.5 h-3.5 text-gray-700" />
                     </div>
                     <div className="text-left">
                       <h4 className="font-medium text-gray-900 text-xs font-sans font-normal">Change Password</h4>
@@ -2240,7 +2072,7 @@ const UserDashboard: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-900 font-sans font-normal">Request Return</h2>
             <button
               onClick={handleReturnCancel}
-              className="text-gray-500 hover:text-gray-700"
+              className="p-2 rounded bg-white border border-gray-300 text-gray-600 hover:bg-gray-50"
             >
               <X className="w-5 h-5" />
             </button>
@@ -2270,7 +2102,7 @@ const UserDashboard: React.FC = () => {
           </div>
           <button
             onClick={() => navigate('/returns-and-refunds')}
-            className="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors text-sm"
+            className="bg-white text-gray-900 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors text-sm"
           >
             View Return Policy
           </button>
@@ -2293,7 +2125,7 @@ const UserDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-white">
+    <div className="min-h-screen pb-20 bg-white font-sans">
       <div className="relative z-10 py-6">
         <div className="max-w-7xl mx-auto px-4">
           {/* Main Content */}
@@ -2319,8 +2151,8 @@ const UserDashboard: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-col items-center space-y-1 px-3 py-2 rounded transition-all duration-200 ${
                   isActive
-                    ? 'text-teal-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-gray-900'
+                    : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 <div className="w-6 h-6 rounded flex items-center justify-center">
@@ -2383,14 +2215,78 @@ const UserDashboard: React.FC = () => {
         trackingData={selectedOrderForTracking ? trackingData[selectedOrderForTracking.id] : null}
       />
 
+      {/* Order Detail Modal (for orders with more than 1 product) */}
+      {showOrderDetailModal && selectedOrderForDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={closeOrderDetailModal}>
+          <div
+            className="bg-white rounded-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div>
+                <span className="text-xs text-gray-400 font-medium">Order #{selectedOrderForDetail.id.slice(-8).toUpperCase()}</span>
+                <span className={`ml-2 px-2 py-0.5 text-xs font-medium rounded-full ${
+                  selectedOrderForDetail.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                  selectedOrderForDetail.status === 'processing' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                  selectedOrderForDetail.status === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                  (selectedOrderForDetail.status === 'cancelled' || selectedOrderForDetail.status === 'failed') ? 'bg-red-50 text-red-700 border border-red-200' :
+                  'bg-gray-50 text-gray-700 border border-gray-200'
+                }`}>
+                  {selectedOrderForDetail.status.charAt(0).toUpperCase() + selectedOrderForDetail.status.slice(1)}
+                </span>
+              </div>
+              <button onClick={closeOrderDetailModal} className="p-2 rounded bg-white border border-gray-300 text-gray-600 hover:bg-gray-50">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              <p className="text-xs text-gray-500 mb-4">{new Date(selectedOrderForDetail.date).toLocaleDateString('en-US', { dateStyle: 'medium' })} • {formatUIPrice(selectedOrderForDetail.total, 'INR')} total</p>
+              <div className="space-y-4">
+                {selectedOrderForDetail.items.map((item: any, idx: number) => (
+                  <div key={item.orderItemId || idx} className="flex gap-3 p-3 rounded-lg border border-gray-100">
+                    <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                      <img src={item.images?.[0] || '/api/placeholder/400/400'} alt={item.title} className="w-full h-full object-cover" onContextMenu={(e) => e.preventDefault()} draggable={false} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 text-sm truncate">{item.title}</h4>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {item.productType === 'poster' && item.posterSize ? `Poster ${item.posterSize}` : item.productType === 'clothing' ? 'Clothing' : 'Digital'}
+                      </p>
+                      <p className="font-semibold text-gray-900 text-sm mt-1">{formatUIPrice(item.price, 'INR')}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => { openTrackingModal(selectedOrderForDetail); }}
+                          disabled={trackingLoading[selectedOrderForDetail.id]}
+                          className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-gray-900 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          {trackingLoading[selectedOrderForDetail.id] ? <div className="w-2.5 h-2.5 border-2 border-gray-400 border-t-white rounded-full animate-spin" /> : <Truck className="w-2.5 h-2.5" />}
+                          Track
+                        </button>
+                        <button
+                          onClick={() => { handleReviewProduct(item, selectedOrderForDetail.id, item.orderItemId); closeOrderDetailModal(); }}
+                          className="flex items-center gap-1 px-2 py-1 text-[11px] text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                        >
+                          <Star className="w-2.5 h-2.5" />
+                          Review
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Change Password Modal */}
       {showChangePasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-teal-100 rounded-lg">
-                  <Key className="w-5 h-5 text-teal-600" />
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <Key className="w-5 h-5 text-gray-700" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 font-sans font-normal">Change Password</h3>
               </div>
@@ -2402,7 +2298,7 @@ const UserDashboard: React.FC = () => {
                   setShowNewPassword(false);
                   setShowConfirmPassword(false);
                 }}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 rounded bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -2426,7 +2322,7 @@ const UserDashboard: React.FC = () => {
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                     className={`w-full px-4 py-2 pr-10 border ${
                       passwordErrors.newPassword ? 'border-red-300' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500`}
                     placeholder="Enter new password"
                   />
                   <button
@@ -2453,7 +2349,7 @@ const UserDashboard: React.FC = () => {
                     onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
                     className={`w-full px-4 py-2 pr-10 border ${
                       passwordErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500`}
                     placeholder="Confirm new password"
                   />
                   <button
@@ -2473,7 +2369,7 @@ const UserDashboard: React.FC = () => {
                 <button
                   onClick={handlePasswordSubmit}
                   disabled={isChangingPassword}
-                  className="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-white text-gray-900 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="font-sans font-normal">{isChangingPassword ? 'Updating...' : 'Update Password'}</span>
                 </button>
@@ -2486,7 +2382,7 @@ const UserDashboard: React.FC = () => {
                     setShowConfirmPassword(false);
                   }}
                   disabled={isChangingPassword}
-                  className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="font-sans font-normal">Cancel</span>
                 </button>

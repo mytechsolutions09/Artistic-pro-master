@@ -310,13 +310,38 @@ const Homepage: React.FC = () => {
       return featuredArtwork.selectedProducts; // Fallback to sample data
     }
     
+    // Filter out F&B and clothing products first
+    const artOnlyProducts = realProducts.filter(product => {
+      const categories = (product.categories || []).map((c: string) => c.toLowerCase());
+      const tags = ((product as any).tags || []).map((t: string) => t.toLowerCase());
+      const combined = [...categories, ...tags].join(' ');
+      
+      // Exclude F&B products
+      const isFB = combined.includes('food & beverage') ||
+                   combined.includes('f&b') ||
+                   combined.includes('f & b') ||
+                   combined.includes('dry fruit') ||
+                   combined.includes('dried fruit') ||
+                   combined.includes('spice');
+      if (isFB) return false;
+      
+      // Exclude clothing products
+      const isClothing = combined.includes('men') ||
+                        combined.includes('women') ||
+                        combined.includes('clothing') ||
+                        !!(product as any).gender;
+      if (isClothing) return false;
+      
+      return true;
+    });
+    
     // Get featured products (products marked as featured in database)
-    const featuredProducts = realProducts.filter(product => product.featured === true);
+    const featuredProducts = artOnlyProducts.filter(product => product.featured === true);
     
     // If we have featured products, use them; otherwise use top products by rating
     const artworkProducts = featuredProducts.length > 0 
       ? featuredProducts.slice(0, 4)
-      : realProducts
+      : artOnlyProducts
           .sort((a, b) => (b.rating || 0) - (a.rating || 0))
           .slice(0, 4);
     

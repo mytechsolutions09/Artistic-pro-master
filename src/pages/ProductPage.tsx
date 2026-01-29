@@ -23,7 +23,8 @@ import {
   ArrowRight as ArrowRightIcon,
   FileText,
   Truck,
-  Info
+  Info,
+  Package
 } from 'lucide-react';
 
 import ArtCard from '../components/ArtCard';
@@ -328,30 +329,14 @@ const ProductPage: React.FC = () => {
   if (!product && !loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-800 mb-4 font-sans font-normal">Product Not Found</h1>
-          <div className="space-y-2 mb-6 text-sm text-gray-600 font-sans font-normal">
-            <p>Debug Info:</p>
-            <p>Category: {categorySlug || 'undefined'}</p>
-            <p>Product: {productSlug || 'undefined'}</p>
-            <p>Available Products: {allProducts.length}</p>
-            <details className="mt-4">
-              <summary className="cursor-pointer text-[#F48FB1]">Show Available Products</summary>
-              <div className="mt-2 text-xs text-gray-500 max-h-32 overflow-y-auto font-sans font-normal">
-                {allProducts.length > 0 ? (
-                  allProducts.map((p, i) => (
-                    <div key={i} className="mb-1 font-sans font-normal">
-                      • {p.title} ({(p as any).category || ((p as any).categories && (p as any).categories[0]) || 'General'})
-                    </div>
-                  ))
-                ) : (
-                  <span className="text-red-400 font-sans font-normal">No products loaded!</span>
-                )}
-              </div>
-            </details>
+        <div className="text-center px-4">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Package className="w-8 h-8 text-gray-400" />
           </div>
-          <Link to="/" className="text-[#F48FB1] hover:text-[#E91E63] font-medium font-sans font-normal">
-            ← Back to Home
+          <h1 className="text-xl font-semibold text-gray-800 mb-2">Product Not Found</h1>
+          <p className="text-sm text-gray-500 mb-6">The product you're looking for doesn't exist or has been removed.</p>
+          <Link to="/" className="inline-block px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+            Back to Home
           </Link>
         </div>
       </div>

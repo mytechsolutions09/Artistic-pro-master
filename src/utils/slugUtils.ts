@@ -64,7 +64,7 @@ export function parseProductUrl(pathname: string): { categorySlug: string; produ
  * Finds a product by category slug and product slug
  * @param products - Array of products to search
  * @param categorySlug - The category slug from URL
- * @param productSlug - The product slug from URL
+ * @param productSlug - The product slug from URL (optional for F&B direct URLs)
  * @returns The found product or null
  */
 export function findProductBySlugs(
@@ -72,7 +72,40 @@ export function findProductBySlugs(
   categorySlug: string,
   productSlug: string
 ): any | null {
+  // For F&B direct URLs (/:slug), productSlug will be empty and categorySlug contains the product slug
+  const hasProductSlug = productSlug && productSlug.length > 0;
+  const slugToMatch = hasProductSlug ? productSlug : categorySlug;
+  
   return products.find(product => {
+    const productTitleSlug = generateSlug(product.title);
+    
+    // If title doesn't match the slug we're looking for, skip
+    if (productTitleSlug !== slugToMatch) return false;
+    
+    // If no productSlug provided (direct URL like /product-name), check if it's an F&B product
+    if (!hasProductSlug) {
+      const categories = (product.categories || []).map((c: string) => c.toLowerCase()).join(' ');
+      const isFB = categories.includes('food & beverage') || 
+                   categories.includes('f&b') || 
+                   categories.includes('food-beverage') ||
+                   categories.includes('dry fruit') || 
+                   categories.includes('dried fruit') || 
+                   categories.includes('spice');
+      return isFB;
+    }
+    
+    // Special handling for /fb/ routes - match F&B products by title only
+    if (categorySlug === 'fb') {
+      const categories = (product.categories || []).map((c: string) => c.toLowerCase()).join(' ');
+      const isFB = categories.includes('food & beverage') || 
+                   categories.includes('f&b') || 
+                   categories.includes('food-beverage') ||
+                   categories.includes('dry fruit') || 
+                   categories.includes('dried fruit') || 
+                   categories.includes('spice');
+      return isFB;
+    }
+    
     // Handle both old single category and new categories array
     let productCategorySlug = '';
     if (product.categories && Array.isArray(product.categories) && product.categories.length > 0) {
@@ -83,9 +116,7 @@ export function findProductBySlugs(
       productCategorySlug = generateSlug((product as any).category);
     }
     
-    const productTitleSlug = generateSlug(product.title);
-    
-    return productCategorySlug === categorySlug && productTitleSlug === productSlug;
+    return productCategorySlug === categorySlug;
   });
 }
 

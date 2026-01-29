@@ -153,6 +153,19 @@ const CategoryDetailPage: React.FC = () => {
 
     
           let filtered = adminProducts.filter(product => {
+        // Exclude F&B products from art categories
+        const categories = (product.categories || []).map((c: string) => c.toLowerCase());
+        const tags = ((product as any).tags || []).map((t: string) => t.toLowerCase());
+        const combined = [...categories, ...tags].join(' ');
+        
+        const isFB = combined.includes('food & beverage') ||
+                     combined.includes('f&b') ||
+                     combined.includes('f & b') ||
+                     combined.includes('dry fruit') ||
+                     combined.includes('dried fruit') ||
+                     combined.includes('spice');
+        if (isFB) return false;
+        
         // Handle both old single category and new categories array
         if (product.categories && Array.isArray(product.categories)) {
           // Check if any category in the array matches
