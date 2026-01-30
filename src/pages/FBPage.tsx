@@ -175,31 +175,10 @@ const FBPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter and Sort Bar */}
+      {/* Sort Bar */}
       <div className="border-b border-gray-200 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <span className="text-xs font-medium tracking-wider text-gray-900 font-sans font-normal">FILTER:</span>
-              <div className="relative">
-                <select 
-                  value={selectedFilter}
-                  onChange={(e) => setSelectedFilter(e.target.value)}
-                  className="text-xs border-0 rounded px-3 py-1.5 pr-8 bg-gray-50 focus:outline-none appearance-none font-sans font-normal"
-                  style={{
-                    outline: 'none',
-                    boxShadow: 'none',
-                    border: 'none',
-                    accentColor: '#9ca3af',
-                    backgroundImage: 'none'
-                  }}
-                >
-                  <option value="all">ALL</option>
-                  {/* Add more filter options based on product tags or custom fields */}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 pointer-events-none" />
-              </div>
-            </div>
+          <div className="flex items-center justify-end flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <span className="text-xs font-medium tracking-wider text-gray-900 font-sans font-normal">SORT BY:</span>
               <div className="relative">
