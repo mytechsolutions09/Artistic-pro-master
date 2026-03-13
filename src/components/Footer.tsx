@@ -12,14 +12,10 @@ const Footer: React.FC = () => {
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className="flex items-center mb-3">
-              <img 
-                src="/logo.png" 
-                alt="Lurevi" 
-                className="h-8 w-auto"
-              />
+              <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
             </div>
             <p className="text-gray-600 mb-4 text-sm">
-              Your premier destination for digital art and premium clothing. Discover unique pieces that express your style.
+              Your destination for digital art. Discover unique pieces that express your style.
             </p>
             <div className="flex space-x-3">
               <a 
@@ -55,11 +51,6 @@ const Footer: React.FC = () => {
               <li>
                 <Link to="/browse" className="text-gray-600 hover:text-gray-900 transition-colors text-sm">
                   Art Gallery
-                </Link>
-              </li>
-              <li>
-                <Link to="/clothes" className="text-gray-600 hover:text-gray-900 transition-colors text-sm">
-                  Clothing
                 </Link>
               </li>
               <li>
@@ -139,9 +130,6 @@ const Footer: React.FC = () => {
               </Link>
               <Link to="/terms-and-conditions" className="text-gray-600 hover:text-gray-900 text-xs transition-colors">
                 Terms of Service
-              </Link>
-              <Link to="/use-and-return-policy" className="text-gray-600 hover:text-gray-900 text-xs transition-colors">
-                Use & Return Policy
               </Link>
               <div className="flex items-center text-gray-600 text-xs">
                 Made with <Heart className="w-3 h-3 text-gray-700 mx-1" /> by Lurevi Team

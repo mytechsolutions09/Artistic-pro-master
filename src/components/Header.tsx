@@ -399,7 +399,7 @@ const Header: React.FC = () => {
             <Link to="/cart" className="relative p-2 text-black hover:text-gray-600">
               <ShoppingCart className="w-4 h-4" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans font-normal">
+                <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans font-normal">
                   {cartItemCount}
                 </span>
               )}
@@ -497,7 +497,7 @@ const Header: React.FC = () => {
             <Link to="/cart" className="relative p-2 text-black hover:text-gray-600">
               <ShoppingCart className="w-4 h-4" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans font-normal">
+                <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans font-normal">
                   {cartItemCount}
                 </span>
               )}

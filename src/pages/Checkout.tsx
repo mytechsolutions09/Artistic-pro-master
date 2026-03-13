@@ -428,7 +428,7 @@ const Checkout: React.FC = () => {
   // Show loading state if waiting for products to load for direct purchase
   if (productId && allProducts.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-['Inter']">
         <div className="text-center max-w-md mx-auto px-4">
           <Loader2 className="w-16 h-16 text-teal-600 mx-auto mb-4 animate-spin" />
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Loading Product...</h1>
@@ -440,7 +440,7 @@ const Checkout: React.FC = () => {
 
   if (cart.items.length === 0 && !directPurchaseProduct) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-['Inter']">
         <div className="text-center max-w-md mx-auto px-4">
           <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Your Cart is Empty</h1>
@@ -457,7 +457,7 @@ const Checkout: React.FC = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-['Inter']">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form */}
@@ -816,10 +816,10 @@ const Checkout: React.FC = () => {
                         Pay securely using Cards, UPI, Net Banking, or Wallets
                       </p>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">💳 Cards</span>
-                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">📱 UPI</span>
-                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">🏦 Net Banking</span>
-                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">💰 Wallets</span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">Cards</span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">UPI</span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">Net Banking</span>
+                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">Wallets</span>
                       </div>
                     </div>
                   </label>
@@ -1128,7 +1128,7 @@ const Checkout: React.FC = () => {
                   </span>
                 </>
               ) : paymentMethod === 'store_credit' ? (
-                <span>pay now</span>
+                <span className="font-['Inter'] uppercase tracking-wide">PAY NOW</span>
               ) : paymentMethod === 'razorpay' ? (
                 <span>Pay {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')} - Proceed to Payment</span>
               ) : (

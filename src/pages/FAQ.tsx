@@ -151,7 +151,7 @@ const FAQ: React.FC = () => {
   })).filter(category => category.questions.length > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-['Inter']">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Search Bar */}
@@ -163,7 +163,7 @@ const FAQ: React.FC = () => {
               placeholder="Search FAQ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-700 focus:border-transparent text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm"
             />
           </div>
         </div>
@@ -186,7 +186,7 @@ const FAQ: React.FC = () => {
                         onClick={() => toggleItem(globalIndex)}
                         className="w-full flex items-center justify-between text-left group"
                       >
-                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">
+                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
                           {item.question}
                         </h3>
                         {isOpen ? (
@@ -209,14 +209,14 @@ const FAQ: React.FC = () => {
         </div>
 
         {/* Still Have Questions */}
-        <div className="mt-12 bg-gradient-to-r from-teal-700 to-teal-600 rounded-xl p-8 text-white text-center">
+        <div className="mt-12 bg-gray-900 rounded-xl p-8 text-white text-center">
           <h2 className="text-2xl font-bold mb-4">Still Have Questions?</h2>
-          <p className="text-teal-100 mb-6">
+          <p className="text-gray-300 mb-6">
             Can't find the answer you're looking for? Our support team is here to help.
           </p>
           <a
             href="/contact-us"
-            className="inline-flex items-center px-6 py-3 bg-white text-teal-700 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-white text-gray-900 font-medium rounded-lg hover:bg-gray-100 transition-colors"
           >
             Contact Support
           </a>

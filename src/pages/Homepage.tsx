@@ -9,6 +9,7 @@ import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
 import HomepageSkeleton from '../components/HomepageSkeleton';
 import OptimizedImage from '../components/OptimizedImage';
 import BentoHeroSection from '../components/BentoHeroSection';
+import { NavigationVisibilityService } from '../services/navigationVisibilityService';
 
 const Homepage: React.FC = () => {
   // Currency context
@@ -243,6 +244,7 @@ const Homepage: React.FC = () => {
     if (!realProducts || realProducts.length === 0) {
       return bestSellers.selectedProducts; // Fallback to sample data
     }
+    const visibilitySettings = NavigationVisibilityService.getSettings();
     
     // Get products with actual pricing data (originalPrice and discountPercentage)
     const productsWithDiscounts = realProducts.filter(product => 
@@ -256,7 +258,9 @@ const Homepage: React.FC = () => {
           .sort((a, b) => (b.downloads || 0) - (a.downloads || 0))
           .slice(0, 3);
     
-    return bestSellersProducts.map(product => {
+    return bestSellersProducts
+      .filter((product) => NavigationVisibilityService.isProductVisible(product, visibilitySettings))
+      .map(product => {
       const category = product.categories?.[0] || product.category || 'Art';
       
       // Check if product is clothing by category or properties
@@ -613,7 +617,13 @@ const Homepage: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Bento Hero Section */}
-      <BentoHeroSection cards={homepageSettings?.bento_hero?.cards || []} />
+      <BentoHeroSection
+        cards={
+          homepageSettings?.bento_hero?.cards ||
+          homepageSettings?.hero_section?.bento_cards ||
+          []
+        }
+      />
 
       {/* Image Slider Section */}
       <section className="py-8 px-4">

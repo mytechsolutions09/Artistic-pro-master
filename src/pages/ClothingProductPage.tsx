@@ -11,6 +11,7 @@ import { MetaPixelService } from '../services/metaPixelService';
 import OptimizedImage from '../components/OptimizedImage';
 import { ReviewService } from '../services/reviewService';
 import { Review } from '../types';
+import { NavigationVisibilityService, type NavigationVisibilitySettings } from '../services/navigationVisibilityService';
 
 const ClothingProductPage: React.FC = () => {
   const { productSlug } = useParams<{ productSlug: string }>();
@@ -34,6 +35,9 @@ const ClothingProductPage: React.FC = () => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [visibilitySettings, setVisibilitySettings] = useState<NavigationVisibilitySettings>(
+    NavigationVisibilityService.getSettings()
+  );
 
   // Find the product by slug (clothing products) and explicitly exclude F&B
   const product = allProducts.find(p => {
@@ -70,6 +74,13 @@ const ClothingProductPage: React.FC = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [productSlug]);
+
+  useEffect(() => {
+    const unsubscribe = NavigationVisibilityService.subscribe((settings) => {
+      setVisibilitySettings(settings);
+    });
+    return unsubscribe;
+  }, []);
 
   // Product data loaded and available
   useEffect(() => {
@@ -253,6 +264,20 @@ const ClothingProductPage: React.FC = () => {
 
   if (loading) {
     return <ClothingProductPageSkeleton />;
+  }
+
+  if (!visibilitySettings.clothesActive) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">This section is currently unavailable</h2>
+          <p className="text-sm text-gray-600">Clothing products have been temporarily deactivated by admin.</p>
+          <Link to="/" className="inline-block mt-4 px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-900 hover:bg-gray-50">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (!product) {

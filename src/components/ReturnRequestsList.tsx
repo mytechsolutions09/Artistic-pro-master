@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RotateCcw, Clock, CheckCircle, XCircle, AlertCircle, Package, Truck, MapPin, Calendar, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { ReturnService, ReturnRequestData } from '../services/returnService';
 import { delhiveryService, ReturnTrackingInfo } from '../services/DelhiveryService';
+import { buildSequenceMap, formatSequenceNumber } from '../utils/sequenceNumberUtils';
 
 interface ReturnRequestsListProps {
   customerEmail: string;
@@ -64,23 +65,6 @@ const ReturnRequestsList: React.FC<ReturnRequestsListProps> = ({ customerEmail }
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'approved':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'rejected':
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'processing':
-        return <Package className="w-4 h-4 text-blue-500" />;
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      default:
-        return <AlertCircle className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -139,6 +123,42 @@ const ReturnRequestsList: React.FC<ReturnRequestsListProps> = ({ customerEmail }
     }));
   };
 
+  // Keep hooks before any conditional return to avoid hook order mismatch
+  const returnSequenceMap = React.useMemo(
+    () =>
+      buildSequenceMap(
+        returns.map((item) => ({
+          id: item.id,
+          createdAt: item.requested_at,
+        }))
+      ),
+    [returns]
+  );
+
+  const orderSequenceMap = React.useMemo(() => {
+    const orderFirstSeen: Record<string, string> = {};
+
+    returns.forEach((item) => {
+      const existing = orderFirstSeen[item.order_id];
+      if (!existing || new Date(item.requested_at).getTime() < new Date(existing).getTime()) {
+        orderFirstSeen[item.order_id] = item.requested_at;
+      }
+    });
+
+    return buildSequenceMap(
+      Object.entries(orderFirstSeen).map(([id, createdAt]) => ({
+        id,
+        createdAt,
+      }))
+    );
+  }, [returns]);
+
+  // Count returns by status
+  const statusCounts = returns.reduce((acc, returnRequest) => {
+    acc[returnRequest.status] = (acc[returnRequest.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -169,14 +189,8 @@ const ReturnRequestsList: React.FC<ReturnRequestsListProps> = ({ customerEmail }
     );
   }
 
-  // Count returns by status
-  const statusCounts = returns.reduce((acc, returnRequest) => {
-    acc[returnRequest.status] = (acc[returnRequest.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 font-['Inter']">
       {/* Return Status Summary */}
       {returns.length > 0 && (
         <div className="bg-white rounded-lg p-3 mb-4 border border-gray-200">
@@ -219,28 +233,24 @@ const ReturnRequestsList: React.FC<ReturnRequestsListProps> = ({ customerEmail }
       {returns.map((returnRequest) => {
         const isExpanded = expandedReturns[returnRequest.id];
         return (
-          <div key={returnRequest.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm shadow-teal-100 hover:shadow-md hover:shadow-teal-200 transition-shadow duration-200">
+          <div key={returnRequest.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm transition-shadow duration-200">
             {/* Accordion Header */}
             <button
               onClick={() => toggleAccordion(returnRequest.id)}
-              className="w-full p-4 text-left hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-inset"
+              className="w-full p-4 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-inset"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <RotateCcw className="w-5 h-5 text-teal-600" />
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 font-sans font-normal">
-                      Return #{returnRequest.id.slice(-8).toUpperCase()}
-                    </h3>
-                    <p className="text-sm text-gray-600 font-sans font-normal">
-                      {returnRequest.product_title} • {formatDate(returnRequest.requested_at)}
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 font-sans font-normal">
+                    Return #{formatSequenceNumber('RET', returnSequenceMap[returnRequest.id])}
+                  </h3>
+                  <p className="text-sm text-gray-600 font-sans font-normal">
+                    Order #{formatSequenceNumber('ORD', orderSequenceMap[returnRequest.order_id])} • {returnRequest.product_title} • {formatDate(returnRequest.requested_at)}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium font-sans font-normal ${getStatusColor(returnRequest.status)}`}>
-                    {getStatusIcon(returnRequest.status)}
-                    <span className="ml-1 font-sans font-normal">{getStatusText(returnRequest.status)}</span>
+                    <span className="font-sans font-normal">{getStatusText(returnRequest.status)}</span>
                   </span>
                   {isExpanded ? (
                     <ChevronUp className="w-5 h-5 text-gray-400" />

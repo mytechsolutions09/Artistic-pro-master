@@ -170,13 +170,13 @@ const Returns: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-['Inter']">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
-            <div className="p-2 bg-green-100 rounded-full">
-              <RotateCcw className="w-6 h-6 text-green-600" />
+            <div className="p-2 bg-gray-100 rounded-full">
+              <RotateCcw className="w-6 h-6 text-gray-700" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Returns & Refunds</h1>
@@ -190,8 +190,8 @@ const Returns: React.FC = () => {
           {returnPolicy.map((policy, index) => (
             <div key={index} className="bg-white rounded-xl shadow-sm p-6 text-center">
               <div className="flex justify-center mb-4">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <div className="text-green-600">{policy.icon}</div>
+                <div className="p-3 bg-gray-100 rounded-lg">
+                  <div className="text-gray-700">{policy.icon}</div>
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">{policy.title}</h3>
@@ -207,11 +207,11 @@ const Returns: React.FC = () => {
             {returnSteps.map((step, index) => (
               <div key={index} className="text-center">
                 <div className="flex justify-center mb-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <div className="text-green-600">{step.icon}</div>
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <div className="text-gray-700">{step.icon}</div>
                   </div>
                 </div>
-                <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">
+                <div className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">
                   {step.step}
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-2">{step.title}</h3>
@@ -229,7 +229,7 @@ const Returns: React.FC = () => {
               <ul className="space-y-2">
                 {condition.conditions.map((item, itemIndex) => (
                   <li key={itemIndex} className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-gray-700 mr-2 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-gray-600">{item}</span>
                   </li>
                 ))}
@@ -243,15 +243,15 @@ const Returns: React.FC = () => {
           <h2 className="text-lg font-bold text-gray-900 mb-6">Types of Refunds</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {refundTypes.map((type, index) => (
-              <div key={index} className="text-center p-6 bg-gradient-to-br from-teal-50 to-white rounded-lg border border-teal-100 hover:shadow-md hover:shadow-teal-200 transition-all duration-200">
+              <div key={index} className="text-center p-6 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200">
                 <div className="flex justify-center mb-4">
-                  <div className="p-3 bg-teal-100 rounded-full">
-                    <div className="text-teal-600">{type.icon}</div>
+                  <div className="p-3 bg-gray-100 rounded-full">
+                    <div className="text-gray-700">{type.icon}</div>
                   </div>
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-3">{type.title}</h3>
                 <p className="text-gray-700 text-sm mb-3 leading-relaxed">{type.description}</p>
-                <div className="pt-3 border-t border-teal-100">
+                <div className="pt-3 border-t border-gray-200">
                   <p className="text-gray-600 text-xs font-medium">{type.conditions}</p>
                 </div>
               </div>
@@ -271,7 +271,7 @@ const Returns: React.FC = () => {
                   </div>
                 </div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-1">{info.method}</h3>
-                <p className="text-teal-600 font-medium mb-1 text-sm">{info.time}</p>
+                <p className="text-gray-800 font-medium mb-1 text-sm">{info.time}</p>
                 <p className="text-gray-600 text-xs">{info.description}</p>
               </div>
             ))}
@@ -306,21 +306,21 @@ const Returns: React.FC = () => {
         </div>
 
         {/* Contact Support */}
-        <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-md p-6 text-white text-center">
+        <div className="bg-gray-900 rounded-md p-6 text-white text-center">
           <h2 className="text-lg font-bold mb-3">Need Help with Returns & Refunds?</h2>
-          <p className="text-teal-100 mb-4 text-sm">
+          <p className="text-gray-300 mb-4 text-sm">
             Have questions about returning an item, processing refunds, or need assistance with the return process?
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="/contact-us"
-              className="inline-flex items-center px-4 py-2 bg-white text-teal-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-white text-gray-900 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
               Contact Support
             </a>
             <a
               href="/help-center"
-              className="inline-flex items-center px-4 py-2 bg-teal-800 text-white font-medium rounded-md hover:bg-teal-900 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-gray-700 text-white font-medium rounded-md hover:bg-gray-800 transition-colors text-sm"
             >
               Help Center
             </a>

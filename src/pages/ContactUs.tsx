@@ -85,7 +85,7 @@ const ContactUs: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-['Inter']">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -95,10 +95,8 @@ const ContactUs: React.FC = () => {
             <div className="space-y-4">
               {contactInfo.map((info, index) => (
                 <div key={index} className="flex items-start space-x-3">
-                  <div className={`flex-shrink-0 p-2 rounded-lg ${
-                    index % 2 === 0 ? 'bg-teal-100' : 'bg-pink-100'
-                  }`}>
-                    <div className={`${index % 2 === 0 ? 'text-teal-600' : 'text-pink-600'} w-4 h-4`}>
+                  <div className="flex-shrink-0 p-2 rounded-lg bg-gray-100">
+                    <div className="text-gray-700 w-4 h-4">
                       {info.icon}
                     </div>
                   </div>
@@ -112,12 +110,12 @@ const ContactUs: React.FC = () => {
             </div>
 
             {/* Additional Help */}
-            <div className="mt-6 p-4 bg-gradient-to-br from-teal-50 to-pink-50 rounded-lg shadow-sm border border-teal-100">
+            <div className="mt-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
               <h3 className="text-base font-semibold text-gray-900 mb-2">Need Quick Help?</h3>
               <p className="text-gray-600 mb-3 text-sm">
                 Check our FAQ section for instant answers to common questions.
               </p>
-              <button className="inline-flex items-center text-teal-600 hover:text-teal-700 font-medium transition-colors text-sm">
+              <button className="inline-flex items-center text-gray-700 hover:text-gray-900 font-medium transition-colors text-sm">
                 <HelpCircle className="w-4 h-4 mr-1" />
                 Visit FAQ
               </button>
@@ -141,7 +139,7 @@ const ContactUs: React.FC = () => {
                       value={formData.name}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
                       placeholder="Your full name"
                     />
                   </div>
@@ -156,7 +154,7 @@ const ContactUs: React.FC = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-colors text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -171,7 +169,7 @@ const ContactUs: React.FC = () => {
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
                   >
                     <option value="general">General Inquiry</option>
                     <option value="order">Order Support</option>
@@ -193,7 +191,7 @@ const ContactUs: React.FC = () => {
                     value={formData.subject}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-colors text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
                     placeholder="Brief description of your inquiry"
                   />
                 </div>
@@ -209,7 +207,7 @@ const ContactUs: React.FC = () => {
                     onChange={handleInputChange}
                     required
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-colors text-sm"
                     placeholder="Please provide details about your inquiry..."
                   />
                 </div>
@@ -218,7 +216,7 @@ const ContactUs: React.FC = () => {
                 {submitStatus && (
                   <div className={`flex items-center space-x-2 p-3 rounded-md text-sm ${
                     submitStatus.success 
-                      ? 'bg-green-50 text-green-700 border border-green-200' 
+                      ? 'bg-gray-100 text-gray-800 border border-gray-200' 
                       : 'bg-red-50 text-red-700 border border-red-200'
                   }`}>
                     {submitStatus.success ? (
@@ -233,7 +231,7 @@ const ContactUs: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-teal-600 to-pink-600 hover:from-teal-700 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-md transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg text-sm"
+                  className="w-full bg-black hover:bg-gray-900 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-md transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg text-sm"
                 >
                   {isSubmitting ? (
                     <>

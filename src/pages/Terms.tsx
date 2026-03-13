@@ -42,13 +42,13 @@ const Terms: React.FC = () => {
     title: string; 
     children: React.ReactNode;
   }) => (
-    <section className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden border border-gray-200 hover:shadow-md hover:shadow-teal-200 transition-shadow">
+    <section className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
       <button
         onClick={() => toggleSection(id)}
         className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center">
-          <Icon className="w-4 h-4 mr-2 text-teal-600 flex-shrink-0" />
+          <Icon className="w-4 h-4 mr-2 text-gray-700 flex-shrink-0" />
           <h2 className="text-xs sm:text-sm font-bold text-gray-900 text-left">{title}</h2>
         </div>
         {expandedSections[id] ? (
@@ -66,9 +66,9 @@ const Terms: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-['Inter']">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-800 to-teal-600 text-white py-6">
+      <div className="bg-gray-900 text-white py-6">
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-center mb-2">
             <FileText className="w-8 h-8" />
@@ -76,10 +76,10 @@ const Terms: React.FC = () => {
           <h1 className="text-xl sm:text-2xl font-bold text-center mb-1">
             Terms and Conditions
           </h1>
-          <p className="text-center text-teal-100 text-xs sm:text-sm">
+          <p className="text-center text-gray-300 text-xs sm:text-sm">
             Please read these terms carefully before using our services
           </p>
-          <p className="text-center text-teal-200 text-xs mt-1">
+          <p className="text-center text-gray-400 text-xs mt-1">
             Last Updated: October 7, 2025
           </p>
         </div>
@@ -91,7 +91,7 @@ const Terms: React.FC = () => {
         <div className="flex justify-end gap-2 mb-3">
           <button
             onClick={expandAll}
-            className="px-3 py-1.5 bg-teal-600 text-white text-xs font-medium rounded hover:bg-teal-700 transition-colors"
+            className="px-3 py-1.5 bg-gray-800 text-white text-xs font-medium rounded hover:bg-black transition-colors"
           >
             Expand All
           </button>
@@ -109,10 +109,10 @@ const Terms: React.FC = () => {
           <AccordionSection id="agreement" icon={Shield} title="1. Agreement to Terms">
             <p>Welcome to Lurevi, Purple Plus, and Necessary Milan (collectively "Company", "we", "our", "us"). These Terms and Conditions ("Terms") govern your use of our website located at lurevi.in and our services.</p>
             <p className="mt-2">By accessing or using our website and services, you agree to be bound by these Terms. If you disagree with any part of these terms, you may not access our website or use our services.</p>
-            <div className="bg-orange-50 border-l-4 border-orange-400 p-2 mt-2">
+            <div className="bg-gray-100 border-l-4 border-gray-400 p-2 mt-2">
               <div className="flex">
-                <AlertCircle className="w-3 h-3 text-orange-400 mr-1.5 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-orange-800">
+                <AlertCircle className="w-3 h-3 text-gray-700 mr-1.5 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-gray-800">
                   <strong>Important:</strong> You must be at least 18 years old to use our services.
                 </p>
               </div>
@@ -195,7 +195,7 @@ const Terms: React.FC = () => {
           <AccordionSection id="returns" icon={RotateCcw} title="6. Returns and Refunds">
             <div>
               <p className="font-semibold text-gray-900">6.1 Physical Products</p>
-              <p className="mt-1">Physical products may be returned within 7 days of delivery if they are defective, damaged, or not as described. For detailed return procedures, please visit our <Link to="/returns-and-refunds" className="text-teal-600 hover:text-teal-700 underline">Returns & Refunds page</Link>.</p>
+              <p className="mt-1">Physical products may be returned within 7 days of delivery if they are defective, damaged, or not as described. For detailed return procedures, please visit our <Link to="/returns-and-refunds" className="text-gray-800 hover:text-black underline">Returns & Refunds page</Link>.</p>
             </div>
             <div className="mt-2">
               <p className="font-semibold text-gray-900">6.2 Digital Products</p>
@@ -239,7 +239,7 @@ const Terms: React.FC = () => {
 
           {/* 9. Privacy */}
           <AccordionSection id="privacy" icon={Lock} title="9. Privacy and Data Protection">
-            <p>Your privacy is important to us. Our collection and use of personal information is governed by our <Link to="/privacy" className="text-teal-600 hover:text-teal-700 underline">Privacy Policy</Link>, which is incorporated into these Terms by reference.</p>
+            <p>Your privacy is important to us. Our collection and use of personal information is governed by our <Link to="/privacy" className="text-gray-800 hover:text-black underline">Privacy Policy</Link>, which is incorporated into these Terms by reference.</p>
             <p className="mt-2">By using our website and services, you consent to the collection, use, and disclosure of your information as described in our Privacy Policy.</p>
           </AccordionSection>
 
@@ -294,7 +294,7 @@ const Terms: React.FC = () => {
 
           {/* 16. Contact Us */}
           <AccordionSection id="contact" icon={Mail} title="16. Contact Us">
-            <div className="bg-teal-50 rounded p-2 border border-teal-200">
+            <div className="bg-gray-100 rounded p-2 border border-gray-200">
               <p className="mb-2">If you have any questions about these Terms and Conditions, please contact us:</p>
               <div className="space-y-1 mb-2">
                 <p className="font-semibold text-gray-900">Lurevi (Purple Plus & Necessary Milan)</p>
@@ -307,8 +307,8 @@ const Terms: React.FC = () => {
           </AccordionSection>
 
           {/* Acknowledgment */}
-          <div className="bg-orange-50 border-l-4 border-orange-400 p-3 mt-3 rounded">
-            <p className="text-xs text-orange-800">
+          <div className="bg-gray-100 border-l-4 border-gray-400 p-3 mt-3 rounded">
+            <p className="text-xs text-gray-800">
               <strong>Acknowledgment:</strong> By using our website and services, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.
             </p>
           </div>
@@ -321,25 +321,25 @@ const Terms: React.FC = () => {
           <div className="flex flex-wrap justify-center gap-2">
             <Link 
               to="/privacy" 
-              className="px-3 py-1.5 bg-white text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-xs font-medium"
+              className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
               Privacy Policy
             </Link>
             <Link 
               to="/returns-and-refunds" 
-              className="px-3 py-1.5 bg-white text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-xs font-medium"
+              className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
               Returns & Refunds
             </Link>
             <Link 
               to="/shipping-info" 
-              className="px-3 py-1.5 bg-white text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-xs font-medium"
+              className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
               Shipping Info
             </Link>
             <Link 
               to="/contact-us" 
-              className="px-3 py-1.5 bg-white text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-xs font-medium"
+              className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
               Contact Us
             </Link>

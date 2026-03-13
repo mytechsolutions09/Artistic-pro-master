@@ -39,6 +39,7 @@ import { parseProductUrl, findProductBySlugs, generateSlug } from '../utils/slug
 import { ReviewService } from '../services/reviewService';
 import { FavoritesService } from '../services/favoritesService';
 import { Review } from '../types';
+import { NavigationVisibilityService } from '../services/navigationVisibilityService';
 
 const ProductPage: React.FC = () => {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
@@ -336,6 +337,23 @@ const ProductPage: React.FC = () => {
           <h1 className="text-xl font-semibold text-gray-800 mb-2">Product Not Found</h1>
           <p className="text-sm text-gray-500 mb-6">The product you're looking for doesn't exist or has been removed.</p>
           <Link to="/" className="inline-block px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!NavigationVisibilityService.isProductVisible(product)) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center px-4">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Package className="w-8 h-8 text-gray-400" />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-800 mb-2">Product Unavailable</h1>
+          <p className="text-sm text-gray-500 mb-6">This product category is currently deactivated by admin.</p>
+          <Link to="/" className="inline-block px-4 py-2 border border-gray-300 text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
             Back to Home
           </Link>
         </div>

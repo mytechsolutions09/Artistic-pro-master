@@ -4,37 +4,46 @@ import ImageSkeleton from './ImageSkeleton';
 
 // Hero Section Skeleton
 export const HeroSectionSkeleton: React.FC = () => {
+  const renderBentoCard = (key: string, style?: React.CSSProperties) => (
+    <div
+      key={key}
+      className="relative overflow-hidden rounded-2xl bg-gray-200 animate-pulse"
+      style={style}
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-300/70 via-gray-200/20 to-transparent" />
+      <div className="absolute bottom-4 left-4 right-4 space-y-2">
+        <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+      </div>
+    </div>
+  );
+
   return (
-    <section className="py-12 px-4">
+    <section className="py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Main Card Skeleton */}
-          <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl p-8 animate-pulse" style={{ minHeight: '300px' }}>
-            <div className="space-y-4">
-              <div className="h-8 bg-gray-300 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-300 rounded w-full"></div>
-              <div className="h-4 bg-gray-300 rounded w-2/3"></div>
-              <div className="h-10 bg-gray-300 rounded-full w-32 mt-6"></div>
-            </div>
-          </div>
+        {/* Desktop bento skeleton */}
+        <div className="hidden lg:grid grid-cols-3 gap-3 auto-rows-[160px] grid-flow-row-dense">
+          {renderBentoCard('d1', { gridColumn: 'span 1 / span 1', gridRow: 'span 2 / span 2' })}
+          {renderBentoCard('d2', { gridColumn: 'span 2 / span 2', gridRow: 'span 1 / span 1' })}
+          {renderBentoCard('d3', { gridColumn: 'span 1 / span 1', gridRow: 'span 1 / span 1' })}
+          {renderBentoCard('d4', { gridColumn: 'span 1 / span 1', gridRow: 'span 1 / span 1' })}
+          {renderBentoCard('d5', { gridColumn: 'span 2 / span 2', gridRow: 'span 1 / span 1' })}
+          {renderBentoCard('d6', { gridColumn: 'span 1 / span 1', gridRow: 'span 1 / span 1' })}
+        </div>
 
-          {/* Featured Card Skeleton */}
-          <div className="relative rounded-2xl overflow-hidden bg-gray-200 animate-pulse" style={{ minHeight: '300px' }}>
-            <ImageSkeleton className="w-full h-full" aspectRatio="landscape" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <div className="h-6 bg-gray-300 rounded w-2/3 mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-            </div>
-          </div>
+        {/* Tablet skeleton */}
+        <div className="hidden md:grid lg:hidden grid-cols-2 gap-3" style={{ gridAutoRows: '200px' }}>
+          {[...Array(6)].map((_, i) => renderBentoCard(`t${i}`))}
+        </div>
 
-          {/* Categories Card Skeleton */}
-          <div className="relative rounded-2xl overflow-hidden bg-gray-200 animate-pulse" style={{ minHeight: '300px' }}>
-            <ImageSkeleton className="w-full h-full" aspectRatio="landscape" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <div className="h-6 bg-gray-300 rounded w-2/3 mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-            </div>
-          </div>
+        {/* Mobile skeleton */}
+        <div className="grid md:hidden grid-cols-2 gap-2" style={{ gridAutoRows: '150px' }}>
+          {renderBentoCard('m1', { gridRow: 'span 2 / span 2' })}
+          {renderBentoCard('m2')}
+          {renderBentoCard('m3')}
+          {renderBentoCard('m4')}
+          {renderBentoCard('m5')}
+          {renderBentoCard('m6')}
         </div>
       </div>
     </section>

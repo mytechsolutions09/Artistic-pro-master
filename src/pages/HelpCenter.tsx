@@ -54,7 +54,7 @@ const HelpCenter: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-['Inter']">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Search Bar */}
@@ -64,7 +64,7 @@ const HelpCenter: React.FC = () => {
             <input
               type="text"
               placeholder="Search for help topics, questions, or issues..."
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ const HelpCenter: React.FC = () => {
               key={index}
               className="bg-white rounded-md p-4 shadow-sm"
             >
-              <div className="text-teal-600 mb-3">
+              <div className="text-gray-700 mb-3">
                 {category.icon}
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">{category.title}</h3>
@@ -100,7 +100,7 @@ const HelpCenter: React.FC = () => {
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold text-gray-900 mb-2">{item.question}</h3>
                     <p className="text-sm text-gray-600 mb-2">{item.answer}</p>
-                    <span className="inline-block px-2 py-1 bg-teal-100 text-teal-800 text-xs font-medium rounded">
+                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">
                       {item.category}
                     </span>
                   </div>
@@ -111,22 +111,22 @@ const HelpCenter: React.FC = () => {
         </div>
 
         {/* Contact Support */}
-        <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-md p-6 text-white text-center">
+        <div className="bg-gray-900 rounded-md p-6 text-white text-center">
           <h2 className="text-lg font-bold mb-3">Still Need Help?</h2>
-          <p className="text-teal-100 mb-4 text-sm">
+          <p className="text-gray-300 mb-4 text-sm">
             Can't find what you're looking for? Our support team is ready to assist you.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/contact-us"
-              className="inline-flex items-center px-4 py-2 bg-white text-teal-600 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-white text-gray-900 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
               <Mail className="w-4 h-4 mr-2" />
               Contact Support
             </Link>
             <Link
               to="/faq"
-              className="inline-flex items-center px-4 py-2 bg-teal-800 text-white font-medium rounded-md hover:bg-teal-900 transition-colors text-sm"
+              className="inline-flex items-center px-4 py-2 bg-gray-700 text-white font-medium rounded-md hover:bg-gray-800 transition-colors text-sm"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               View FAQ

@@ -41,7 +41,7 @@ const AboutUs: React.FC = () => {
     {
       year: "Sep 2023",
       title: "Fashion Launch",
-      description: "Introduced premium clothing line featuring original artwork. Partnered with sustainable manufacturers to ensure ethical production practices."
+      description: "Introduced a fashion line featuring original artwork. Partnered with sustainable manufacturers to ensure ethical production practices."
     },
     {
       year: "Dec 2023",
@@ -79,18 +79,17 @@ const AboutUs: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-['Inter']">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 text-white">
+      <div className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              About <span className="text-pink-300">Lurevi</span>
+              About <span className="text-gray-200">Lurevi</span>
             </h1>
-            <p className="text-lg text-teal-100 max-w-3xl mx-auto leading-relaxed">
-              We're passionate about bringing art to life through digital creations and premium clothing. 
-              Founded in 2023, Lurevi, along with our sister companies Purple Plus and Necessary Milan, 
-              has grown from a small startup to a global platform serving customers in over 50 countries. 
+            <p className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              We're passionate about bringing art to life through digital creations and fashion-forward products. 
+              Founded in 2023, Lurevi has grown from a small startup to a global platform serving customers in over 50 countries. 
               Our mission is to make unique, high-quality art accessible to everyone, everywhere.
             </p>
           </div>
@@ -108,7 +107,7 @@ const AboutUs: React.FC = () => {
               unique designs that allow you to express your personality through what you wear.
             </p>
             <p className="text-base text-gray-600 mb-4 leading-relaxed">
-              From stunning digital art pieces to premium clothing collections, we curate 
+              From stunning digital art pieces to curated fashion collections, we curate 
               and create products that inspire confidence and creativity in every customer. 
               Our carefully selected artists and designers work tirelessly to bring you 
               exclusive collections that you won't find anywhere else.
@@ -122,34 +121,34 @@ const AboutUs: React.FC = () => {
             <div className="flex items-center space-x-4">
               <Link
                 to="/products"
-                className="bg-gradient-to-r from-teal-600 to-pink-600 hover:from-teal-700 hover:to-pink-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="bg-black hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Explore Our Products
               </Link>
               <Link
                 to="/contact-us"
-                className="border-2 border-teal-600 text-teal-600 hover:bg-teal-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+                className="border-2 border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
               >
                 Get in Touch
               </Link>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-teal-50 to-pink-50 rounded-2xl p-6 shadow-lg">
+          <div className="bg-gray-100 rounded-2xl p-6 shadow-lg">
             <div className="grid grid-cols-2 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-teal-600 mb-2">50K+</div>
+                <div className="text-3xl font-bold text-gray-800 mb-2">50K+</div>
                 <div className="text-sm text-gray-600">Happy Customers</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-pink-600 mb-2">15K+</div>
+                <div className="text-3xl font-bold text-gray-800 mb-2">15K+</div>
                 <div className="text-sm text-gray-600">Unique Designs</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-teal-600 mb-2">50+</div>
+                <div className="text-3xl font-bold text-gray-800 mb-2">50+</div>
                 <div className="text-sm text-gray-600">Countries Served</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-pink-600 mb-2">99.9%</div>
+                <div className="text-3xl font-bold text-gray-800 mb-2">99.9%</div>
                 <div className="text-sm text-gray-600">Satisfaction Rate</div>
               </div>
             </div>
@@ -168,8 +167,8 @@ const AboutUs: React.FC = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="text-center p-4 bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl">
-              <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4 bg-gray-100 rounded-xl">
+              <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Lightbulb className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Digital Art Gallery</h3>
@@ -178,18 +177,18 @@ const AboutUs: React.FC = () => {
                 Download high-resolution prints instantly for your home or office.
               </p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl">
-              <div className="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4 bg-gray-100 rounded-xl">
+              <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Target className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Premium Clothing</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Fashion Collection</h3>
               <p className="text-gray-600 text-sm">
                 Fashion-forward clothing featuring original artwork. From t-shirts to hoodies, 
                 express your style with unique designs that stand out.
               </p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl">
-              <div className="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4 bg-gray-100 rounded-xl">
+              <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Custom Solutions</h3>
@@ -214,9 +213,7 @@ const AboutUs: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((value, index) => (
               <div key={index} className="text-center">
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full mb-3 ${
-                  index % 2 === 0 ? 'bg-teal-100 text-teal-600' : 'bg-pink-100 text-pink-600'
-                }`}>
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-3 bg-gray-100 text-gray-700">
                   {React.cloneElement(value.icon, { className: "w-6 h-6" })}
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{value.title}</h3>
@@ -237,7 +234,7 @@ const AboutUs: React.FC = () => {
             </p>
           </div>
           <div className="relative">
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-teal-400 to-pink-400"></div>
+            <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gray-300"></div>
             <div className="space-y-6">
               {milestones.map((milestone, index) => (
                 <div key={index} className={`flex items-center ${
@@ -245,12 +242,12 @@ const AboutUs: React.FC = () => {
                 }`}>
                   <div className={`w-1/2 ${index % 2 === 0 ? 'pr-6 text-right' : 'pl-6 text-left'}`}>
                     <div className="bg-white rounded-lg p-4 shadow-lg">
-                      <div className="text-xl font-bold text-teal-600 mb-1">{milestone.year}</div>
+                      <div className="text-xl font-bold text-gray-800 mb-1">{milestone.year}</div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-1">{milestone.title}</h3>
                       <p className="text-gray-600 text-sm">{milestone.description}</p>
                     </div>
                   </div>
-                  <div className="w-3 h-3 bg-gradient-to-r from-teal-500 to-pink-500 rounded-full border-2 border-white shadow-lg z-10"></div>
+                  <div className="w-3 h-3 bg-gray-700 rounded-full border-2 border-white shadow-lg z-10"></div>
                   <div className="w-1/2"></div>
                 </div>
               ))}
@@ -271,13 +268,11 @@ const AboutUs: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {teamMembers.map((member, index) => (
               <div key={index} className="text-center">
-                <div className={`w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center ${
-                  index % 2 === 0 ? 'bg-teal-100 text-teal-600' : 'bg-pink-100 text-pink-600'
-                }`}>
+                <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center bg-gray-100 text-gray-700">
                   <Users className="w-8 h-8" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">{member.name}</h3>
-                <p className="text-teal-600 font-medium mb-1 text-sm">{member.role}</p>
+                <p className="text-gray-700 font-medium mb-1 text-sm">{member.role}</p>
                 <p className="text-xs text-gray-600">{member.description}</p>
               </div>
             ))}
@@ -296,8 +291,8 @@ const AboutUs: React.FC = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center p-4 bg-teal-50 rounded-xl">
-              <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4 bg-gray-100 rounded-xl">
+              <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Leaf className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">Sustainable Practices</h3>
@@ -305,8 +300,8 @@ const AboutUs: React.FC = () => {
                 Eco-friendly packaging, sustainable materials, and carbon-neutral shipping options.
               </p>
             </div>
-            <div className="text-center p-4 bg-pink-50 rounded-xl">
-              <div className="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4 bg-gray-100 rounded-xl">
+              <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Palette className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">Artist Support</h3>
@@ -314,8 +309,8 @@ const AboutUs: React.FC = () => {
                 Fair compensation for artists and designers, promoting creative talent worldwide.
               </p>
             </div>
-            <div className="text-center p-4 bg-teal-50 rounded-xl">
-              <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4 bg-gray-100 rounded-xl">
+              <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">Quality Assurance</h3>
@@ -323,8 +318,8 @@ const AboutUs: React.FC = () => {
                 Rigorous quality control and premium materials for all our products.
               </p>
             </div>
-            <div className="text-center p-4 bg-pink-50 rounded-xl">
-              <div className="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4 bg-gray-100 rounded-xl">
+              <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Handshake className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-2">Community Impact</h3>
@@ -337,29 +332,29 @@ const AboutUs: React.FC = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-teal-600 to-pink-600 text-white py-8">
+      <div className="bg-gray-900 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold mb-3">Ready to Experience Lurevi?</h2>
-          <p className="text-lg text-teal-100 mb-6 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-300 mb-6 max-w-2xl mx-auto">
             Join thousands of satisfied customers and discover the perfect blend of art and fashion. 
             Start your journey with us today!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/browse"
-              className="bg-white text-teal-600 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="bg-white text-gray-900 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               Explore Art Gallery
             </Link>
             <Link
               to="/clothes"
-              className="bg-white text-pink-600 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="bg-white text-gray-900 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               Shop Clothing
             </Link>
             <Link
               to="/contact-us"
-              className="border-2 border-white text-white hover:bg-white hover:text-teal-600 font-semibold py-3 px-8 rounded-lg transition-all duration-200"
+              className="border-2 border-white text-white hover:bg-white hover:text-gray-900 font-semibold py-3 px-8 rounded-lg transition-all duration-200"
             >
               Contact Us
             </Link>

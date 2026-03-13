@@ -131,7 +131,7 @@ const CartPage: React.FC = () => {
 
   if (cart.items.length === 0) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] bg-white flex items-center justify-center px-4">
+      <div className="min-h-[calc(100vh-4rem)] bg-white flex items-center justify-center px-4 font-['Inter']">
         <div className="max-w-sm w-full text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShoppingCart className="w-8 h-8 text-gray-400" />
@@ -158,13 +158,13 @@ const CartPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="min-h-screen bg-white font-['Inter']">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Cart Items - Left Column */}
           <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">Cart</h1>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-semibold text-gray-900 leading-none">Cart</h1>
               <button
                 onClick={clearCart}
                 className="text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
@@ -173,15 +173,15 @@ const CartPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-3">
               {cart.items.map((item) => (
-                <div key={item.id} className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+                <div key={item.id} className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
                   {/* Product Image */}
                   <div className="relative flex-shrink-0">
                     <img
                       src={item.product.images?.[0] || '/api/placeholder/400/400'}
                       alt={item.product.title}
-                      className="w-20 h-20 object-cover rounded-md"
+                      className="w-16 h-16 object-cover rounded-md"
                     />
                   </div>
 
@@ -189,7 +189,7 @@ const CartPage: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base mb-1">{item.product.title}</h3>
+                        <h3 className="font-semibold text-gray-900 text-base leading-tight mb-0.5">{item.product.title}</h3>
                         
                         {/* Product Variant Info */}
                         <div className="space-y-1">
@@ -212,7 +212,7 @@ const CartPage: React.FC = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center space-x-4 mt-3">
+                        <div className="flex items-center space-x-3 mt-2">
                           <button 
                             onClick={() => toggleFavorite(item.product.id)}
                             disabled={favoritesLoading[item.product.id]}
@@ -238,7 +238,7 @@ const CartPage: React.FC = () => {
                       </div>
 
                       {/* Price and Quantity */}
-                      <div className="flex flex-col items-end space-y-3">
+                      <div className="flex flex-col items-end space-y-2">
                         {/* Price */}
                         <div className="text-right">
                           {item.product.originalPrice && item.product.originalPrice > item.selectedPrice ? (
@@ -246,7 +246,7 @@ const CartPage: React.FC = () => {
                               <p className="text-sm text-gray-500 line-through">
                                 {formatUIPrice(item.product.originalPrice, 'INR')}
                               </p>
-                              <p className="font-bold text-gray-900 text-lg">
+                              <p className="font-bold text-gray-900 text-xl leading-none">
                                 {formatUIPrice(item.selectedPrice, 'INR')}
                               </p>
                               {item.product.discountPercentage && (
@@ -256,14 +256,14 @@ const CartPage: React.FC = () => {
                               )}
                             </>
                           ) : (
-                            <p className="font-bold text-gray-900 text-lg">
+                            <p className="font-bold text-gray-900 text-xl leading-none">
                               {formatUIPrice(item.selectedPrice, 'INR')}
                             </p>
                           )}
                         </div>
                         
                         {/* Quantity Controls */}
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
                           <button
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                             disabled={item.quantity <= 1}
@@ -271,7 +271,7 @@ const CartPage: React.FC = () => {
                           >
                             <Minus className="w-4 h-4" />
                           </button>
-                          <span className="w-8 text-center font-medium text-gray-900">
+                          <span className="w-7 text-center font-medium text-gray-900">
                             {item.quantity}
                           </span>
                           <button
@@ -291,10 +291,10 @@ const CartPage: React.FC = () => {
 
           {/* Order Summary - Right Column */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 sticky top-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 sticky top-8">
+              <h2 className="text-2xl font-semibold text-gray-900 leading-none mb-5">Order Summary</h2>
 
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 mb-5">
                 {/* Subtotal */}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
@@ -318,10 +318,10 @@ const CartPage: React.FC = () => {
                 )}
 
                 {/* Total */}
-                <div className="border-t border-gray-200 pt-4">
+                <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between">
                     <span className="text-lg font-bold text-gray-900">Total</span>
-                    <span className="text-xl font-bold text-gray-900">
+                    <span className="text-2xl leading-none font-bold text-gray-900">
                       {formatUIPrice(total, 'INR')}
                     </span>
                   </div>
@@ -331,7 +331,7 @@ const CartPage: React.FC = () => {
               {/* Checkout Button */}
               <button
                 onClick={handleCheckout}
-                className="w-full bg-teal-600 text-white py-2.5 px-4 rounded-md font-medium hover:bg-teal-700 transition-colors mb-4"
+                className="w-full bg-black text-white py-2.5 px-4 rounded-md font-medium hover:bg-gray-900 transition-colors mb-3"
               >
                 Checkout
               </button>

@@ -13,6 +13,52 @@ const DEFAULT_SETTINGS: NavigationVisibilitySettings = {
   fbActive: true,
 };
 
+const FB_KEYWORDS = [
+  'food & beverage',
+  'f&b',
+  'f & b',
+  'food and beverage',
+  'dry fruit',
+  'dried fruit',
+  'spice',
+  'spices',
+];
+
+const CLOTHING_KEYWORDS = [
+  'men',
+  'women',
+  'unisex',
+  'clothing',
+  'hoodie',
+  'sweatshirt',
+  't-shirt',
+  'tshirt',
+  'shirt',
+];
+
+const getCombinedProductText = (product: any): string => {
+  const categories = Array.isArray(product?.categories) ? product.categories : [];
+  const tags = Array.isArray(product?.tags) ? product.tags : [];
+  const category = product?.category ? [product.category] : [];
+
+  return [...categories, ...tags, ...category]
+    .map((value) => String(value || '').toLowerCase())
+    .join(' ');
+};
+
+const isFBProduct = (product: any): boolean => {
+  const combined = getCombinedProductText(product);
+  return FB_KEYWORDS.some((keyword) => combined.includes(keyword));
+};
+
+const isClothingProduct = (product: any): boolean => {
+  const gender = String(product?.gender || '').toLowerCase();
+  if (gender === 'men' || gender === 'women' || gender === 'unisex') return true;
+
+  const combined = getCombinedProductText(product);
+  return CLOTHING_KEYWORDS.some((keyword) => combined.includes(keyword));
+};
+
 const readSettings = (): NavigationVisibilitySettings => {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS;
 
@@ -71,5 +117,25 @@ export const NavigationVisibilityService = {
       window.removeEventListener(UPDATE_EVENT, handleChange);
       window.removeEventListener('storage', handleStorage);
     };
+  },
+
+  isFBProduct(product: any): boolean {
+    return isFBProduct(product);
+  },
+
+  isClothingProduct(product: any): boolean {
+    return isClothingProduct(product);
+  },
+
+  isProductVisible(product: any, settings?: NavigationVisibilitySettings): boolean {
+    const resolvedSettings = settings || readSettings();
+    if (!resolvedSettings.fbActive && isFBProduct(product)) return false;
+    if (!resolvedSettings.clothesActive && isClothingProduct(product)) return false;
+    return true;
+  },
+
+  filterProductsByVisibility<T>(products: T[], settings?: NavigationVisibilitySettings): T[] {
+    const resolvedSettings = settings || readSettings();
+    return products.filter((product) => this.isProductVisible(product, resolvedSettings));
   },
 };

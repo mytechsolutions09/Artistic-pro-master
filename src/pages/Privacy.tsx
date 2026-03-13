@@ -40,13 +40,13 @@ const Privacy: React.FC = () => {
     title: string; 
     children: React.ReactNode;
   }) => (
-    <section className="bg-white rounded-lg shadow-sm shadow-teal-100 overflow-hidden border border-gray-200 hover:shadow-md hover:shadow-teal-200 transition-shadow">
+    <section className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow">
       <button
         onClick={() => toggleSection(id)}
         className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center">
-          <Icon className="w-4 h-4 mr-2 text-teal-600 flex-shrink-0" />
+          <Icon className="w-4 h-4 mr-2 text-gray-700 flex-shrink-0" />
           <h2 className="text-xs sm:text-sm font-bold text-gray-900 text-left">{title}</h2>
         </div>
         {expandedSections[id] ? (
@@ -64,9 +64,9 @@ const Privacy: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-['Inter']">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-800 to-teal-600 text-white py-6">
+      <div className="bg-gray-900 text-white py-6">
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-center mb-2">
             <Shield className="w-8 h-8" />
@@ -74,10 +74,10 @@ const Privacy: React.FC = () => {
           <h1 className="text-xl sm:text-2xl font-bold text-center mb-1">
             Privacy Policy
           </h1>
-          <p className="text-center text-teal-100 text-xs sm:text-sm">
+          <p className="text-center text-gray-300 text-xs sm:text-sm">
             Your privacy is important to us. Learn how we collect, use, and protect your data.
           </p>
-          <p className="text-center text-teal-200 text-xs mt-1">
+          <p className="text-center text-gray-400 text-xs mt-1">
             Last Updated: October 7, 2025
           </p>
         </div>
@@ -89,7 +89,7 @@ const Privacy: React.FC = () => {
         <div className="flex justify-end gap-2 mb-3">
           <button
             onClick={expandAll}
-            className="px-3 py-1.5 bg-teal-600 text-white text-xs font-medium rounded hover:bg-teal-700 transition-colors"
+            className="px-3 py-1.5 bg-gray-800 text-white text-xs font-medium rounded hover:bg-black transition-colors"
           >
             Expand All
           </button>
@@ -107,10 +107,10 @@ const Privacy: React.FC = () => {
           <AccordionSection id="intro" icon={FileText} title="1. Introduction">
             <p>Welcome to Lurevi's Privacy Policy. This policy describes how Lurevi, Purple Plus, and Necessary Milan (collectively "we", "us", or "our") collect, use, share, and protect your personal information when you use our website at lurevi.in and our services.</p>
             <p className="mt-2">By using our website and services, you consent to the data practices described in this policy. If you do not agree with this policy, please do not use our website or services.</p>
-            <div className="bg-teal-50 border-l-4 border-teal-400 p-2 mt-2">
+            <div className="bg-gray-100 border-l-4 border-gray-400 p-2 mt-2">
               <div className="flex">
-                <AlertCircle className="w-3 h-3 text-teal-600 mr-1.5 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-teal-800">
+                <AlertCircle className="w-3 h-3 text-gray-700 mr-1.5 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-gray-800">
                   <strong>Key Point:</strong> We are committed to protecting your privacy and handling your data transparently and securely.
                 </p>
               </div>
@@ -251,10 +251,10 @@ const Privacy: React.FC = () => {
               <li><strong>Regular Audits:</strong> We regularly review and update our security practices</li>
               <li><strong>Limited Access:</strong> Only authorized personnel can access personal data</li>
             </ul>
-            <div className="bg-orange-50 border-l-4 border-orange-400 p-2 mt-2">
+            <div className="bg-gray-100 border-l-4 border-gray-400 p-2 mt-2">
               <div className="flex">
-                <AlertCircle className="w-3 h-3 text-orange-400 mr-1.5 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-orange-800">
+                <AlertCircle className="w-3 h-3 text-gray-700 mr-1.5 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-gray-800">
                   <strong>Note:</strong> While we strive to protect your data, no method of transmission over the internet is 100% secure. Please use strong passwords and keep your account credentials confidential.
                 </p>
               </div>
@@ -284,7 +284,7 @@ const Privacy: React.FC = () => {
               <p className="font-semibold text-gray-900">7.5 Objection</p>
               <p className="mt-1">You can object to certain types of data processing, such as direct marketing.</p>
             </div>
-            <p className="mt-2 text-teal-600 font-medium">To exercise these rights, contact us at support@lurevi.com</p>
+            <p className="mt-2 text-gray-800 font-medium">To exercise these rights, contact us at support@lurevi.com</p>
           </AccordionSection>
 
           {/* 8. Data Retention */}
@@ -332,7 +332,7 @@ const Privacy: React.FC = () => {
 
           {/* 12. Contact Us */}
           <AccordionSection id="contact" icon={Mail} title="12. Contact Us">
-            <div className="bg-teal-50 rounded p-2 border border-teal-200">
+            <div className="bg-gray-100 rounded p-2 border border-gray-200">
               <p className="mb-2">If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:</p>
               <div className="space-y-1 mb-2">
                 <p className="font-semibold text-gray-900">Lurevi (Purple Plus & Necessary Milan)</p>
@@ -345,8 +345,8 @@ const Privacy: React.FC = () => {
           </AccordionSection>
 
           {/* Acknowledgment */}
-          <div className="bg-teal-50 border-l-4 border-teal-400 p-3 mt-3 rounded">
-            <p className="text-xs text-teal-800">
+          <div className="bg-gray-100 border-l-4 border-gray-400 p-3 mt-3 rounded">
+            <p className="text-xs text-gray-800">
               <strong>Your Consent:</strong> By using our website and services, you acknowledge that you have read and understood this Privacy Policy and consent to the collection, use, and disclosure of your information as described herein.
             </p>
           </div>
@@ -359,25 +359,25 @@ const Privacy: React.FC = () => {
           <div className="flex flex-wrap justify-center gap-2">
             <Link 
               to="/terms-and-conditions" 
-              className="px-3 py-1.5 bg-white text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-xs font-medium"
+              className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
               Terms & Conditions
             </Link>
             <Link 
               to="/returns-and-refunds" 
-              className="px-3 py-1.5 bg-white text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-xs font-medium"
+              className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
               Returns & Refunds
             </Link>
             <Link 
               to="/shipping-info" 
-              className="px-3 py-1.5 bg-white text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-xs font-medium"
+              className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
               Shipping Info
             </Link>
             <Link 
               to="/contact-us" 
-              className="px-3 py-1.5 bg-white text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-xs font-medium"
+              className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
               Contact Us
             </Link>

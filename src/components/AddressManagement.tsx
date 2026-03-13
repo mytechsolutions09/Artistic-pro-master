@@ -166,7 +166,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="font-sans font-normal">Add Address</span>
@@ -274,7 +274,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
               </button>
               <button
                 type="submit"
-                className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                className="px-3 py-1.5 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm"
               >
                 <span className="font-sans font-normal">{editingAddress ? 'Update Address' : 'Save Address'}</span>
               </button>
@@ -291,7 +291,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
           <p className="text-gray-500 mb-4">Add your first address to get started</p>
           <button
             onClick={() => setShowForm(true)}
-            className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+            className="px-3 py-1.5 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors text-sm"
           >
             <span className="font-sans font-normal">Add Address</span>
           </button>

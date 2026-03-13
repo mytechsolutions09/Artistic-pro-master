@@ -4,6 +4,7 @@ import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import { Product } from '../types';
 import { ChevronDown } from 'lucide-react';
+import { NavigationVisibilityService, type NavigationVisibilitySettings } from '../services/navigationVisibilityService';
 
 const FBPage: React.FC = () => {
   const { adminProducts, loading, error } = useProducts();
@@ -11,6 +12,9 @@ const FBPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('featured');
+  const [visibilitySettings, setVisibilitySettings] = useState<NavigationVisibilitySettings>(
+    NavigationVisibilityService.getSettings()
+  );
 
   // F&B categories
   const categories = [
@@ -126,6 +130,13 @@ const FBPage: React.FC = () => {
     setFilteredProducts(sorted);
   }, [adminProducts, selectedCategory, selectedFilter, sortBy]);
 
+  useEffect(() => {
+    const unsubscribe = NavigationVisibilityService.subscribe((settings) => {
+      setVisibilitySettings(settings);
+    });
+    return unsubscribe;
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -147,6 +158,17 @@ const FBPage: React.FC = () => {
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded font-sans font-normal">
             Error loading products: {error}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!visibilitySettings.fbActive) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">F&B is currently unavailable</h2>
+          <p className="text-sm text-gray-600">This section has been temporarily deactivated by admin.</p>
         </div>
       </div>
     );

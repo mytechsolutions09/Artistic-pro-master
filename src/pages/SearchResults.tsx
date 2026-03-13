@@ -7,6 +7,7 @@ import { Product } from '../types';
 import { useCurrency } from '../contexts/CurrencyContext';
 import FilterSidebar from '../components/FilterSidebar';
 import ProductCard from '../components/ProductCard';
+import { NavigationVisibilityService } from '../services/navigationVisibilityService';
 
 interface SearchResult extends Product {
   itemType?: 'product' | 'normal_item' | 'fb_item';
@@ -119,6 +120,9 @@ const SearchResults: React.FC = () => {
         };
         allResults.push(normalizedItem);
       });
+
+      // Apply visibility rules from admin nav toggles (F&B / Clothes)
+      allResults.splice(0, allResults.length, ...NavigationVisibilityService.filterProductsByVisibility(allResults));
 
       // Apply filters
       let filteredResults = allResults.filter(result => {

@@ -21,6 +21,24 @@ const HomepageManagement: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
 
+  const getDefaultBentoSpan = (index: number) => {
+    if (index === 0) return { desktopColSpan: 1, desktopRowSpan: 2 };
+    if (index === 1) return { desktopColSpan: 2, desktopRowSpan: 1 };
+    if (index === 4) return { desktopColSpan: 2, desktopRowSpan: 1 };
+    return { desktopColSpan: 1, desktopRowSpan: 1 };
+  };
+
+  const normalizeBentoCards = (cards: any[] = []) => {
+    return cards.map((card, index) => {
+      const defaults = getDefaultBentoSpan(index);
+      return {
+        ...card,
+        desktopColSpan: Number(card.desktopColSpan || defaults.desktopColSpan),
+        desktopRowSpan: Number(card.desktopRowSpan || defaults.desktopRowSpan),
+      };
+    });
+  };
+
   // Fetch real data from database
   const fetchRealData = async () => {
     try {
@@ -42,7 +60,9 @@ const HomepageManagement: React.FC = () => {
         
         // Apply saved settings to state variables
         if (savedSettings.bento_hero) {
-          setBentoHero(savedSettings.bento_hero);
+          setBentoHero({ cards: normalizeBentoCards(savedSettings.bento_hero.cards || []) });
+        } else if (savedSettings.hero_section?.bento_cards) {
+          setBentoHero({ cards: normalizeBentoCards(savedSettings.hero_section.bento_cards) });
         }
         if (savedSettings.hero_section) {
           setHeroSection(savedSettings.hero_section);
@@ -127,12 +147,12 @@ const HomepageManagement: React.FC = () => {
   // Bento Hero State
   const [bentoHero, setBentoHero] = useState<{ cards: any[] }>({
     cards: [
-      { id: '1', title: 'Paintings', subtitle: 'Explore Collection', image: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/paintings', bgColor: '#f5e6d3' },
-      { id: '2', title: 'Photography', subtitle: 'Stunning Shots', image: 'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/photography', bgColor: '#d3e8f5' },
-      { id: '3', title: 'Abstract', subtitle: 'Modern Expressions', image: 'https://images.pexels.com/photos/1047540/pexels-photo-1047540.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/abstract', bgColor: '#e8d3f5' },
-      { id: '4', title: 'Nature', subtitle: 'Raw & Beautiful', image: 'https://images.pexels.com/photos/1172207/pexels-photo-1172207.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/nature', bgColor: '#d3f5e8' },
-      { id: '5', title: 'Portrait', subtitle: 'Human Stories', image: 'https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/portrait', bgColor: '#f5d3d3' },
-      { id: '6', title: 'Digital Art', subtitle: 'New Dimensions', image: 'https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/digital', bgColor: '#f5f0d3' },
+      { id: '1', title: 'Paintings', subtitle: 'Explore Collection', image: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/paintings', bgColor: '#f5e6d3', desktopColSpan: 1, desktopRowSpan: 2 },
+      { id: '2', title: 'Photography', subtitle: 'Stunning Shots', image: 'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/photography', bgColor: '#d3e8f5', desktopColSpan: 2, desktopRowSpan: 1 },
+      { id: '3', title: 'Abstract', subtitle: 'Modern Expressions', image: 'https://images.pexels.com/photos/1047540/pexels-photo-1047540.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/abstract', bgColor: '#e8d3f5', desktopColSpan: 1, desktopRowSpan: 1 },
+      { id: '4', title: 'Nature', subtitle: 'Raw & Beautiful', image: 'https://images.pexels.com/photos/1172207/pexels-photo-1172207.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/nature', bgColor: '#d3f5e8', desktopColSpan: 1, desktopRowSpan: 1 },
+      { id: '5', title: 'Portrait', subtitle: 'Human Stories', image: 'https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/portrait', bgColor: '#f5d3d3', desktopColSpan: 2, desktopRowSpan: 1 },
+      { id: '6', title: 'Digital Art', subtitle: 'New Dimensions', image: 'https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/digital', bgColor: '#f5f0d3', desktopColSpan: 1, desktopRowSpan: 1 },
     ]
   });
 
@@ -375,8 +395,11 @@ const HomepageManagement: React.FC = () => {
     try {
       // Prepare all homepage settings data
       const homepageSettings = {
-        bento_hero: bentoHero,
-        hero_section: heroSection,
+        bento_hero: bentoHero, // Backward/forward compatible payload
+        hero_section: {
+          ...heroSection,
+          bento_cards: bentoHero.cards
+        },
         image_slider: imageSlider,
         featured_grid: featuredGrid,
         best_sellers: bestSellers,
@@ -464,6 +487,15 @@ const HomepageManagement: React.FC = () => {
     });
   };
 
+  const updateBentoCardSpan = (index: number, field: 'desktopColSpan' | 'desktopRowSpan', value: number) => {
+    const safeValue = Math.max(1, Math.min(3, Number(value || 1)));
+    setBentoHero(prev => {
+      const updated = [...prev.cards];
+      updated[index] = { ...updated[index], [field]: safeValue };
+      return { cards: updated };
+    });
+  };
+
   const addBentoCard = () => {
     setBentoHero(prev => ({
       cards: [
@@ -475,6 +507,8 @@ const HomepageManagement: React.FC = () => {
           image: '',
           link: '/categories',
           bgColor: '#f5f5f5',
+          desktopColSpan: 1,
+          desktopRowSpan: 1,
         }
       ]
     }));
@@ -503,28 +537,58 @@ const HomepageManagement: React.FC = () => {
               {/* Layout Preview */}
               <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Desktop Layout Preview</p>
-                <div className="grid grid-cols-3 gap-1.5 text-xs text-center font-medium text-white" style={{ height: '120px' }}>
-                  <div className="row-span-2 bg-gray-700 rounded flex items-center justify-center">Card 1<br/>(Tall)</div>
-                  <div className="col-span-2 bg-gray-600 rounded flex items-center justify-center">Card 2 (Wide)</div>
-                  <div className="bg-gray-500 rounded flex items-center justify-center">Card 3</div>
-                  <div className="bg-gray-500 rounded flex items-center justify-center">Card 4</div>
+                <div className="grid grid-cols-3 gap-1.5 text-xs text-center font-medium text-white auto-rows-[50px] grid-flow-row-dense">
+                  {bentoHero.cards.map((card, idx) => {
+                    const colSpan = Math.max(1, Math.min(3, Number(card.desktopColSpan || 1)));
+                    const rowSpan = Math.max(1, Math.min(3, Number(card.desktopRowSpan || 1)));
+                    return (
+                      <div
+                        key={`preview-${card.id || idx}`}
+                        className={`${idx < 2 ? 'bg-gray-700' : idx < 6 ? 'bg-gray-600' : 'bg-gray-500'} rounded flex items-center justify-center px-1`}
+                        style={{
+                          gridColumn: `span ${colSpan} / span ${colSpan}`,
+                          gridRow: `span ${rowSpan} / span ${rowSpan}`,
+                        }}
+                      >
+                        <span className="leading-tight">
+                          Card {idx + 1}
+                          <br />
+                          <span className="text-[10px] opacity-80">{colSpan}w x {rowSpan}h</span>
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="grid grid-cols-3 gap-1.5 text-xs text-center font-medium text-white mt-1.5" style={{ height: '50px' }}>
-                  <div className="col-span-2 bg-gray-600 rounded flex items-center justify-center">Card 5 (Wide)</div>
-                  <div className="bg-gray-500 rounded flex items-center justify-center">Card 6</div>
-                </div>
-                {bentoHero.cards.length > 6 && (
-                  <div className="mt-3">
-                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Extra Cards Preview</p>
-                    <div className="grid grid-cols-3 gap-1.5 text-xs text-center font-medium text-white" style={{ gridAutoRows: '50px' }}>
-                      {bentoHero.cards.slice(6).map((_, extraIdx) => (
-                        <div key={`preview-extra-${extraIdx}`} className="bg-gray-500 rounded flex items-center justify-center">
-                          Card {extraIdx + 7}
-                        </div>
-                      ))}
-                    </div>
+                <div className="mt-4 bg-white rounded-lg border border-gray-200 p-3">
+                  <p className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider mb-2">Adjust Sizes</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {bentoHero.cards.map((card, idx) => (
+                      <div key={`size-${card.id || idx}`} className="flex items-center gap-2 text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-gray-50">
+                        <span className="font-semibold text-gray-700 w-12 flex-shrink-0">Card {idx + 1}</span>
+                        <label className="text-gray-500">W</label>
+                        <select
+                          value={Number(card.desktopColSpan || 1)}
+                          onChange={(e) => updateBentoCardSpan(idx, 'desktopColSpan', Number(e.target.value))}
+                          className="px-1.5 py-1 border border-gray-200 rounded text-xs"
+                        >
+                          <option value={1}>1</option>
+                          <option value={2}>2</option>
+                          <option value={3}>3</option>
+                        </select>
+                        <label className="text-gray-500">H</label>
+                        <select
+                          value={Number(card.desktopRowSpan || 1)}
+                          onChange={(e) => updateBentoCardSpan(idx, 'desktopRowSpan', Number(e.target.value))}
+                          className="px-1.5 py-1 border border-gray-200 rounded text-xs"
+                        >
+                          <option value={1}>1</option>
+                          <option value={2}>2</option>
+                          <option value={3}>3</option>
+                        </select>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
 
               <div className="flex items-center justify-between mb-4">

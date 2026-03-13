@@ -4,6 +4,7 @@ import ProductCard from '../components/ProductCard';
 import ClothingPageSkeleton from '../components/ClothingPageSkeleton';
 import { Product } from '../types';
 import { ChevronDown } from 'lucide-react';
+import { NavigationVisibilityService, type NavigationVisibilitySettings } from '../services/navigationVisibilityService';
 
 const MenClothingPage: React.FC = () => {
   const { adminProducts, loading, error } = useProducts();
@@ -11,6 +12,9 @@ const MenClothingPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSize, setSelectedSize] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('featured');
+  const [visibilitySettings, setVisibilitySettings] = useState<NavigationVisibilitySettings>(
+    NavigationVisibilityService.getSettings()
+  );
 
   // Clothing categories - Match exactly with admin clothingTypes
   const categories = [
@@ -110,6 +114,13 @@ const MenClothingPage: React.FC = () => {
     setFilteredProducts(sorted);
   }, [adminProducts, selectedCategory, selectedSize, sortBy]);
 
+  useEffect(() => {
+    const unsubscribe = NavigationVisibilityService.subscribe((settings) => {
+      setVisibilitySettings(settings);
+    });
+    return unsubscribe;
+  }, []);
+
   if (loading) {
     return <ClothingPageSkeleton />;
   }
@@ -121,6 +132,17 @@ const MenClothingPage: React.FC = () => {
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded font-sans font-normal">
             Error loading products: {error}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!visibilitySettings.clothesActive) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Clothes section is currently unavailable</h2>
+          <p className="text-sm text-gray-600">This section has been temporarily deactivated by admin.</p>
         </div>
       </div>
     );

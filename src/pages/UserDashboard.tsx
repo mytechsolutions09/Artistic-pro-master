@@ -22,6 +22,7 @@ import AddressManagement from '../components/AddressManagement';
 import OrderTrackingModal from '../components/OrderTrackingModal';
 import { delhiveryService } from '../services/DelhiveryService';
 import { ReturnService } from '../services/returnService';
+import { buildSequenceMap, formatSequenceNumber } from '../utils/sequenceNumberUtils';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -327,6 +328,20 @@ const UserDashboard: React.FC = () => {
     fetchUserOrders();
     fetchReturnRequests();
   }, [user]);
+
+  const orderSequenceMap = React.useMemo(
+    () =>
+      buildSequenceMap(
+        userOrders.map((order) => ({
+          id: order.id,
+          createdAt: order.date,
+        }))
+      ),
+    [userOrders]
+  );
+
+  const getOrderDisplayNumber = (orderId: string) =>
+    formatSequenceNumber('ORD', orderSequenceMap[orderId]);
 
 
   // Fetch real tracking data from Delhivery for orders
@@ -990,7 +1005,7 @@ const UserDashboard: React.FC = () => {
                            #{index + 1}
                          </div>
                          <div className="flex-1">
-                           <p className="font-semibold text-gray-900 text-sm font-sans font-normal">Order #{order.id.slice(-4).toUpperCase()}</p>
+                           <p className="font-semibold text-gray-900 text-sm font-sans font-normal">Order #{getOrderDisplayNumber(order.id)}</p>
                            <p className="text-xs text-gray-700 font-sans font-normal">{order.items.length} items • {formatUIPrice(order.total, 'INR')}</p>
                            <p className="text-xs text-gray-500 font-sans font-normal">{new Date(order.date).toLocaleDateString()}</p>
                          </div>
@@ -1118,6 +1133,8 @@ const UserDashboard: React.FC = () => {
   const renderOrders = () => {
     // Filter orders by date and search query
     const filteredOrders = userOrders.filter(order => {
+      const normalizedQuery = orderSearchQuery.trim().toLowerCase();
+
       // Date filter
       const orderDate = new Date(order.date);
       const startDate = dateFilter.startDate ? new Date(dateFilter.startDate) : null;
@@ -1134,13 +1151,16 @@ const UserDashboard: React.FC = () => {
         return true;
       })();
 
-      // Search filter (search in order ID, product titles, status)
-      const matchesSearch = !orderSearchQuery || 
-        order.id.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
-        order.status.toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
-        order.items.some(item => 
-          item.title.toLowerCase().includes(orderSearchQuery.toLowerCase())
-        );
+      // Search filter (order number, order ID, status, customer name, product titles)
+      const orderNumber = getOrderDisplayNumber(order.id).toLowerCase();
+      const customerName = String((order as any).customerName || (order as any).customer_name || '').toLowerCase();
+      const matchesSearch =
+        !normalizedQuery ||
+        orderNumber.includes(normalizedQuery) ||
+        order.id.toLowerCase().includes(normalizedQuery) ||
+        order.status.toLowerCase().includes(normalizedQuery) ||
+        customerName.includes(normalizedQuery) ||
+        order.items.some(item => item.title.toLowerCase().includes(normalizedQuery));
       
       return matchesDate && matchesSearch;
     });
@@ -1163,7 +1183,7 @@ const UserDashboard: React.FC = () => {
     };
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 font-['Inter']">
         {/* Single Row Header */}
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -1318,7 +1338,7 @@ const UserDashboard: React.FC = () => {
                     {/* BOTTOM HALF: Info & Actions */}
                     <div className="h-1/2 p-3 flex flex-col">
                       {/* Order ID */}
-                      <span className="text-[10px] text-gray-400 font-medium">#{order.id.slice(-8).toUpperCase()}</span>
+                      <span className="text-[10px] text-gray-400 font-medium">#{getOrderDisplayNumber(order.id)}</span>
                       
                       {/* Product Info */}
                       <h3 
@@ -2224,7 +2244,7 @@ const UserDashboard: React.FC = () => {
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <div>
-                <span className="text-xs text-gray-400 font-medium">Order #{selectedOrderForDetail.id.slice(-8).toUpperCase()}</span>
+                <span className="text-xs text-gray-400 font-medium">Order #{getOrderDisplayNumber(selectedOrderForDetail.id)}</span>
                 <span className={`ml-2 px-2 py-0.5 text-xs font-medium rounded-full ${
                   selectedOrderForDetail.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
                   selectedOrderForDetail.status === 'processing' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
