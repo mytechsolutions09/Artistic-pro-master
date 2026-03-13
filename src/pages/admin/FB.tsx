@@ -10,6 +10,7 @@ import OrderManagement from '../../components/admin/OrderManagement';
 import { ProductService } from '../../services/supabaseService';
 import { NotificationManager } from '../../components/Notification';
 import { useProducts } from '../../contexts/ProductContext';
+import { NavigationVisibilityService } from '../../services/navigationVisibilityService';
 
 interface FBItem {
   id?: string;
@@ -45,6 +46,7 @@ const FB: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState<FBItem | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isFBNavActive, setIsFBNavActive] = useState(true);
   const { addProduct, updateProduct, deleteProduct, adminProducts } = useProducts();
   const [formData, setFormData] = useState<FBItem>({
     title: '',
@@ -73,6 +75,17 @@ const FB: React.FC = () => {
       loadItems();
     }
   }, [activeTab, adminProducts]);
+
+  useEffect(() => {
+    const settings = NavigationVisibilityService.getSettings();
+    setIsFBNavActive(settings.fbActive);
+
+    const unsubscribe = NavigationVisibilityService.subscribe((nextSettings) => {
+      setIsFBNavActive(nextSettings.fbActive);
+    });
+
+    return unsubscribe;
+  }, []);
 
   const loadItems = () => {
     setLoading(true);
@@ -493,6 +506,11 @@ const FB: React.FC = () => {
     setShowEditModal(true);
   };
 
+  const handleSetFBNavActive = (isActive: boolean) => {
+    NavigationVisibilityService.setSectionActive('fb', isActive);
+    NotificationManager.success(`F&B navbar link ${isActive ? 'activated' : 'deactivated'}`);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'all':
@@ -504,6 +522,30 @@ const FB: React.FC = () => {
                 <p className="text-sm text-gray-500 mt-0.5">Manage all food and beverage items</p>
               </div>
               <div className="flex items-center space-x-4">
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1">
+                  <button
+                    onClick={() => handleSetFBNavActive(true)}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      isFBNavActive
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    type="button"
+                  >
+                    Active
+                  </button>
+                  <button
+                    onClick={() => handleSetFBNavActive(false)}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      !isFBNavActive
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    type="button"
+                  >
+                    Deactivate
+                  </button>
+                </div>
                 {/* Category filter tabs */}
                 <div className="hidden md:flex items-center space-x-2">
                   {[

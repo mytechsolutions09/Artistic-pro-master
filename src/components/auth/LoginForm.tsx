@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, Mail, Smartphone } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
-import { useLogo } from '../../hooks/useLogo';
 import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
 import PhoneLogin from './PhoneLogin';
@@ -23,8 +22,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const { settings, loading: appearanceLoading } = useAppearance();
-  const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
+  const { loading: appearanceLoading } = useAppearance();
 
   // Check if Turnstile is enabled
   const turnstileEnabled = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_ENABLED === 'true';
@@ -139,27 +137,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               <div className="flex items-center justify-center mb-3">
                 <Link 
                   to="/"
-                  className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+                  className="text-black hover:text-gray-600 transition-colors"
                 >
-                  {logoLoading ? (
-                    <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
-                  ) : logoUrl ? (
-                    <img 
-                      src={logoUrl} 
-                      alt="Logo" 
-                      className="h-12 w-auto"
-                      onError={(e) => {
-                        console.error('Error loading logo from Supabase:', e);
-                        e.currentTarget.src = '/lurevi-logo.svg';
-                      }}
-                    />
-                  ) : (
-                    <img 
-                      src="/lurevi-logo.svg" 
-                      alt="Lurevi" 
-                      className="h-12 w-auto"
-                    />
-                  )}
+                  <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
                 </Link>
               </div>
 
@@ -176,7 +156,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                   onClick={() => setLoginMethod('email')}
                   className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
                     loginMethod === 'email'
-                      ? 'bg-white text-teal-600 shadow-sm'
+                      ? 'bg-white text-black shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -192,7 +172,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                     onClick={() => setLoginMethod('phone')}
                     className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
                       loginMethod === 'phone'
-                        ? 'bg-white text-teal-600 shadow-sm'
+                        ? 'bg-white text-black shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
@@ -323,7 +303,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -343,7 +323,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 {loginMethod === 'email' && (
                   <Link
                     to="/forgot-password"
-                    className="text-xs text-teal-600 hover:text-teal-700 transition-colors text-center sm:text-left"
+                    className="text-xs text-black hover:text-gray-700 transition-colors text-center sm:text-left"
                   >
                     Forgot Password?
                   </Link>
@@ -352,7 +332,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                   Not a user?{' '}
                   <Link
                     to="/sign-up"
-                    className="font-medium text-teal-600 hover:text-teal-700 transition-colors"
+                    className="font-medium text-black hover:text-gray-700 transition-colors"
                   >
                     Sign up
                   </Link>

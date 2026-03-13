@@ -131,7 +131,7 @@ const CartPage: React.FC = () => {
 
   if (cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="min-h-[calc(100vh-4rem)] bg-white flex items-center justify-center px-4">
         <div className="max-w-sm w-full text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShoppingCart className="w-8 h-8 text-gray-400" />

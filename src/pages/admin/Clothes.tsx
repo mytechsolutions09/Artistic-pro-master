@@ -8,6 +8,7 @@ import ProductCard from '../../components/ProductCard';
 import { ProductService } from '../../services/supabaseService';
 import { NotificationManager } from '../../components/Notification';
 import ProductExport from '../../components/admin/ProductExport';
+import { NavigationVisibilityService } from '../../services/navigationVisibilityService';
 
 const Clothes: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -52,6 +53,7 @@ const Clothes: React.FC = () => {
   const [updating, setUpdating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [isClothesNavActive, setIsClothesNavActive] = useState(true);
 
   useEffect(() => {
     // Filter products that are clothing items
@@ -92,11 +94,27 @@ const Clothes: React.FC = () => {
     setWomenProducts(women);
   }, [adminProducts]);
 
+  useEffect(() => {
+    const settings = NavigationVisibilityService.getSettings();
+    setIsClothesNavActive(settings.clothesActive);
+
+    const unsubscribe = NavigationVisibilityService.subscribe((nextSettings) => {
+      setIsClothesNavActive(nextSettings.clothesActive);
+    });
+
+    return unsubscribe;
+  }, []);
+
   const clothesCounts = {
     total: clothingProducts.length,
     men: menProducts.length,
     women: womenProducts.length,
     featured: clothingProducts.filter(p => p.featured).length
+  };
+
+  const handleSetClothesNavActive = (isActive: boolean) => {
+    NavigationVisibilityService.setSectionActive('clothes', isActive);
+    NotificationManager.success(`Clothes navbar link ${isActive ? 'activated' : 'deactivated'}`);
   };
 
   const renderTabContent = () => {
@@ -131,8 +149,36 @@ const Clothes: React.FC = () => {
   const renderAllClothes = () => (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">All Clothing Products</h2>
-        <p className="text-gray-600">Manage all your clothing inventory</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">All Clothing Products</h2>
+            <p className="text-gray-600">Manage all your clothing inventory</p>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1">
+            <button
+              onClick={() => handleSetClothesNavActive(true)}
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                isClothesNavActive
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              type="button"
+            >
+              Active
+            </button>
+            <button
+              onClick={() => handleSetClothesNavActive(false)}
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                !isClothesNavActive
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              type="button"
+            >
+              Deactivate
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 mb-6">

@@ -8,6 +8,7 @@ import { generateProductUrl, generateSlug } from '../utils/slugUtils';
 import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
 import HomepageSkeleton from '../components/HomepageSkeleton';
 import OptimizedImage from '../components/OptimizedImage';
+import BentoHeroSection from '../components/BentoHeroSection';
 
 const Homepage: React.FC = () => {
   // Currency context
@@ -611,63 +612,8 @@ const Homepage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Main Card */}
-            <div 
-              className={`bg-gradient-to-br ${heroSection.mainCard.gradientColors?.[0] || 'from-orange-200'} ${heroSection.mainCard.gradientColors?.[1] || 'to-orange-300'} rounded-2xl p-8 flex flex-col justify-center relative`} 
-              style={{ minHeight: `${heroSection.height}px` }}
-            >
-              <h1 className="text-xl font-semibold text-gray-800 mb-2 font-sans font-normal">
-                {heroSection.mainCard.title}
-              </h1>
-              <p className="text-gray-700 mb-6 text-sm font-sans font-normal">
-                {heroSection.mainCard.subtitle}
-              </p>
-              <Link 
-                to={heroSection.mainCard.buttonLink}
-                className="inline-block px-4 py-2 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors w-fit text-sm font-sans font-normal"
-              >
-                {heroSection.mainCard.buttonText}
-              </Link>
-            </div>
-
-            {/* Featured Card */}
-            <Link to={heroSection.featuredCard.link} className="relative rounded-2xl overflow-hidden group cursor-pointer" style={{ minHeight: `${heroSection.height}px` }}>
-              <OptimizedImage
-                src={heroSection.featuredCard.images[0]}
-                alt={heroSection.featuredCard.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                width={600}
-                priority={true}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-base font-semibold mb-1 text-white font-sans font-normal">{heroSection.featuredCard.title}</h3>
-                <p className="text-white/90 text-xs font-sans font-normal">{heroSection.featuredCard.subtitle}</p>
-              </div>
-            </Link>
-
-            {/* Categories Card */}
-            <Link to={heroSection.categoriesCard.link} className="relative rounded-2xl overflow-hidden group cursor-pointer" style={{ minHeight: `${heroSection.height}px` }}>
-              <OptimizedImage
-                src={heroSection.categoriesCard.images[0]}
-                alt={heroSection.categoriesCard.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                width={600}
-                priority={true}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="text-base font-semibold mb-1 text-white font-sans font-normal">{heroSection.categoriesCard.title}</h3>
-                <p className="text-white/90 text-xs font-sans font-normal">{heroSection.categoriesCard.subtitle}</p>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Bento Hero Section */}
+      <BentoHeroSection cards={homepageSettings?.bento_hero?.cards || []} />
 
       {/* Image Slider Section */}
       <section className="py-8 px-4">

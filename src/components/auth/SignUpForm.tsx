@@ -3,13 +3,11 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
-import { useLogo } from '../../hooks/useLogo';
 import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
 
 const SignUpForm: React.FC = () => {
-  const { settings, loading: appearanceLoading } = useAppearance();
-  const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
+  const { loading: appearanceLoading } = useAppearance();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -129,27 +127,9 @@ const SignUpForm: React.FC = () => {
                 <div className="flex items-center justify-center mb-4">
                   <Link 
                     to="/"
-                    className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+                    className="text-black hover:text-gray-600 transition-colors"
                   >
-                    {logoLoading ? (
-                      <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
-                    ) : logoUrl ? (
-                      <img 
-                        src={logoUrl} 
-                        alt="Logo" 
-                        className="h-12 w-auto"
-                        onError={(e) => {
-                          console.error('Error loading logo from Supabase:', e);
-                          e.currentTarget.src = '/lurevi-logo.svg';
-                        }}
-                      />
-                    ) : (
-                      <img 
-                        src="/lurevi-logo.svg" 
-                        alt="Lurevi" 
-                        className="h-12 w-auto"
-                      />
-                    )}
+                    <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
                   </Link>
                 </div>
 
@@ -177,7 +157,7 @@ const SignUpForm: React.FC = () => {
                   <div className="space-y-2">
                     <Link
                       to="/sign-in"
-                      className="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       Sign In
                     </Link>
@@ -218,27 +198,9 @@ const SignUpForm: React.FC = () => {
               <div className="flex items-center justify-center mb-3">
                 <Link 
                   to="/"
-                  className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+                  className="text-black hover:text-gray-600 transition-colors"
                 >
-                  {logoLoading ? (
-                    <div className="h-16 w-32 bg-gray-200 animate-pulse rounded"></div>
-                  ) : logoUrl ? (
-                    <img 
-                      src={logoUrl} 
-                      alt="Logo" 
-                      className="h-16 w-auto"
-                      onError={(e) => {
-                        console.error('Error loading logo from Supabase:', e);
-                        e.currentTarget.src = '/lurevi-logo.svg';
-                      }}
-                    />
-                  ) : (
-                    <img 
-                      src="/lurevi-logo.svg" 
-                      alt="Lurevi" 
-                      className="h-16 w-auto"
-                    />
-                  )}
+                  <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
                 </Link>
               </div>
 
@@ -377,7 +339,7 @@ const SignUpForm: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
@@ -389,7 +351,7 @@ const SignUpForm: React.FC = () => {
                   Already have an account?{' '}
                   <Link
                     to="/sign-in"
-                    className="font-medium text-teal-600 hover:text-teal-700 transition-colors"
+                    className="font-medium text-black hover:text-gray-700 transition-colors"
                   >
                     Sign in here
                   </Link>

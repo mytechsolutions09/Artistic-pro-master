@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Eye, Plus, Trash2, Settings, Layout, Image, Star, Palette, TrendingUp, Mail, Grid, BarChart3, Upload, Check, X } from 'lucide-react';
+import { Save, Eye, Plus, Trash2, Settings, Layout, Image, Star, Palette, TrendingUp, Mail, Grid, BarChart3, Upload, Check, X, LayoutGrid } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { HeroSectionConfig, ImageSliderConfig, FeaturedGridConfig, BestSellersConfig, FeaturedArtworkConfig, CategoriesConfig, TrendingCollectionsConfig, StatsConfig, NewsletterConfig } from '../../types';
 import { ProductService, CategoryService } from '../../services/supabaseService';
@@ -41,6 +41,9 @@ const HomepageManagement: React.FC = () => {
 
         
         // Apply saved settings to state variables
+        if (savedSettings.bento_hero) {
+          setBentoHero(savedSettings.bento_hero);
+        }
         if (savedSettings.hero_section) {
           setHeroSection(savedSettings.hero_section);
         }
@@ -120,6 +123,18 @@ const HomepageManagement: React.FC = () => {
     image: category.image || 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800',
     description: category.description || 'Category description'
   }));
+
+  // Bento Hero State
+  const [bentoHero, setBentoHero] = useState<{ cards: any[] }>({
+    cards: [
+      { id: '1', title: 'Paintings', subtitle: 'Explore Collection', image: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/paintings', bgColor: '#f5e6d3' },
+      { id: '2', title: 'Photography', subtitle: 'Stunning Shots', image: 'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/photography', bgColor: '#d3e8f5' },
+      { id: '3', title: 'Abstract', subtitle: 'Modern Expressions', image: 'https://images.pexels.com/photos/1047540/pexels-photo-1047540.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/abstract', bgColor: '#e8d3f5' },
+      { id: '4', title: 'Nature', subtitle: 'Raw & Beautiful', image: 'https://images.pexels.com/photos/1172207/pexels-photo-1172207.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/nature', bgColor: '#d3f5e8' },
+      { id: '5', title: 'Portrait', subtitle: 'Human Stories', image: 'https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/portrait', bgColor: '#f5d3d3' },
+      { id: '6', title: 'Digital Art', subtitle: 'New Dimensions', image: 'https://images.pexels.com/photos/1619317/pexels-photo-1619317.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/digital', bgColor: '#f5f0d3' },
+    ]
+  });
 
   // Hero Section State
   const [heroSection, setHeroSection] = useState<HeroSectionConfig>({
@@ -360,6 +375,7 @@ const HomepageManagement: React.FC = () => {
     try {
       // Prepare all homepage settings data
       const homepageSettings = {
+        bento_hero: bentoHero,
         hero_section: heroSection,
         image_slider: imageSlider,
         featured_grid: featuredGrid,
@@ -426,6 +442,7 @@ const HomepageManagement: React.FC = () => {
 
   const getSectionIcon = (type: string) => {
     switch (type) {
+      case 'bentoHero': return <LayoutGrid className="w-5 h-5" />;
       case 'hero': return <Layout className="w-5 h-5" />;
       case 'imageSlider': return <Image className="w-5 h-5" />;
       case 'featuredGrid': return <Grid className="w-5 h-5" />;
@@ -439,8 +456,193 @@ const HomepageManagement: React.FC = () => {
     }
   };
 
+  const updateBentoCard = (index: number, field: string, value: string) => {
+    setBentoHero(prev => {
+      const updated = [...prev.cards];
+      updated[index] = { ...updated[index], [field]: value };
+      return { cards: updated };
+    });
+  };
+
+  const addBentoCard = () => {
+    setBentoHero(prev => ({
+      cards: [
+        ...prev.cards,
+        {
+          id: `card-${Date.now()}`,
+          title: `New Category ${prev.cards.length + 1}`,
+          subtitle: 'Category subtitle',
+          image: '',
+          link: '/categories',
+          bgColor: '#f5f5f5',
+        }
+      ]
+    }));
+  };
+
+  const removeBentoCard = (index: number) => {
+    setBentoHero(prev => {
+      if (prev.cards.length <= 1) return prev;
+      return {
+        cards: prev.cards.filter((_, idx) => idx !== index),
+      };
+    });
+  };
+
   const renderSectionEditor = () => {
     switch (selectedSection) {
+      case 'bentoHero':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h4 className="font-semibold text-gray-800 text-lg border-b border-gray-200 pb-3 mb-2">Bento Hero Cards</h4>
+              <p className="text-sm text-gray-500 mb-6">
+                Configure the bento hero cards. First 6 cards use the featured bento layout, extra cards appear below in a responsive grid.
+              </p>
+
+              {/* Layout Preview */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Desktop Layout Preview</p>
+                <div className="grid grid-cols-3 gap-1.5 text-xs text-center font-medium text-white" style={{ height: '120px' }}>
+                  <div className="row-span-2 bg-gray-700 rounded flex items-center justify-center">Card 1<br/>(Tall)</div>
+                  <div className="col-span-2 bg-gray-600 rounded flex items-center justify-center">Card 2 (Wide)</div>
+                  <div className="bg-gray-500 rounded flex items-center justify-center">Card 3</div>
+                  <div className="bg-gray-500 rounded flex items-center justify-center">Card 4</div>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 text-xs text-center font-medium text-white mt-1.5" style={{ height: '50px' }}>
+                  <div className="col-span-2 bg-gray-600 rounded flex items-center justify-center">Card 5 (Wide)</div>
+                  <div className="bg-gray-500 rounded flex items-center justify-center">Card 6</div>
+                </div>
+                {bentoHero.cards.length > 6 && (
+                  <div className="mt-3">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Extra Cards Preview</p>
+                    <div className="grid grid-cols-3 gap-1.5 text-xs text-center font-medium text-white" style={{ gridAutoRows: '50px' }}>
+                      {bentoHero.cards.slice(6).map((_, extraIdx) => (
+                        <div key={`preview-extra-${extraIdx}`} className="bg-gray-500 rounded flex items-center justify-center">
+                          Card {extraIdx + 7}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-gray-600">Total cards: <span className="font-semibold">{bentoHero.cards.length}</span></p>
+                <button
+                  type="button"
+                  onClick={addBentoCard}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Card
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {bentoHero.cards.map((card, idx) => (
+                  <div key={card.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                          {idx + 1}
+                        </div>
+                        <h5 className="font-semibold text-gray-700 text-sm">
+                          {idx === 0 ? 'Card 1 — Tall (left column)' :
+                           idx === 1 ? 'Card 2 — Wide (top right)' :
+                           idx === 2 ? 'Card 3 — Medium' :
+                           idx === 3 ? 'Card 4 — Medium' :
+                           idx === 4 ? 'Card 5 — Wide (bottom left)' :
+                           idx === 5 ? 'Card 6 — Medium (bottom right)' :
+                           `Card ${idx + 1} — Extra Grid Card`}
+                        </h5>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeBentoCard(idx)}
+                        disabled={bentoHero.cards.length <= 1}
+                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent transition-colors"
+                        title="Remove card"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Image preview */}
+                    {card.image && (
+                      <div className="relative h-28 mb-3 rounded-lg overflow-hidden bg-gray-200">
+                        <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <div className="absolute bottom-2 left-3 text-white text-xs font-bold uppercase tracking-wide">{card.title}</div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                        <input
+                          type="text"
+                          value={card.title}
+                          onChange={(e) => updateBentoCard(idx, 'title', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                          placeholder="e.g. Paintings"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Subtitle</label>
+                        <input
+                          type="text"
+                          value={card.subtitle || ''}
+                          onChange={(e) => updateBentoCard(idx, 'subtitle', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                          placeholder="e.g. Explore Collection"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Image URL</label>
+                        <input
+                          type="text"
+                          value={card.image || ''}
+                          onChange={(e) => updateBentoCard(idx, 'image', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-mono"
+                          placeholder="https://..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Link (route)</label>
+                        <input
+                          type="text"
+                          value={card.link}
+                          onChange={(e) => updateBentoCard(idx, 'link', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                          placeholder="/categories/paintings"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Fallback Background Color</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={card.bgColor || '#f5f5f5'}
+                            onChange={(e) => updateBentoCard(idx, 'bgColor', e.target.value)}
+                            className="w-10 h-9 rounded border border-gray-200 cursor-pointer p-0.5"
+                          />
+                          <input
+                            type="text"
+                            value={card.bgColor || '#f5f5f5'}
+                            onChange={(e) => updateBentoCard(idx, 'bgColor', e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-mono"
+                            placeholder="#f5f5f5"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
       case 'hero':
   return (
           <div className="space-y-8">
@@ -3422,6 +3624,7 @@ const HomepageManagement: React.FC = () => {
   };
 
   const sections = [
+    { id: 'bentoHero', name: 'Bento Hero', type: 'bentoHero' },
     { id: 'hero', name: 'Hero Section', type: 'hero' },
     { id: 'imageSlider', name: 'Image Slider', type: 'imageSlider' },
     { id: 'featuredGrid', name: 'Featured Grid', type: 'featuredGrid' },

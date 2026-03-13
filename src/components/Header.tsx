@@ -5,6 +5,7 @@ import { CartManager } from '../services/orderService';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../utils/adminUtils';
 import { useCategories } from '../contexts/CategoryContext';
+import { NavigationVisibilityService, type NavigationVisibilitySettings } from '../services/navigationVisibilityService';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,6 +17,9 @@ const Header: React.FC = () => {
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
+  const [navigationVisibility, setNavigationVisibility] = useState<NavigationVisibilitySettings>(
+    NavigationVisibilityService.getSettings()
+  );
   const searchRef = useRef<HTMLDivElement>(null);
   const categoriesRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -46,6 +50,14 @@ const Header: React.FC = () => {
     return () => {
       unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = NavigationVisibilityService.subscribe((settings) => {
+      setNavigationVisibility(settings);
+    });
+
+    return unsubscribe;
   }, []);
 
   // Close search suggestions when clicking outside
@@ -234,91 +246,87 @@ const Header: React.FC = () => {
               <Heart className="w-4 h-4" />
             </Link>
             {/* Search Icon/Bar - Desktop */}
-            <div className="relative" ref={searchRef}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsSearchOpen(true);
-                }}
-                className="p-2 text-black hover:text-gray-600"
-                title="Search"
-              >
-                <Search className="w-4 h-4" />
-              </button>
-              
-              {/* Search Bar - Opens below icon */}
-              {isSearchOpen && (
-                <div className="absolute top-full right-0 mt-2" style={{ minWidth: '300px', width: '400px' }}>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => handleSearchInputChange(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      onFocus={() => {}}
-                      placeholder="search"
-                      autoFocus
-                      className="w-full pl-10 pr-4 py-2 bg-white text-black border border-black rounded-full focus:outline-none focus:border-black focus:ring-0 font-sans font-normal"
-                    />
-                    
-                    {/* Search Suggestions Dropdown */}
-                    {showSearchSuggestions && (searchSuggestions.length > 0 || searchHistory.length > 0) && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
-                        {/* Search History */}
-                        {searchHistory.length > 0 && (
-                          <div className="p-2">
-                            <div className="flex items-center justify-between mb-2 px-2">
-                              <div className="flex items-center space-x-2 text-xs text-gray-500 font-sans font-normal">
-                                <Clock className="w-3 h-3" />
-                                <span className="font-sans font-normal">Recent Searches</span>
+            <div className={`relative transition-all duration-200 ${isSearchOpen ? 'w-[360px]' : 'w-auto'}`} ref={searchRef}>
+              {!isSearchOpen ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsSearchOpen(true);
+                  }}
+                  className="p-2 text-black hover:text-gray-600"
+                  title="Search"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => handleSearchInputChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="search"
+                    autoFocus
+                    className="w-full pl-10 pr-4 py-2 bg-white text-black border border-black rounded-full focus:outline-none focus:border-black focus:ring-0 font-sans font-normal"
+                  />
+
+                  {/* Search Suggestions Dropdown */}
+                  {showSearchSuggestions && (searchSuggestions.length > 0 || searchHistory.length > 0) && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                      {/* Search History */}
+                      {searchHistory.length > 0 && (
+                        <div className="p-2">
+                          <div className="flex items-center justify-between mb-2 px-2">
+                            <div className="flex items-center space-x-2 text-xs text-gray-500 font-sans font-normal">
+                              <Clock className="w-3 h-3" />
+                              <span className="font-sans font-normal">Recent Searches</span>
+                            </div>
+                            <button
+                              onClick={clearSearchHistory}
+                              className="text-xs text-pink-600 hover:text-pink-700 hover:underline font-sans font-normal"
+                            >
+                              Clear
+                            </button>
+                          </div>
+                          {searchHistory.map((item, index) => (
+                            <button
+                              key={`history-${index}`}
+                              onClick={() => handleSearch(item)}
+                              className={getSuggestionItemClass(index, true)}
+                            >
+                              <div className="flex items-center space-x-3 font-sans font-normal">
+                                <Clock className="w-4 h-4 text-gray-400" />
+                                <span className="font-sans font-normal">{item}</span>
                               </div>
-                              <button
-                                onClick={clearSearchHistory}
-                                className="text-xs text-pink-600 hover:text-pink-700 hover:underline font-sans font-normal"
-                              >
-                                Clear
-                              </button>
-                            </div>
-                            {searchHistory.map((item, index) => (
-                              <button
-                                key={`history-${index}`}
-                                onClick={() => handleSearch(item)}
-                                className={getSuggestionItemClass(index, true)}
-                              >
-                                <div className="flex items-center space-x-3 font-sans font-normal">
-                                  <Clock className="w-4 h-4 text-gray-400" />
-                                  <span className="font-sans font-normal">{item}</span>
-                                </div>
-                              </button>
-                            ))}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Search Suggestions */}
+                      {searchSuggestions.length > 0 && (
+                        <div className="p-2">
+                          <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2 px-2 font-sans font-normal">
+                            <TrendingUp className="w-3 h-3" />
+                            <span className="font-sans font-normal">Suggestions</span>
                           </div>
-                        )}
-                        
-                        {/* Search Suggestions */}
-                        {searchSuggestions.length > 0 && (
-                          <div className="p-2">
-                            <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2 px-2 font-sans font-normal">
-                              <TrendingUp className="w-3 h-3" />
-                              <span className="font-sans font-normal">Suggestions</span>
-                            </div>
-                            {searchSuggestions.map((suggestion, index) => (
-                              <button
-                                key={`suggestion-${index}`}
-                                onClick={() => handleSearch(suggestion)}
-                                className={getSuggestionItemClass(index)}
-                              >
-                                <div className="flex items-center space-x-3 font-sans font-normal">
-                                  <Search className="w-4 h-4 text-gray-400" />
-                                  <span className="font-sans font-normal">{suggestion}</span>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                          {searchSuggestions.map((suggestion, index) => (
+                            <button
+                              key={`suggestion-${index}`}
+                              onClick={() => handleSearch(suggestion)}
+                              className={getSuggestionItemClass(index)}
+                            >
+                              <div className="flex items-center space-x-3 font-sans font-normal">
+                                <Search className="w-4 h-4 text-gray-400" />
+                                <span className="font-sans font-normal">{suggestion}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -373,12 +381,16 @@ const Header: React.FC = () => {
             <Link to="/shop" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
               Shop
             </Link>
-            <Link to="/clothes" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
-              Clothes
-            </Link>
-            <Link to="/fb" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
-              F&B
-            </Link>
+            {navigationVisibility.clothesActive && (
+              <Link to="/clothes" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
+                Clothes
+              </Link>
+            )}
+            {navigationVisibility.fbActive && (
+              <Link to="/fb" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
+                F&B
+              </Link>
+            )}
             {isAdmin(user?.email) && (
               <Link to="/admin" className="p-2 text-black hover:text-gray-600" title="Admin">
                 <Settings className="w-4 h-4" />
@@ -399,13 +411,89 @@ const Header: React.FC = () => {
 
           {/* Tablet Navigation - Search Tab */}
           <div className="hidden md:flex lg:hidden items-center space-x-3">
-            <Link 
-              to="/search" 
-              className="p-2 text-black hover:text-gray-600"
-              title="Search"
-            >
-              <Search className="w-4 h-4" />
-            </Link>
+            <div className="relative" ref={searchRef}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSearchOpen(true);
+                }}
+                className="p-2 text-black hover:text-gray-600"
+                title="Search"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+
+              {isSearchOpen && (
+                <div className="absolute top-full right-0 mt-2 z-50" style={{ minWidth: '280px', width: '320px' }}>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => handleSearchInputChange(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="search"
+                      autoFocus
+                      className="w-full pl-10 pr-4 py-2 bg-white text-black border border-black rounded-full focus:outline-none focus:border-black focus:ring-0 font-sans font-normal"
+                    />
+
+                    {showSearchSuggestions && (searchSuggestions.length > 0 || searchHistory.length > 0) && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                        {searchHistory.length > 0 && (
+                          <div className="p-2">
+                            <div className="flex items-center justify-between mb-2 px-2">
+                              <div className="flex items-center space-x-2 text-xs text-gray-500 font-sans font-normal">
+                                <Clock className="w-3 h-3" />
+                                <span className="font-sans font-normal">Recent Searches</span>
+                              </div>
+                              <button
+                                onClick={clearSearchHistory}
+                                className="text-xs text-pink-600 hover:text-pink-700 hover:underline font-sans font-normal"
+                              >
+                                Clear
+                              </button>
+                            </div>
+                            {searchHistory.map((item, index) => (
+                              <button
+                                key={`tablet-history-${index}`}
+                                onClick={() => handleSearch(item)}
+                                className={getSuggestionItemClass(index, true)}
+                              >
+                                <div className="flex items-center space-x-3 font-sans font-normal">
+                                  <Clock className="w-4 h-4 text-gray-400" />
+                                  <span className="font-sans font-normal">{item}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {searchSuggestions.length > 0 && (
+                          <div className="p-2">
+                            <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2 px-2 font-sans font-normal">
+                              <TrendingUp className="w-3 h-3" />
+                              <span className="font-sans font-normal">Suggestions</span>
+                            </div>
+                            {searchSuggestions.map((suggestion, index) => (
+                              <button
+                                key={`tablet-suggestion-${index}`}
+                                onClick={() => handleSearch(suggestion)}
+                                className={getSuggestionItemClass(index)}
+                              >
+                                <div className="flex items-center space-x-3 font-sans font-normal">
+                                  <Search className="w-4 h-4 text-gray-400" />
+                                  <span className="font-sans font-normal">{suggestion}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <Link to="/cart" className="relative p-2 text-black hover:text-gray-600">
               <ShoppingCart className="w-4 h-4" />
               {cartItemCount > 0 && (
@@ -532,20 +620,24 @@ const Header: React.FC = () => {
               >
                 <span className="font-sans font-normal uppercase text-sm">Shop</span>
               </Link>
-              <Link
-                to="/clothes"
-                className="text-black hover:text-gray-600 py-2 font-sans font-normal"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <span className="font-sans font-normal uppercase text-sm">Clothes</span>
-              </Link>
-              <Link
-                to="/fb"
-                className="text-black hover:text-gray-600 py-2 font-sans font-normal"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <span className="font-sans font-normal uppercase text-sm">F&B</span>
-              </Link>
+              {navigationVisibility.clothesActive && (
+                <Link
+                  to="/clothes"
+                  className="text-black hover:text-gray-600 py-2 font-sans font-normal"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <span className="font-sans font-normal uppercase text-sm">Clothes</span>
+                </Link>
+              )}
+              {navigationVisibility.fbActive && (
+                <Link
+                  to="/fb"
+                  className="text-black hover:text-gray-600 py-2 font-sans font-normal"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <span className="font-sans font-normal uppercase text-sm">F&B</span>
+                </Link>
+              )}
               {isAdmin(user?.email) && (
                 <Link
                   to="/admin"

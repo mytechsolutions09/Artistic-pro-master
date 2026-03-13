@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../../services/supabaseService';
 import { AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
-import { useLogo } from '../../hooks/useLogo';
 import AuthIllustration from './AuthIllustration';
 import ArtLoader from './ArtLoader';
 import { PasswordResetService } from '../../services/passwordResetService';
 
 const ForgotPasswordForm: React.FC = () => {
-  const { settings, loading: appearanceLoading } = useAppearance();
-  const { logoUrl, loading: logoLoading, error: logoError } = useLogo();
+  const { loading: appearanceLoading } = useAppearance();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,27 +72,9 @@ const ForgotPasswordForm: React.FC = () => {
                 <div className="flex items-center justify-center mb-4">
                   <Link 
                     to="/"
-                    className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+                    className="text-black hover:text-gray-600 transition-colors"
                   >
-                    {logoLoading ? (
-                      <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
-                    ) : logoUrl ? (
-                      <img 
-                        src={logoUrl} 
-                        alt="Logo" 
-                        className="h-12 w-auto"
-                        onError={(e) => {
-                          console.error('Error loading logo from Supabase:', e);
-                          e.currentTarget.src = '/lurevi-logo.svg';
-                        }}
-                      />
-                    ) : (
-                      <img 
-                        src="/lurevi-logo.svg" 
-                        alt="Lurevi" 
-                        className="h-12 w-auto"
-                      />
-                    )}
+                    <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
                   </Link>
                 </div>
 
@@ -126,7 +105,7 @@ const ForgotPasswordForm: React.FC = () => {
                   <div className="space-y-2">
                     <Link
                       to="/sign-in"
-                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       Back to Sign In
                     </Link>
@@ -135,7 +114,7 @@ const ForgotPasswordForm: React.FC = () => {
                         setSuccess(false);
                         setEmail('');
                       }}
-                      className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200"
+                      className="w-full flex justify-center py-2 px-4 border border-black rounded-md shadow-sm text-sm font-medium text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-200"
                     >
                       Send Another Email
                     </button>
@@ -170,27 +149,9 @@ const ForgotPasswordForm: React.FC = () => {
               <div className="flex items-center justify-center mb-4">
                 <Link 
                   to="/"
-                  className="hover:scale-110 transition-transform duration-200 cursor-pointer"
+                  className="text-black hover:text-gray-600 transition-colors"
                 >
-                  {logoLoading ? (
-                    <div className="h-12 w-24 bg-gray-200 animate-pulse rounded"></div>
-                  ) : logoUrl ? (
-                    <img 
-                      src={logoUrl} 
-                      alt="Logo" 
-                      className="h-12 w-auto"
-                      onError={(e) => {
-                        console.error('Error loading logo from Supabase:', e);
-                        e.currentTarget.src = '/lurevi-logo.svg';
-                      }}
-                    />
-                  ) : (
-                    <img 
-                      src="/lurevi-logo.svg" 
-                      alt="Lurevi" 
-                      className="h-12 w-auto"
-                    />
-                  )}
+                  <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
                 </Link>
               </div>
 
@@ -198,7 +159,7 @@ const ForgotPasswordForm: React.FC = () => {
               <div className="mb-4">
                 <Link
                   to="/sign-in"
-                  className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  className="inline-flex items-center text-sm text-black hover:text-gray-700 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Back to Sign In
@@ -246,7 +207,7 @@ const ForgotPasswordForm: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 sm:py-3.5 px-4 border border-transparent rounded-md shadow-sm text-sm sm:text-base font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="w-full flex justify-center py-3 sm:py-3.5 px-4 border border-transparent rounded-md shadow-sm text-sm sm:text-base font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </button>
@@ -258,7 +219,7 @@ const ForgotPasswordForm: React.FC = () => {
                   Remember your password?{' '}
                   <Link
                     to="/sign-in"
-                    className="font-medium text-teal-600 hover:text-teal-700 transition-colors"
+                    className="font-medium text-black hover:text-gray-700 transition-colors"
                   >
                     Sign in here
                   </Link>
