@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../services/supabaseService';
+import { appCache, CACHE_KEYS, CACHE_TTL } from '../services/cacheService';
 
 interface ThemeColors {
   lightPink: string;
@@ -40,18 +41,28 @@ export const AppearanceProvider: React.FC<AppearanceProviderProps> = ({ children
   const loadSettings = async () => {
     try {
       setLoading(true);
+
+      // Serve from cache when available — appearance rarely changes
+      const cached = appCache.get<AppearanceSettings>(CACHE_KEYS.APPEARANCE_SETTINGS);
+      if (cached) {
+        setSettings(cached);
+        applyThemeColors(cached.themeColors);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('appearance_settings')
         .select('*')
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') {
         console.error('Error loading appearance settings:', error);
         return;
       }
 
       if (data) {
-        const newSettings = {
+        const newSettings: AppearanceSettings = {
           themeColors: data.theme_colors || {
             lightPink: '#ffffff',
             pink: '#ffffff',
@@ -60,6 +71,7 @@ export const AppearanceProvider: React.FC<AppearanceProviderProps> = ({ children
           leftSideImage: data.left_side_image || '',
           leftSideImageType: data.left_side_image_type || 'illustration'
         };
+        appCache.set(CACHE_KEYS.APPEARANCE_SETTINGS, newSettings, CACHE_TTL.APPEARANCE);
         setSettings(newSettings);
         applyThemeColors(newSettings.themeColors);
       }

@@ -9,8 +9,9 @@ const STORAGE_KEY = 'navigation_visibility_settings';
 const UPDATE_EVENT = 'navigation-visibility-updated';
 
 const DEFAULT_SETTINGS: NavigationVisibilitySettings = {
-  clothesActive: true,
-  fbActive: true,
+  // Keep both sections disabled by default until an admin explicitly enables them.
+  clothesActive: false,
+  fbActive: false,
 };
 
 const FB_KEYWORDS = [

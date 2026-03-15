@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3 } from 'lucide-react';
 import { HomepageSettingsService } from '../services/homepageSettingsService';
 import { ProductService, CategoryService } from '../services/supabaseService';
+import { appCache, CACHE_KEYS, CACHE_TTL } from '../services/cacheService';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { generateProductUrl, generateSlug } from '../utils/slugUtils';
 import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
@@ -43,30 +44,33 @@ const Homepage: React.FC = () => {
         return;
       }
       
-      // Optimize: Only fetch limited products for homepage display
+      // Settings and categories are served from cache when warm (populated by global contexts)
       const [settings, categories, stats] = await Promise.all([
         HomepageSettingsService.getHomepageSettings(),
-        CategoryService.getAllCategories(),
-        ProductService.getProductStats()
+        appCache.getOrFetch(CACHE_KEYS.CATEGORIES_ALL, () => CategoryService.getAllCategories(), CACHE_TTL.CATEGORIES),
+        appCache.getOrFetch('stats:products', () => ProductService.getProductStats(), CACHE_TTL.PRODUCTS),
       ]);
-      
-      // Fetch only a limited number of products for homepage (enough for featured sections)
-      // This prevents loading all products which can be slow
-      // Use a lightweight query that only fetches necessary columns
-      const { supabase } = await import('../services/supabaseService');
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('id, title, price, original_price, discount_percentage, images, main_image, categories, category, rating, downloads, slug, status, featured, product_type, created_date')
-        .eq('status', 'active')
-        .order('created_date', { ascending: false })
-        .limit(50); // Limit to 50 products for homepage
-      
-      const products = productsError ? [] : (productsData || []).map((product: any) => ({
-        ...product,
-        productType: product.product_type || 'digital',
-        createdDate: product.created_date,
-        favoritesCount: 0 // Will be calculated if needed
-      }));
+
+      // Lightweight homepage product fetch — cached separately from the full admin product list
+      const products = await appCache.getOrFetch<any[]>(
+        CACHE_KEYS.PRODUCTS_HOMEPAGE,
+        async () => {
+          const { supabase } = await import('../services/supabaseService');
+          const { data: productsData, error: productsError } = await supabase
+            .from('products')
+            .select('id, title, price, original_price, discount_percentage, images, main_image, categories, category, rating, downloads, slug, status, featured, product_type, created_date')
+            .eq('status', 'active')
+            .order('created_date', { ascending: false })
+            .limit(50);
+          return productsError ? [] : (productsData || []).map((product: any) => ({
+            ...product,
+            productType: product.product_type || 'digital',
+            createdDate: product.created_date,
+            favoritesCount: 0
+          }));
+        },
+        CACHE_TTL.PRODUCTS
+      );
       
       
       setHomepageSettings(settings);
@@ -539,6 +543,27 @@ const Homepage: React.FC = () => {
     ]
   };
 
+  const resolvedHomepageCategories = (categoriesSection.selectedCategories || []).map((category: any) => {
+    const liveCategory = (realCategories || []).find((candidate: any) => {
+      if (category?.id && candidate?.id) return candidate.id === category.id;
+      if (category?.slug && candidate?.slug) return candidate.slug === category.slug;
+      if (category?.name && candidate?.name) return candidate.name === category.name;
+      return false;
+    });
+
+    const liveImage = liveCategory?.image;
+    const existingImage =
+      category?.image || (Array.isArray(category?.images) && category.images.length > 0 ? category.images[0] : undefined);
+
+    return {
+      ...category,
+      image: liveImage || existingImage,
+      count: liveCategory?.count ?? category?.count ?? 0,
+      description: liveCategory?.description || category?.description,
+      slug: liveCategory?.slug || category?.slug,
+    };
+  });
+
   const trendingCollections = homepageSettings?.trending_collections || {
     title: 'Trending Collections',
     subtitle: 'Discover the most popular and trending art collections this season',
@@ -909,7 +934,7 @@ const Homepage: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categoriesSection.selectedCategories.map((category: any) => (
+            {resolvedHomepageCategories.map((category: any) => (
               <Link key={category.id} to={`/${category.slug}`} className="group">
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                   <div className="relative h-32">

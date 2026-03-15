@@ -20,6 +20,10 @@ const Categories: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
+  const notifyCategoriesUpdated = () => {
+    window.dispatchEvent(new Event('categoriesUpdated'));
+  };
+
   // Load categories
   const loadCategories = async () => {
     try {
@@ -49,6 +53,7 @@ const Categories: React.FC = () => {
       if (result) {
 
         await loadCategories();
+        notifyCategoriesUpdated();
         setShowCreateModal(false);
       } else {
         console.error('Category creation returned null');
@@ -66,6 +71,7 @@ const Categories: React.FC = () => {
       if (editingCategory) {
         await categoryService.updateCategory({ id: editingCategory.id, ...categoryData });
         await loadCategories();
+        notifyCategoriesUpdated();
         setEditingCategory(null);
       }
     } catch (error) {
@@ -79,6 +85,7 @@ const Categories: React.FC = () => {
       try {
         await categoryService.deleteCategory(categoryId);
         await loadCategories();
+        notifyCategoriesUpdated();
     } catch (error) {
       console.error('Error deleting category:', error);
       }
@@ -92,6 +99,7 @@ const Categories: React.FC = () => {
       if (category) {
         await categoryService.updateCategory({ id: categoryId, featured: !category.featured });
         await loadCategories();
+        notifyCategoriesUpdated();
       }
     } catch (error) {
       console.error('Error toggling category featured status:', error);
@@ -407,7 +415,7 @@ const Categories: React.FC = () => {
 interface CategoryModalProps {
   title: string;
   category?: Category;
-  onSubmit: (category: any) => void;
+  onSubmit: (category: any) => Promise<void> | void;
   onClose: () => void;
 }
 
@@ -444,7 +452,10 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ title, category, onSubmit
       // Upload new image if selected
       if (imageFile) {
         const uploadedImage = await ImageUploadService.uploadImage(imageFile, 'categories');
-        imageUrl = uploadedImage.url || '';
+        if (!uploadedImage.success || !uploadedImage.url) {
+          throw new Error(uploadedImage.error || 'Image upload failed');
+        }
+        imageUrl = uploadedImage.url;
       }
 
       const categoryData = {
@@ -452,10 +463,10 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ title, category, onSubmit
         image: imageUrl
       };
 
-      onSubmit(categoryData);
+      await onSubmit(categoryData);
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      alert((error as Error)?.message || 'Failed to upload image. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -526,7 +537,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ title, category, onSubmit
                   {imageFile ? 'Change Image' : 'Upload Image'}
                 </span>
                 <span className="text-xs text-gray-400 mt-1">
-                  PNG, JPG up to 2MB
+                  PNG, JPG up to 50MB
                 </span>
               </label>
             </div>

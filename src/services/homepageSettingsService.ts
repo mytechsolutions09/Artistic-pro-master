@@ -1,4 +1,5 @@
 import { supabase } from './supabaseService';
+import { appCache, CACHE_KEYS, CACHE_TTL } from './cacheService';
 
 export interface HomepageSettings {
   id?: string;
@@ -17,11 +18,13 @@ export interface HomepageSettings {
 
 export class HomepageSettingsService {
   /**
-   * Get homepage settings from database
+   * Get homepage settings — served from cache when available.
    */
   static async getHomepageSettings(): Promise<HomepageSettings | null> {
-    try {
+    const cached = appCache.get<HomepageSettings>(CACHE_KEYS.HOMEPAGE_SETTINGS);
+    if (cached) return cached;
 
+    try {
       const { data, error } = await supabase
         .from('homepage_settings')
         .select('*')
@@ -30,16 +33,11 @@ export class HomepageSettingsService {
         .single();
 
       if (error) {
-
-        if (error.code === 'PGRST116') {
-          // No rows found, return null
-
-          return null;
-        }
+        if (error.code === 'PGRST116') return null;
         throw error;
       }
 
-
+      if (data) appCache.set(CACHE_KEYS.HOMEPAGE_SETTINGS, data, CACHE_TTL.HOMEPAGE);
       return data;
     } catch (error) {
       console.error('Error fetching homepage settings:', error);
@@ -101,6 +99,7 @@ export class HomepageSettingsService {
         if (error) throw error;
       }
 
+      appCache.invalidate(CACHE_KEYS.HOMEPAGE_SETTINGS);
       return true;
     } catch (error) {
       console.error('Error saving homepage settings:', error);
@@ -116,9 +115,10 @@ export class HomepageSettingsService {
       const { error } = await supabase
         .from('homepage_settings')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
       if (error) throw error;
+      appCache.invalidate(CACHE_KEYS.HOMEPAGE_SETTINGS);
       return true;
     } catch (error) {
       console.error('Error resetting homepage settings:', error);

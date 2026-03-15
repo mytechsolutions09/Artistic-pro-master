@@ -139,7 +139,7 @@ async function ensureBucketExists(bucketName: string) {
       const { error: createError } = await supabase.storage.createBucket(bucketName, {
         public: true,
         allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'],
-        fileSizeLimit: 10485760 // 10MB
+        fileSizeLimit: 52428800 // 50MB
       });
       
       if (createError) {

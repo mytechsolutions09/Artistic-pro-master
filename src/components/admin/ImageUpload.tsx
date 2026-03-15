@@ -202,7 +202,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               Drag and drop or click to select
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              PNG, JPG, WebP, GIF up to 10MB
+              PNG, JPG, WebP, GIF up to 50MB
             </p>
           </div>
 

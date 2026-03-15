@@ -4,6 +4,7 @@ import { categoryService } from '../services/categoryService';
 import { CategoryService as SupabaseCategoryService } from '../services/supabaseService';
 import { MemoryEfficientArray } from '../utils/memoryUtils';
 import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
+import { appCache, CACHE_KEYS, CACHE_TTL } from '../services/cacheService';
 
 interface CategoryContextType {
   categories: Category[];
@@ -50,24 +51,39 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
 
   // Listen for custom events to trigger immediate refresh
   useEffect(() => {
+    const handleCategoryDataUpdated = async () => {
+      await forceRefreshCounts();
+    };
     const handleCategoryCountsUpdated = async () => {
-
       await forceRefreshCounts();
     };
 
+    window.addEventListener('categoriesUpdated', handleCategoryDataUpdated);
     window.addEventListener('categoryCountsUpdated', handleCategoryCountsUpdated);
     
     return () => {
+      window.removeEventListener('categoriesUpdated', handleCategoryDataUpdated);
       window.removeEventListener('categoryCountsUpdated', handleCategoryCountsUpdated);
     };
   }, []);
 
-  // Refresh categories from database
-  const refreshCategories = async () => {
+  // Refresh categories (uses cache unless forceRefresh=true)
+  const refreshCategories = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
+
+      if (!forceRefresh) {
+        const cached = appCache.get<Category[]>(CACHE_KEYS.CATEGORIES_ALL);
+        if (cached) {
+          setCategories(cached);
+          setLoading(false);
+          return;
+        }
+      }
+
       const data = await categoryService.getAllCategories();
+      appCache.set(CACHE_KEYS.CATEGORIES_ALL, data, CACHE_TTL.CATEGORIES);
       setCategories(data);
     } catch (err) {
       console.error('Error loading categories:', err);
@@ -77,15 +93,11 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
     }
   };
 
-  // Refresh category counts specifically
-  // Note: Counts are now auto-updated by database triggers
-  // This function just re-fetches the data from the database
+  // Refresh category counts (delegates to refreshCategories via cache)
   const refreshCategoryCounts = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Just reload the categories - counts are updated by database triggers
       await refreshCategories();
     } catch (err) {
       console.error('Error refreshing category counts:', err);
@@ -95,15 +107,13 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
     }
   };
 
-  // Force refresh category counts (for immediate updates)
-  // Note: This no longer triggers database updates, just refreshes the local data
+  // Force-refresh: always bypasses cache and fetches fresh data
   const forceRefreshCounts = async () => {
     try {
       setError(null);
-      
-      // Reload the categories without showing loading state
-      // Counts are already correct in the database thanks to triggers
+      appCache.invalidate(CACHE_KEYS.CATEGORIES_ALL);
       const data = await categoryService.getAllCategories();
+      appCache.set(CACHE_KEYS.CATEGORIES_ALL, data, CACHE_TTL.CATEGORIES);
       setCategories(data);
     } catch (err) {
       console.error('Error force refreshing category counts:', err);

@@ -4,6 +4,7 @@ import { ProductService } from '../services/supabaseService';
 import { MemoryEfficientArray } from '../utils/memoryUtils';
 import { logMemoryUsage } from '../utils/memoryUtils';
 import { enhanceProductWithSampleImages } from '../utils/sampleImageUtils';
+import { appCache, CACHE_KEYS, CACHE_TTL } from '../services/cacheService';
 
 interface ProductContextType {
   // All products (admin + featured)
@@ -119,34 +120,44 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     return enhanceProductWithSampleImages(baseProduct);
   };
 
-  // Refresh products from database
-  const refreshProducts = async () => {
+  // Refresh products from database (uses cache unless forceRefresh=true)
+  const refreshProducts = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
-      
-      
-      // Fetch all products and featured products
+
+      if (!forceRefresh) {
+        const cachedAll      = appCache.get<any[]>(CACHE_KEYS.PRODUCTS_ALL);
+        const cachedFeatured = appCache.get<any[]>(CACHE_KEYS.PRODUCTS_FEATURED);
+        if (cachedAll && cachedFeatured) {
+          setAdminProducts(cachedAll.map(mapDatabaseProduct));
+          setFeaturedArtworks(cachedFeatured.map(mapDatabaseProduct) as ArtWork[]);
+          setLoading(false);
+          return;
+        }
+      }
+
       const [allProductsData, featuredProductsData] = await Promise.all([
         ProductService.getAllProducts(),
         ProductService.getFeaturedProducts()
       ]);
 
+      appCache.set(CACHE_KEYS.PRODUCTS_ALL,      allProductsData,      CACHE_TTL.PRODUCTS);
+      appCache.set(CACHE_KEYS.PRODUCTS_FEATURED,  featuredProductsData, CACHE_TTL.PRODUCTS);
 
-      // Map database fields to Product interface
-      const mappedProducts = allProductsData.map(mapDatabaseProduct);
-      const mappedFeatured = featuredProductsData.map(mapDatabaseProduct);
+      setAdminProducts(allProductsData.map(mapDatabaseProduct));
+      setFeaturedArtworks(featuredProductsData.map(mapDatabaseProduct) as ArtWork[]);
 
-
-      setAdminProducts(mappedProducts);
-      setFeaturedArtworks(mappedFeatured as ArtWork[]);
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load products');
       console.error('❌ Error loading products:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const invalidateProductCache = () => {
+    appCache.invalidatePrefix('products:');
   };
 
   // Add new product
@@ -157,16 +168,10 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   }) => {
     try {
       setError(null);
-      
       const newProduct = await ProductService.createProduct(productData);
-      
       const mappedProduct = mapDatabaseProduct(newProduct);
-      
-      setAdminProducts(prev => {
-        const updated = [...prev, mappedProduct];
-        return updated;
-      });
-      
+      invalidateProductCache();
+      setAdminProducts(prev => [...prev, mappedProduct]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add product');
       console.error('❌ Error adding product:', err);
@@ -180,10 +185,9 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
       setError(null);
       const updatedProduct = await ProductService.updateProduct(id, updates);
       const mappedProduct = mapDatabaseProduct(updatedProduct);
-      setAdminProducts(prev => 
-        prev.map(product => 
-          product.id === id ? mappedProduct : product
-        )
+      invalidateProductCache();
+      setAdminProducts(prev =>
+        prev.map(product => product.id === id ? mappedProduct : product)
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update product');
@@ -196,6 +200,7 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     try {
       setError(null);
       await ProductService.deleteProduct(id);
+      invalidateProductCache();
       setAdminProducts(prev => prev.filter(product => product.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete product');
@@ -212,11 +217,9 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
 
       const newStatus = product.status === 'active' ? 'inactive' : 'active';
       await ProductService.updateProduct(id, { status: newStatus });
-      
-      setAdminProducts(prev => 
-        prev.map(p => 
-          p.id === id ? { ...p, status: newStatus } : p
-        )
+      invalidateProductCache();
+      setAdminProducts(prev =>
+        prev.map(p => p.id === id ? { ...p, status: newStatus } : p)
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle product status');
@@ -233,11 +236,9 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
 
       const newFeatured = !product.featured;
       await ProductService.updateProduct(id, { featured: newFeatured });
-      
-      setAdminProducts(prev => 
-        prev.map(p => 
-          p.id === id ? { ...p, featured: newFeatured } : p
-        )
+      invalidateProductCache();
+      setAdminProducts(prev =>
+        prev.map(p => p.id === id ? { ...p, featured: newFeatured } : p)
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle featured status');

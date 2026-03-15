@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../services/supabaseService';
 import { Palette, Image, Save, Upload, Eye, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { appCache, CACHE_KEYS } from '../../../services/cacheService';
 
 interface ThemeColors {
   lightPink: string;
@@ -79,8 +80,9 @@ const AppearanceSettings: React.FC = () => {
 
       if (error) throw error;
 
+      appCache.invalidate(CACHE_KEYS.APPEARANCE_SETTINGS);
       setMessage({ type: 'success', text: 'Appearance settings saved successfully!' });
-      
+
       // Apply theme colors to CSS custom properties
       applyThemeColors();
       

@@ -14,7 +14,7 @@ export class ImageUploadService {
   private static readonly BUCKETS = {
     'category-images': {
       name: 'category-images',
-      maxSize: 10 * 1024 * 1024, // 10MB
+      maxSize: 50 * 1024 * 1024, // 50MB
       allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     },
     'product-images': {
