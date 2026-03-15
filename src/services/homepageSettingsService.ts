@@ -73,6 +73,7 @@ export class HomepageSettingsService {
             trending_collections: settings.trending_collections,
             stats: settings.stats,
             newsletter: settings.newsletter,
+            promotional_bar: settings.promotional_bar,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingSettings.id);
@@ -92,6 +93,7 @@ export class HomepageSettingsService {
             trending_collections: settings.trending_collections,
             stats: settings.stats,
             newsletter: settings.newsletter,
+            promotional_bar: settings.promotional_bar,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }]);

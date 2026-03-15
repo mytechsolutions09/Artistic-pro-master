@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Eye, Plus, Trash2, Settings, Layout, Image, Star, Palette, TrendingUp, Mail, Grid, BarChart3, Upload, Check, X, LayoutGrid } from 'lucide-react';
+import { Save, Eye, Plus, Trash2, Settings, Layout, Image, Star, Palette, TrendingUp, Mail, Grid, BarChart3, Upload, Check, X, LayoutGrid, Megaphone } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { HeroSectionConfig, ImageSliderConfig, FeaturedGridConfig, BestSellersConfig, FeaturedArtworkConfig, CategoriesConfig, TrendingCollectionsConfig, StatsConfig, NewsletterConfig } from '../../types';
 import { ProductService, CategoryService } from '../../services/supabaseService';
@@ -91,6 +91,9 @@ const HomepageManagement: React.FC = () => {
         if (savedSettings.newsletter) {
           setNewsletterSection(savedSettings.newsletter);
         }
+        if (savedSettings.promotional_bar) {
+          setPromoBar(savedSettings.promotional_bar);
+        }
         setSettingsLoaded(true);
       } else {
 
@@ -143,6 +146,17 @@ const HomepageManagement: React.FC = () => {
     image: category.image || 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800',
     description: category.description || 'Category description'
   }));
+
+  // Promotional Bar State
+  const [promoBar, setPromoBar] = useState<any>({
+    enabled: true,
+    text: '🎨 Free shipping on orders above ₹999 · Use code ARTFREE',
+    linkText: 'Shop Now',
+    link: '/browse',
+    bgColor: '#111827',
+    textColor: '#ffffff',
+    dismissible: true,
+  });
 
   // Bento Hero State
   const [bentoHero, setBentoHero] = useState<{ cards: any[] }>({
@@ -407,7 +421,8 @@ const HomepageManagement: React.FC = () => {
         categories: categoriesSection,
         trending_collections: trendingCollections,
         stats: statsSection,
-        newsletter: newsletterSection
+        newsletter: newsletterSection,
+        promotional_bar: promoBar
       };
 
       // Save to database
@@ -465,6 +480,7 @@ const HomepageManagement: React.FC = () => {
 
   const getSectionIcon = (type: string) => {
     switch (type) {
+      case 'promoBar': return <Megaphone className="w-5 h-5" />;
       case 'bentoHero': return <LayoutGrid className="w-5 h-5" />;
       case 'hero': return <Layout className="w-5 h-5" />;
       case 'imageSlider': return <Image className="w-5 h-5" />;
@@ -485,6 +501,29 @@ const HomepageManagement: React.FC = () => {
       updated[index] = { ...updated[index], [field]: value };
       return { cards: updated };
     });
+  };
+
+  // Per-card local image upload state  { [cardIndex]: 'uploading' | 'done' | 'error' }
+  const [bentoCardUploadState, setBentoCardUploadState] = useState<Record<number, 'uploading' | 'done' | 'error'>>({});
+
+  const handleBentoCardImageUpload = async (index: number, file: File) => {
+    setBentoCardUploadState(prev => ({ ...prev, [index]: 'uploading' }));
+    try {
+      const result = await ImageUploadService.uploadFile(file, 'homepage-hero-images', 'bento');
+      if (result.success && result.url) {
+        updateBentoCard(index, 'image', result.url);
+        setBentoCardUploadState(prev => ({ ...prev, [index]: 'done' }));
+        setTimeout(() => setBentoCardUploadState(prev => { const n = { ...prev }; delete n[index]; return n; }), 2000);
+      } else {
+        setBentoCardUploadState(prev => ({ ...prev, [index]: 'error' }));
+        setTimeout(() => setBentoCardUploadState(prev => { const n = { ...prev }; delete n[index]; return n; }), 3000);
+        alert(result.error || 'Image upload failed. Please try again.');
+      }
+    } catch (err) {
+      setBentoCardUploadState(prev => ({ ...prev, [index]: 'error' }));
+      setTimeout(() => setBentoCardUploadState(prev => { const n = { ...prev }; delete n[index]; return n; }), 3000);
+      alert('Image upload failed. Please try again.');
+    }
   };
 
   const updateBentoCardSpan = (index: number, field: 'desktopColSpan' | 'desktopRowSpan', value: number) => {
@@ -525,6 +564,139 @@ const HomepageManagement: React.FC = () => {
 
   const renderSectionEditor = () => {
     switch (selectedSection) {
+      case 'promoBar':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h4 className="font-semibold text-gray-800 text-lg border-b border-gray-200 pb-3 mb-5">Promotional Bar</h4>
+              <p className="text-sm text-gray-500 mb-6">A thin announcement strip shown at the very top of the homepage. Use it for sales, free shipping, discount codes, or any announcement.</p>
+
+              {/* Live preview */}
+              {promoBar.text && (
+                <div
+                  className="rounded-xl flex items-center justify-center px-8 py-3 text-sm font-medium mb-6 relative"
+                  style={{ backgroundColor: promoBar.bgColor, color: promoBar.textColor }}
+                >
+                  <span>{promoBar.text}</span>
+                  {promoBar.linkText && (
+                    <span className="ml-2 underline font-semibold opacity-80">{promoBar.linkText} →</span>
+                  )}
+                  {promoBar.dismissible && (
+                    <span className="absolute right-4 opacity-50 text-xs">✕</span>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {/* Enabled toggle */}
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Show Bar</p>
+                    <p className="text-xs text-gray-500">Display the promotional bar on the homepage</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPromoBar((p: any) => ({ ...p, enabled: !p.enabled }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${promoBar.enabled ? 'bg-pink-500' : 'bg-gray-300'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${promoBar.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                {/* Bar text */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Bar Text</label>
+                  <input
+                    type="text"
+                    value={promoBar.text}
+                    onChange={(e) => setPromoBar((p: any) => ({ ...p, text: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                    placeholder="🎨 Free shipping on orders above ₹999"
+                  />
+                </div>
+
+                {/* Link text + URL */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Link Label</label>
+                    <input
+                      type="text"
+                      value={promoBar.linkText}
+                      onChange={(e) => setPromoBar((p: any) => ({ ...p, linkText: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                      placeholder="Shop Now"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Link URL</label>
+                    <input
+                      type="text"
+                      value={promoBar.link}
+                      onChange={(e) => setPromoBar((p: any) => ({ ...p, link: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                      placeholder="/browse"
+                    />
+                  </div>
+                </div>
+
+                {/* Colors */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Background Color</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={promoBar.bgColor}
+                        onChange={(e) => setPromoBar((p: any) => ({ ...p, bgColor: e.target.value }))}
+                        className="w-10 h-9 rounded border border-gray-200 cursor-pointer p-0.5"
+                      />
+                      <input
+                        type="text"
+                        value={promoBar.bgColor}
+                        onChange={(e) => setPromoBar((p: any) => ({ ...p, bgColor: e.target.value }))}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-mono"
+                        placeholder="#111827"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Text Color</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={promoBar.textColor}
+                        onChange={(e) => setPromoBar((p: any) => ({ ...p, textColor: e.target.value }))}
+                        className="w-10 h-9 rounded border border-gray-200 cursor-pointer p-0.5"
+                      />
+                      <input
+                        type="text"
+                        value={promoBar.textColor}
+                        onChange={(e) => setPromoBar((p: any) => ({ ...p, textColor: e.target.value }))}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-mono"
+                        placeholder="#ffffff"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dismissible toggle */}
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Dismissible</p>
+                    <p className="text-xs text-gray-500">Show a close (✕) button so visitors can hide the bar</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPromoBar((p: any) => ({ ...p, dismissible: !p.dismissible }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${promoBar.dismissible ? 'bg-pink-500' : 'bg-gray-300'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${promoBar.dismissible ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       case 'bentoHero':
         return (
           <div className="space-y-6">
@@ -663,7 +835,53 @@ const HomepageManagement: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Image URL</label>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Image</label>
+                        {/* Local upload */}
+                        <div className="mb-2">
+                          <label
+                            htmlFor={`bento-upload-${idx}`}
+                            className={`flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg border-2 border-dashed cursor-pointer text-sm font-medium transition-colors
+                              ${bentoCardUploadState[idx] === 'uploading'
+                                ? 'border-pink-300 bg-pink-50 text-pink-500 cursor-not-allowed'
+                                : bentoCardUploadState[idx] === 'done'
+                                ? 'border-green-300 bg-green-50 text-green-600'
+                                : bentoCardUploadState[idx] === 'error'
+                                ? 'border-red-300 bg-red-50 text-red-600'
+                                : 'border-gray-300 bg-white text-gray-600 hover:border-pink-400 hover:bg-pink-50 hover:text-pink-600'}`}
+                          >
+                            {bentoCardUploadState[idx] === 'uploading' && (
+                              <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>Uploading…</>
+                            )}
+                            {bentoCardUploadState[idx] === 'done' && (
+                              <><Check className="w-4 h-4" />Uploaded!</>
+                            )}
+                            {bentoCardUploadState[idx] === 'error' && (
+                              <><X className="w-4 h-4" />Upload failed — retry</>
+                            )}
+                            {!bentoCardUploadState[idx] && (
+                              <><Upload className="w-4 h-4" />Upload from device</>
+                            )}
+                          </label>
+                          <input
+                            id={`bento-upload-${idx}`}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            className="hidden"
+                            disabled={bentoCardUploadState[idx] === 'uploading'}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleBentoCardImageUpload(idx, file);
+                              e.target.value = '';
+                            }}
+                          />
+                        </div>
+                        {/* OR divider */}
+                        <div className="flex items-center gap-2 my-2">
+                          <div className="flex-1 h-px bg-gray-200" />
+                          <span className="text-xs text-gray-400 font-medium">or paste URL</span>
+                          <div className="flex-1 h-px bg-gray-200" />
+                        </div>
+                        {/* URL input */}
                         <input
                           type="text"
                           value={card.image || ''}
@@ -3688,6 +3906,7 @@ const HomepageManagement: React.FC = () => {
   };
 
   const sections = [
+    { id: 'promoBar', name: 'Promo Bar', type: 'promoBar' },
     { id: 'bentoHero', name: 'Bento Hero', type: 'bentoHero' },
     { id: 'hero', name: 'Hero Section', type: 'hero' },
     { id: 'imageSlider', name: 'Image Slider', type: 'imageSlider' },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3, ArrowRight } from 'lucide-react';
 import { HomepageSettingsService } from '../services/homepageSettingsService';
 import { ProductService, CategoryService } from '../services/supabaseService';
 import { appCache, CACHE_KEYS, CACHE_TTL } from '../services/cacheService';
@@ -641,6 +641,7 @@ const Homepage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
+
       {/* Bento Hero Section */}
       <BentoHeroSection
         cards={
@@ -653,100 +654,234 @@ const Homepage: React.FC = () => {
       {/* Image Slider Section */}
       <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[300px] lg:h-[400px]">
-              {/* Image Section */}
-              <div className="relative overflow-hidden h-[250px] lg:h-full">
-                <OptimizedImage
-                  src={safeImageSlider.slides[currentSlide].images[0]}
-                  alt={safeImageSlider.slides[currentSlide].title}
-                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                  width={800}
-                  priority={true}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent lg:from-black/20" />
-                
-                {/* Navigation Arrows */}
-                {safeImageSlider.showArrows && (
-                  <>
-                    <button
-                      onClick={prevSlide}
-                      className="absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-1.5 lg:p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-                    >
-                      <ChevronLeft size={16} className="lg:w-5 lg:h-5" />
-                    </button>
-                    <button
-                      onClick={nextSlide}
-                      className="absolute right-2 lg:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-1.5 lg:p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-                    >
-                      <ChevronRight size={16} className="lg:w-5 lg:h-5" />
-                    </button>
-                  </>
-                )}
-              </div>
+          {/* Full-bleed slider — image fills the whole card */}
+          <div className="relative rounded-2xl shadow-lg overflow-hidden h-[340px] sm:h-[420px] lg:h-[480px]">
 
-              {/* Text Description Section */}
-              <div className="p-4 sm:p-6 lg:p-8 flex flex-col justify-center h-full">
-                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 mb-3 lg:mb-4 font-sans font-normal">
-                  {safeImageSlider.slides[currentSlide].title}
-                </h2>
-                {safeImageSlider.slides[currentSlide].subtitle && (
-                  <p className="text-sm sm:text-base text-gray-600 mb-3 lg:mb-4 font-sans font-normal">
-                    {safeImageSlider.slides[currentSlide].subtitle}
-                  </p>
-                )}
-                <p className="text-xs sm:text-sm text-gray-500 mb-4 lg:mb-6 font-sans font-normal">
-                  {safeImageSlider.slides[currentSlide].description}
-                </p>
-                <Link
-                  to={safeImageSlider.slides[currentSlide].link}
-                  className="inline-block px-4 sm:px-6 py-2 sm:py-3 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors w-fit text-xs sm:text-sm font-sans font-normal"
+            {/* Full-bleed background image */}
+            <OptimizedImage
+              src={safeImageSlider.slides[currentSlide].images[0]}
+              alt={safeImageSlider.slides[currentSlide].title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 scale-100 hover:scale-105"
+              width={1400}
+              priority={true}
+            />
+
+            {/* Navigation Arrows */}
+            {safeImageSlider.showArrows && (
+              <>
+                <button
+                  onClick={prevSlide}
+                  className="absolute left-3 lg:left-5 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white backdrop-blur-sm text-gray-800 p-2 lg:p-2.5 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
                 >
-                  View Artwork
-                </Link>
+                  <ChevronLeft size={18} className="lg:w-5 lg:h-5" />
+                </button>
+                <button
+                  onClick={nextSlide}
+                  className="absolute right-3 lg:right-5 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white backdrop-blur-sm text-gray-800 p-2 lg:p-2.5 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+                >
+                  <ChevronRight size={18} className="lg:w-5 lg:h-5" />
+                </button>
+              </>
+            )}
+
+            {/* White gradient + text at the bottom */}
+            <div className="absolute bottom-0 left-0 right-0 z-10">
+              {/* Gradient fade from transparent → white */}
+              <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none" />
+
+              {/* Text & button sit on top of the gradient */}
+              <div className="relative px-5 sm:px-8 lg:px-10 pt-10 pb-5 sm:pb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 mb-1 leading-snug font-sans truncate">
+                    {safeImageSlider.slides[currentSlide].title}
+                  </h2>
+                  {safeImageSlider.slides[currentSlide].subtitle && (
+                    <p className="text-xs sm:text-sm text-gray-500 mb-1 font-sans font-normal">
+                      {safeImageSlider.slides[currentSlide].subtitle}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 font-sans font-normal line-clamp-2 hidden sm:block">
+                    {safeImageSlider.slides[currentSlide].description}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  {/* Slide dots */}
+                  {safeImageSlider.slides.length > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      {safeImageSlider.slides.map((_: any, i: number) => (
+                        <button
+                          key={i}
+                          onClick={() => setCurrentSlide(i)}
+                          className={`rounded-full transition-all duration-300 ${
+                            i === currentSlide
+                              ? 'w-5 h-2 bg-gray-800'
+                              : 'w-2 h-2 bg-gray-300 hover:bg-gray-500'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <Link
+                    to={safeImageSlider.slides[currentSlide].link}
+                    className="inline-block px-4 sm:px-5 py-2 bg-gray-900 text-white hover:bg-gray-700 font-medium rounded-full transition-colors text-xs sm:text-sm font-sans whitespace-nowrap"
+                  >
+                    View Artwork
+                  </Link>
+                </div>
               </div>
             </div>
-
           </div>
         </div>
       </section>
 
       {/* Featured Grid Section */}
-      <section className="py-12 px-4 bg-gray-50">
+      <section className="py-12 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
-          
-          <div className={`grid gap-6 ${
-            safeFeaturedGrid.gridLayout === 'two-column' ? 'grid-cols-1 md:grid-cols-2' :
-            safeFeaturedGrid.gridLayout === 'three-column' ? 'grid-cols-1 md:grid-cols-3' :
-            'grid-cols-1 md:grid-cols-4'
-          }`}>
-            {safeFeaturedGrid.items.map((item: any) => (
-              <Link key={item.id} to={item.link} className="group">
-                <div className="relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-64">
+
+          {/* Section header */}
+          {(safeFeaturedGrid.title || safeFeaturedGrid.subtitle) && (
+            <div className="flex items-end justify-between mb-7">
+              <div>
+                {safeFeaturedGrid.title && (
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 font-sans">{safeFeaturedGrid.title}</h2>
+                )}
+                {safeFeaturedGrid.subtitle && (
+                  <p className="text-sm text-gray-500 mt-1 font-sans">{safeFeaturedGrid.subtitle}</p>
+                )}
+              </div>
+              {safeFeaturedGrid.showButton && (
+                <Link
+                  to={safeFeaturedGrid.buttonLink}
+                  className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors font-sans"
+                >
+                  {safeFeaturedGrid.buttonText}
+                  <ArrowRight size={14} />
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* Asymmetric magazine layout for exactly 3 items */}
+          {safeFeaturedGrid.gridLayout === 'three-column' && safeFeaturedGrid.items.length === 3 ? (
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 h-[360px] sm:h-[440px] lg:h-[500px]"
+              style={{ gridTemplateRows: '1fr 1fr' }}
+            >
+              {/* Card 1 — tall hero card, spans 2 rows */}
+              <Link
+                to={safeFeaturedGrid.items[0].link}
+                className="group col-span-1 row-span-2 relative rounded-2xl overflow-hidden"
+              >
+                <OptimizedImage
+                  src={safeFeaturedGrid.items[0].images[0]}
+                  alt={safeFeaturedGrid.items[0].title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  width={700}
+                  priority={false}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                  <span className="text-[10px] uppercase tracking-widest text-white/60 font-sans font-medium">Collection</span>
+                  <h3 className="text-white font-bold text-sm sm:text-base leading-snug mt-0.5 mb-1 font-sans">{safeFeaturedGrid.items[0].title}</h3>
+                  <p className="text-white/70 text-xs font-sans hidden sm:block">{safeFeaturedGrid.items[0].subtitle}</p>
+                  <span className="mt-2 sm:mt-3 inline-flex items-center gap-1 text-xs text-white/80 group-hover:text-white group-hover:gap-2 transition-all font-sans">
+                    Explore <ArrowRight size={11} />
+                  </span>
+                </div>
+              </Link>
+
+              {/* Cards 2 & 3 — fill each row of the right column */}
+              {[safeFeaturedGrid.items[1], safeFeaturedGrid.items[2]].map((item: any) => (
+                <Link
+                  key={item.id}
+                  to={item.link}
+                  className="group relative rounded-2xl overflow-hidden"
+                >
                   <OptimizedImage
                     src={item.images[0]}
                     alt={item.title}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                    width={600}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    width={500}
                     priority={false}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-base font-semibold text-white mb-1 font-sans font-normal">{item.title}</h3>
-                    <p className="text-white/90 text-xs font-sans font-normal">{item.subtitle}</p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                    <span className="text-[9px] uppercase tracking-widest text-white/60 font-sans font-medium hidden sm:block">Collection</span>
+                    <h3 className="text-white font-bold text-xs sm:text-sm leading-snug font-sans">{item.title}</h3>
+                    <span className="mt-1 inline-flex items-center gap-1 text-[10px] text-white/70 group-hover:text-white group-hover:gap-1.5 transition-all font-sans">
+                      Explore <ArrowRight size={10} />
+                    </span>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
 
+          ) : safeFeaturedGrid.gridLayout === 'two-column' && safeFeaturedGrid.items.length >= 2 ? (
+            /* Two-column: first card wide hero, rest stack */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {safeFeaturedGrid.items.map((item: any, idx: number) => (
+                <Link
+                  key={item.id}
+                  to={item.link}
+                  className={`group relative rounded-2xl overflow-hidden ${idx === 0 ? 'h-72 sm:h-80' : 'h-56 sm:h-64'}`}
+                >
+                  <OptimizedImage
+                    src={item.images[0]}
+                    alt={item.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    width={700}
+                    priority={false}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                    <span className="text-[10px] uppercase tracking-widest text-white/60 font-sans font-medium">Collection</span>
+                    <h3 className="text-white font-bold text-sm sm:text-base leading-snug mt-0.5 mb-1 font-sans">{item.title}</h3>
+                    <p className="text-white/70 text-xs font-sans hidden sm:block">{item.subtitle}</p>
+                    <span className="mt-2 inline-flex items-center gap-1 text-xs text-white/80 group-hover:text-white group-hover:gap-2 transition-all font-sans">
+                      Explore <ArrowRight size={11} />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+          ) : (
+            /* Four-column / fallback: uniform grid */
+            <div className={`grid gap-3 sm:gap-4 grid-cols-2 ${
+              safeFeaturedGrid.gridLayout === 'four-column' ? 'md:grid-cols-4' : 'md:grid-cols-3'
+            }`}>
+              {safeFeaturedGrid.items.map((item: any) => (
+                <Link key={item.id} to={item.link} className="group relative rounded-2xl overflow-hidden h-52 sm:h-64">
+                  <OptimizedImage
+                    src={item.images[0]}
+                    alt={item.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    width={500}
+                    priority={false}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+                    <h3 className="text-white font-bold text-xs sm:text-sm leading-snug font-sans">{item.title}</h3>
+                    <p className="text-white/70 text-[11px] mt-0.5 font-sans">{item.subtitle}</p>
+                    <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-white/70 group-hover:text-white group-hover:gap-1.5 transition-all font-sans">
+                      Explore <ArrowRight size={10} />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Mobile CTA button */}
           {safeFeaturedGrid.showButton && (
-            <div className="text-center mt-8">
+            <div className="text-center mt-7 sm:hidden">
               <Link
                 to={safeFeaturedGrid.buttonLink}
-                className="inline-block px-6 py-3 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors text-sm font-sans font-normal"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-gray-700 transition-colors font-sans"
               >
                 {safeFeaturedGrid.buttonText}
+                <ArrowRight size={14} />
               </Link>
             </div>
           )}
