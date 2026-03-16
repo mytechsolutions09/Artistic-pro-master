@@ -1916,7 +1916,9 @@ export class AnalyticsService {
         monthlyData.push({
           month: months[monthIndex],
           revenue: revenue,
-          orders: orders?.length || 0
+          orders: orders?.length || 0,
+          monthStart: monthStart.toISOString(),
+          monthEnd: monthEnd.toISOString()
         });
       }
 
@@ -1932,6 +1934,69 @@ export class AnalyticsService {
         { month: 'Jun', revenue: 0, orders: 0 },
         { month: 'Jul', revenue: 0, orders: 0 }
       ];
+    }
+  }
+
+  static async getRevenueDataByDateRange(fromDate?: string, toDate?: string) {
+    try {
+      // If no explicit range provided, keep existing monthly behavior.
+      if (!fromDate && !toDate) {
+        return this.getMonthlyRevenueData();
+      }
+
+      const now = new Date();
+      const start = fromDate ? new Date(`${fromDate}T00:00:00`) : new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+      const end = toDate ? new Date(`${toDate}T23:59:59`) : now;
+
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('created_at, total_amount, currency_code, currency_rate')
+        .gte('created_at', start.toISOString())
+        .lte('created_at', end.toISOString())
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching revenue data by date range:', error);
+        return [];
+      }
+
+      // Build day buckets so chart visibly responds to exact date selection.
+      const byDay = new Map<string, { revenue: number; orders: number; start: Date; end: Date }>();
+      (orders || []).forEach((order: any) => {
+        const d = new Date(order.created_at);
+        const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const amountINR = CurrencyService.convertAmount(order.total_amount, order.currency_code || 'INR', 'INR');
+        if (!byDay.has(dayKey)) {
+          const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+          const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+          byDay.set(dayKey, { revenue: 0, orders: 0, start: dayStart, end: dayEnd });
+        }
+        const bucket = byDay.get(dayKey)!;
+        bucket.revenue += amountINR;
+        bucket.orders += 1;
+      });
+
+      // Fill missing days with zero values for smooth chart continuity.
+      const daySeries: any[] = [];
+      const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      while (cursor <= last) {
+        const dayKey = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+        const bucket = byDay.get(dayKey);
+        daySeries.push({
+          month: cursor.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
+          revenue: bucket?.revenue || 0,
+          orders: bucket?.orders || 0,
+          monthStart: new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 0, 0, 0).toISOString(),
+          monthEnd: new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 23, 59, 59).toISOString(),
+        });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      return daySeries;
+    } catch (error) {
+      console.error('Error in getRevenueDataByDateRange:', error);
+      return [];
     }
   }
 

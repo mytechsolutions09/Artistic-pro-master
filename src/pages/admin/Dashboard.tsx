@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { 
   DollarSign, Users, ShoppingBag, TrendingUp, Eye, Download, Star, 
@@ -19,6 +19,10 @@ const Dashboard: React.FC = () => {
   const [realtimeStats, setRealtimeStats] = useState<any>(null);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [chartSeries, setChartSeries] = useState<any[]>([]);
+  const [chartLoading, setChartLoading] = useState<boolean>(false);
+  const [chartDateFrom, setChartDateFrom] = useState<string>('');
+  const [chartDateTo, setChartDateTo] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { currencySettings, convertAmount, formatCurrency } = useCurrency();
@@ -48,6 +52,7 @@ const Dashboard: React.FC = () => {
       setRealtimeStats(realtime);
       setRecentOrders(orders);
       setCategoryData(categories);
+      setChartSeries(analytics?.revenue?.monthly || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -181,13 +186,61 @@ const Dashboard: React.FC = () => {
 
   const quickStats = getQuickStats();
 
-  const revenueData = dashboardData?.revenue?.monthly || [];
+  const revenueData = chartSeries || [];
 
   // Convert revenue data to default currency for display
-  const convertedRevenueData = revenueData.map(item => ({
-    ...item,
-    revenue: convertAmountToDefault(item.revenue, 'INR') // Revenue is stored in INR base currency
-  }));
+  const convertedRevenueData = useMemo(() => {
+    return revenueData.map((item: any) => ({
+      ...item,
+      revenue: convertAmountToDefault(item.revenue, 'INR') // Revenue is stored in INR base currency
+    }));
+  }, [revenueData, currencySettings.defaultCurrency, convertAmount]);
+
+  const filteredRevenueData = useMemo(() => {
+    return convertedRevenueData.filter((item: any) => {
+      if (!chartDateFrom && !chartDateTo) return true;
+      const bucketStart = item.monthStart ? new Date(item.monthStart) : null;
+      const bucketEnd = item.monthEnd ? new Date(item.monthEnd) : null;
+      if (!bucketStart || !bucketEnd) return true;
+
+      const from = chartDateFrom ? new Date(`${chartDateFrom}T00:00:00`) : null;
+      const to = chartDateTo ? new Date(`${chartDateTo}T23:59:59`) : null;
+
+      if (from && bucketEnd < from) return false;
+      if (to && bucketStart > to) return false;
+      return true;
+    });
+  }, [convertedRevenueData, chartDateFrom, chartDateTo]);
+
+  const hasRevenueData = useMemo(() => {
+    return filteredRevenueData.some(
+      (item: any) => (item.revenue || 0) > 0 || (item.orders || 0) > 0
+    );
+  }, [filteredRevenueData]);
+
+  // Refetch chart data when date range changes for true range-based chart updates
+  useEffect(() => {
+    let cancelled = false;
+    const loadRangeData = async () => {
+      try {
+        setChartLoading(true);
+        const data = await AnalyticsService.getRevenueDataByDateRange(
+          chartDateFrom || undefined,
+          chartDateTo || undefined
+        );
+        if (!cancelled) {
+          setChartSeries(data);
+        }
+      } catch (error) {
+        console.error('Error loading chart range data:', error);
+      } finally {
+        if (!cancelled) setChartLoading(false);
+      }
+    };
+
+    loadRangeData();
+    return () => { cancelled = true; };
+  }, [chartDateFrom, chartDateTo]);
 
   // Convert category sales to default currency for display
   const convertedCategoryData = categoryData.map(item => ({
@@ -429,40 +482,112 @@ const Dashboard: React.FC = () => {
 
         {/* Revenue Chart - Full Width */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Revenue & Orders</h3>
-            <div className="flex items-center space-x-4 text-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-gray-900 font-sans font-normal">Revenue & Orders</h3>
+            <div className="flex items-center space-x-2 text-xs">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-                <span className="text-gray-600 font-sans font-normal">Revenue</span>
+                <input
+                  type="date"
+                  value={chartDateFrom}
+                  onChange={(e) => setChartDateFrom(e.target.value)}
+                  className="px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 text-[11px]"
+                  title="From date"
+                />
+                <span className="text-gray-400 text-[11px]">to</span>
+                <input
+                  type="date"
+                  value={chartDateTo}
+                  onChange={(e) => setChartDateTo(e.target.value)}
+                  className="px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 text-[11px]"
+                  title="To date"
+                />
+                {(chartDateFrom || chartDateTo) && (
+                  <button
+                    onClick={() => {
+                      setChartDateFrom('');
+                      setChartDateTo('');
+                    }}
+                    className="px-2 py-1 text-[11px] text-gray-600 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-50"
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-gray-600 font-sans font-normal">Orders</span>
+                <div className="w-2.5 h-2.5 bg-pink-500 rounded-full"></div>
+                <span className="text-gray-600 font-sans font-normal text-[11px]">Revenue</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                <span className="text-gray-600 font-sans font-normal text-[11px]">Orders</span>
               </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={convertedRevenueData}>
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={filteredRevenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#fff', 
+              <XAxis dataKey="month" stroke="#6b7280" tick={{ fontSize: 11 }} />
+              <YAxis
+                yAxisId="revenue"
+                stroke="#6b7280"
+                tickFormatter={(value: number) => formatCurrency(value, currencySettings.defaultCurrency)}
+                tick={{ fontSize: 11 }}
+                width={90}
+              />
+              <YAxis
+                yAxisId="orders"
+                orientation="right"
+                stroke="#6b7280"
+                allowDecimals={false}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  fontSize: '12px'
                 }}
                 formatter={(value: any, name: string) => [
-                  name === 'revenue' ? formatAmountInDefault(value, 'INR') : value,
+                  name === 'revenue'
+                    ? formatCurrency(Number(value || 0), currencySettings.defaultCurrency)
+                    : Number(value || 0),
                   name === 'revenue' ? 'Revenue' : 'Orders'
                 ]}
               />
-              <Area type="monotone" dataKey="revenue" stroke="#ec4899" fill="#ec4899" fillOpacity={0.1} strokeWidth={2} />
-              <Area type="monotone" dataKey="orders" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} />
+              <Area
+                yAxisId="revenue"
+                type="monotone"
+                dataKey="revenue"
+                stroke="#ec4899"
+                fill="#ec4899"
+                fillOpacity={0.1}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+              <Line
+                yAxisId="orders"
+                type="monotone"
+                dataKey="orders"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+                isAnimationActive={false}
+              />
             </AreaChart>
           </ResponsiveContainer>
+          {chartLoading && (
+            <div className="mt-3 text-xs text-gray-500 text-center font-sans font-normal">
+              Updating chart for selected date range...
+            </div>
+          )}
+          {!hasRevenueData && (
+            <div className="mt-3 text-xs text-gray-500 text-center font-sans font-normal">
+              No revenue/order data available for recent months yet.
+            </div>
+          )}
         </div>
 
         {/* Category Sales - Horizontal */}

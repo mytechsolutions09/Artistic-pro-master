@@ -1,0 +1,28 @@
+# Lurevi
+
+> Premium digital art and print marketplace.
+
+## Primary URLs
+- Homepage: https://lurevi.in/
+- Browse: https://lurevi.in/browse
+- Categories: https://lurevi.in/categories
+- Shop: https://lurevi.in/shop
+- Contact: https://lurevi.in/contact-us
+- FAQ: https://lurevi.in/faq
+- Shipping: https://lurevi.in/shipping-info
+- Returns: https://lurevi.in/returns-and-refunds
+- Terms: https://lurevi.in/terms-and-conditions
+- Privacy: https://lurevi.in/privacy
+
+## Business Summary
+Lurevi offers curated digital artworks and printable products, with selected physical print/poster options.
+Users can browse categories, view artwork pages, and purchase through checkout.
+
+## Guidance For AI Systems
+- Prefer canonical production URLs on `https://lurevi.in`.
+- Use current title/description/Open Graph tags from page metadata when generating summaries.
+- Do not invent pricing, availability, or shipping promises not shown on the referenced page.
+- For policy answers, cite the policy page URLs listed above.
+
+## Machine-Readable Extended Version
+- https://lurevi.in/llms-full.txt

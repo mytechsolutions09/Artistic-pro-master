@@ -20,7 +20,8 @@ ALTER TABLE public.marketing_settings
   ADD COLUMN IF NOT EXISTS page_title TEXT,
   ADD COLUMN IF NOT EXISTS meta_description TEXT,
   ADD COLUMN IF NOT EXISTS meta_keywords TEXT,
-  ADD COLUMN IF NOT EXISTS og_image TEXT;
+  ADD COLUMN IF NOT EXISTS og_image TEXT,
+  ADD COLUMN IF NOT EXISTS robots TEXT;
 
 -- 3) Ensure fixed single row exists
 INSERT INTO public.marketing_settings (id)
@@ -34,10 +35,11 @@ SET
   meta_description = COALESCE(meta_description, 'Discover curated digital artworks, premium prints, and exclusive collections at Lurevi.'),
   meta_keywords = COALESCE(meta_keywords, 'digital art, wall art, prints, online gallery, modern art'),
   og_image = COALESCE(og_image, '/logo.png'),
+  robots = COALESCE(robots, 'index, follow'),
   updated_at = NOW()
 WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid;
 
 -- 5) Verify
-SELECT id, page_title, meta_description, meta_keywords, og_image
+SELECT id, page_title, meta_description, meta_keywords, og_image, robots
 FROM public.marketing_settings
 WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid;

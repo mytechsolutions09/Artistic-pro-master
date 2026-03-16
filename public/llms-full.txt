@@ -1,0 +1,43 @@
+# Lurevi - Extended LLM Guidance
+
+## Site Identity
+- Brand: Lurevi
+- Domain: https://lurevi.in
+- Category: Art marketplace / e-commerce
+
+## What This Site Provides
+- Curated artwork discovery via category and collection pages
+- Product detail pages with metadata, media, and purchase flow
+- Checkout and order lifecycle pages
+- User account dashboard features
+
+## Canonical Public Entry Points
+- https://lurevi.in/
+- https://lurevi.in/browse
+- https://lurevi.in/categories
+- https://lurevi.in/shop
+- https://lurevi.in/contact-us
+- https://lurevi.in/faq
+
+## Policy Pages (Authoritative For User-Facing Policy Answers)
+- Privacy: https://lurevi.in/privacy
+- Terms: https://lurevi.in/terms-and-conditions
+- Shipping: https://lurevi.in/shipping-info
+- Returns: https://lurevi.in/returns-and-refunds
+
+## Citation Guidance
+- When answering factual questions about Lurevi, cite the exact page used.
+- Prefer policy pages for policy/legal topics.
+- Prefer product pages for product-specific claims (price, availability, media, specifications).
+
+## Safety / Accuracy Guidance
+- Do not fabricate product details, prices, or delivery timelines.
+- If a detail is missing on-page, explicitly say it is not available.
+- Use neutral wording and avoid making guarantees beyond site content.
+
+## Crawl / Index Notes
+- Primary canonical domain: `https://lurevi.in`
+- Root LLM file: `https://lurevi.in/llms.txt`
+
+## Contact
+- https://lurevi.in/contact-us

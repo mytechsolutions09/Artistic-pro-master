@@ -16,6 +16,7 @@ interface MarketingSettings {
   meta_description?: string;
   meta_keywords?: string;
   og_image?: string;
+  robots?: string;
 }
 
 const FIXED_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
@@ -42,6 +43,7 @@ const Marketing: React.FC = () => {
     meta_description: '',
     meta_keywords: '',
     og_image: '',
+    robots: 'index, follow',
   });
 
   useEffect(() => {
@@ -74,6 +76,7 @@ const Marketing: React.FC = () => {
           meta_description: data.meta_description || '',
           meta_keywords: data.meta_keywords || '',
           og_image: data.og_image || '',
+          robots: data.robots || 'index, follow',
         });
       }
     } catch (error) {
@@ -503,6 +506,20 @@ const Marketing: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   placeholder="https://your-domain.com/og-image.jpg"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Robots Directive</label>
+                <select
+                  value={seoSettings.robots}
+                  onChange={(e) => setSeoSettings({ ...seoSettings, robots: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="index, follow">index, follow (default)</option>
+                  <option value="noindex, follow">noindex, follow</option>
+                  <option value="index, nofollow">index, nofollow</option>
+                  <option value="noindex, nofollow">noindex, nofollow</option>
+                </select>
               </div>
             </div>
           </div>

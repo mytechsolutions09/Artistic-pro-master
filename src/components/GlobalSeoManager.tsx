@@ -25,7 +25,7 @@ const GlobalSeoManager: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('marketing_settings')
-          .select('page_title, meta_description, meta_keywords, og_image')
+          .select('page_title, meta_description, meta_keywords, og_image, robots')
           .eq('id', FIXED_MARKETING_ID)
           .single();
 
@@ -40,6 +40,7 @@ const GlobalSeoManager: React.FC = () => {
         const description = data.meta_description?.trim();
         const keywords = data.meta_keywords?.trim();
         const ogImage = data.og_image?.trim();
+        const robots = data.robots?.trim();
         const currentUrl = window.location.href;
         const defaultImage = `${window.location.origin}/logo.png`;
 
@@ -57,6 +58,10 @@ const GlobalSeoManager: React.FC = () => {
 
         if (keywords) {
           setMetaTag('meta[name="keywords"]', keywords);
+        }
+
+        if (robots) {
+          setMetaTag('meta[name="robots"]', robots);
         }
 
         const imageUrl = ogImage || defaultImage;

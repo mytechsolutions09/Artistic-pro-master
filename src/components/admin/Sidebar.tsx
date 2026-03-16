@@ -42,8 +42,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'orders', label: 'Orders', icon: ShoppingBag, path: '/admin/orders' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'normal', label: 'Normal', icon: Layers, path: '/admin/normal' },
-    { id: 'fb', label: 'F & B', icon: UtensilsCrossed, path: '/admin/fb' },
-    { id: 'clothes', label: 'Clothes', icon: Shirt, path: '/admin/clothes' },
     { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },
     { id: 'returns', label: 'Returns', icon: RotateCcw, path: '/admin/returns' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
@@ -53,6 +51,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'homepage', label: 'Homepage', icon: Home, path: '/admin/homepage' },
     { id: 'marketing', label: 'Marketing', icon: TrendingUp, path: '/admin/marketing' },
     { id: 'database', label: 'Database', icon: Database, path: '/admin/database' },
+    { id: 'fb', label: 'F & B', icon: UtensilsCrossed, path: '/admin/fb' },
+    { id: 'clothes', label: 'Clothes', icon: Shirt, path: '/admin/clothes' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' }
   ];
 
