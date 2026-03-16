@@ -44,7 +44,7 @@ export class ImageUploadService {
     },
     'homepage-hero-images': {
       name: 'homepage-hero-images',
-      maxSize: 10 * 1024 * 1024, // 10MB
+      maxSize: 15 * 1024 * 1024, // 15MB
       allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     },
     'homepage-slider-images': {

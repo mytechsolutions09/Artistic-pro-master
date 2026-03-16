@@ -874,6 +874,7 @@ const HomepageManagement: React.FC = () => {
                               e.target.value = '';
                             }}
                           />
+                          <p className="text-[11px] text-gray-400 mt-1">PNG, JPG, WebP, GIF up to 15MB</p>
                         </div>
                         {/* OR divider */}
                         <div className="flex items-center gap-2 my-2">
