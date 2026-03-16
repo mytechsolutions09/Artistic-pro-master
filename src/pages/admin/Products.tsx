@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Eye, Search, Grid, List, Star, 
   Download, TrendingUp, Package, DollarSign, RefreshCw, CheckSquare, Image as ImageIcon,
-  X, FileText, File, Copy, Heart
+  X, FileText, File, Copy, Heart, ChevronDown
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ProductsSecondaryNav from '../../components/admin/ProductsSecondaryNav';
@@ -1722,7 +1722,7 @@ const Products: React.FC = () => {
         {activeTab === 'templates' ? (
           <TemplatesManagement onClose={() => {}} />
         ) : (
-          <div className="p-6 space-y-4">
+          <div className="p-5 space-y-4">
         {/* Compact Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -1749,7 +1749,7 @@ const Products: React.FC = () => {
             </button>
             <button 
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-sm"
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
             >
               <Plus className="w-4 h-4" />
               <span>Add Product</span>
@@ -1758,132 +1758,141 @@ const Products: React.FC = () => {
         </div>
 
         {/* Compact Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-          <div className="bg-white p-3 rounded-lg border border-gray-100">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          <div className="bg-white p-2.5 rounded-lg border border-gray-100">
                 <div className="flex items-center space-x-2">
               <Package className="w-4 h-4 text-blue-600" />
             <div>
                 <p className="text-xs text-gray-500">Total</p>
-                <p className="text-lg font-bold text-gray-900">{stats.total}</p>
+                <p className="text-base font-bold text-gray-900">{stats.total}</p>
             </div>
             </div>
           </div>
-          <div className="bg-white p-3 rounded-lg border border-gray-100">
+          <div className="bg-white p-2.5 rounded-lg border border-gray-100">
             <div className="flex items-center space-x-2">
               <CheckSquare className="w-4 h-4 text-green-600" />
             <div>
                 <p className="text-xs text-gray-500">Active</p>
-                <p className="text-lg font-bold text-gray-900">{stats.active}</p>
+                <p className="text-base font-bold text-gray-900">{stats.active}</p>
             </div>
             </div>
           </div>
-          <div className="bg-white p-3 rounded-lg border border-gray-100">
+          <div className="bg-white p-2.5 rounded-lg border border-gray-100">
             <div className="flex items-center space-x-2">
               <Star className="w-4 h-4 text-yellow-600" />
             <div>
                 <p className="text-xs text-gray-500">Featured</p>
-                <p className="text-lg font-bold text-gray-900">{stats.featured}</p>
+                <p className="text-base font-bold text-gray-900">{stats.featured}</p>
             </div>
             </div>
           </div>
-          <div className="bg-white p-3 rounded-lg border border-gray-100">
+          <div className="bg-white p-2.5 rounded-lg border border-gray-100">
             <div className="flex items-center space-x-2">
               <Download className="w-4 h-4 text-purple-600" />
             <div>
                 <p className="text-xs text-gray-500">Downloads</p>
-                <p className="text-lg font-bold text-gray-900">{stats.totalDownloads}</p>
+                <p className="text-base font-bold text-gray-900">{stats.totalDownloads}</p>
             </div>
             </div>
           </div>
-          <div className="bg-white p-3 rounded-lg border border-gray-100">
+          <div className="bg-white p-2.5 rounded-lg border border-gray-100">
             <div className="flex items-center space-x-2">
-              <Heart className="w-4 h-4 text-pink-600" />
+              <Heart className="w-4 h-4 text-gray-700" />
             <div>
                 <p className="text-xs text-gray-500">Favorites</p>
-                <p className="text-lg font-bold text-gray-900">{stats.totalFavorites}</p>
+                <p className="text-base font-bold text-gray-900">{stats.totalFavorites}</p>
             </div>
             </div>
           </div>
-          <div className="bg-white p-3 rounded-lg border border-gray-100">
+          <div className="bg-white p-2.5 rounded-lg border border-gray-100">
             <div className="flex items-center space-x-2">
               <DollarSign className="w-4 h-4 text-green-600" />
             <div>
                 <p className="text-xs text-gray-500">Revenue</p>
-                <p className="text-lg font-bold text-gray-900">{formatCurrency(stats.totalRevenue, currencySettings.defaultCurrency)}</p>
+                <p className="text-base font-bold text-gray-900">{formatCurrency(stats.totalRevenue, currencySettings.defaultCurrency)}</p>
             </div>
             </div>
             </div>
-          <div className="bg-white p-3 rounded-lg border border-gray-100">
+          <div className="bg-white p-2.5 rounded-lg border border-gray-100">
               <div className="flex items-center space-x-2">
-              <TrendingUp className="w-4 h-4 text-pink-600" />
+              <TrendingUp className="w-4 h-4 text-gray-700" />
               <div>
                 <p className="text-xs text-gray-500">Avg Rating</p>
-                <p className="text-lg font-bold text-gray-900">{products.length > 0 ? (products.reduce((sum, p) => sum + (p.rating || 0), 0) / products.length).toFixed(1) : '0.0'}</p>
+                <p className="text-base font-bold text-gray-900">{products.length > 0 ? (products.reduce((sum, p) => sum + (p.rating || 0), 0) / products.length).toFixed(1) : '0.0'}</p>
               </div>
               </div>
             </div>
           </div>
 
         {/* Compact Filters */}
-        <div className="bg-white p-4 rounded-lg border border-gray-100">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center space-x-2">
-              <Search className="w-4 h-4 text-gray-400" />
+        <div className="bg-white p-3 rounded-lg border border-gray-100">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm w-64"
+                className="pl-9 pr-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 text-sm w-56"
               />
             </div>
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
-            >
-              <option value="all">All Categories</option>
-              {uniqueCategories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
+            <div className="relative">
               <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
-            >
-              <option value="all">All Status</option>
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="appearance-none min-w-[150px] px-3 pr-8 py-2 border border-gray-200 bg-gray-50 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-300 text-sm text-gray-700"
+              >
+                <option value="all">All Categories</option>
+                {uniqueCategories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <div className="relative">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="appearance-none min-w-[130px] px-3 pr-8 py-2 border border-gray-200 bg-gray-50 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-300 text-sm text-gray-700"
+              >
+                <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
                 <option value="draft">Draft</option>
               </select>
+              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <div className="relative">
               <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [field, order] = e.target.value.split('-');
-                setSortBy(field);
-                setSortOrder(order as 'asc' | 'desc');
-              }}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
-            >
-              <option value="created_date-desc">Newest First</option>
-              <option value="created_date-asc">Oldest First</option>
-              <option value="title-asc">Name A-Z</option>
-              <option value="title-desc">Name Z-A</option>
-              <option value="price-asc">Price Low-High</option>
-              <option value="price-desc">Price High-Low</option>
-              <option value="downloads-desc">Most Downloaded</option>
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split('-');
+                  setSortBy(field);
+                  setSortOrder(order as 'asc' | 'desc');
+                }}
+                className="appearance-none min-w-[160px] px-3 pr-8 py-2 border border-gray-200 bg-gray-50 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-300 text-sm text-gray-700"
+              >
+                <option value="created_date-desc">Newest First</option>
+                <option value="created_date-asc">Oldest First</option>
+                <option value="title-asc">Name A-Z</option>
+                <option value="title-desc">Name Z-A</option>
+                <option value="price-asc">Price Low-High</option>
+                <option value="price-desc">Price High-Low</option>
+                <option value="downloads-desc">Most Downloaded</option>
               </select>
+              <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
             <div className="flex items-center space-x-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-pink-100 text-pink-600' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 <Grid className="w-4 h-4" />
               </button>
                 <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-pink-100 text-pink-600' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-gray-200 text-gray-800' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                 <List className="w-4 h-4" />
                 </button>
@@ -1893,15 +1902,15 @@ const Products: React.FC = () => {
             
         {/* Bulk Actions */}
         {selectedProducts.length > 0 && (
-          <div className="bg-pink-50 border border-pink-200 rounded-lg p-3">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-pink-800">
+              <span className="text-sm text-gray-800">
                 {selectedProducts.length} product{selectedProducts.length > 1 ? 's' : ''} selected
               </span>
               <div className="flex items-center space-x-2">
               <button
                   onClick={clearSelection}
-                  className="text-sm text-pink-600 hover:text-pink-700"
+                  className="text-sm text-gray-700 hover:text-gray-900"
                 >
                   Clear
               </button>
@@ -1948,7 +1957,7 @@ const Products: React.FC = () => {
                         type="checkbox"
                         checked={selectedProducts.includes(product.id)}
                           onChange={() => toggleProductSelection(product.id)}
-                          className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                          className="rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                         />
                         <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                           {product.main_image ? (
@@ -2047,7 +2056,7 @@ const Products: React.FC = () => {
                     type="checkbox"
                     checked={selectedProducts.includes(product.id)}
                       onChange={() => toggleProductSelection(product.id)}
-                      className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                      className="rounded border-gray-300 text-gray-700 focus:ring-gray-400"
                   />
                     <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                       {product.main_image ? (
@@ -2183,7 +2192,7 @@ const Products: React.FC = () => {
                         onClick={() => setCurrentPage(pageNum)}
                         className={`px-3 py-1 text-sm border rounded ${
                           currentPage === pageNum
-                            ? 'bg-pink-600 text-white border-pink-600'
+                            ? 'bg-gray-900 text-white border-gray-900'
                             : 'border-gray-300 hover:bg-gray-50'
                         }`}
                       >

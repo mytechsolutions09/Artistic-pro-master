@@ -13,6 +13,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import BottomTabs from './components/BottomTabs';
 import PromoBar from './components/PromoBar';
+import GlobalSeoManager from './components/GlobalSeoManager';
 import Homepage from './pages/Homepage';
 import CategoriesPage from './pages/CategoriesPage';
 import BrowsePage from './pages/BrowsePage';
@@ -88,6 +89,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
+      <GlobalSeoManager />
       <PromoBar />
       {!shouldHideHeader && <Header />}
       <BottomTabs />

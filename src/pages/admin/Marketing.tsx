@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react';
+import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav';
 import { supabase } from '../../services/supabaseService';
 import MetaPixelService from '../../services/metaPixelService';
 
@@ -11,9 +12,16 @@ interface MarketingSettings {
   google_analytics_enabled: boolean;
   google_tag_manager_id: string;
   google_tag_manager_enabled: boolean;
+  page_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
+  og_image?: string;
 }
 
+const FIXED_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
 const Marketing: React.FC = () => {
+  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo'>('tracking');
   const [settings, setSettings] = useState<MarketingSettings>({
     meta_pixel_id: '',
     meta_pixel_enabled: true,
@@ -25,9 +33,16 @@ const Marketing: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingSeo, setSavingSeo] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [pixelStatus, setPixelStatus] = useState<'active' | 'inactive' | 'checking'>('checking');
   const [copied, setCopied] = useState(false);
+  const [seoSettings, setSeoSettings] = useState({
+    page_title: '',
+    meta_description: '',
+    meta_keywords: '',
+    og_image: '',
+  });
 
   useEffect(() => {
     loadSettings();
@@ -40,6 +55,7 @@ const Marketing: React.FC = () => {
       const { data, error } = await supabase
         .from('marketing_settings')
         .select('*')
+        .eq('id', FIXED_ID)
         .single();
 
       if (error) {
@@ -53,6 +69,12 @@ const Marketing: React.FC = () => {
         }
       } else if (data) {
         setSettings(data);
+        setSeoSettings({
+          page_title: data.page_title || '',
+          meta_description: data.meta_description || '',
+          meta_keywords: data.meta_keywords || '',
+          og_image: data.og_image || '',
+        });
       }
     } catch (error) {
       console.error('Error loading marketing settings:', error);
@@ -73,26 +95,12 @@ const Marketing: React.FC = () => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      
-      // Fixed UUID for single-row table
-      const FIXED_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
-      
-      // Try to update first (most common case)
-      const { error: updateError } = await supabase
-        .from('marketing_settings')
-        .update(settings)
-        .eq('id', FIXED_ID);
 
-      // If update fails because row doesn't exist, insert it
-      if (updateError && updateError.code === 'PGRST116') {
-        const { error: insertError } = await supabase
-          .from('marketing_settings')
-          .insert([{ ...settings, id: FIXED_ID }]);
-        
-        if (insertError) throw insertError;
-      } else if (updateError) {
-        throw updateError;
-      }
+      const { error } = await supabase
+        .from('marketing_settings')
+        .upsert([{ id: FIXED_ID, ...settings, ...seoSettings }], { onConflict: 'id' });
+
+      if (error) throw error;
 
       showMessage('success', 'Marketing settings saved successfully! Refresh the page to apply changes.');
     } catch (error: any) {
@@ -128,6 +136,24 @@ const Marketing: React.FC = () => {
     }
   };
 
+  const handleSaveSeo = () => {
+    (async () => {
+      try {
+        setSavingSeo(true);
+        const { error } = await supabase
+          .from('marketing_settings')
+          .upsert([{ id: FIXED_ID, ...settings, ...seoSettings }], { onConflict: 'id' });
+        if (error) throw error;
+        showMessage('success', 'SEO settings saved successfully! Refresh the page to apply changes.');
+      } catch (error) {
+        console.error('Error saving SEO settings:', error);
+        showMessage('error', 'Failed to save SEO settings');
+      } finally {
+        setSavingSeo(false);
+      }
+    })();
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Marketing & Analytics">
@@ -139,17 +165,19 @@ const Marketing: React.FC = () => {
   }
 
   return (
-    <AdminLayout title="Marketing & Analytics">
-      <div className="space-y-4 p-6">
+    <AdminLayout title="Marketing & Analytics" noHeader={true}>
+      <MarketingSecondaryNav activeTab={activeSubTab} onTabChange={setActiveSubTab} />
+      <div className="flex-1 flex flex-col overflow-hidden ml-24">
+      <div className="space-y-3 p-4">
         {/* Header */}
-        <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 rounded-lg shadow-md">
+        <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-4 rounded-lg shadow-md">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-              <TrendingUp className="w-8 h-8 text-white" />
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+              <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Marketing & Analytics</h1>
-              <p className="text-pink-100">Track user behavior and optimize ad campaigns</p>
+              <h1 className="text-xl font-bold text-white">Marketing & Analytics</h1>
+              <p className="text-sm text-pink-100">Track user behavior and optimize ad campaigns</p>
             </div>
           </div>
         </div>
@@ -170,8 +198,9 @@ const Marketing: React.FC = () => {
           </div>
         )}
 
+        <div className={activeSubTab === 'tracking' ? 'space-y-3' : 'hidden'}>
         {/* Meta (Facebook) Pixel */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -247,7 +276,7 @@ const Marketing: React.FC = () => {
             <div className="flex space-x-2">
               <button
                 onClick={testPixel}
-                className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium"
+                className="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium"
               >
                 <BarChart3 className="w-5 h-5" />
                 <span>Test Pixel</span>
@@ -256,7 +285,7 @@ const Marketing: React.FC = () => {
                 href="https://business.facebook.com/events_manager"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center space-x-2 font-medium"
+                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center space-x-2 font-medium"
               >
                 <ExternalLink className="w-5 h-5" />
                 <span>Events Manager</span>
@@ -280,7 +309,7 @@ const Marketing: React.FC = () => {
         </div>
 
         {/* Google Analytics (Coming Soon) */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm opacity-60">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm opacity-60">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-orange-100 rounded-lg">
@@ -317,7 +346,7 @@ const Marketing: React.FC = () => {
         </div>
 
         {/* Google Tag Manager (Coming Soon) */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm opacity-60">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm opacity-60">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-purple-100 rounded-lg">
@@ -354,11 +383,11 @@ const Marketing: React.FC = () => {
         </div>
 
         {/* Save Button */}
-        <div className="sticky bottom-4 bg-white border border-gray-200 p-4 rounded-lg shadow-lg">
+        <div className="sticky bottom-4 bg-white border border-gray-200 p-3 rounded-lg shadow-lg">
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-5 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? (
               <>
@@ -375,7 +404,7 @@ const Marketing: React.FC = () => {
         </div>
 
         {/* Quick Links */}
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-lg border border-gray-200">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
           <h3 className="font-semibold text-gray-800 mb-3">Quick Links & Resources</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <a
@@ -416,6 +445,89 @@ const Marketing: React.FC = () => {
             </a>
           </div>
         </div>
+        </div>
+
+        {/* SEO Sub-tab Content */}
+        <div className={activeSubTab === 'seo' ? 'space-y-3' : 'hidden'}>
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <Search className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800">SEO Settings</h2>
+                <p className="text-sm text-gray-500">Configure homepage metadata for better search visibility</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
+                <input
+                  type="text"
+                  value={seoSettings.page_title}
+                  onChange={(e) => setSeoSettings({ ...seoSettings, page_title: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Artistic Pro | Premium Digital Art & Wall Prints"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+                <textarea
+                  value={seoSettings.meta_description}
+                  onChange={(e) => setSeoSettings({ ...seoSettings, meta_description: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Discover curated digital artworks, premium prints, and exclusive collections."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Meta Keywords</label>
+                <input
+                  type="text"
+                  value={seoSettings.meta_keywords}
+                  onChange={(e) => setSeoSettings({ ...seoSettings, meta_keywords: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="digital art, wall art, prints, modern art, online gallery"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Open Graph Image URL</label>
+                <input
+                  type="text"
+                  value={seoSettings.og_image}
+                  onChange={(e) => setSeoSettings({ ...seoSettings, og_image: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="https://your-domain.com/og-image.jpg"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="sticky bottom-4 bg-white border border-gray-200 p-3 rounded-lg shadow-lg">
+            <button
+              onClick={handleSaveSeo}
+              disabled={savingSeo}
+              className="w-full px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {savingSeo ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  <span>Save SEO Settings</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
       </div>
     </AdminLayout>
   );
