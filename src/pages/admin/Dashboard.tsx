@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, LabelList } from 'recharts';
 import { 
   DollarSign, Users, ShoppingBag, TrendingUp, Eye, Download, Star, 
   Calendar, Clock, Bell, Settings, Plus, ArrowRight, Filter, Search,
@@ -524,7 +524,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={filteredRevenueData}>
+            <BarChart data={filteredRevenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="month" stroke="#6b7280" tick={{ fontSize: 11 }} />
               <YAxis
@@ -556,27 +556,23 @@ const Dashboard: React.FC = () => {
                   name === 'revenue' ? 'Revenue' : 'Orders'
                 ]}
               />
-              <Area
+              <Bar
                 yAxisId="revenue"
-                type="monotone"
                 dataKey="revenue"
-                stroke="#ec4899"
                 fill="#ec4899"
-                fillOpacity={0.1}
-                strokeWidth={2}
+                radius={[4, 4, 0, 0]}
+                barSize={14}
                 isAnimationActive={false}
               />
-              <Line
+              <Bar
                 yAxisId="orders"
-                type="monotone"
                 dataKey="orders"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
+                fill="#3b82f6"
+                radius={[4, 4, 0, 0]}
+                barSize={14}
                 isAnimationActive={false}
               />
-            </AreaChart>
+            </BarChart>
           </ResponsiveContainer>
           {chartLoading && (
             <div className="mt-3 text-xs text-gray-500 text-center font-sans font-normal">
@@ -590,28 +586,72 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Category Sales - Horizontal */}
-        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-2">
+        {/* Category Sales Graph */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-900">Category Sales</h3>
             <span className="text-xs text-gray-500 font-sans font-normal">{convertedCategoryData.length} categories</span>
           </div>
-          
           {convertedCategoryData.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {convertedCategoryData.map((category, index) => (
-                <div key={index} className="flex items-center space-x-1 px-2 py-1 bg-gray-50 rounded-md">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: category.color }}></div>
-                  <span className="text-xs text-gray-700 font-sans font-normal">{category.name}</span>
-                  <span className="text-xs font-medium text-gray-900 font-sans font-normal">{formatAmountInDefault(category.sales, 'INR')}</span>
-                  <span className="text-xs text-gray-500 font-sans font-normal">({category.value}%)</span>
-                </div>
-              ))}
-            </div>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart
+                data={[...convertedCategoryData]
+                  .sort((a, b) => (b.sales || 0) - (a.sales || 0))
+                  .slice(0, 8)}
+                margin={{ top: 4, right: 10, left: 10, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11 }}
+                  stroke="#6b7280"
+                  interval={0}
+                />
+                <YAxis
+                  type="number"
+                  tick={{ fontSize: 11 }}
+                  stroke="#6b7280"
+                  width={80}
+                  tickFormatter={(value: number) => formatCurrency(value, currencySettings.defaultCurrency)}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    fontSize: '12px'
+                  }}
+                  formatter={(value: any, _name: string, props: any) => {
+                    const salesAmount = formatCurrency(Number(value || 0), currencySettings.defaultCurrency);
+                    const salesCount = props?.payload?.salesCount || 0;
+                    return [salesAmount, `Amount • ${salesCount} sales`];
+                  }}
+                />
+                <Bar
+                  dataKey="sales"
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={false}
+                >
+                  <LabelList
+                    dataKey="salesCount"
+                    position="top"
+                    formatter={(value: any) => `${Number(value || 0)} sales`}
+                    style={{ fill: '#6b7280', fontSize: 11 }}
+                  />
+                  {convertedCategoryData
+                    .sort((a, b) => (b.sales || 0) - (a.sales || 0))
+                    .slice(0, 8)
+                    .map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color || '#9ca3af'} />
+                    ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           ) : (
-            <div className="text-center py-2">
-              <Package className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-              <p className="text-xs text-gray-500 font-sans font-normal">No data</p>
+            <div className="text-center py-8">
+              <Package className="w-5 h-5 text-gray-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-500 font-sans font-normal">No category sales data available</p>
             </div>
           )}
         </div>

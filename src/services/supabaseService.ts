@@ -2018,6 +2018,7 @@ export class AnalyticsService {
           total_price,
           currency_code,
           currency_rate,
+          quantity,
           products!inner(
             category
           )
@@ -2045,6 +2046,10 @@ export class AnalyticsService {
           return sum + convertedAmount;
         }, 0);
 
+        const salesCount = categoryOrderItems.reduce((sum, item: any) => {
+          return sum + (Number(item.quantity) || 1);
+        }, 0);
+
         // Calculate percentage based on total sales
         const totalAllSales = orderItems?.reduce((sum, item) => {
           const itemCurrency = item.currency_code || 'INR';
@@ -2062,7 +2067,8 @@ export class AnalyticsService {
           name: category.name,
           value: percentage,
           color: this.getCategoryColor(category.name),
-          sales: totalSales
+          sales: totalSales,
+          salesCount
         };
       }) || [];
 
