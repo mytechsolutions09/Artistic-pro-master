@@ -40,6 +40,7 @@ import { ReviewService } from '../services/reviewService';
 import { FavoritesService } from '../services/favoritesService';
 import { Review } from '../types';
 import { NavigationVisibilityService } from '../services/navigationVisibilityService';
+import ProductPageSkeleton from '../components/ProductPageSkeleton';
 
 const ProductPage: React.FC = () => {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
@@ -227,6 +228,18 @@ const ProductPage: React.FC = () => {
 
   // Find the product using category and product slugs
   const product = findProductBySlugs(allProducts, categorySlug || '', productSlug || '');
+
+  // Stable "random" cart count between 5 and 30 per product
+  const cartCount = React.useMemo(() => {
+    if (!product) return 20;
+    const seed = String(product.id || product.title || '');
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i);
+      hash |= 0;
+    }
+    return 5 + (Math.abs(hash) % 26); // 5..30
+  }, [product?.id, product?.title]);
   
   // Debug: Log search results
 
@@ -278,52 +291,7 @@ const ProductPage: React.FC = () => {
 
   // Show loading state while products are being fetched
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          {/* Beautiful Art-themed Loader */}
-          <div className="relative mx-auto mb-6">
-            {/* Main Canvas */}
-            <div className="w-24 h-24 bg-white rounded-2xl shadow-lg border-2 border-[#FAC6CF] p-3 relative overflow-hidden">
-              {/* Animated Paint Brush */}
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
-                <div className="w-8 h-1 bg-[#F48FB1] rounded-full animate-pulse"></div>
-                <div className="w-6 h-1 bg-[#F48FB1] rounded-full mt-1 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-4 h-1 bg-[#F48FB1] rounded-full mt-1 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-              </div>
-              
-              {/* Animated Paint Drops */}
-              <div className="absolute bottom-2 left-2">
-                <div className="w-3 h-3 bg-[#FAC6CF] rounded-full animate-bounce"></div>
-              </div>
-              <div className="absolute bottom-3 right-3">
-                <div className="w-2 h-2 bg-[#F48FB1] rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
-              </div>
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                <div className="w-2.5 h-2.5 bg-[#E91E63] rounded-full animate-bounce" style={{ animationDelay: '0.6s' }}></div>
-              </div>
-              
-              {/* Animated Palette */}
-              <div className="absolute top-1/2 right-2 transform -translate-y-1/2">
-                <div className="w-4 h-4 bg-gradient-to-br from-[#FAC6CF] to-[#F48FB1] rounded-full animate-ping"></div>
-              </div>
-            </div>
-            
-            {/* Floating Art Elements */}
-            <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#FAC6CF] rounded-full animate-pulse opacity-75"></div>
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#F48FB1] rounded-full animate-pulse opacity-75" style={{ animationDelay: '0.5s' }}></div>
-            <div className="absolute -bottom-1 -left-1 w-5 h-5 bg-[#E91E63] rounded-full animate-pulse opacity-75" style={{ animationDelay: '0.3s' }}></div>
-            <div className="absolute -bottom-2 -right-2 w-3 h-3 bg-[#FAC6CF] rounded-full animate-pulse opacity-75" style={{ animationDelay: '0.7s' }}></div>
-          </div>
-          
-          <h2 className="text-2xl font-semibold text-gray-800 mb-3 bg-gradient-to-r from-[#F48FB1] to-[#E91E63] bg-clip-text text-transparent font-sans font-normal">
-            Creating Art...
-          </h2>
-          <p className="text-gray-600 mb-2 font-sans font-normal">Please wait while we prepare your masterpiece</p>
-          <p className="text-sm text-[#F48FB1] font-medium font-sans font-normal">Loading product details</p>
-        </div>
-      </div>
-    );
+    return <ProductPageSkeleton />;
   }
 
   // Show product not found only after loading is complete
@@ -776,7 +744,7 @@ const ProductPage: React.FC = () => {
                     <span className="text-xs font-sans font-normal">Share</span>
                   </button>
                   <span className="text-xs text-gray-400 font-sans font-normal">•</span>
-                  <span className="text-xs text-gray-500 font-sans font-normal">In 20+ carts</span>
+                  <span className="text-xs text-gray-500 font-sans font-normal">In {cartCount}+ carts</span>
                 </div>
               </div>
 
@@ -854,53 +822,56 @@ const ProductPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-2 font-sans font-normal">Product Type</label>
-                    <select
-                      value={selectedProductType}
-                      onChange={(e) => setSelectedProductType(e.target.value as 'digital' | 'poster')}
-                      className="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 text-xs text-gray-600 font-sans font-normal text-left [&>option]:bg-white [&>option]:text-gray-600 [&>option]:text-left [&>option:hover]:bg-gray-100 [&>option:hover]:text-gray-600 [&>option:checked]:bg-gray-100 [&>option:checked]:text-gray-600"
-                      style={{
-                        backgroundColor: 'transparent',
-                        backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23718196' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                        backgroundPosition: 'right 0.5rem center',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundSize: '1.5em 1.5em',
-                        textAlign: 'left'
-                      }}
-                    >
-                      <option value="digital">Digital Download</option>
-                      <option value="poster">Physical Poster</option>
-                    </select>
+                    <div className="w-full border border-gray-300 rounded-md bg-gray-50 overflow-hidden">
+                      <select
+                        value={selectedProductType}
+                        onChange={(e) => setSelectedProductType(e.target.value as 'digital' | 'poster')}
+                        className="w-full px-3 py-1.5 pr-8 border-0 appearance-none bg-transparent focus:outline-none focus:ring-0 text-xs text-gray-700 font-sans font-normal text-left [&>option]:bg-white [&>option]:text-gray-700 [&>option]:text-left"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23718196' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                          backgroundPosition: 'right 0.5rem center',
+                          backgroundRepeat: 'no-repeat',
+                          backgroundSize: '1.5em 1.5em',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <option value="digital">Digital Download</option>
+                        <option value="poster">Physical Poster</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Poster Size Selection - Right next to Product Type */}
                   {selectedProductType === 'poster' && (
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1 font-sans font-normal">Poster Size</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-2 font-sans font-normal">Poster Size</label>
                       {product.posterPricing && Object.keys(product.posterPricing).length > 0 ? (
-                        <select
-                          value={selectedPosterSize}
-                          onChange={(e) => setSelectedPosterSize(e.target.value)}
-                          className="w-full px-3 py-1.5 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 bg-gray-50 text-xs text-gray-600 font-sans font-normal [&>option]:bg-white [&>option]:text-gray-600"
-                          style={{
-                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23718196' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                            backgroundPosition: 'right 0.5rem center',
-                            backgroundRepeat: 'no-repeat',
-                            backgroundSize: '1.5em 1.5em'
-                          }}
-                        >
-                          {Object.entries(product.posterPricing).map(([size, price]) => {
-                            const originalPrice = Number(price);
-                            const discountedPrice = product.discountPercentage && product.discountPercentage > 0 
-                              ? Math.round(originalPrice * (1 - (product.discountPercentage / 100)))
-                              : originalPrice;
-                            
-                            return (
-                              <option key={size} value={size}>
-                                {size} - {formatUIPrice(discountedPrice, 'INR')}
-                              </option>
-                            );
-                          })}
-                        </select>
+                        <div className="w-full border border-gray-300 rounded-md bg-gray-50 overflow-hidden">
+                          <select
+                            value={selectedPosterSize}
+                            onChange={(e) => setSelectedPosterSize(e.target.value)}
+                            className="w-full px-3 py-1.5 pr-8 border-0 appearance-none bg-transparent focus:outline-none focus:ring-0 text-xs text-gray-700 font-sans font-normal [&>option]:bg-white [&>option]:text-gray-700"
+                            style={{
+                              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23718196' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                              backgroundPosition: 'right 0.5rem center',
+                              backgroundRepeat: 'no-repeat',
+                              backgroundSize: '1.5em 1.5em'
+                            }}
+                          >
+                            {Object.entries(product.posterPricing).map(([size, price]) => {
+                              const originalPrice = Number(price);
+                              const discountedPrice = product.discountPercentage && product.discountPercentage > 0 
+                                ? Math.round(originalPrice * (1 - (product.discountPercentage / 100)))
+                                : originalPrice;
+                              
+                              return (
+                                <option key={size} value={size}>
+                                  {size} - {formatUIPrice(discountedPrice, 'INR')}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
                       ) : (
                         <div className="text-xs text-gray-500 p-2 border border-gray-200 rounded-md bg-gray-50 font-sans font-normal">
                           No poster sizes configured
