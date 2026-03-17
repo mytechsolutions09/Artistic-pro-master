@@ -1,4 +1,6 @@
 import { emailConfig, EmailType, EmailPriority, isValidEmail } from '../config/email';
+import { FunctionsHttpError } from '@supabase/supabase-js';
+import { supabase } from './supabaseService';
 
 // Email interfaces
 export interface EmailRecipient {
@@ -352,11 +354,7 @@ export class EmailService {
         };
       }
 
-      // In a real implementation, you would use a library like nodemailer
-      // For now, we'll simulate the email sending with Hostinger SMTP
-
-      // Simulate SMTP connection and sending
-      const result = await this.simulateSMTPEmail(options);
+      const result = await this.sendViaSMTP(options);
       
       if (result.success) {
 
@@ -602,25 +600,53 @@ export class EmailService {
   }
 
   /**
-   * Simulate SMTP email sending (replace with actual nodemailer implementation)
+   * Send email via Supabase Edge Function (real SMTP)
    */
-  private static async simulateSMTPEmail(options: EmailOptions): Promise<EmailResult> {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-    
-    // Simulate 95% success rate
-    const success = Math.random() > 0.05;
-    
-    if (success) {
-      const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      return {
-        success: true,
-        messageId
-      };
-    } else {
+  private static async sendViaSMTP(options: EmailOptions): Promise<EmailResult> {
+    const recipients = Array.isArray(options.to) ? options.to : [options.to];
+    const firstRecipient = recipients[0];
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: firstRecipient.email,
+          toName: firstRecipient.name || '',
+          subject: options.subject,
+          html: options.html || '',
+          text: options.text || '',
+          replyTo: options.replyTo || emailConfig.replyTo.email || '',
+        },
+      });
+
+      if (error) {
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const errorBody = await error.context.json();
+            const detailedError =
+              errorBody?.error ||
+              errorBody?.message ||
+              'Edge Function returned non-2xx response';
+            console.error('Edge Function HTTP error details:', errorBody);
+            return { success: false, error: detailedError };
+          } catch {
+            return { success: false, error: error.message || 'Edge Function HTTP error' };
+          }
+        }
+
+        console.error('Edge Function error:', error);
+        return { success: false, error: error.message || 'Edge Function call failed' };
+      }
+
+      if (data?.success) {
+        return { success: true, messageId: data.messageId };
+      }
+
+      return { success: false, error: data?.error || 'Unknown email error' };
+    } catch (err) {
+      console.error('Email send network error:', err);
       return {
         success: false,
-        error: 'SMTP server temporarily unavailable'
+        error: err instanceof Error ? err.message : 'Network error sending email',
       };
     }
   }

@@ -5,10 +5,6 @@ import {
   Mail, 
   Receipt, 
   Home, 
-  ShoppingBag,
-  Calendar,
-  CreditCard,
-  User,
   Star
 } from 'lucide-react';
 import { Order } from '../types';
@@ -133,7 +129,7 @@ const PaymentSuccess: React.FC = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center" style={{ fontFamily: 'Inter, sans-serif' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Processing your order...</p>
@@ -144,7 +140,7 @@ const PaymentSuccess: React.FC = () => {
   
   if (!order) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center" style={{ fontFamily: 'Inter, sans-serif' }}>
         <div className="text-center max-w-md mx-auto px-4">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Receipt className="w-8 h-8 text-red-500" />
@@ -174,7 +170,7 @@ const PaymentSuccess: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Compact Success Header */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-600">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -185,17 +181,6 @@ const PaymentSuccess: React.FC = () => {
               </div>
               <div className="text-center sm:text-left">
                 <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">Payment Successful!</h1>
-                <p className="text-sm text-green-50">Order #{order.id.slice(-8).toUpperCase()}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-white/90">
-              <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>{new Date(order.date).toLocaleDateString()}</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <CreditCard className="w-3.5 h-3.5" />
-                <span className="capitalize">{order.paymentMethod}</span>
               </div>
             </div>
           </div>
@@ -275,8 +260,8 @@ const PaymentSuccess: React.FC = () => {
                   <Mail className="w-5 h-5 text-green-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-900 text-sm mb-1">Confirmation Email Sent</h4>
-                  <p className="text-xs text-gray-600 truncate">{order.customerEmail}</p>
+                  <h4 className="font-semibold text-gray-900 text-sm mb-1">Order Confirmation Email</h4>
+                  <p className="text-xs text-gray-600 truncate">Sent to: {order.customerEmail}</p>
                 </div>
               </div>
             </div>
@@ -284,36 +269,6 @@ const PaymentSuccess: React.FC = () => {
           
           {/* Sidebar */}
           <div className="space-y-4">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 bg-gray-50">
-                <h3 className="text-base font-semibold text-gray-900">Quick Actions</h3>
-              </div>
-              <div className="p-3 sm:p-4 space-y-2">
-                <Link
-                  to="/dashboard"
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2.5 px-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-sm font-medium shadow-sm"
-                >
-                  <User className="w-4 h-4" />
-                  <span>My Dashboard</span>
-                </Link>
-                <Link
-                  to="/browse"
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-2.5 px-4 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 text-sm font-medium shadow-sm"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Continue Shopping</span>
-                </Link>
-                <Link
-                  to="/"
-                  className="w-full flex items-center justify-center gap-2 border-2 border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 text-sm font-medium"
-                >
-                  <Home className="w-4 h-4" />
-                  <span>Back to Home</span>
-                </Link>
-              </div>
-            </div>
-            
             {/* Payment Status */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 bg-gray-50">
@@ -328,8 +283,20 @@ const PaymentSuccess: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Payment ID</span>
-                  <span className="font-mono text-xs text-gray-900">{order.paymentId?.slice(-12)}</span>
+                  <span className="text-gray-600">Date</span>
+                  <span className="text-gray-900">{new Date(order.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Order Number</span>
+                  <span className="text-sm font-semibold text-gray-900">#{order.id.slice(-8).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Payment Mode</span>
+                  <span className="text-gray-900">
+                    {(order.paymentMethod || 'N/A')
+                      .replace(/_/g, ' ')
+                      .replace(/\b\w/g, (char) => char.toUpperCase())}
+                  </span>
                 </div>
               </div>
             </div>
@@ -340,9 +307,9 @@ const PaymentSuccess: React.FC = () => {
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Mail className="w-6 h-6 text-green-600" />
                 </div>
-                <h4 className="font-semibold text-gray-900 text-sm mb-1">Email Sent!</h4>
+                <h4 className="font-semibold text-gray-900 text-sm mb-1">Order Confirmation Email</h4>
                 <p className="text-xs text-gray-600 break-words">
-                  Confirmation sent to <strong className="text-gray-900">{order.customerEmail}</strong>
+                  Sent to <strong className="text-gray-900">{order.customerEmail}</strong>
                 </p>
               </div>
             </div>

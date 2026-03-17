@@ -126,11 +126,22 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
 
 
     
+    const downloadLinks = await generateSecureDownloadLinks(order.id, orderData.items);
+
+    if (downloadLinks.length > 0) {
+      await supabaseService
+        .from('orders')
+        .update({ download_links: downloadLinks })
+        .eq('id', order.id);
+    }
+
+    const emailResult = await sendOrderConfirmationEmail(orderData, order.id, downloadLinks);
+
     return {
       success: true,
       orderId: order.id,
-      downloadLinks: [], // You can add download link generation here
-      emailSent: false // You can add email sending here
+      downloadLinks,
+      emailSent: emailResult.success
     };
 
   } catch (error) {
@@ -147,4 +158,85 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
  */
 export function isServiceRoleAvailable(): boolean {
   return !!supabaseService;
+}
+
+async function sendOrderConfirmationEmail(
+  orderData: CompleteOrderData,
+  orderId: string,
+  downloadLinks: string[]
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const items = await getProductDetailsForEmail(orderData.items);
+    const { EmailService } = await import('./emailService');
+
+    const result = await EmailService.sendOrderConfirmation(
+      orderData.customerEmail,
+      orderData.customerName,
+      {
+        orderId,
+        orderDate: new Date().toISOString(),
+        totalAmount: orderData.totalAmount,
+        items,
+        downloadLinks
+      }
+    );
+
+    return { success: result.success, error: result.error };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send order email'
+    };
+  }
+}
+
+async function getProductDetailsForEmail(items: CompleteOrderData['items']) {
+  if (!supabaseService) return [];
+
+  const productIds = items.map(item => item.productId);
+  const { data: products } = await supabaseService
+    .from('products')
+    .select('id, title, main_image, pdf_url, product_type')
+    .in('id', productIds);
+
+  const productMap = new Map((products || []).map(product => [product.id, product]));
+
+  return items.map(item => {
+    const product = productMap.get(item.productId);
+    const isDigital = product?.product_type === 'digital';
+
+    return {
+      title: product?.title || item.productTitle,
+      quantity: item.quantity,
+      price: item.unitPrice,
+      mainImage: isDigital ? product?.main_image : undefined,
+      pdfUrl: isDigital ? product?.pdf_url : undefined
+    };
+  });
+}
+
+async function generateSecureDownloadLinks(
+  orderId: string,
+  items: CompleteOrderData['items']
+): Promise<string[]> {
+  if (!supabaseService) return [];
+
+  const downloadLinks: string[] = [];
+
+  for (const item of items) {
+    const { data: product } = await supabaseService
+      .from('products')
+      .select('pdf_url')
+      .eq('id', item.productId)
+      .single();
+
+    if (product?.pdf_url) {
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 15);
+      const token = `${orderId}_${item.productId}_${timestamp}_${random}`;
+      downloadLinks.push(`${window.location.origin}/download/${item.productId}?token=${token}&order=${orderId}`);
+    }
+  }
+
+  return downloadLinks;
 }

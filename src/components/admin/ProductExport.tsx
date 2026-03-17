@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Download, FileText, CheckCircle, AlertCircle, RefreshCw, ExternalLink, CheckSquare, Square } from 'lucide-react';
-import ProductCatalogExportService, { ProductExportData } from '../../services/productCatalogExport';
+import { Download, FileText, CheckCircle, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
+import ProductCatalogExportService from '../../services/productCatalogExport';
 
 const ProductExport: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -13,13 +13,9 @@ const ProductExport: React.FC = () => {
     withImages: 0,
     withoutImages: 0
   });
-  const [preview, setPreview] = useState<ProductExportData[]>([]);
-  const [allProducts, setAllProducts] = useState<ProductExportData[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadStats();
-    loadAllProducts();
   }, []);
 
   const loadStats = async () => {
@@ -31,44 +27,12 @@ const ProductExport: React.FC = () => {
     }
   };
 
-  const loadAllProducts = async () => {
-    try {
-      setLoading(true);
-      const products = await ProductCatalogExportService.fetchProducts();
-      setAllProducts(products);
-      setPreview(products); // Show all products in scrollable table
-    } catch (error) {
-      console.error('Error loading products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.size === allProducts.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(allProducts.map(p => p.product_id)));
-    }
-  };
-
-  const toggleSelectProduct = (productId: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(productId)) {
-      newSelected.delete(productId);
-    } else {
-      newSelected.add(productId);
-    }
-    setSelectedIds(newSelected);
-  };
-
   const handleExport = async () => {
     try {
       setExporting(true);
       setMessage(null);
       
-      const productIds = selectedIds.size > 0 ? Array.from(selectedIds) : undefined;
-      const result = await ProductCatalogExportService.exportToCSV(productIds);
+      const result = await ProductCatalogExportService.exportToCSV();
       
       if (result.success) {
         setMessage({
@@ -94,13 +58,10 @@ const ProductExport: React.FC = () => {
   };
 
   const getExportCount = () => {
-    return selectedIds.size > 0 ? selectedIds.size : stats.total;
+    return stats.total;
   };
 
   const getExportButtonText = () => {
-    if (selectedIds.size > 0) {
-      return `Export ${selectedIds.size} Selected Product${selectedIds.size !== 1 ? 's' : ''}`;
-    }
     return `Export All ${stats.total} Products`;
   };
 
@@ -164,24 +125,11 @@ const ProductExport: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-800">Export to CSV</h2>
-            <p className="text-sm text-gray-500">
-              {selectedIds.size > 0 
-                ? `${selectedIds.size} product${selectedIds.size !== 1 ? 's' : ''} selected`
-                : 'Select products below or export all'
-              }
-            </p>
+            <p className="text-sm text-gray-500">Export full product catalog in one click</p>
           </div>
           <div className="flex items-center space-x-2">
-            {selectedIds.size > 0 && (
-              <button
-                onClick={() => setSelectedIds(new Set())}
-                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
-              >
-                Clear Selection
-              </button>
-            )}
             <button
-              onClick={loadAllProducts}
+              onClick={loadStats}
               className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
               title="Refresh"
             >
@@ -242,130 +190,7 @@ const ProductExport: React.FC = () => {
         <div className="bg-white p-12 rounded-lg border border-gray-200 shadow-sm">
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="text-gray-600 font-medium">Loading products...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Product Selection Table */}
-      {!loading && preview.length > 0 && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-gray-600" />
-              <h2 className="text-lg font-semibold text-gray-800">Select Products to Export</h2>
-              <span className="text-sm text-gray-500">
-                ({preview.length} shown{allProducts.length > preview.length ? ` of ${allProducts.length}` : ''})
-              </span>
-            </div>
-            <button
-              onClick={toggleSelectAll}
-              className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-            >
-              {selectedIds.size === allProducts.length ? (
-                <>
-                  <CheckSquare className="w-4 h-4" />
-                  <span>Deselect All</span>
-                </>
-              ) : (
-                <>
-                  <Square className="w-4 h-4" />
-                  <span>Select All</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="text-left p-3 font-medium text-gray-700 w-12 bg-gray-50">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.size === allProducts.length && allProducts.length > 0}
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                      />
-                    </th>
-                    <th className="text-left p-3 font-medium text-gray-700 bg-gray-50">ID</th>
-                    <th className="text-left p-3 font-medium text-gray-700 bg-gray-50">Title</th>
-                    <th className="text-left p-3 font-medium text-gray-700 bg-gray-50">Price</th>
-                    <th className="text-left p-3 font-medium text-gray-700 bg-gray-50">Availability</th>
-                    <th className="text-left p-3 font-medium text-gray-700 bg-gray-50">Link</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.map((product, index) => (
-                    <tr 
-                      key={index} 
-                      className={`border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors ${
-                        selectedIds.has(product.product_id) ? 'bg-blue-50' : 'bg-white'
-                      }`}
-                      onClick={() => toggleSelectProduct(product.product_id)}
-                    >
-                      <td className="p-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(product.product_id)}
-                          onChange={() => toggleSelectProduct(product.product_id)}
-                          className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </td>
-                      <td className="p-3 text-gray-600 font-mono text-xs">{product.product_id.substring(0, 8)}...</td>
-                      <td className="p-3 text-gray-900">{product.title}</td>
-                      <td className="p-3 text-gray-900">₹{product.price}</td>
-                      <td className="p-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          product.availability === 'in stock'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          {product.availability}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <a
-                          href={product.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <span>View</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
-          {allProducts.length > preview.length && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 text-center">
-              Showing {preview.length} of {allProducts.length} products. Select specific products or export all.
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* No Products State */}
-      {!loading && preview.length === 0 && stats.total > 0 && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-center py-8">
-            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">Unable to load products for preview</p>
-            <button
-              onClick={loadAllProducts}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Retry Loading Products</span>
-            </button>
+            <p className="text-gray-600 font-medium">Loading export data...</p>
           </div>
         </div>
       )}

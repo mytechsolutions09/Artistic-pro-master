@@ -103,6 +103,30 @@ const BentoHeroSection: React.FC<BentoHeroSectionProps> = ({ cards }) => {
     return Math.max(1, Math.min(max, parsed));
   };
 
+  const TABLET_SPAN_PATTERN = [
+    'row-span-2',
+    'row-span-2',
+    'col-span-2',
+    'row-span-2',
+    'row-span-2',
+    'col-span-2 row-span-2',
+  ];
+
+  const MOBILE_SPAN_PATTERN = [
+    'col-span-2 row-span-2',
+    'row-span-2',
+    'row-span-2',
+    'col-span-2',
+    'col-span-2',
+    'col-span-2 row-span-2',
+  ];
+
+  const getTabletCardClass = (index: number) =>
+    TABLET_SPAN_PATTERN[index % TABLET_SPAN_PATTERN.length];
+
+  const getMobileCardClass = (index: number) =>
+    MOBILE_SPAN_PATTERN[index % MOBILE_SPAN_PATTERN.length];
+
   const renderCard = (
     card: BentoCard,
     extraClass: string = '',
@@ -160,14 +184,14 @@ const BentoHeroSection: React.FC<BentoHeroSectionProps> = ({ cards }) => {
           })}
         </div>
 
-        {/* ── Tablet (md – lg) ── 2-col grid */}
-        <div className="hidden md:grid lg:hidden grid-cols-2 gap-3" style={{ gridAutoRows: '200px' }}>
-          {normalizedCards.map((card) => renderCard(card))}
+        {/* ── Tablet (md – lg) ── mixed 2-col grid */}
+        <div className="hidden md:grid lg:hidden grid-cols-2 gap-3 grid-flow-dense" style={{ gridAutoRows: '150px' }}>
+          {normalizedCards.map((card, index) => renderCard(card, getTabletCardClass(index)))}
         </div>
 
-        {/* ── Mobile ── 2-col compact */}
-        <div className="grid md:hidden grid-cols-2 gap-2" style={{ gridAutoRows: '150px' }}>
-          {normalizedCards.map((card, index) => renderCard(card, index === 0 ? 'row-span-2' : ''))}
+        {/* ── Mobile ── asymmetric collage */}
+        <div className="grid md:hidden grid-cols-2 gap-2.5 grid-flow-dense" style={{ gridAutoRows: '110px' }}>
+          {normalizedCards.map((card, index) => renderCard(card, getMobileCardClass(index)))}
         </div>
 
       </div>

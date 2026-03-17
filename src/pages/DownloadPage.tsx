@@ -176,9 +176,9 @@ const DownloadPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-['Inter']" style={{ fontFamily: 'Inter, sans-serif' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p className="text-gray-600">Validating download link...</p>
         </div>
       </div>
@@ -187,7 +187,7 @@ const DownloadPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-['Inter']" style={{ fontFamily: 'Inter, sans-serif' }}>
         <div className="max-w-md mx-auto text-center">
           <div className="bg-white rounded-xl shadow-sm border border-red-200 p-8">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
@@ -195,7 +195,7 @@ const DownloadPage: React.FC = () => {
             <p className="text-gray-600 mb-6">{error}</p>
             <button
               onClick={() => navigate('/')}
-              className="flex items-center justify-center space-x-2 px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors mx-auto"
+              className="flex items-center justify-center space-x-2 px-6 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg transition-colors mx-auto"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Go Home</span>
@@ -207,7 +207,7 @@ const DownloadPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-['Inter']" style={{ fontFamily: 'Inter, sans-serif' }}>
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -247,8 +247,8 @@ const DownloadPage: React.FC = () => {
               {product?.pdf_url && (
                 <div className="border border-gray-200 rounded-lg p-3">
                   <div className="flex items-center space-x-2 mb-3">
-                    <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-pink-600" />
+                    <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-black" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-800 text-sm">Product PDF</h3>
@@ -268,7 +268,7 @@ const DownloadPage: React.FC = () => {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-pink-500 h-2 rounded-full transition-all duration-300"
+                          className="bg-gray-900 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${downloadProgress}%` }}
                         ></div>
                       </div>
@@ -278,7 +278,7 @@ const DownloadPage: React.FC = () => {
                   <button
                     onClick={() => handleDownload('pdf')}
                     disabled={downloadingPdf}
-                    className="w-full flex items-center justify-center space-x-1 px-3 py-2 bg-pink-300 hover:bg-pink-400 disabled:bg-gray-400 text-white rounded-lg transition-colors text-sm"
+                    className="w-full flex items-center justify-center space-x-1 px-3 py-2 bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 text-white rounded-lg transition-colors text-sm"
                   >
                     <Download className="w-4 h-4" />
                     <span>{downloadingPdf ? 'Downloading...' : 'Download PDF'}</span>
@@ -290,8 +290,8 @@ const DownloadPage: React.FC = () => {
               {product?.main_image && (
                 <div className="border border-gray-200 rounded-lg p-3">
                   <div className="flex items-center space-x-2 mb-3">
-                    <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                      <ImageIcon className="w-4 h-4 text-pink-600" />
+                    <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <ImageIcon className="w-4 h-4 text-black" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-800 text-sm">Main Image</h3>
@@ -311,7 +311,7 @@ const DownloadPage: React.FC = () => {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-pink-500 h-2 rounded-full transition-all duration-300"
+                          className="bg-gray-900 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${downloadProgress}%` }}
                         ></div>
                       </div>
@@ -321,7 +321,7 @@ const DownloadPage: React.FC = () => {
                   <button
                     onClick={() => handleDownload('image')}
                     disabled={downloadingImage}
-                    className="w-full flex items-center justify-center space-x-1 px-3 py-2 bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 text-white rounded-lg transition-colors text-sm"
+                    className="w-full flex items-center justify-center space-x-1 px-3 py-2 bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 text-white rounded-lg transition-colors text-sm"
                   >
                     <Download className="w-4 h-4" />
                     <span>{downloadingImage ? 'Downloading...' : 'Download Image'}</span>
@@ -339,9 +339,9 @@ const DownloadPage: React.FC = () => {
             </div>
 
             {/* Important Information */}
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="font-medium text-blue-800 mb-1 text-sm">📋 Important Information</h3>
-              <ul className="text-xs text-blue-700 space-y-0.5">
+            <div className="mt-4 p-3 rounded-lg">
+              <h3 className="font-medium text-gray-700 mb-1 text-sm">Important Information</h3>
+              <ul className="text-xs text-gray-600 space-y-0.5">
                 <li>• Download links are valid forever</li>
                 <li>• Files can be used for both personal and commercial purposes</li>
                 <li>• Keep this page bookmarked for future downloads</li>

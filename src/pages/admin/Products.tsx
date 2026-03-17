@@ -10,7 +10,7 @@ import ProductsSecondaryNav from '../../components/admin/ProductsSecondaryNav';
 import TemplatesManagement from '../../components/admin/TemplatesManagement';
 import ProductExport from '../../components/admin/ProductExport';
 import BackToTop from '../../components/BackToTop';
-import { ProductService, OrderService } from '../../services/supabaseService';
+import { ProductService, OrderService, supabase } from '../../services/supabaseService';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { ImageUploadService } from '../../services/imageUploadService';
 import { templateService, ProductTemplate } from '../../services/templateService';
@@ -1268,7 +1268,33 @@ const Products: React.FC = () => {
     try {
       setLoading(true);
       const data = await ProductService.getAllProducts();
-      setProducts(data || []);
+      const productsData = data || [];
+
+      // Count unique orders per product from order_items
+      const { data: orderItemsData, error: orderItemsError } = await supabase
+        .from('order_items')
+        .select('product_id, order_id');
+
+      if (orderItemsError) {
+        console.error('Error loading product order counts:', orderItemsError);
+        setProducts(productsData.map((product: any) => ({ ...product, orderCount: 0 })));
+      } else {
+        const productOrderMap = new Map<string, Set<string>>();
+        (orderItemsData || []).forEach((item: { product_id: string; order_id: string }) => {
+          if (!item?.product_id || !item?.order_id) return;
+          if (!productOrderMap.has(item.product_id)) {
+            productOrderMap.set(item.product_id, new Set<string>());
+          }
+          productOrderMap.get(item.product_id)!.add(item.order_id);
+        });
+
+        setProducts(
+          productsData.map((product: any) => ({
+            ...product,
+            orderCount: productOrderMap.get(product.id)?.size || 0,
+          }))
+        );
+      }
       
       // Load revenue from orders
       const orderStats = await OrderService.getOrderStats();
@@ -1951,78 +1977,78 @@ const Products: React.FC = () => {
               >
                 {viewMode === 'grid' ? (
                   <>
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-2">
+                    <div className="relative mb-3">
+                      <div className="w-full h-36 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+                        {product.main_image ? (
+                          <img
+                            src={product.main_image}
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-gray-400" />
+                        )}
+                      </div>
                       <input
                         type="checkbox"
                         checked={selectedProducts.includes(product.id)}
-                          onChange={() => toggleProductSelection(product.id)}
-                          className="rounded border-gray-300 text-gray-700 focus:ring-gray-400"
-                        />
-                        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                          {product.main_image ? (
-                            <img 
-                              src={product.main_image} 
-                            alt={product.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : product.images && product.images.length > 0 ? (
-                            <img 
-                              src={product.images[0]} 
-                              alt={product.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <ImageIcon className="w-6 h-6 text-gray-400" />
-                          )}
+                        onChange={() => toggleProductSelection(product.id)}
+                        className="absolute top-2 left-2 rounded border-gray-300 text-gray-700 focus:ring-gray-400 bg-white/90"
+                      />
+                      <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                        <div className="px-2 py-1 rounded-full bg-white/90 flex items-center space-x-1">
+                          <Star className="w-3.5 h-3.5 text-yellow-400 fill-current" />
+                          <span className="text-xs font-medium text-gray-700">{product.rating?.toFixed(1) || '0.0'}</span>
                         </div>
-                        </div>
-                      <div className="flex items-center space-x-1">
-                        {product.featured && <Star className="w-4 h-4 text-yellow-500 fill-current" />}
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          product.status === 'active' ? 'bg-green-100 text-green-800' :
-                          product.status === 'inactive' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {product.status}
-                      </span>
+                        {product.featured && (
+                          <div className="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center">
+                            <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
+                          </div>
+                        )}
                       </div>
-                            </div>
-                    <h3 className="font-medium text-gray-900 mb-1 line-clamp-2">{product.title}</h3>
+                    </div>
+                    <h3 className="font-['Inter'] text-sm font-medium text-gray-900 mb-1 line-clamp-2">{product.title}</h3>
                     <div className="mb-2">
                         {product.categories && product.categories.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {product.categories.map((category: string, index: number) => (
-                            <span 
-                              key={index}
-                              className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                            >
+                            <span key={index} className="inline-block text-[11px] text-gray-600">
                               {category}
-                      </span>
+                              {index < product.categories.length - 1 && <span className="mx-1 text-gray-400">|</span>}
+                            </span>
                           ))}
                       </div>
                       ) : product.category ? (
-                        <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                        <span className="inline-block text-[11px] text-gray-600">
                           {product.category}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">No categories</span>
                         )}
                       </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-gray-900">{formatCurrency(product.price, currencySettings.defaultCurrency)}</span>
-                      <div className="flex items-center space-x-3 text-gray-500">
-                        <span>{product.downloads || 0} downloads</span>
-                        <div className="flex items-center space-x-1">
-                          <Heart className="w-3 h-3" />
-                          <span>{product.favoritesCount || 0}</span>
-                        </div>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      <div className="rounded-md bg-gray-50 py-1.5 text-center">
+                        <p className="text-sm font-semibold text-gray-800">{product.downloads || 0}</p>
+                        <p className="text-[10px] uppercase tracking-wide text-gray-500">Downloads</p>
                       </div>
+                      <div className="rounded-md bg-gray-50 py-1.5 text-center">
+                        <p className="text-sm font-semibold text-gray-800">{product.orderCount || 0}</p>
+                        <p className="text-[10px] uppercase tracking-wide text-gray-500">Orders</p>
                       </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm text-gray-600">{product.rating?.toFixed(1) || '0.0'}</span>
+                      <div className="rounded-md bg-gray-50 py-1.5 text-center">
+                        <p className="text-sm font-semibold text-gray-800">{product.favoritesCount || 0}</p>
+                        <p className="text-[10px] uppercase tracking-wide text-gray-500">Favorites</p>
+                      </div>
+                    </div>
+                    <div className="flex items-end justify-between mt-3">
+                      <div className="leading-tight">
+                        <p className="text-base font-semibold text-gray-900">{formatCurrency(product.price, currencySettings.defaultCurrency)}</p>
                       </div>
                       <div className="flex items-center space-x-1">
                         <button className="p-1 text-gray-400 hover:text-gray-600">
@@ -2077,30 +2103,21 @@ const Products: React.FC = () => {
                 </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-medium text-gray-900 truncate">{product.title}</h3>
+                        <h3 className="font-['Inter'] text-xs font-medium text-gray-900 truncate">{product.title}</h3>
                         {product.featured && <Star className="w-4 h-4 text-yellow-500 fill-current" />}
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          product.status === 'active' ? 'bg-green-100 text-green-800' :
-                          product.status === 'inactive' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                    {product.status}
-                  </span>
                 </div>
                       <div className="mt-1">
                     {product.categories && product.categories.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {product.categories.map((category: string, index: number) => (
-                              <span 
-                                key={index}
-                                className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                              >
-                          {category}
-                  </span>
+                              <span key={index} className="inline-block text-[11px] text-gray-600">
+                                {category}
+                                {index < product.categories.length - 1 && <span className="mx-1 text-gray-400">|</span>}
+                              </span>
                             ))}
                           </div>
                         ) : product.category ? (
-                          <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                          <span className="inline-block text-[11px] text-gray-600">
                             {product.category}
                       </span>
                         ) : (
@@ -2112,6 +2129,7 @@ const Products: React.FC = () => {
                       <p className="font-medium text-gray-900">{formatCurrency(product.price, currencySettings.defaultCurrency)}</p>
                       <div className="flex items-center justify-end space-x-3 text-sm text-gray-500">
                         <span>{product.downloads || 0} downloads</span>
+                        <span>{product.orderCount || 0} orders</span>
                         <div className="flex items-center space-x-1">
                           <Heart className="w-3 h-3" />
                           <span>{product.favoritesCount || 0}</span>
