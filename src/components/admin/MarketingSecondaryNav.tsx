@@ -1,16 +1,16 @@
 import React from 'react';
-import { TrendingUp, Search } from 'lucide-react';
+import { TrendingUp, Search, CheckCircle } from 'lucide-react';
 
 export interface MarketingTab {
-  id: 'tracking' | 'seo';
+  id: 'tracking' | 'seo' | 'seo_daily';
   label: string;
   icon: React.ReactNode;
   description: string;
 }
 
 interface MarketingSecondaryNavProps {
-  activeTab: 'tracking' | 'seo';
-  onTabChange: (tabId: 'tracking' | 'seo') => void;
+  activeTab: 'tracking' | 'seo' | 'seo_daily';
+  onTabChange: (tabId: 'tracking' | 'seo' | 'seo_daily') => void;
   className?: string;
 }
 
@@ -26,6 +26,12 @@ const MARKETING_TABS: MarketingTab[] = [
     label: 'SEO',
     icon: <Search className="w-4 h-4" />,
     description: 'Search metadata and Open Graph',
+  },
+  {
+    id: 'seo_daily',
+    label: 'SEO Daily',
+    icon: <CheckCircle className="w-4 h-4" />,
+    description: 'Daily SEO checklist and routine',
   },
 ];
 

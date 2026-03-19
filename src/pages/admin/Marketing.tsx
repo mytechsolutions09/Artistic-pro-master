@@ -20,9 +20,27 @@ interface MarketingSettings {
 }
 
 const FIXED_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+const DAILY_SEO_TASKS = [
+  { id: 'search_console', label: 'Check Google Search Console for indexing issues and errors.' },
+  { id: 'optimize_page', label: 'Improve one page title, meta description, and internal links.' },
+  { id: 'refresh_content', label: 'Publish new content or refresh one old page with updated info.' },
+  { id: 'technical_check', label: 'Fix one technical SEO item (speed, alt text, broken link, schema).' },
+  { id: 'keyword_tracking', label: 'Track 3-5 priority keywords and record movement.' },
+  { id: 'distribution', label: 'Share one page/post for traffic and backlink opportunities.' },
+] as const;
+
+const getTodayKey = () => new Date().toISOString().slice(0, 10);
+const getStorageKey = () => `seo_daily_checklist_${getTodayKey()}`;
+const getTaskStatusKey = () => `seo_daily_task_status_${getTodayKey()}`;
+const getKeywordKey = () => `seo_daily_keywords_${getTodayKey()}`;
+
+type DailyTaskStatus = {
+  lastRunAt: string;
+  note: string;
+};
 
 const Marketing: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo'>('tracking');
+  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'seo_daily'>('tracking');
   const [settings, setSettings] = useState<MarketingSettings>({
     meta_pixel_id: '',
     meta_pixel_enabled: true,
@@ -38,6 +56,9 @@ const Marketing: React.FC = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [pixelStatus, setPixelStatus] = useState<'active' | 'inactive' | 'checking'>('checking');
   const [copied, setCopied] = useState(false);
+  const [dailyChecklist, setDailyChecklist] = useState<Record<string, boolean>>({});
+  const [dailyTaskStatus, setDailyTaskStatus] = useState<Record<string, DailyTaskStatus>>({});
+  const [runningTaskId, setRunningTaskId] = useState<string | null>(null);
   const [seoSettings, setSeoSettings] = useState({
     page_title: '',
     meta_description: '',
@@ -49,7 +70,38 @@ const Marketing: React.FC = () => {
   useEffect(() => {
     loadSettings();
     checkPixelStatus();
+    loadDailyChecklist();
   }, []);
+
+  const loadDailyChecklist = () => {
+    const defaultChecklist = DAILY_SEO_TASKS.reduce((acc, task) => {
+      acc[task.id] = false;
+      return acc;
+    }, {} as Record<string, boolean>);
+
+    try {
+      const savedChecklist = localStorage.getItem(getStorageKey());
+      if (!savedChecklist) {
+        setDailyChecklist(defaultChecklist);
+        return;
+      }
+
+      const parsed = JSON.parse(savedChecklist) as Record<string, boolean>;
+      const merged = { ...defaultChecklist, ...parsed };
+      setDailyChecklist(merged);
+
+      const savedTaskStatus = localStorage.getItem(getTaskStatusKey());
+      if (savedTaskStatus) {
+        setDailyTaskStatus(JSON.parse(savedTaskStatus) as Record<string, DailyTaskStatus>);
+      } else {
+        setDailyTaskStatus({});
+      }
+    } catch (error) {
+      console.error('Failed to load SEO daily checklist:', error);
+      setDailyChecklist(defaultChecklist);
+      setDailyTaskStatus({});
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -156,6 +208,128 @@ const Marketing: React.FC = () => {
       }
     })();
   };
+
+  const saveDailyTaskStatus = (status: Record<string, DailyTaskStatus>) => {
+    localStorage.setItem(getTaskStatusKey(), JSON.stringify(status));
+  };
+
+  const runDailyTaskAutomation = async (taskId: string) => {
+    switch (taskId) {
+      case 'search_console': {
+        window.open('https://search.google.com/search-console', '_blank', 'noopener,noreferrer');
+        return 'Opened Google Search Console in a new tab.';
+      }
+      case 'optimize_page': {
+        setActiveSubTab('seo');
+        return 'Switched to SEO settings. Update metadata fields, then click Save SEO Settings.';
+      }
+      case 'refresh_content': {
+        window.open('/admin/homepage-management', '_blank', 'noopener,noreferrer');
+        return 'Opened Homepage Management so you can update content quickly.';
+      }
+      case 'technical_check': {
+        const checks: string[] = [];
+
+        try {
+          const robotsRes = await fetch('/robots.txt', { cache: 'no-store' });
+          checks.push(robotsRes.ok ? 'robots.txt OK' : 'robots.txt missing');
+        } catch {
+          checks.push('robots.txt check failed');
+        }
+
+        try {
+          const sitemapRes = await fetch('/sitemap.xml', { cache: 'no-store' });
+          checks.push(sitemapRes.ok ? 'sitemap.xml OK' : 'sitemap.xml missing');
+        } catch {
+          checks.push('sitemap.xml check failed');
+        }
+
+        checks.push(document.querySelector('meta[name="description"]') ? 'meta description found' : 'meta description missing');
+        checks.push(document.querySelector('link[rel="canonical"]') ? 'canonical found' : 'canonical missing');
+        checks.push(document.querySelector('meta[property="og:image"]') ? 'og:image found' : 'og:image missing');
+
+        return `Technical check finished: ${checks.join(', ')}.`;
+      }
+      case 'keyword_tracking': {
+        const existingKeywords = localStorage.getItem(getKeywordKey());
+        const defaultValue = existingKeywords ? (JSON.parse(existingKeywords) as string[]).join(', ') : '';
+        const input = window.prompt('Enter 3-5 keywords separated by commas', defaultValue);
+
+        if (input === null) {
+          throw new Error('Keyword tracking was cancelled.');
+        }
+
+        const keywords = input
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+          .slice(0, 5);
+
+        if (keywords.length < 3) {
+          throw new Error('Please enter at least 3 keywords.');
+        }
+
+        localStorage.setItem(getKeywordKey(), JSON.stringify(keywords));
+        return `Saved ${keywords.length} keywords for today: ${keywords.join(', ')}.`;
+      }
+      case 'distribution': {
+        const targetUrl = `${window.location.origin}/`;
+        await navigator.clipboard.writeText(targetUrl);
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(targetUrl)}`, '_blank', 'noopener,noreferrer');
+        return 'Copied homepage URL and opened share dialog.';
+      }
+      default:
+        return 'Task action completed.';
+    }
+  };
+
+  const toggleDailyTask = async (taskId: string) => {
+    const currentlyChecked = Boolean(dailyChecklist[taskId]);
+    if (currentlyChecked) {
+      const next = { ...dailyChecklist, [taskId]: false };
+      setDailyChecklist(next);
+      localStorage.setItem(getStorageKey(), JSON.stringify(next));
+      return;
+    }
+
+    try {
+      setRunningTaskId(taskId);
+      const note = await runDailyTaskAutomation(taskId);
+
+      const nextChecklist = { ...dailyChecklist, [taskId]: true };
+      setDailyChecklist(nextChecklist);
+      localStorage.setItem(getStorageKey(), JSON.stringify(nextChecklist));
+
+      const nextStatus = {
+        ...dailyTaskStatus,
+        [taskId]: {
+          lastRunAt: new Date().toISOString(),
+          note,
+        },
+      };
+      setDailyTaskStatus(nextStatus);
+      saveDailyTaskStatus(nextStatus);
+      showMessage('success', note);
+    } catch (error: any) {
+      showMessage('error', error?.message || 'Task automation failed. Please try again.');
+    } finally {
+      setRunningTaskId(null);
+    }
+  };
+
+  const resetDailyChecklist = () => {
+    const reset = DAILY_SEO_TASKS.reduce((acc, task) => {
+      acc[task.id] = false;
+      return acc;
+    }, {} as Record<string, boolean>);
+
+    setDailyChecklist(reset);
+    localStorage.setItem(getStorageKey(), JSON.stringify(reset));
+    setDailyTaskStatus({});
+    saveDailyTaskStatus({});
+  };
+
+  const completedDailyTasks = DAILY_SEO_TASKS.filter((task) => dailyChecklist[task.id]).length;
 
   if (loading) {
     return (
@@ -541,6 +715,72 @@ const Marketing: React.FC = () => {
                   <span>Save SEO Settings</span>
                 </>
               )}
+            </button>
+          </div>
+        </div>
+
+        {/* SEO Daily Sub-tab Content */}
+        <div className={activeSubTab === 'seo_daily' ? 'space-y-3' : 'hidden'}>
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800">SEO Daily Checklist</h2>
+                  <p className="text-sm text-gray-500">Use this routine every day to steadily improve rankings.</p>
+                </div>
+              </div>
+              <span className="px-3 py-1 rounded-full text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {completedDailyTasks}/{DAILY_SEO_TASKS.length} done
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {DAILY_SEO_TASKS.map((task) => (
+                <label
+                  key={task.id}
+                  className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                    dailyChecklist[task.id]
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(dailyChecklist[task.id])}
+                    onChange={() => void toggleDailyTask(task.id)}
+                    disabled={runningTaskId === task.id}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <div className="flex-1">
+                    <span className={`text-sm block ${dailyChecklist[task.id] ? 'text-emerald-800' : 'text-gray-700'}`}>
+                      {task.label}
+                    </span>
+                    {dailyTaskStatus[task.id] && (
+                      <span className="text-xs text-gray-500 mt-1 block">
+                        Last run: {new Date(dailyTaskStatus[task.id].lastRunAt).toLocaleTimeString()}
+                      </span>
+                    )}
+                    {runningTaskId === task.id && (
+                      <span className="text-xs text-emerald-600 mt-1 block">Running automation...</span>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-gray-600">
+              Checklist resets by date and is stored in your browser for quick daily tracking.
+            </p>
+            <button
+              onClick={resetDailyChecklist}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
+            >
+              Reset Today
             </button>
           </div>
         </div>
