@@ -235,8 +235,11 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
+          <Link to="/" className="flex flex-col items-center leading-none text-center font-['Inter']">
+            <span className="text-black font-bold uppercase text-2xl">Lurevi</span>
+            <span className="text-[9px] sm:text-[10px] text-gray-600 tracking-[0.14em] uppercase mt-0.5">
+              Luxury That Stays With You
+            </span>
           </Link>
 
 

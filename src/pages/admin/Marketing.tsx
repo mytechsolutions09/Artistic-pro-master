@@ -25,6 +25,7 @@ const DAILY_SEO_TASKS = [
   { id: 'optimize_page', label: 'Improve one page title, meta description, and internal links.' },
   { id: 'refresh_content', label: 'Publish new content or refresh one old page with updated info.' },
   { id: 'technical_check', label: 'Fix one technical SEO item (speed, alt text, broken link, schema).' },
+  { id: 'llm_seo', label: 'Validate LLM SEO files (llms.txt, llms-full.txt, robots + sitemap references).' },
   { id: 'keyword_tracking', label: 'Track 3-5 priority keywords and record movement.' },
   { id: 'distribution', label: 'Share one page/post for traffic and backlink opportunities.' },
 ] as const;
@@ -249,6 +250,40 @@ const Marketing: React.FC = () => {
         checks.push(document.querySelector('meta[property="og:image"]') ? 'og:image found' : 'og:image missing');
 
         return `Technical check finished: ${checks.join(', ')}.`;
+      }
+      case 'llm_seo': {
+        const checks: string[] = [];
+
+        try {
+          const llmsRes = await fetch('/llms.txt', { cache: 'no-store' });
+          checks.push(llmsRes.ok ? 'llms.txt OK' : 'llms.txt missing');
+        } catch {
+          checks.push('llms.txt check failed');
+        }
+
+        try {
+          const llmsFullRes = await fetch('/llms-full.txt', { cache: 'no-store' });
+          checks.push(llmsFullRes.ok ? 'llms-full.txt OK' : 'llms-full.txt missing');
+        } catch {
+          checks.push('llms-full.txt check failed');
+        }
+
+        try {
+          const robotsRes = await fetch('/robots.txt', { cache: 'no-store' });
+          if (robotsRes.ok) {
+            const robotsText = await robotsRes.text();
+            checks.push(robotsText.includes('/llms.txt') ? 'robots includes llms.txt' : 'robots missing llms.txt');
+            checks.push(robotsText.includes('/llms-full.txt') ? 'robots includes llms-full.txt' : 'robots missing llms-full.txt');
+            checks.push(robotsText.toLowerCase().includes('sitemap:') ? 'robots includes sitemap' : 'robots missing sitemap');
+          } else {
+            checks.push('robots.txt missing');
+          }
+        } catch {
+          checks.push('robots.txt check failed');
+        }
+
+        window.open('/llms.txt', '_blank', 'noopener,noreferrer');
+        return `LLM SEO check finished: ${checks.join(', ')}.`;
       }
       case 'keyword_tracking': {
         const existingKeywords = localStorage.getItem(getKeywordKey());

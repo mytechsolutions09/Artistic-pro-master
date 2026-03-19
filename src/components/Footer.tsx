@@ -14,8 +14,8 @@ const Footer: React.FC = () => {
             <div className="flex items-center mb-3">
               <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
             </div>
-            <p className="text-gray-600 mb-4 text-sm">
-              Your destination for digital art. Discover unique pieces that express your style.
+            <p className="text-gray-600 mb-4 text-xs uppercase tracking-[0.12em] font-['Inter']">
+              Luxury That Stays With You
             </p>
             <div className="flex space-x-3">
               <a 

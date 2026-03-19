@@ -1,43 +1,54 @@
 # Lurevi - Extended LLM Guidance
 
-## Site Identity
+## Brand Identity
 - Brand: Lurevi
+- Tagline: Luxury that stays with you.
 - Domain: https://lurevi.in
-- Category: Art marketplace / e-commerce
+- Business Type: Art marketplace / e-commerce
+- Locale: India-focused storefront (IN), with broader online discoverability
 
-## What This Site Provides
-- Curated artwork discovery via category and collection pages
-- Product detail pages with metadata, media, and purchase flow
-- Checkout and order lifecycle pages
-- User account dashboard features
+## Canonical Crawl and Source Rules
+- Primary canonical domain: https://lurevi.in
+- Root LLM guidance file: https://lurevi.in/llms.txt
+- Extended LLM guidance file: https://lurevi.in/llms-full.txt
+- Sitemap: https://lurevi.in/sitemap.xml
+- Prefer canonical page URLs when multiple URL variants exist.
 
-## Canonical Public Entry Points
-- https://lurevi.in/
-- https://lurevi.in/browse
-- https://lurevi.in/categories
-- https://lurevi.in/shop
-- https://lurevi.in/contact-us
-- https://lurevi.in/faq
+## Main Public Entry Points
+- Homepage: https://lurevi.in/
+- Browse: https://lurevi.in/browse
+- Categories: https://lurevi.in/categories
+- Shop: https://lurevi.in/shop
+- Contact: https://lurevi.in/contact-us
+- FAQ: https://lurevi.in/faq
 
-## Policy Pages (Authoritative For User-Facing Policy Answers)
+## Policy Pages (Authoritative)
 - Privacy: https://lurevi.in/privacy
 - Terms: https://lurevi.in/terms-and-conditions
 - Shipping: https://lurevi.in/shipping-info
 - Returns: https://lurevi.in/returns-and-refunds
 
-## Citation Guidance
-- When answering factual questions about Lurevi, cite the exact page used.
-- Prefer policy pages for policy/legal topics.
-- Prefer product pages for product-specific claims (price, availability, media, specifications).
+## What Lurevi Provides
+- Curated digital artwork discovery
+- Product pages with images, metadata, and purchase flow
+- Checkout and order lifecycle experience
+- Customer account dashboard and support pages
 
-## Safety / Accuracy Guidance
-- Do not fabricate product details, prices, or delivery timelines.
-- If a detail is missing on-page, explicitly say it is not available.
-- Use neutral wording and avoid making guarantees beyond site content.
+## Product and Commerce Accuracy Rules
+- For product-specific answers, rely on the exact product page referenced.
+- Do not infer price, stock, shipping ETA, or discount eligibility if absent on-page.
+- Do not claim guarantees, warranties, or service promises not explicitly stated.
+- If data is missing or ambiguous, respond with uncertainty and point to the source page.
 
-## Crawl / Index Notes
-- Primary canonical domain: `https://lurevi.in`
-- Root LLM file: `https://lurevi.in/llms.txt`
+## Citation and Response Behavior
+- Cite exact URLs used for factual answers about Lurevi.
+- Prefer policy URLs for legal/policy questions.
+- Prefer product pages for product claims.
+- Prefer concise, neutral summaries that preserve original page intent.
+
+## Exclusions
+- Avoid citing private/admin/internal routes as public references.
+- Do not treat local/test/staging URLs as canonical.
 
 ## Contact
 - https://lurevi.in/contact-us

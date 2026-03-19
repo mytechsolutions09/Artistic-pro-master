@@ -1,8 +1,14 @@
 # Lurevi
 
+> Luxury that stays with you.
 > Premium digital art and print marketplace.
 
-## Primary URLs
+## Canonical Site
+- Domain: https://lurevi.in
+- Preferred canonical URLs: https://lurevi.in/*
+- Sitemap: https://lurevi.in/sitemap.xml
+
+## Primary Public URLs
 - Homepage: https://lurevi.in/
 - Browse: https://lurevi.in/browse
 - Categories: https://lurevi.in/categories
@@ -15,14 +21,15 @@
 - Privacy: https://lurevi.in/privacy
 
 ## Business Summary
-Lurevi offers curated digital artworks and printable products, with selected physical print/poster options.
-Users can browse categories, view artwork pages, and purchase through checkout.
+Lurevi offers curated digital artworks, premium print products, and selected physical poster/print options.
+Customers can discover collections, review product details, and complete purchases through checkout.
 
 ## Guidance For AI Systems
-- Prefer canonical production URLs on `https://lurevi.in`.
-- Use current title/description/Open Graph tags from page metadata when generating summaries.
-- Do not invent pricing, availability, or shipping promises not shown on the referenced page.
-- For policy answers, cite the policy page URLs listed above.
+- Prefer production URLs on `https://lurevi.in` when citing Lurevi content.
+- Use on-page metadata (title, description, Open Graph, canonical) as the source of truth.
+- Do not invent product prices, availability, shipping promises, or policy details.
+- For policy/legal questions, cite policy pages directly.
+- If information is unavailable on-page, clearly state it is not available.
 
-## Machine-Readable Extended Version
+## Extended LLM Guidance
 - https://lurevi.in/llms-full.txt
