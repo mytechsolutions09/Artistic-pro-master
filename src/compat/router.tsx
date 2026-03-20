@@ -9,11 +9,10 @@
  *   import { Link, useNavigate, useLocation, useParams } from '@/src/compat/router';
  */
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useRouter,
   usePathname,
-  useSearchParams,
   useParams as nextUseParams,
   redirect,
 } from 'next/navigation';
@@ -58,8 +57,14 @@ export function useNavigate() {
 // Returns a react-router-compatible location object.
 export function useLocation() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const search = searchParams?.toString() ? `?${searchParams.toString()}` : '';
+  const [search, setSearch] = useState('');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const updateSearch = () => setSearch(window.location.search || '');
+    updateSearch();
+    window.addEventListener('popstate', updateSearch);
+    return () => window.removeEventListener('popstate', updateSearch);
+  }, [pathname]);
   return {
     pathname: pathname ?? '/',
     search,
@@ -87,10 +92,63 @@ export function Navigate({ to, replace: _replace }: { to: string; replace?: bool
 }
 
 // ─── useSearchParams ─────────────────────────────────────────────────────────
-// In react-router, useSearchParams returns [searchParams, setSearchParams].
-// We export next/navigation's version directly — same interface for reads,
-// but mutations require router.push() with new query string.
-export { useSearchParams } from 'next/navigation';
+// react-router-compatible tuple API:
+//   const [params, setParams] = useSearchParams();
+// This implementation avoids next/navigation's useSearchParams hook so static
+// prerendering does not fail for pages using the compatibility layer.
+type SearchParamsInput =
+  | string
+  | URLSearchParams
+  | Record<string, string | number | boolean | null | undefined>;
+
+function toUrlSearchParams(input: SearchParamsInput): URLSearchParams {
+  if (typeof input === 'string') return new URLSearchParams(input);
+  if (input instanceof URLSearchParams) return new URLSearchParams(input.toString());
+  const params = new URLSearchParams();
+  Object.entries(input).forEach(([key, value]) => {
+    if (value === null || value === undefined) return;
+    params.set(key, String(value));
+  });
+  return params;
+}
+
+export function useSearchParams() {
+  const router = useRouter();
+  const pathname = usePathname() ?? '/';
+  const [searchState, setSearchState] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const updateSearch = () => setSearchState(window.location.search || '');
+    updateSearch();
+    window.addEventListener('popstate', updateSearch);
+    return () => window.removeEventListener('popstate', updateSearch);
+  }, [pathname]);
+
+  const params = useMemo(() => {
+    const raw = searchState.startsWith('?') ? searchState.slice(1) : searchState;
+    return new URLSearchParams(raw);
+  }, [searchState]);
+
+  const setSearchParams = useCallback(
+    (
+      next: SearchParamsInput | ((prev: URLSearchParams) => SearchParamsInput),
+      options?: { replace?: boolean }
+    ) => {
+      const base = new URLSearchParams(params.toString());
+      const resolved = typeof next === 'function' ? next(base) : next;
+      const nextParams = toUrlSearchParams(resolved);
+      const query = nextParams.toString();
+      const nextUrl = query ? `${pathname}?${query}` : pathname;
+      setSearchState(query ? `?${query}` : '');
+      if (options?.replace) router.replace(nextUrl);
+      else router.push(nextUrl);
+    },
+    [params, pathname, router]
+  );
+
+  return [params, setSearchParams] as const;
+}
 
 // ─── BrowserRouter / Routes / Route ──────────────────────────────────────────
 // These are only in src/App.tsx which is no longer used by Next.js routing.
