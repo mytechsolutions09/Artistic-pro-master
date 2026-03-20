@@ -29,7 +29,7 @@ const DAILY_SEO_TASKS = [
   { id: 'refresh_content', label: 'Publish new content or refresh one old page with updated info.' },
   { id: 'technical_check', label: 'Fix one technical SEO item (speed, alt text, broken link, schema).' },
   { id: 'llm_seo', label: 'Validate LLM SEO files (llms.txt, llms-full.txt, robots + sitemap references).' },
-  { id: 'keyword_tracking', label: 'Track 3-5 priority keywords and record movement.' },
+  { id: 'keyword_tracking', label: 'Track up to 10 priority keywords and record movement.' },
   { id: 'distribution', label: 'Share one page/post for traffic and backlink opportunities.' },
 ] as const;
 
@@ -39,6 +39,19 @@ const getTaskStatusKey = () => `seo_daily_task_status_${getTodayKey()}`;
 const getKeywordKey = () => `seo_daily_keywords_${getTodayKey()}`;
 const getSeoStudioKey = () => `seo_studio_settings_${FIXED_ID}`;
 const getKeywordTrackerKey = () => `seo_keyword_tracker_${FIXED_ID}`;
+const MAX_KEYWORDS = 10;
+const PRIORITY_KEYWORD_SEEDS = [
+  'luxury wall art India',
+  'buy digital art prints online',
+  'premium wall decor for home',
+  'how to decorate with wall prints',
+  'Indian contemporary art online',
+  'modern art prints for living room',
+  'digital art download high resolution',
+  'art prints gift India',
+  'framed art prints for bedroom India',
+  'unique home decor gifts online',
+] as const;
 
 type DailyTaskStatus = {
   lastRunAt: string;
@@ -82,7 +95,7 @@ const Marketing: React.FC = () => {
   const [dailyTaskStatus, setDailyTaskStatus] = useState<Record<string, DailyTaskStatus>>({});
   const [runningTaskId, setRunningTaskId] = useState<string | null>(null);
   const [keywordRows, setKeywordRows] = useState<KeywordRow[]>(
-    Array.from({ length: 5 }).map(() => ({
+    Array.from({ length: MAX_KEYWORDS }).map(() => ({
       keyword: '',
       previousPosition: '',
       currentPosition: '',
@@ -91,6 +104,9 @@ const Marketing: React.FC = () => {
   );
   const [keywordTrackingSavedAt, setKeywordTrackingSavedAt] = useState<string>('');
   const [savingKeywordTracking, setSavingKeywordTracking] = useState(false);
+  const [autofillingKeywords, setAutofillingKeywords] = useState(false);
+  const [keywordActionPlan, setKeywordActionPlan] = useState('');
+  const [copiedKeywordPlan, setCopiedKeywordPlan] = useState(false);
   const [seoSettings, setSeoSettings] = useState({
     page_title: '',
     meta_description: '',
@@ -187,10 +203,19 @@ const Marketing: React.FC = () => {
   const loadKeywordTracking = () => {
     try {
       const raw = localStorage.getItem(getKeywordTrackerKey());
-      if (!raw) return;
+      if (!raw) {
+        const seededRows = Array.from({ length: MAX_KEYWORDS }).map((_, idx) => ({
+          keyword: PRIORITY_KEYWORD_SEEDS[idx] || '',
+          previousPosition: '',
+          currentPosition: '',
+          movementNote: '',
+        }));
+        setKeywordRows(seededRows);
+        return;
+      }
       const parsed = JSON.parse(raw) as { rows?: KeywordRow[]; savedAt?: string };
       if (Array.isArray(parsed.rows) && parsed.rows.length > 0) {
-        const normalized = Array.from({ length: 5 }).map((_, idx) => {
+        const normalized = Array.from({ length: MAX_KEYWORDS }).map((_, idx) => {
           const row = parsed.rows?.[idx];
           return {
             keyword: row?.keyword || '',
@@ -305,6 +330,100 @@ const Marketing: React.FC = () => {
     );
   };
 
+  const extractKeywordCandidates = (text: string): string[] => {
+    const stopWords = new Set([
+      'the', 'and', 'for', 'with', 'that', 'this', 'from', 'your', 'you', 'our', 'are', 'was', 'were',
+      'have', 'has', 'had', 'not', 'but', 'all', 'any', 'can', 'will', 'into', 'about', 'their', 'them',
+      'its', 'it', 'to', 'of', 'in', 'on', 'by', 'at', 'as', 'or', 'is', 'be', 'an', 'a',
+      'shop', 'buy', 'online',
+    ]);
+
+    const words = text
+      .toLowerCase()
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/[^a-z0-9\s-]/g, ' ')
+      .split(/\s+/)
+      .map((w) => w.trim())
+      .filter((w) => w.length >= 3 && !stopWords.has(w));
+
+    const scores = new Map<string, number>();
+
+    // Single-word candidates
+    for (const w of words) {
+      scores.set(w, (scores.get(w) || 0) + 1);
+    }
+
+    // Two-word phrases
+    for (let i = 0; i < words.length - 1; i += 1) {
+      const phrase = `${words[i]} ${words[i + 1]}`;
+      if (words[i] === words[i + 1]) continue;
+      scores.set(phrase, (scores.get(phrase) || 0) + 2);
+    }
+
+    return Array.from(scores.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([keyword]) => keyword)
+      .filter((keyword) => keyword.length >= 4);
+  };
+
+  const autofillKeywordsFromContent = async () => {
+    try {
+      setAutofillingKeywords(true);
+
+      const sources: string[] = [
+        seoSettings.page_title,
+        seoSettings.meta_description,
+        seoSettings.meta_keywords,
+        seoSettings.internal_linking_suggestions,
+      ];
+
+      // Pull lightweight live content so suggestions reflect current catalog.
+      const [{ data: categories }, { data: products }] = await Promise.all([
+        supabase
+          .from('categories')
+          .select('name, description')
+          .eq('is_active', true)
+          .limit(25),
+        supabase
+          .from('products')
+          .select('title, description')
+          .eq('status', 'active')
+          .limit(40),
+      ]);
+
+      for (const c of categories ?? []) {
+        if (c?.name) sources.push(c.name);
+        if (c?.description) sources.push(c.description);
+      }
+      for (const p of products ?? []) {
+        if (p?.title) sources.push(p.title);
+        if (p?.description) sources.push(p.description);
+      }
+
+      const ranked = extractKeywordCandidates(sources.join(' '));
+      const unique = Array.from(new Set(ranked)).slice(0, MAX_KEYWORDS);
+
+      if (unique.length === 0) {
+        showMessage('error', 'Not enough content found to auto-fill keywords.');
+        return;
+      }
+
+      setKeywordRows((prev) =>
+        prev.map((row, idx) => ({
+          ...row,
+          keyword: unique[idx] ?? row.keyword,
+        }))
+      );
+
+      showMessage('success', `Auto-filled ${Math.min(unique.length, MAX_KEYWORDS)} keywords from current content.`);
+    } catch (error) {
+      console.error('Failed to auto-fill keywords:', error);
+      showMessage('error', 'Failed to auto-fill keywords from content.');
+    } finally {
+      setAutofillingKeywords(false);
+    }
+  };
+
   const getMovementDelta = (row: KeywordRow): string => {
     const prev = Number.parseInt(row.previousPosition.trim(), 10);
     const curr = Number.parseInt(row.currentPosition.trim(), 10);
@@ -317,8 +436,8 @@ const Marketing: React.FC = () => {
 
   const saveKeywordTracking = () => {
     const filled = keywordRows.filter((row) => row.keyword.trim());
-    if (filled.length < 3 || filled.length > 5) {
-      showMessage('error', 'Please fill between 3 and 5 keywords.');
+    if (filled.length < 3 || filled.length > MAX_KEYWORDS) {
+      showMessage('error', `Please fill between 3 and ${MAX_KEYWORDS} keywords.`);
       return;
     }
 
@@ -339,6 +458,64 @@ const Marketing: React.FC = () => {
       showMessage('error', 'Failed to save keyword tracking.');
     } finally {
       setSavingKeywordTracking(false);
+    }
+  };
+
+  const generateKeywordActionPlan = () => {
+    const filled = keywordRows.filter((row) => row.keyword.trim());
+    if (filled.length === 0) {
+      showMessage('error', 'Add at least one keyword before generating actions.');
+      return;
+    }
+
+    const lines = filled.map((row) => {
+      const keyword = row.keyword.trim();
+      const prev = Number.parseInt(row.previousPosition.trim(), 10);
+      const curr = Number.parseInt(row.currentPosition.trim(), 10);
+
+      if (!Number.isFinite(prev) || !Number.isFinite(curr)) {
+        return `- ${keyword}: set baseline rank, improve title + H1 + first paragraph match, add 2 internal links with this anchor.`;
+      }
+
+      const delta = prev - curr;
+      if (delta > 0) {
+        return `- ${keyword}: improved (+${delta}). Keep momentum with one content refresh and 1 new internal link this week.`;
+      }
+      if (delta === 0) {
+        return `- ${keyword}: flat. Strengthen intent-match in title/meta and add FAQ/schema snippet for this page.`;
+      }
+
+      return `- ${keyword}: dropped (${delta}). Audit top competing page, refresh content depth, and add 3 high-context internal links.`;
+    });
+
+    const plan = [
+      `Weekly Keyword Ranking Plan (${filled.length} keywords)`,
+      '',
+      ...lines,
+      '',
+      'Execution checklist:',
+      '1) Update title/meta for top 3 keywords.',
+      '2) Add internal links from homepage/categories/shop.',
+      '3) Refresh one page section per dropped keyword.',
+      '4) Recheck positions in 7 days.',
+    ].join('\n');
+
+    setKeywordActionPlan(plan);
+    showMessage('success', 'Generated keyword ranking action plan.');
+  };
+
+  const copyKeywordActionPlan = async () => {
+    if (!keywordActionPlan.trim()) {
+      showMessage('error', 'Generate an action plan first.');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(keywordActionPlan);
+      setCopiedKeywordPlan(true);
+      setTimeout(() => setCopiedKeywordPlan(false), 1500);
+      showMessage('success', 'Keyword action plan copied.');
+    } catch {
+      showMessage('error', 'Failed to copy keyword action plan.');
     }
   };
 
@@ -600,8 +777,10 @@ const Marketing: React.FC = () => {
       }
       case 'keyword_tracking': {
         const existingKeywords = localStorage.getItem(getKeywordKey());
-        const defaultValue = existingKeywords ? (JSON.parse(existingKeywords) as string[]).join(', ') : '';
-        const input = window.prompt('Enter 3-5 keywords separated by commas', defaultValue);
+        const defaultValue = existingKeywords
+          ? (JSON.parse(existingKeywords) as string[]).join(', ')
+          : PRIORITY_KEYWORD_SEEDS.join(', ');
+        const input = window.prompt(`Enter 3-${MAX_KEYWORDS} keywords separated by commas`, defaultValue);
 
         if (input === null) {
           throw new Error('Keyword tracking was cancelled.');
@@ -611,7 +790,7 @@ const Marketing: React.FC = () => {
           .split(',')
           .map((value) => value.trim())
           .filter(Boolean)
-          .slice(0, 5);
+          .slice(0, MAX_KEYWORDS);
 
         if (keywords.length < 3) {
           throw new Error('Please enter at least 3 keywords.');
@@ -1262,7 +1441,7 @@ const Marketing: React.FC = () => {
               <div>
                 <h2 className="text-base font-semibold text-gray-800">Keyword Tracking</h2>
                 <p className="text-sm text-gray-500">
-                  Add 3-5 priority keywords and record movement (previous vs current position).
+                  Add 3-10 priority keywords and record movement (previous vs current position).
                 </p>
               </div>
               {keywordTrackingSavedAt && (
@@ -1328,24 +1507,52 @@ const Marketing: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm">
-            <button
-              onClick={saveKeywordTracking}
-              disabled={savingKeywordTracking}
-              className="w-full px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {savingKeywordTracking ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  <span>Save Keyword Tracking</span>
-                </>
-              )}
-            </button>
+          <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={saveKeywordTracking}
+                disabled={savingKeywordTracking}
+                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingKeywordTracking ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    <span>Save Keyword Tracking</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => void autofillKeywordsFromContent()}
+                disabled={autofillingKeywords}
+                className="px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-800 rounded-lg transition-colors font-medium disabled:opacity-50"
+              >
+                {autofillingKeywords ? 'Auto-filling...' : 'Auto-fill Keywords'}
+              </button>
+              <button
+                onClick={generateKeywordActionPlan}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
+              >
+                Generate Rank-Higher Actions
+              </button>
+              <button
+                onClick={() => void copyKeywordActionPlan()}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
+              >
+                {copiedKeywordPlan ? 'Copied' : 'Copy Action Plan'}
+              </button>
+            </div>
+            <textarea
+              value={keywordActionPlan}
+              onChange={(e) => setKeywordActionPlan(e.target.value)}
+              rows={8}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              placeholder="Generated weekly action plan will appear here..."
+            />
           </div>
         </div>
 

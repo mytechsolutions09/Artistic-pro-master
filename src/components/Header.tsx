@@ -386,6 +386,9 @@ const Header: React.FC = () => {
             <Link to="/shop" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
               Shop
             </Link>
+            <Link to="/gifts" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
+              Gifts
+            </Link>
             {navigationVisibility.clothesActive && (
               <Link to="/clothes" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
                 Clothes
@@ -624,6 +627,13 @@ const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 <span className="font-sans font-normal uppercase text-sm">Shop</span>
+              </Link>
+              <Link
+                to="/gifts"
+                className="text-black hover:text-gray-600 py-2 font-sans font-normal"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <span className="font-sans font-normal uppercase text-sm">Gifts</span>
               </Link>
               {navigationVisibility.clothesActive && (
                 <Link

@@ -8,6 +8,7 @@ const STATIC_ROUTES = [
   { path: '/browse', changeFrequency: 'daily' as const, priority: 0.9 },
   { path: '/categories', changeFrequency: 'weekly' as const, priority: 0.9 },
   { path: '/shop', changeFrequency: 'daily' as const, priority: 0.9 },
+  { path: '/blog', changeFrequency: 'weekly' as const, priority: 0.7 },
   { path: '/clothes', changeFrequency: 'weekly' as const, priority: 0.8 },
   { path: '/contact-us', changeFrequency: 'yearly' as const, priority: 0.4 },
   { path: '/faq', changeFrequency: 'monthly' as const, priority: 0.5 },
@@ -39,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       return entries;
     }
 
-    const [{ data: categories }, { data: products }] = await Promise.all([
+    const [{ data: categories }, { data: products }, { data: blogPosts }] = await Promise.all([
       supabase
         .from('categories')
         .select('slug, updated_at')
@@ -48,6 +49,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .from('products')
         .select('slug, categories, updated_at')
         .eq('status', 'active'),
+      supabase
+        .from('blog_posts')
+        .select('slug, updated_at, published_at')
+        .eq('status', 'published'),
     ]);
 
     for (const category of categories ?? []) {
@@ -76,6 +81,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: product.updated_at ? new Date(product.updated_at) : now,
         changeFrequency: 'weekly',
         priority: 0.7,
+      });
+    }
+
+    for (const post of blogPosts ?? []) {
+      if (!post?.slug) continue;
+      const safeSlug = encodeURIComponent(String(post.slug));
+      entries.push({
+        url: `${SITE_URL}/blog/${safeSlug}`,
+        lastModified: post.updated_at ? new Date(post.updated_at) : post.published_at ? new Date(post.published_at) : now,
+        changeFrequency: 'weekly',
+        priority: 0.6,
       });
     }
   } catch {

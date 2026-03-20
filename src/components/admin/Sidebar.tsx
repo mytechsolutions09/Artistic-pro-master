@@ -24,7 +24,8 @@ import {
   Brush,
   Layers,
   UtensilsCrossed,
-  Shirt
+  Shirt,
+  FileText
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -42,6 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/admin/tasks' },
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/admin' },
     { id: 'orders', label: 'Orders', icon: ShoppingBag, path: '/admin/orders' },
+    { id: 'blog', label: 'Blog', icon: FileText, path: '/admin/blog' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'normal', label: 'Normal', icon: Layers, path: '/admin/normal' },
     { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },

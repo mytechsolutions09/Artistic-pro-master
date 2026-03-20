@@ -23,6 +23,19 @@ const nextConfig = {
     ],
   },
   trailingSlash: false,
+  async headers() {
+    return [
+      {
+        source: '/admin/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
+          },
+        ],
+      },
+    ];
+  },
   // Fix for EISDIR readlink errors on Windows
   webpack: (config) => {
     config.resolve.symlinks = false;
