@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Create a service role client that bypasses RLS
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Only create service client if service key is available
 const supabaseService = supabaseServiceKey ? 
@@ -63,7 +63,7 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
 
 
     if (!supabaseService) {
-      throw new Error('Service role key not configured. Please set VITE_SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
+      throw new Error('Service role key not configured. Please set SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
     }
 
     // Determine order status based on payment method and product types

@@ -233,7 +233,7 @@ export class EmailTestUtils {
       const config = {
         smtpHost: process.env.NEXT_PUBLIC_SMTP_HOST,
         smtpPort: process.env.NEXT_PUBLIC_SMTP_PORT,
-        smtpUser: process.env.NEXT_PUBLIC_SMTP_USER,
+        smtpUser: process.env.SMTP_USER,
         fromEmail: process.env.NEXT_PUBLIC_EMAIL_FROM_EMAIL,
         fromName: process.env.NEXT_PUBLIC_EMAIL_FROM_NAME
       };
@@ -273,8 +273,8 @@ export class EmailTestUtils {
         host: process.env.NEXT_PUBLIC_SMTP_HOST,
         port: process.env.NEXT_PUBLIC_SMTP_PORT,
         secure: process.env.NEXT_PUBLIC_SMTP_SECURE,
-        user: process.env.NEXT_PUBLIC_SMTP_USER,
-        pass: process.env.NEXT_PUBLIC_SMTP_PASS
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
       };
 
       // Check if Hostinger SMTP settings are configured
@@ -329,8 +329,8 @@ export class EmailTestUtils {
       const imapConfig = {
         host: process.env.NEXT_PUBLIC_IMAP_HOST,
         port: process.env.NEXT_PUBLIC_IMAP_PORT,
-        user: process.env.NEXT_PUBLIC_IMAP_USER,
-        pass: process.env.NEXT_PUBLIC_IMAP_PASS
+        user: process.env.IMAP_USER,
+        pass: process.env.IMAP_PASS
       };
 
       const isHostingerIMAP = imapConfig.host === 'imap.hostinger.com';
@@ -380,8 +380,8 @@ export class EmailTestUtils {
       const popConfig = {
         host: process.env.NEXT_PUBLIC_POP_HOST,
         port: process.env.NEXT_PUBLIC_POP_PORT,
-        user: process.env.NEXT_PUBLIC_POP_USER,
-        pass: process.env.NEXT_PUBLIC_POP_PASS
+        user: process.env.POP_USER,
+        pass: process.env.POP_PASS
       };
 
       const isHostingerPOP = popConfig.host === 'pop.hostinger.com';

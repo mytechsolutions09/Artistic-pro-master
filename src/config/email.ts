@@ -6,8 +6,8 @@ export const emailConfig = {
     port: parseInt(process.env.NEXT_PUBLIC_SMTP_PORT || '465'),
     secure: process.env.NEXT_PUBLIC_SMTP_SECURE === 'true' || true, // true for 465, false for other ports
     auth: {
-      user: process.env.NEXT_PUBLIC_SMTP_USER || '',
-      pass: process.env.NEXT_PUBLIC_SMTP_PASS || ''
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASS || ''
     }
   },
   
@@ -17,8 +17,8 @@ export const emailConfig = {
     port: parseInt(process.env.NEXT_PUBLIC_IMAP_PORT || '993'),
     secure: true, // IMAP over SSL
     auth: {
-      user: process.env.NEXT_PUBLIC_IMAP_USER || '',
-      pass: process.env.NEXT_PUBLIC_IMAP_PASS || ''
+      user: process.env.IMAP_USER || '',
+      pass: process.env.IMAP_PASS || ''
     }
   },
   
@@ -28,8 +28,8 @@ export const emailConfig = {
     port: parseInt(process.env.NEXT_PUBLIC_POP_PORT || '995'),
     secure: true, // POP over SSL
     auth: {
-      user: process.env.NEXT_PUBLIC_POP_USER || '',
-      pass: process.env.NEXT_PUBLIC_POP_PASS || ''
+      user: process.env.POP_USER || '',
+      pass: process.env.POP_PASS || ''
     }
   },
   

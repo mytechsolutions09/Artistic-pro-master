@@ -11,7 +11,7 @@ const DELHIVERY_CONFIG = {
   baseURL: process.env.NEXT_PUBLIC_DELHIVERY_BASE_URL || 'https://staging-express.delhivery.com',
   expressBaseURL: process.env.NEXT_PUBLIC_DELHIVERY_EXPRESS_URL || 'https://express-dev-test.delhivery.com',
   trackBaseURL: process.env.NEXT_PUBLIC_DELHIVERY_TRACK_URL || 'https://track.delhivery.com',
-  token: process.env.NEXT_PUBLIC_DELHIVERY_API_TOKEN || 'xxxxxxxxxxxxxxxx',
+  token: process.env.DELHIVERY_API_TOKEN || 'xxxxxxxxxxxxxxxx',
   clientName: process.env.NEXT_PUBLIC_DELHIVERY_CLIENT_NAME || '', // Required for B2B pickup requests
   timeout: parseInt(process.env.NEXT_PUBLIC_DELHIVERY_TIMEOUT || '10000'),
   retryAttempts: parseInt(process.env.NEXT_PUBLIC_DELHIVERY_RETRY_ATTEMPTS || '3'),
@@ -23,7 +23,7 @@ const isApiConfigured = () => {
   if (USE_SUPABASE_PROXY) {
     return true; // Assume Edge Function has the token
   }
-  const token = process.env.NEXT_PUBLIC_DELHIVERY_API_TOKEN;
+  const token = process.env.DELHIVERY_API_TOKEN;
   return token && token !== 'your-delhivery-api-token' && token !== 'xxxxxxxxxxxxxxxx';
 };
 

@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Create a service role client for admin operations
 const createServiceRoleClient = () => {
-  const serviceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     console.warn('Service role key not found. Using regular client.');
     return supabase;

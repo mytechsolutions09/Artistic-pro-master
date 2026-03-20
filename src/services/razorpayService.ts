@@ -5,7 +5,7 @@ import { LogoService } from './logoService';
 
 // Razorpay configuration
 const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-const RAZORPAY_KEY_SECRET = process.env.NEXT_PUBLIC_RAZORPAY_KEY_SECRET;
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 const RAZORPAY_CURRENCY = process.env.NEXT_PUBLIC_RAZORPAY_CURRENCY || 'INR';
 const RAZORPAY_COMPANY_NAME = process.env.NEXT_PUBLIC_RAZORPAY_COMPANY_NAME || 'Lurevi';
 const RAZORPAY_THEME_COLOR = process.env.NEXT_PUBLIC_RAZORPAY_THEME_COLOR || '#0d9488';

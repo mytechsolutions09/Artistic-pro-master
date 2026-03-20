@@ -35,9 +35,9 @@ const EnvTest: React.FC = () => {
                 </span>
               </div>
               <div>
-                <span className="font-medium">Service Key:</span> 
-                <span className={`ml-2 ${process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Optional'}
+                <span className="font-medium">Service Key:</span>
+                <span className="ml-2 text-gray-500">
+                  Server-only (not exposed to client)
                 </span>
               </div>
             </div>

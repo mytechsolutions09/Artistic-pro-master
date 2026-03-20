@@ -304,9 +304,9 @@ const Users: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
             <p className="text-gray-600">Manage user accounts and permissions from Supabase Auth</p>
-            {!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY && (
+            {!process.env.SUPABASE_SERVICE_ROLE_KEY && (
               <p className="text-sm text-orange-600 mt-1">
-                ⚠️ Service role key not configured. Showing sample data. Add VITE_SUPABASE_SERVICE_ROLE_KEY to access real user data.
+                ⚠️ Service role key not configured. Showing sample data. Add SUPABASE_SERVICE_ROLE_KEY to access real user data.
               </p>
             )}
           </div>

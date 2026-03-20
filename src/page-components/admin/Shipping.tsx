@@ -247,14 +247,14 @@ const Shipping: React.FC = () => {
     
     // Check if Delhivery API is configured
     const checkApiConfiguration = () => {
-      const token = process.env.NEXT_PUBLIC_DELHIVERY_API_TOKEN;
-      if (!token || token === 'your-delhivery-api-token' || token === 'xxxxxxxxxxxxxxxx') {
+      const usingProxy = process.env.NEXT_PUBLIC_USE_SUPABASE_DELHIVERY_PROXY !== 'false';
+      if (!usingProxy) {
         NotificationManager.warning(
-          'Delhivery API not configured. Using mock data for testing. Please configure your API token in .env file.',
+          'Delhivery proxy is disabled. Ensure DELHIVERY_API_TOKEN is configured server-side.',
           0 // Don't auto-close
         );
       }
-      // Only show warning if API is not configured - success is not necessary
+      // Token is now server-only and intentionally not exposed to the browser.
     };
     
     checkApiConfiguration();
