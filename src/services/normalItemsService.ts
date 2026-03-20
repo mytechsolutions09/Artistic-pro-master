@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { ProductService } from './supabaseService';
 
@@ -280,3 +282,7 @@ class NormalItemsService {
 }
 
 export default NormalItemsService;
+
+
+
+

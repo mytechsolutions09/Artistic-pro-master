@@ -1,3 +1,21 @@
+'use client'
+
+// SSR guard: localStorage / sessionStorage don't exist on the server.
+// Provide a no-op in-memory fallback so this service is safe to import
+// in both server and client environments.
+const _storage = (() => {
+  if (typeof window !== 'undefined') return window.localStorage;
+  const _data: Record<string, string> = {};
+  return {
+    getItem: (k: string) => _data[k] ?? null,
+    setItem: (k: string, v: string) => { _data[k] = v; },
+    removeItem: (k: string) => { delete _data[k]; },
+    clear: () => { for (const k in _data) delete _data[k]; },
+    get length() { return Object.keys(_data).length; },
+    key: (i: number) => Object.keys(_data)[i] ?? null,
+  };
+})();
+
 // Currency Service with API integration and caching
 export interface Currency {
   code: string;
@@ -48,7 +66,7 @@ export class CurrencyService {
 
   // Get current currency settings
   static getCurrencySettings(): CurrencySettings {
-    const stored = localStorage.getItem(this.STORAGE_KEY);
+    const stored = _storage.getItem(this.STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       // Check if INR is missing from enabled currencies and add it
@@ -74,13 +92,13 @@ export class CurrencyService {
 
   // Save currency settings
   static saveCurrencySettings(settings: CurrencySettings): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+    _storage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
   }
 
   // Force refresh currency settings (useful for debugging)
   static forceRefreshSettings(): void {
-    localStorage.removeItem(this.STORAGE_KEY);
-    localStorage.removeItem(this.RATES_KEY); // Also clear cached rates
+    _storage.removeItem(this.STORAGE_KEY);
+    _storage.removeItem(this.RATES_KEY); // Also clear cached rates
     // This will trigger the default settings to be loaded
   }
 
@@ -98,7 +116,7 @@ export class CurrencyService {
       rates,
       timestamp: Date.now()
     };
-    localStorage.setItem(this.RATES_KEY, JSON.stringify(cacheData));
+    _storage.setItem(this.RATES_KEY, JSON.stringify(cacheData));
 
     return { success: true, message: `${currencyCode} rate updated to ${newRate}` };
   }
@@ -110,7 +128,7 @@ export class CurrencyService {
 
   // Reset currency rates to defaults
   static resetCurrencyRates(): { success: boolean; message: string } {
-    localStorage.removeItem(this.RATES_KEY);
+    _storage.removeItem(this.RATES_KEY);
     return { success: true, message: 'Currency rates reset to defaults' };
   }
 
@@ -140,7 +158,7 @@ export class CurrencyService {
       rates: currentRates,
       timestamp: Date.now()
     };
-    localStorage.setItem(this.RATES_KEY, JSON.stringify(cacheData));
+    _storage.setItem(this.RATES_KEY, JSON.stringify(cacheData));
 
     return { success: true, message: `Updated ${Object.keys(rates).length} currency rates`, errors: [] };
   }
@@ -209,7 +227,7 @@ export class CurrencyService {
 
   // Get cached exchange rates
   private static getCachedRates(): Record<string, number> {
-    const cached = localStorage.getItem(this.RATES_KEY);
+    const cached = _storage.getItem(this.RATES_KEY);
     if (cached) {
       const data = JSON.parse(cached);
       const now = Date.now();
@@ -235,7 +253,7 @@ export class CurrencyService {
       rates,
       timestamp: Date.now()
     };
-    localStorage.setItem(this.RATES_KEY, JSON.stringify(data));
+    _storage.setItem(this.RATES_KEY, JSON.stringify(data));
   }
 
   // Fetch live exchange rates from API
@@ -496,7 +514,7 @@ export class CurrencyService {
       defaultCurrency: settings.defaultCurrency,
       lastUpdated: settings.lastUpdated,
       autoUpdate: settings.autoUpdate,
-      ratesAge: Date.now() - (JSON.parse(localStorage.getItem(this.RATES_KEY) || '{"timestamp": 0}').timestamp || 0),
+      ratesAge: Date.now() - (JSON.parse(_storage.getItem(this.RATES_KEY) || '{"timestamp": 0}').timestamp || 0),
       topRates: Object.entries(rates)
         .filter(([code]) => settings.enabledCurrencies.includes(code))
         .slice(0, 5)
@@ -594,3 +612,7 @@ declare global {
 }
 
 export default CurrencyService;
+
+
+
+

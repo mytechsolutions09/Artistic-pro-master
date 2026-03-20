@@ -128,3 +128,6 @@ export function findProductBySlugs(
 export function generateCategorySlug(category: string): string {
   return generateSlug(category);
 }
+
+
+

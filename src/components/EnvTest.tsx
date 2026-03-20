@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { checkEnvironmentVariables, getLocalhostConfig, isLocalhost } from '../utils/envCheck';
 
@@ -22,20 +24,20 @@ const EnvTest: React.FC = () => {
             <div className="text-sm space-y-1">
               <div>
                 <span className="font-medium">URL:</span> 
-                <span className={`ml-2 ${import.meta.env.VITE_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}`}>
-                  {import.meta.env.VITE_SUPABASE_URL ? 'Set' : 'Missing'}
+                <span className={`ml-2 ${process.env.NEXT_PUBLIC_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}`}>
+                  {process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing'}
                 </span>
               </div>
               <div>
                 <span className="font-medium">Anon Key:</span> 
-                <span className={`ml-2 ${import.meta.env.VITE_SUPABASE_ANON_KEY ? 'text-green-600' : 'text-red-600'}`}>
-                  {import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set' : 'Missing'}
+                <span className={`ml-2 ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'text-green-600' : 'text-red-600'}`}>
+                  {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing'}
                 </span>
               </div>
               <div>
                 <span className="font-medium">Service Key:</span> 
-                <span className={`ml-2 ${import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Optional'}
+                <span className={`ml-2 ${process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? 'text-green-600' : 'text-yellow-600'}`}>
+                  {process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Optional'}
                 </span>
               </div>
             </div>
@@ -46,12 +48,12 @@ const EnvTest: React.FC = () => {
             <div className="text-sm space-y-1">
               <div>
                 <span className="font-medium">Mode:</span> 
-                <span className="ml-2 text-blue-600">{import.meta.env.MODE}</span>
+                <span className="ml-2 text-blue-600">{process.env.NODE_ENV}</span>
               </div>
               <div>
                 <span className="font-medium">Development:</span> 
-                <span className={`ml-2 ${import.meta.env.DEV ? 'text-green-600' : 'text-gray-600'}`}>
-                  {import.meta.env.DEV ? 'Yes' : 'No'}
+                <span className={`ml-2 ${process.env.NODE_ENV === "development" ? 'text-green-600' : 'text-gray-600'}`}>
+                  {process.env.NODE_ENV === "development" ? 'Yes' : 'No'}
                 </span>
               </div>
               <div>
@@ -97,3 +99,7 @@ const EnvTest: React.FC = () => {
 };
 
 export default EnvTest;
+
+
+
+

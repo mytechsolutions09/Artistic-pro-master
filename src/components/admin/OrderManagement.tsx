@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { 
   Package, Calendar, DollarSign, CheckCircle, XCircle, Clock, AlertCircle, 
@@ -648,3 +650,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) =
 };
 
 export default OrderManagement;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useCallback } from 'react';
 import { ImageUploadService, UploadResult } from '../../services/imageUploadService';
 
@@ -290,3 +292,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     </div>
   );
 };
+
+
+
+

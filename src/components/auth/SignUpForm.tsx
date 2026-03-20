@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/src/compat/router';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
@@ -366,3 +368,7 @@ const SignUpForm: React.FC = () => {
 };
 
 export default SignUpForm;
+
+
+
+

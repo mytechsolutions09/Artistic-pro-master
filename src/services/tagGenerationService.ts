@@ -1,3 +1,5 @@
+'use client'
+
 // Centralized tag generation service for automatic category-to-tags mapping
 export interface CategoryTagMapping {
   [categoryName: string]: string[];
@@ -172,3 +174,7 @@ export const getTagsForCategory = (categoryName: string): string[] => {
   // Return fallback tags
   return generateFallbackTags(categoryName);
 };
+
+
+
+

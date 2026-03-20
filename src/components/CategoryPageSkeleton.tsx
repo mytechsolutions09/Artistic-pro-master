@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import ProductCardSkeleton from './ProductCardSkeleton';
 
@@ -93,3 +95,7 @@ const CategoryPageSkeleton: React.FC<CategoryPageSkeletonProps> = ({
 };
 
 export default CategoryPageSkeleton;
+
+
+
+

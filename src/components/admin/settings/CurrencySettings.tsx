@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { 
   DollarSign, Calculator, ArrowRightLeft, RefreshCw, CheckCircle, XCircle,
@@ -636,3 +638,7 @@ const CurrencySettings: React.FC = () => {
 };
 
 export default CurrencySettings;
+
+
+
+

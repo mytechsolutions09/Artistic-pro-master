@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react';
 import { supabase } from '../../../services/supabaseService';
@@ -45,7 +47,7 @@ const MarketingSettings: React.FC = () => {
         // If no settings exist, use defaults
         if (error.code === 'PGRST116') {
           // Get from env
-          const envPixelId = import.meta.env.VITE_META_PIXEL_ID || '';
+          const envPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || '';
           setSettings(prev => ({ ...prev, meta_pixel_id: envPixelId }));
         } else {
           throw error;
@@ -416,4 +418,8 @@ const MarketingSettings: React.FC = () => {
 };
 
 export default MarketingSettings;
+
+
+
+
 

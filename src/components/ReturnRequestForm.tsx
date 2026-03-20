@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { RotateCcw, AlertCircle, CheckCircle, Package, Truck } from 'lucide-react';
 import { ReturnService } from '../services/returnService';
@@ -261,3 +263,7 @@ const ReturnRequestForm: React.FC<ReturnRequestFormProps> = ({
 };
 
 export default ReturnRequestForm;
+
+
+
+

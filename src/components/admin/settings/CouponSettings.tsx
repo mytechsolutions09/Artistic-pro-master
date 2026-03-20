@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -528,3 +530,7 @@ const CouponSettings: React.FC = () => {
 };
 
 export default CouponSettings;
+
+
+
+

@@ -36,3 +36,6 @@ export const TAILWIND_COLORS = {
   'site-dark': '#E91E63',
   'site-white': '#FFFFFF',
 } as const;
+
+
+

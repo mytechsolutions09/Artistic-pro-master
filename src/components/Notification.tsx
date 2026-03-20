@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, X, ShoppingCart, AlertCircle } from 'lucide-react';
 
@@ -197,3 +199,7 @@ const NotificationContainer: React.FC = () => {
 };
 
 export default NotificationContainer;
+
+
+
+

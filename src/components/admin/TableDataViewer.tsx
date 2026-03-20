@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { 
   ChevronLeft, 
@@ -332,3 +334,7 @@ const TableDataViewer: React.FC<TableDataViewerProps> = ({ tableName, onClose })
 };
 
 export default TableDataViewer;
+
+
+
+

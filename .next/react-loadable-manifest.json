@@ -1,0 +1,78 @@
+{
+  "node_modules\\@supabase\\auth-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch": {
+    "id": 80485,
+    "files": []
+  },
+  "node_modules\\@supabase\\functions-js\\dist\\module\\helper.js -> @supabase/node-fetch": {
+    "id": 80485,
+    "files": []
+  },
+  "node_modules\\@supabase\\realtime-js\\dist\\module\\RealtimeClient.js -> @supabase/node-fetch": {
+    "id": 80485,
+    "files": []
+  },
+  "node_modules\\@supabase\\storage-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch": {
+    "id": 80485,
+    "files": []
+  },
+  "src\\components\\Header.tsx -> ../services/normalItemsService": {
+    "id": 95597,
+    "files": [
+      "static/chunks/5597.38a63efb31ec88c1.js"
+    ]
+  },
+  "src\\components\\Header.tsx -> ../services/supabaseService": {
+    "id": 7471,
+    "files": []
+  },
+  "src\\components\\admin\\StorageTest.tsx -> ../../services/categoryService": {
+    "id": 78928,
+    "files": [
+      "static/chunks/8928-e1b004c442badf2e.js"
+    ]
+  },
+  "src\\contexts\\AuthContext.tsx -> ../services/emailService": {
+    "id": 1144,
+    "files": [
+      "static/chunks/1144-a2d1dcb020e63985.js"
+    ]
+  },
+  "src\\page-components\\Checkout.tsx -> ../services/addressService": {
+    "id": 79413,
+    "files": []
+  },
+  "src\\page-components\\Homepage.tsx -> ../services/supabaseService": {
+    "id": 7471,
+    "files": []
+  },
+  "src\\page-components\\UserDashboard.tsx -> ../services/supabaseService": {
+    "id": 7471,
+    "files": []
+  },
+  "src\\page-components\\admin\\HomepageManagement.tsx -> ../../services/imageUploadService": {
+    "id": 6492,
+    "files": []
+  },
+  "src\\page-components\\admin\\Products.tsx -> ../../services/supabaseService": {
+    "id": 7471,
+    "files": []
+  },
+  "src\\services\\completeOrderService.ts -> ./emailService": {
+    "id": 1144,
+    "files": [
+      "static/chunks/1144-a2d1dcb020e63985.js"
+    ]
+  },
+  "src\\services\\databaseService.ts -> jszip": {
+    "id": 57635,
+    "files": [
+      "static/chunks/7635.2cff99687bbe7bc8.js"
+    ]
+  },
+  "src\\services\\orderServiceBypass.ts -> ./emailService": {
+    "id": 1144,
+    "files": [
+      "static/chunks/1144-a2d1dcb020e63985.js"
+    ]
+  }
+}

@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { CategoryService as SupabaseCategoryService } from './supabaseService';
 
@@ -635,3 +637,7 @@ class CategoryService {
 
 export const categoryService = new CategoryService();
 export default categoryService;
+
+
+
+

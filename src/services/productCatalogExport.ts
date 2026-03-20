@@ -1,3 +1,5 @@
+'use client'
+
 // Product Catalog Export Service
 // Exports products to CSV format for Facebook/Instagram catalog integration
 
@@ -320,4 +322,8 @@ export class ProductCatalogExportService {
 }
 
 export default ProductCatalogExportService;
+
+
+
+
 

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect, useRef } from 'react';
 
 interface CloudflareTurnstileProps {
@@ -32,9 +34,9 @@ const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
   const widgetIdRef = useRef<string | null>(null);
 
   // Get Cloudflare Turnstile configuration from environment
-  const siteKey = String(import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY || '');
-  const enabled = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_ENABLED === 'true';
-  const themeFromEnv = String(import.meta.env.VITE_CLOUDFLARE_TURNSTILE_THEME || 'light');
+  const siteKey = String(process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY || '');
+  const enabled = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_ENABLED === 'true';
+  const themeFromEnv = String(process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_THEME || 'light');
 
   useEffect(() => {
     // If Turnstile is disabled or no site key, skip rendering
@@ -120,4 +122,8 @@ const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
 };
 
 export default CloudflareTurnstile;
+
+
+
+
 

@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 export interface TableInfo {
@@ -486,3 +488,7 @@ export class DatabaseService {
     return table?.columns || [];
   }
 }
+
+
+
+

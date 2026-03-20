@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 
 const ProductCardSkeleton: React.FC = () => {
@@ -82,3 +84,7 @@ const ProductCardSkeleton: React.FC = () => {
 };
 
 export default ProductCardSkeleton;
+
+
+
+

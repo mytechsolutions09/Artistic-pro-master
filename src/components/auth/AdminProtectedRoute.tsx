@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAdmin } from '../../utils/adminUtils';
@@ -80,3 +82,7 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
 };
 
 export default AdminProtectedRoute;
+
+
+
+

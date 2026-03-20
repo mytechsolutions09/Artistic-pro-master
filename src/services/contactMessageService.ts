@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 export interface ContactMessage {
@@ -297,3 +299,7 @@ export class ContactMessageService {
 }
 
 export default ContactMessageService;
+
+
+
+

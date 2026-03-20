@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { 
   Home,
@@ -152,3 +154,7 @@ const NormalSecondaryNav: React.FC<NormalSecondaryNavProps> = ({
 };
 
 export default NormalSecondaryNav;
+
+
+
+

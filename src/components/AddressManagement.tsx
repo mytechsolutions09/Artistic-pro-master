@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, Edit, Trash2, Star, StarOff, User, Mail, Phone } from 'lucide-react';
 import { UserAddress, AddressFormData } from '../services/addressService';
@@ -371,3 +373,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
 };
 
 export default AddressManagement;
+
+
+
+

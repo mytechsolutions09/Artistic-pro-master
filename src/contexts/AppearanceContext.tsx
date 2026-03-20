@@ -1,3 +1,5 @@
+'use client'
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../services/supabaseService';
 import { appCache, CACHE_KEYS, CACHE_TTL } from '../services/cacheService';
@@ -111,3 +113,7 @@ export const useAppearance = (): AppearanceContextType => {
   }
   return context;
 };
+
+
+
+

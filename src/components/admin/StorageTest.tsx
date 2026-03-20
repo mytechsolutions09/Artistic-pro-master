@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { ImageUploadService } from '../../services/imageUploadService';
 import { supabase } from '../../services/supabaseService';
@@ -135,3 +137,7 @@ export const StorageTest: React.FC = () => {
     </div>
   );
 };
+
+
+
+

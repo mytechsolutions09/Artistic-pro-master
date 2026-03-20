@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react';
 
 const SCRIPT_ID = 'lurevi-structured-data';
@@ -44,3 +46,7 @@ const StructuredData: React.FC = () => {
 };
 
 export default StructuredData;
+
+
+
+

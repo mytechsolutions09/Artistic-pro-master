@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect, useRef } from 'react';
 import { optimizeImageUrl, preloadImage } from '../utils/imageOptimization';
 import { getOptimalImageQuality } from '../utils/performanceUtils';
@@ -125,4 +127,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 };
 
 export default OptimizedImage;
+
+
+
+
 

@@ -330,3 +330,6 @@ export interface NewsletterConfig {
   placeholder: string;
   buttonText: string;
 }
+
+
+

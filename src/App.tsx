@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from '@/src/compat/router';
 import { useEffect } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -206,3 +206,6 @@ function App() {
 }
 
 export default App;
+
+
+

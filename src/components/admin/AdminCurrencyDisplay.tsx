@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { DollarSign, TrendingUp, RefreshCw } from 'lucide-react';
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -73,3 +75,7 @@ const AdminCurrencyDisplay: React.FC<AdminCurrencyDisplayProps> = ({
 };
 
 export default AdminCurrencyDisplay;
+
+
+
+

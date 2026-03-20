@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react';
 
 interface OpenGraphTagsProps {
@@ -108,4 +110,8 @@ const OpenGraphTags: React.FC<OpenGraphTagsProps> = ({
 };
 
 export default OpenGraphTags;
+
+
+
+
 

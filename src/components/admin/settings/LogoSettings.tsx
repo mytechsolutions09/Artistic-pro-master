@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Save, Upload, Trash2, Eye, Loader2 } from 'lucide-react';
 import { LogoService, LogoSettings as LogoSettingsType } from '../../../services/logoService';
@@ -247,3 +249,7 @@ const LogoSettings: React.FC = () => {
 };
 
 export default LogoSettings;
+
+
+
+

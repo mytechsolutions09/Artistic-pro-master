@@ -1,11 +1,13 @@
+'use client'
+
 // Alternative order service that bypasses RLS for order creation
 // This uses a service role key to bypass RLS policies entirely
 
 import { createClient } from '@supabase/supabase-js';
 
 // Create a service role client that bypasses RLS
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Only create service client if service key is available
 const supabaseService = supabaseServiceKey ? 
@@ -240,3 +242,7 @@ async function generateSecureDownloadLinks(
 
   return downloadLinks;
 }
+
+
+
+

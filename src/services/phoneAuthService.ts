@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 export interface PhoneAuthResult {
@@ -10,7 +12,7 @@ export interface PhoneAuthResult {
 class PhoneAuthService {
   private readonly COUNTRY_CODE = '+91'; // India
   private readonly PHONE_REGEX = /^[6-9]\d{9}$/; // Indian mobile numbers start with 6-9
-  private readonly EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-otp-msg91`;
+  private readonly EDGE_FUNCTION_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-otp-msg91`;
 
   /**
    * Format phone number to E.164 format (+91XXXXXXXXXX)
@@ -77,7 +79,7 @@ class PhoneAuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           phone: formattedPhone,
@@ -149,7 +151,7 @@ class PhoneAuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           phone: formattedPhone,
@@ -269,4 +271,8 @@ class PhoneAuthService {
 }
 
 export default new PhoneAuthService();
+
+
+
+
 

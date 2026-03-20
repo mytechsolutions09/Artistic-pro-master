@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from '@/src/compat/router';
 import { Search, ShoppingCart, User, Menu, X, Heart, Clock, TrendingUp, ChevronDown, Settings } from 'lucide-react';
 import { CartManager } from '../services/orderService';
 import { useAuth } from '../contexts/AuthContext';
@@ -678,3 +680,7 @@ const Header: React.FC = () => {
 };
 
 export default Header;
+
+
+
+

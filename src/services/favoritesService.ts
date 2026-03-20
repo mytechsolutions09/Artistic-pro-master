@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { Product } from '../types';
 
@@ -209,3 +211,7 @@ export class FavoritesService {
     }
   }
 }
+
+
+
+

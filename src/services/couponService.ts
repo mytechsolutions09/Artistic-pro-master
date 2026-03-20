@@ -1,16 +1,18 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { createClient } from '@supabase/supabase-js';
 
 // Create a service role client for admin operations
 const createServiceRoleClient = () => {
-  const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     console.warn('Service role key not found. Using regular client.');
     return supabase;
   }
   
   return createClient(
-    import.meta.env.VITE_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
     serviceRoleKey,
     {
       auth: {
@@ -261,3 +263,7 @@ export class CouponService {
     }
   }
 }
+
+
+
+

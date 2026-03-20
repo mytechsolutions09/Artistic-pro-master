@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from '@/src/compat/router';
 import { Home, Grid3X3, ShoppingCart, User, LogIn, Heart, Palette, Shirt } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { CartManager } from '../services/orderService';
@@ -196,3 +198,7 @@ const BottomTabs: React.FC = () => {
 };
 
 export default BottomTabs;
+
+
+
+

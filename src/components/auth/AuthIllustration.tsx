@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { useAppearance } from '../../contexts/AppearanceContext';
 
@@ -42,3 +44,7 @@ const AuthIllustration: React.FC<AuthIllustrationProps> = ({ className = '' }) =
 };
 
 export default AuthIllustration;
+
+
+
+

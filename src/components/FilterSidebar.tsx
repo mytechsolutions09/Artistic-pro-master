@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { Product } from '../types';
@@ -518,3 +520,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
 };
 
 export default FilterSidebar;
+
+
+
+

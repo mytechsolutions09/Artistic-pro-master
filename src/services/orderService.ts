@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { CurrencyService } from './currencyService';
 import { Cart, CartItem, ArtWork } from '../types';
@@ -460,3 +462,7 @@ class OrderManager {
 export const orderService = new OrderService();
 export { CartManager, OrderManager };
 export default orderService;
+
+
+
+

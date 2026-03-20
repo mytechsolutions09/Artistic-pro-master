@@ -1,18 +1,20 @@
+'use client'
+
 import axios from 'axios';
 import { supabase } from './supabaseService';
 
 // Use Supabase Edge Function for Delhivery API calls (avoids CORS)
-const USE_SUPABASE_PROXY = import.meta.env.VITE_USE_SUPABASE_DELHIVERY_PROXY !== 'false'; // Default to true
+const USE_SUPABASE_PROXY = process.env.NEXT_PUBLIC_USE_SUPABASE_DELHIVERY_PROXY !== 'false'; // Default to true
 
 // Delhivery API Configuration
 const DELHIVERY_CONFIG = {
-  baseURL: import.meta.env.VITE_DELHIVERY_BASE_URL || 'https://staging-express.delhivery.com',
-  expressBaseURL: import.meta.env.VITE_DELHIVERY_EXPRESS_URL || 'https://express-dev-test.delhivery.com',
-  trackBaseURL: import.meta.env.VITE_DELHIVERY_TRACK_URL || 'https://track.delhivery.com',
-  token: import.meta.env.VITE_DELHIVERY_API_TOKEN || 'xxxxxxxxxxxxxxxx',
-  clientName: import.meta.env.VITE_DELHIVERY_CLIENT_NAME || '', // Required for B2B pickup requests
-  timeout: parseInt(import.meta.env.VITE_DELHIVERY_TIMEOUT || '10000'),
-  retryAttempts: parseInt(import.meta.env.VITE_DELHIVERY_RETRY_ATTEMPTS || '3'),
+  baseURL: process.env.NEXT_PUBLIC_DELHIVERY_BASE_URL || 'https://staging-express.delhivery.com',
+  expressBaseURL: process.env.NEXT_PUBLIC_DELHIVERY_EXPRESS_URL || 'https://express-dev-test.delhivery.com',
+  trackBaseURL: process.env.NEXT_PUBLIC_DELHIVERY_TRACK_URL || 'https://track.delhivery.com',
+  token: process.env.NEXT_PUBLIC_DELHIVERY_API_TOKEN || 'xxxxxxxxxxxxxxxx',
+  clientName: process.env.NEXT_PUBLIC_DELHIVERY_CLIENT_NAME || '', // Required for B2B pickup requests
+  timeout: parseInt(process.env.NEXT_PUBLIC_DELHIVERY_TIMEOUT || '10000'),
+  retryAttempts: parseInt(process.env.NEXT_PUBLIC_DELHIVERY_RETRY_ATTEMPTS || '3'),
 };
 
 // Check if API is properly configured
@@ -21,7 +23,7 @@ const isApiConfigured = () => {
   if (USE_SUPABASE_PROXY) {
     return true; // Assume Edge Function has the token
   }
-  const token = import.meta.env.VITE_DELHIVERY_API_TOKEN;
+  const token = process.env.NEXT_PUBLIC_DELHIVERY_API_TOKEN;
   return token && token !== 'your-delhivery-api-token' && token !== 'xxxxxxxxxxxxxxxx';
 };
 
@@ -2587,3 +2589,7 @@ class DelhiveryService {
 // Create and export a singleton instance
 export const delhiveryService = new DelhiveryService();
 export default delhiveryService;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { MemoryMonitor, getMemoryStats, formatBytes } from '../utils/memoryUtils';
 
@@ -80,3 +82,7 @@ export const MemoryMonitorComponent: React.FC<MemoryMonitorProps> = ({
 };
 
 export default MemoryMonitorComponent;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { Download, FileText, CheckCircle, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import ProductCatalogExportService from '../../services/productCatalogExport';
@@ -234,3 +236,7 @@ const ProductExport: React.FC = () => {
 };
 
 export default ProductExport;
+
+
+
+

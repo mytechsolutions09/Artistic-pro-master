@@ -1,3 +1,5 @@
+'use client'
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import CurrencyService, { Currency, CurrencySettings } from '../services/currencyService';
 
@@ -311,3 +313,7 @@ export const withCurrency = <P extends object>(
 };
 
 export default CurrencyContext;
+
+
+
+

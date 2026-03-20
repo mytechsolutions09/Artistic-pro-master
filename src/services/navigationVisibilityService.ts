@@ -1,3 +1,12 @@
+'use client'
+
+// SSR-safe localStorage wrapper
+const _storage = typeof window !== 'undefined' ? window.localStorage : {
+  getItem: (_k: string) => null,
+  setItem: (_k: string, _v: string) => {},
+  removeItem: (_k: string) => {},
+};
+
 export type NavigationSection = 'clothes' | 'fb';
 
 export interface NavigationVisibilitySettings {
@@ -64,7 +73,7 @@ const readSettings = (): NavigationVisibilitySettings => {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS;
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window._storage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
 
     const parsed = JSON.parse(raw);
@@ -81,7 +90,7 @@ const readSettings = (): NavigationVisibilitySettings => {
 const persistSettings = (settings: NavigationVisibilitySettings) => {
   if (typeof window === 'undefined') return;
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  window._storage.setItem(STORAGE_KEY, JSON.stringify(settings));
   window.dispatchEvent(new Event(UPDATE_EVENT));
 };
 
@@ -140,3 +149,7 @@ export const NavigationVisibilityService = {
     return products.filter((product) => this.isProductVisible(product, resolvedSettings));
   },
 };
+
+
+
+

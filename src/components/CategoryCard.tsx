@@ -1,5 +1,7 @@
+'use client'
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/src/compat/router';
 import { Category } from '../types';
 
 interface CategoryCardProps {
@@ -50,3 +52,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
 };
 
 export default CategoryCard;
+
+
+
+

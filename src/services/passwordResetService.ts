@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { EmailService } from './emailService';
 
@@ -214,3 +216,7 @@ export class PasswordResetService {
 }
 
 export default PasswordResetService;
+
+
+
+

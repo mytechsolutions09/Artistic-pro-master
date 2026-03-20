@@ -31,3 +31,6 @@ export const formatSequenceNumber = (
   const safe = Math.max(1, Number(sequence || 1));
   return `${prefix}${String(safe).padStart(padLength, '0')}`;
 };
+
+
+

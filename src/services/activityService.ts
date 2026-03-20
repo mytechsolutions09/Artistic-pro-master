@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import CurrencyService from './currencyService';
 
@@ -297,3 +299,7 @@ export class ActivityService {
     }
   }
 }
+
+
+
+

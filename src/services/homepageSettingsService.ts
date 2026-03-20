@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { appCache, CACHE_KEYS, CACHE_TTL } from './cacheService';
 
@@ -128,3 +130,7 @@ export class HomepageSettingsService {
     }
   }
 }
+
+
+
+

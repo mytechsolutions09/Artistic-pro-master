@@ -1,3 +1,5 @@
+'use client'
+
 import { emailConfig, EmailType, EmailPriority, isValidEmail } from '../config/email';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from './supabaseService';
@@ -717,3 +719,7 @@ export class EmailService {
 }
 
 export default EmailService;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import {
   HomepageSkeleton,
@@ -93,3 +95,7 @@ const SkeletonDemo: React.FC = () => {
 };
 
 export default SkeletonDemo;
+
+
+
+

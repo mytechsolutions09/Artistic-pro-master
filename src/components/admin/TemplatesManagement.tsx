@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit, Trash2, X, FileText, 
@@ -685,3 +687,7 @@ const TemplatesManagement: React.FC<TemplatesManagementProps> = ({ onClose }) =>
 };
 
 export default TemplatesManagement;
+
+
+
+

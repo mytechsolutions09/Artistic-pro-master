@@ -1,5 +1,7 @@
+'use client'
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/src/compat/router';
 import { Download, Star, Heart } from 'lucide-react';
 import { ArtWork } from '../types';
 import { generateProductUrl } from '../utils/slugUtils';
@@ -106,3 +108,7 @@ const ArtCard: React.FC<ArtCardProps> = ({ artwork, size = 'medium' }) => {
 };
 
 export default ArtCard;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { 
   Globe, Shield, Bell, Palette, DollarSign, Users, 
@@ -173,3 +175,7 @@ const SettingsSecondaryNav: React.FC<SettingsSecondaryNavProps> = ({
 };
 
 export default SettingsSecondaryNav;
+
+
+
+

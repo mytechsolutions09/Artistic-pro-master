@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import ProductCardSkeleton from './ProductCardSkeleton';
 import ImageSkeleton from './ImageSkeleton';
@@ -283,3 +285,7 @@ export const HomepageSkeleton: React.FC = () => {
 };
 
 export default HomepageSkeleton;
+
+
+
+

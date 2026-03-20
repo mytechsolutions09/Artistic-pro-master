@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react';
 
 // No-op: rely on browser defaults (including built-in history scroll restoration)
@@ -55,3 +57,7 @@ export const useScrollRestoration = () => {
     };
   }, []);
 };
+
+
+
+

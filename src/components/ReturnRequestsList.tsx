@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { RotateCcw, Clock, CheckCircle, XCircle, AlertCircle, Package, Truck, MapPin, Calendar, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { ReturnService, ReturnRequestData } from '../services/returnService';
@@ -462,3 +464,7 @@ const ReturnRequestsList: React.FC<ReturnRequestsListProps> = ({ customerEmail }
 };
 
 export default ReturnRequestsList;
+
+
+
+

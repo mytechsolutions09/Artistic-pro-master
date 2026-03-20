@@ -1,3 +1,5 @@
+'use client'
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Product } from '../types';
 import CurrencyService from './currencyService';
@@ -7,20 +9,20 @@ let _supabase: SupabaseClient | null = null;
 
 // Function to get Supabase configuration
 function getSupabaseConfig() {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // Validate required environment variables
   if (!supabaseUrl || supabaseUrl === 'https://your-project.supabase.co') {
-    console.error('❌ VITE_SUPABASE_URL is not set or is using default value');
-    console.error('Please set VITE_SUPABASE_URL in your .env file');
-    throw new Error('VITE_SUPABASE_URL is required');
+    console.error('❌ NEXT_PUBLIC_SUPABASE_URL is not set or is using default value');
+    console.error('Please set NEXT_PUBLIC_SUPABASE_URL in your .env.local file');
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
   }
 
   if (!supabaseAnonKey || supabaseAnonKey === 'your-anon-key') {
-    console.error('❌ VITE_SUPABASE_ANON_KEY is not set or is using default value');
-    console.error('Please set VITE_SUPABASE_ANON_KEY in your .env file');
-    throw new Error('VITE_SUPABASE_ANON_KEY is required');
+    console.error('❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is not set or is using default value');
+    console.error('Please set NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file');
+    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
   }
 
   return {
@@ -120,10 +122,10 @@ export interface OrderItem {
 
 // Storage bucket configuration
 export const STORAGE_BUCKETS = {
-  PRODUCT_IMAGES: import.meta.env.VITE_PRODUCT_IMAGES_BUCKET || 'product-images',
-  CLOTHES_IMAGES: import.meta.env.VITE_CLOTHES_IMAGES_BUCKET || 'clothes-images',
-  CATEGORY_IMAGES: import.meta.env.VITE_CATEGORY_IMAGES_BUCKET || 'category-images',
-  USER_AVATARS: import.meta.env.VITE_USER_AVATARS_BUCKET || 'user-avatars'
+  PRODUCT_IMAGES: process.env.NEXT_PUBLIC_PRODUCT_IMAGES_BUCKET || 'product-images',
+  CLOTHES_IMAGES: process.env.NEXT_PUBLIC_CLOTHES_IMAGES_BUCKET || 'clothes-images',
+  CATEGORY_IMAGES: process.env.NEXT_PUBLIC_CATEGORY_IMAGES_BUCKET || 'category-images',
+  USER_AVATARS: process.env.NEXT_PUBLIC_USER_AVATARS_BUCKET || 'user-avatars'
 } as const;
 
 // Helper function to check if bucket exists and create it if needed
@@ -2205,3 +2207,7 @@ export default {
   subscribeToTasks,
   subscribeToTaskStats
 };
+
+
+
+

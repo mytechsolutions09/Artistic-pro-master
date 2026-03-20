@@ -252,3 +252,6 @@ export const getCompressedImageUrl = (url: string): string => {
 
   return optimizeImageUrl(url, width, quality);
 };
+
+
+

@@ -166,3 +166,6 @@ export const getProgressToNextLevel = (orders: number, totalSpent: number): {
     spentNeeded
   };
 };
+
+
+

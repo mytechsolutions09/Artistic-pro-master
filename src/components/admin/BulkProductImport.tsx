@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react';
 import { 
   Upload, Download, FileText, CheckCircle, AlertCircle, 
@@ -1006,3 +1008,7 @@ const BulkProductImport: React.FC<BulkProductImportProps> = ({ onImport, onClose
 };
 
 export default BulkProductImport;
+
+
+
+

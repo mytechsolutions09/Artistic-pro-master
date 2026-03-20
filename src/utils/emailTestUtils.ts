@@ -231,11 +231,11 @@ export class EmailTestUtils {
 
       
       const config = {
-        smtpHost: import.meta.env.VITE_SMTP_HOST,
-        smtpPort: import.meta.env.VITE_SMTP_PORT,
-        smtpUser: import.meta.env.VITE_SMTP_USER,
-        fromEmail: import.meta.env.VITE_EMAIL_FROM_EMAIL,
-        fromName: import.meta.env.VITE_EMAIL_FROM_NAME
+        smtpHost: process.env.NEXT_PUBLIC_SMTP_HOST,
+        smtpPort: process.env.NEXT_PUBLIC_SMTP_PORT,
+        smtpUser: process.env.NEXT_PUBLIC_SMTP_USER,
+        fromEmail: process.env.NEXT_PUBLIC_EMAIL_FROM_EMAIL,
+        fromName: process.env.NEXT_PUBLIC_EMAIL_FROM_NAME
       };
 
       const missingConfig = Object.entries(config)
@@ -270,11 +270,11 @@ export class EmailTestUtils {
   static testHostingerSMTP(): { success: boolean; message: string; details: any } {
     try {
       const smtpConfig = {
-        host: import.meta.env.VITE_SMTP_HOST,
-        port: import.meta.env.VITE_SMTP_PORT,
-        secure: import.meta.env.VITE_SMTP_SECURE,
-        user: import.meta.env.VITE_SMTP_USER,
-        pass: import.meta.env.VITE_SMTP_PASS
+        host: process.env.NEXT_PUBLIC_SMTP_HOST,
+        port: process.env.NEXT_PUBLIC_SMTP_PORT,
+        secure: process.env.NEXT_PUBLIC_SMTP_SECURE,
+        user: process.env.NEXT_PUBLIC_SMTP_USER,
+        pass: process.env.NEXT_PUBLIC_SMTP_PASS
       };
 
       // Check if Hostinger SMTP settings are configured
@@ -327,10 +327,10 @@ export class EmailTestUtils {
   static testHostingerIMAP(): { success: boolean; message: string; details: any } {
     try {
       const imapConfig = {
-        host: import.meta.env.VITE_IMAP_HOST,
-        port: import.meta.env.VITE_IMAP_PORT,
-        user: import.meta.env.VITE_IMAP_USER,
-        pass: import.meta.env.VITE_IMAP_PASS
+        host: process.env.NEXT_PUBLIC_IMAP_HOST,
+        port: process.env.NEXT_PUBLIC_IMAP_PORT,
+        user: process.env.NEXT_PUBLIC_IMAP_USER,
+        pass: process.env.NEXT_PUBLIC_IMAP_PASS
       };
 
       const isHostingerIMAP = imapConfig.host === 'imap.hostinger.com';
@@ -378,10 +378,10 @@ export class EmailTestUtils {
   static testHostingerPOP(): { success: boolean; message: string; details: any } {
     try {
       const popConfig = {
-        host: import.meta.env.VITE_POP_HOST,
-        port: import.meta.env.VITE_POP_PORT,
-        user: import.meta.env.VITE_POP_USER,
-        pass: import.meta.env.VITE_POP_PASS
+        host: process.env.NEXT_PUBLIC_POP_HOST,
+        port: process.env.NEXT_PUBLIC_POP_PORT,
+        user: process.env.NEXT_PUBLIC_POP_USER,
+        pass: process.env.NEXT_PUBLIC_POP_PASS
       };
 
       const isHostingerPOP = popConfig.host === 'pop.hostinger.com';
@@ -487,3 +487,6 @@ export class EmailTestUtils {
 }
 
 export default EmailTestUtils;
+
+
+

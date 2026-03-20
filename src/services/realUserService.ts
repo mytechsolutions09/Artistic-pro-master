@@ -1,3 +1,5 @@
+'use client'
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Lazy initialization for Supabase clients
@@ -6,9 +8,9 @@ let _supabaseAdmin: SupabaseClient | null = null;
 
 // Function to get Supabase configuration
 function getSupabaseConfig() {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
 
   // Validate required environment variables
   if (!supabaseUrl || supabaseUrl === 'https://your-project.supabase.co') {
@@ -404,3 +406,7 @@ export class RealUserService {
     }
   }
 }
+
+
+
+

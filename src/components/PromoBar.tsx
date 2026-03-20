@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from '@/src/compat/router';
 import { X } from 'lucide-react';
 import { supabase } from '../services/supabaseService';
 
@@ -71,3 +71,6 @@ const PromoBar: React.FC = () => {
 };
 
 export default PromoBar;
+
+
+

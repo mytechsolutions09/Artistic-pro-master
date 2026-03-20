@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * In-memory + sessionStorage cache with TTL support.
  *
@@ -19,6 +21,14 @@ interface CacheEntry<T> {
 
 const SESSION_PREFIX = 'app_cache:';
 
+// SSR-safe sessionStorage wrapper
+const _sessionStorage = typeof window !== 'undefined' ? window.sessionStorage : {
+  getItem: (_k: string) => null as string | null,
+  setItem: (_k: string, _v: string) => {},
+  removeItem: (_k: string) => {},
+  clear: () => {},
+};
+
 class CacheService {
   private static instance: CacheService;
   private memory = new Map<string, CacheEntry<unknown>>();
@@ -34,7 +44,7 @@ class CacheService {
     return Date.now() - entry.timestamp > entry.ttl;
   }
 
-  /** Read from memory → sessionStorage. Returns null on miss or expiry. */
+  /** Read from memory → _sessionStorage. Returns null on miss or expiry. */
   get<T>(key: string): T | null {
     const memEntry = this.memory.get(key);
     if (memEntry) {
@@ -43,14 +53,14 @@ class CacheService {
     }
 
     try {
-      const raw = sessionStorage.getItem(SESSION_PREFIX + key);
+      const raw = _sessionStorage.getItem(SESSION_PREFIX + key);
       if (raw) {
         const entry: CacheEntry<T> = JSON.parse(raw);
         if (!this.isExpired(entry)) {
           this.memory.set(key, entry);
           return entry.data;
         }
-        sessionStorage.removeItem(SESSION_PREFIX + key);
+        _sessionStorage.removeItem(SESSION_PREFIX + key);
       }
     } catch {
       // sessionStorage unavailable (SSR, private browsing restrictions, quota)
@@ -59,12 +69,12 @@ class CacheService {
     return null;
   }
 
-  /** Write to both memory and sessionStorage. */
+  /** Write to both memory and _sessionStorage. */
   set<T>(key: string, data: T, ttlMs: number): void {
     const entry: CacheEntry<T> = { data, timestamp: Date.now(), ttl: ttlMs };
     this.memory.set(key, entry);
     try {
-      sessionStorage.setItem(SESSION_PREFIX + key, JSON.stringify(entry));
+      _sessionStorage.setItem(SESSION_PREFIX + key, JSON.stringify(entry));
     } catch {
       // Quota exceeded — memory-only is still useful
     }
@@ -73,7 +83,7 @@ class CacheService {
   /** Remove a single key from both tiers. */
   invalidate(key: string): void {
     this.memory.delete(key);
-    try { sessionStorage.removeItem(SESSION_PREFIX + key); } catch { /* noop */ }
+    try { _sessionStorage.removeItem(SESSION_PREFIX + key); } catch { /* noop */ }
   }
 
   /** Remove all keys whose name starts with `prefix`. */
@@ -83,11 +93,11 @@ class CacheService {
     }
     try {
       const toRemove: string[] = [];
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const k = sessionStorage.key(i);
+      for (let i = 0; i < _sessionStorage.length; i++) {
+        const k = _sessionStorage.key(i);
         if (k?.startsWith(SESSION_PREFIX + prefix)) toRemove.push(k);
       }
-      toRemove.forEach(k => sessionStorage.removeItem(k));
+      toRemove.forEach(k => _sessionStorage.removeItem(k));
     } catch { /* noop */ }
   }
 
@@ -96,11 +106,11 @@ class CacheService {
     this.memory.clear();
     try {
       const toRemove: string[] = [];
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const k = sessionStorage.key(i);
+      for (let i = 0; i < _sessionStorage.length; i++) {
+        const k = _sessionStorage.key(i);
         if (k?.startsWith(SESSION_PREFIX)) toRemove.push(k);
       }
-      toRemove.forEach(k => sessionStorage.removeItem(k));
+      toRemove.forEach(k => _sessionStorage.removeItem(k));
     } catch { /* noop */ }
   }
 
@@ -136,3 +146,7 @@ export const CACHE_TTL = {
   HOMEPAGE:     15 * 60 * 1000,   // 15 min — homepage config rarely changes
   APPEARANCE:   30 * 60 * 1000,   // 30 min — theme/branding almost never changes
 } as const;
+
+
+
+

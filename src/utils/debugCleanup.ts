@@ -46,7 +46,7 @@ export class DebugCleanup {
     }
 
     // Disable debug console methods in production
-    if (import.meta.env.PROD) {
+    if (process.env.NODE_ENV === "production") {
       // Override console methods to prevent debug output in production
       console.log = () => {};
       console.debug = () => {};
@@ -150,7 +150,7 @@ export class DebugCleanup {
     return (
       localStorage.getItem('debugMode') === 'true' ||
       localStorage.getItem('developmentMode') === 'true' ||
-      import.meta.env.DEV ||
+      process.env.NODE_ENV === "development" ||
       window.location.hostname === 'localhost' ||
       window.location.hostname.includes('dev')
     );
@@ -160,7 +160,7 @@ export class DebugCleanup {
    * Enable debug mode (for development)
    */
   static enableDebugMode(): void {
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === "development") {
       localStorage.setItem('debugMode', 'true');
       console.log('🐛 Debug mode enabled');
     }
@@ -181,3 +181,6 @@ export const clearDebugOnLogin = () => DebugCleanup.clearAll();
 export const isDebugEnabled = () => DebugCleanup.isDebugMode();
 export const enableDebug = () => DebugCleanup.enableDebugMode();
 export const disableDebug = () => DebugCleanup.disableDebugMode();
+
+
+

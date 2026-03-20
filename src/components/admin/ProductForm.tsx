@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { 
   Save, X, Upload, Image as ImageIcon, Trash2,
@@ -1574,3 +1576,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
 };
 
 export default ProductForm;
+
+
+
+

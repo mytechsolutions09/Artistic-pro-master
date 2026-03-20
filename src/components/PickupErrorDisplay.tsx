@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Pickup Error Display Component
  * Displays detailed 401 error information with diagnostics and troubleshooting steps
@@ -251,3 +253,7 @@ export const PickupErrorDisplay: React.FC<PickupErrorDisplayProps> = ({ error, o
     </div>
   );
 };
+
+
+
+

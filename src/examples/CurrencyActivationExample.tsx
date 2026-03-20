@@ -212,3 +212,6 @@ const details = CurrencyService.getCurrencyDetails('EUR');
 };
 
 export default CurrencyActivationExample;
+
+
+

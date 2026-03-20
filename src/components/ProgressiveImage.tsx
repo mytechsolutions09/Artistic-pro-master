@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react';
 import { getOptimizedImageUrl, getBlurPlaceholderUrl, getOptimalFormat } from '../utils/imageOptimization';
 
@@ -139,3 +141,7 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
 };
 
 export default ProgressiveImage;
+
+
+
+

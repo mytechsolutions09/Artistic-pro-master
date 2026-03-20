@@ -1,6 +1,12 @@
 [build]
-  publish = "dist"
   command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # Redirect subdomain to Men's clothing page
 [[redirects]]
@@ -9,9 +15,3 @@
   status = 301
   force = true
   conditions = {Host = ["necessary.lurevi.in"]}
-
-# SPA fallback
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200

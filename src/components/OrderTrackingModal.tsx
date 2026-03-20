@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { X, Truck, MapPin, Clock, CheckCircle, AlertCircle, Package } from 'lucide-react';
 
@@ -496,3 +498,7 @@ const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
 };
 
 export default OrderTrackingModal;
+
+
+
+

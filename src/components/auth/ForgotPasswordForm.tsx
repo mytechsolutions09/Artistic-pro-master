@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/src/compat/router';
 import { AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
 import AuthIllustration from './AuthIllustration';
@@ -234,3 +236,7 @@ const ForgotPasswordForm: React.FC = () => {
 };
 
 export default ForgotPasswordForm;
+
+
+
+

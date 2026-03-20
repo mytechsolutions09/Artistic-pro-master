@@ -78,3 +78,6 @@ export function enhanceProductWithSampleImages(product: any): any {
 export function enhanceProductsWithSampleImages(products: any[]): any[] {
   return products.map(enhanceProductWithSampleImages);
 }
+
+
+

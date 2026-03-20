@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, MapPin, User, Mail, Phone, Plus } from 'lucide-react';
 import { UserAddress, AddressFormData } from '../services/addressService';
@@ -169,3 +171,7 @@ const SavedAddressDropdown: React.FC<SavedAddressDropdownProps> = ({
 };
 
 export default SavedAddressDropdown;
+
+
+
+

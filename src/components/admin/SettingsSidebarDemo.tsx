@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Monitor, DollarSign, Bell } from 'lucide-react';
 
@@ -202,3 +204,7 @@ const SettingsSidebarDemo: React.FC = () => {
 };
 
 export default SettingsSidebarDemo;
+
+
+
+

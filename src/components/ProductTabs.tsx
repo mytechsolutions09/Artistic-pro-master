@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { FileText, Truck, Info, Plus, Minus } from 'lucide-react';
 
@@ -62,3 +64,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({ tabs, activeTab, onTabChange 
 };
 
 export default ProductTabs;
+
+
+
+

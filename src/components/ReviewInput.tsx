@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react';
 import { Star, Send, X, Camera, Image as ImageIcon, Upload } from 'lucide-react';
 import { ReviewService, CreateReviewData } from '../services/reviewService';
@@ -315,3 +317,7 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
 };
 
 export default ReviewInput;
+
+
+
+

@@ -1,0 +1,1 @@
+"use strict";exports.id=2203,exports.ids=[2203],exports.modules={82203:(t,e,r)=>{r.r(e),r.d(e,{default:()=>s});let s=(0,r(68570).createProxy)(String.raw`H:\site\Artistic-pro-master\app\client-shell.tsx#default`)}};

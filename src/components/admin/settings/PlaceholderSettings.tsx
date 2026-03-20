@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { Construction, Lightbulb, Star, ArrowRight } from 'lucide-react';
 
@@ -82,3 +84,7 @@ const PlaceholderSettings: React.FC<PlaceholderSettingsProps> = ({
 };
 
 export default PlaceholderSettings;
+
+
+
+

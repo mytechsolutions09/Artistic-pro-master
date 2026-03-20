@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 
 const ClothingPageSkeleton: React.FC = () => {
@@ -71,3 +73,7 @@ const ClothingPageSkeleton: React.FC = () => {
 };
 
 export default ClothingPageSkeleton;
+
+
+
+

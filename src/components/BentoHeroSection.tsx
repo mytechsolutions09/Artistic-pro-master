@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/src/compat/router';
 import OptimizedImage from './OptimizedImage';
 
 export interface BentoCard {
@@ -200,3 +200,6 @@ const BentoHeroSection: React.FC<BentoHeroSectionProps> = ({ cards }) => {
 };
 
 export default BentoHeroSection;
+
+
+

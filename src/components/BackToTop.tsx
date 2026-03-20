@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { ChevronUp } from 'lucide-react';
 
@@ -61,3 +63,7 @@ const BackToTop: React.FC<BackToTopProps> = ({
 };
 
 export default BackToTop;
+
+
+
+

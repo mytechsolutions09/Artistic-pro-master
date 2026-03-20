@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Category Image Service
  * Optimizes image loading for category pages with intelligent preloading
@@ -164,3 +166,7 @@ export const categoryImageService = new CategoryImageService();
 
 // Export the class for testing
 export { CategoryImageService };
+
+
+
+

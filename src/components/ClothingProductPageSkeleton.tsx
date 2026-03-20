@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 
 const ClothingProductPageSkeleton: React.FC = () => {
@@ -152,3 +154,7 @@ const ClothingProductPageSkeleton: React.FC = () => {
 };
 
 export default ClothingProductPageSkeleton;
+
+
+
+

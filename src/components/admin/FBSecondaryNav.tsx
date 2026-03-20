@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { 
   UtensilsCrossed, Plus, Package, Star, FileText, Download, 
@@ -142,3 +144,7 @@ const FBSecondaryNav: React.FC<FBSecondaryNavProps> = ({
 };
 
 export default FBSecondaryNav;
+
+
+
+

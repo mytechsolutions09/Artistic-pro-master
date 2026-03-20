@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { useCurrency } from '../../../contexts/CurrencyContext';
 import { CurrencyService } from '../../../services/currencyService';
@@ -266,3 +268,7 @@ const CurrencyRateManager: React.FC<CurrencyRateManagerProps> = ({ className = '
 };
 
 export default CurrencyRateManager;
+
+
+
+

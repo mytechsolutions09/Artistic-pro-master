@@ -1,3 +1,5 @@
+'use client'
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { Category } from '../types';
 import { categoryService } from '../services/categoryService';
@@ -155,3 +157,7 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
     </CategoryContext.Provider>
   );
 };
+
+
+
+

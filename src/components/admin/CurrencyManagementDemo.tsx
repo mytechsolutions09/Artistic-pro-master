@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { 
   Power, PowerOff, Crown, Star, AlertTriangle, CheckCircle, 
@@ -320,3 +322,7 @@ const CurrencyManagementDemo: React.FC = () => {
 };
 
 export default CurrencyManagementDemo;
+
+
+
+

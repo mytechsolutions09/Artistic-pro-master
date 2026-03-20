@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { checkEnvironmentVariables } from '../utils/envCheck';
 
@@ -537,3 +539,7 @@ export class ImageUploadService {
     return this.uploadFile(file, 'homepage-trending-images', 'trending', `collection_${collectionId}_${Date.now()}.${file.name.split('.').pop()}`);
   }
 }
+
+
+
+

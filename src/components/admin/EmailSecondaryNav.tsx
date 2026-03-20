@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { 
   Send, Users, Clock, CheckCircle, AlertCircle, TestTube, 
@@ -145,3 +147,7 @@ const EmailSecondaryNav: React.FC<EmailSecondaryNavProps> = ({
 };
 
 export default EmailSecondaryNav;
+
+
+
+

@@ -1,21 +1,21 @@
 // Supabase configuration
 export const supabaseConfig = {
-  url: import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co',
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key',
-  serviceRoleKey: import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || ''
+  url: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co',
+  anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key',
+  serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 };
 
 // Development mode settings
-export const isDevelopment = import.meta.env.DEV;
-export const isProduction = import.meta.env.PROD;
+export const isDevelopment = process.env.NODE_ENV === 'development';
+export const isProduction = process.env.NODE_ENV === 'production';
 
 // Localhost configuration
 export const localhostConfig = {
-  host: import.meta.env.VITE_DEV_SERVER_HOST || 'localhost',
-  port: parseInt(import.meta.env.VITE_DEV_SERVER_PORT || '5173'),
-  url: import.meta.env.VITE_APP_URL || 'http://localhost:5173',
-  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:5173/api',
-  adminUrl: import.meta.env.VITE_ADMIN_URL || 'http://localhost:5173/admin'
+  host: process.env.NEXT_PUBLIC_DEV_SERVER_HOST || 'localhost',
+  port: parseInt(process.env.NEXT_PUBLIC_DEV_SERVER_PORT || '3000'),
+  url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+  adminUrl: process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3000/admin'
 };
 
 // API endpoints and configurations
@@ -52,3 +52,6 @@ export default {
   tables,
   channels
 };
+
+
+

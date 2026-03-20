@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 
 const CategoryCardSkeleton: React.FC = () => {
@@ -25,3 +27,7 @@ const CategoryCardSkeleton: React.FC = () => {
 };
 
 export default CategoryCardSkeleton;
+
+
+
+

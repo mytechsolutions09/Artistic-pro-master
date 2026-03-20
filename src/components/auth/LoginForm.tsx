@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/src/compat/router';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, Mail, Smartphone } from 'lucide-react';
 import { useAppearance } from '../../contexts/AppearanceContext';
@@ -25,8 +27,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const { loading: appearanceLoading } = useAppearance();
 
   // Check if Turnstile is enabled
-  const turnstileEnabled = import.meta.env.VITE_CLOUDFLARE_TURNSTILE_ENABLED === 'true';
-  const hasSiteKey = !!import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY;
+  const turnstileEnabled = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_ENABLED === 'true';
+  const hasSiteKey = !!process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY;
 
   // Function to clear remembered credentials
   const clearRememberedCredentials = () => {
@@ -347,3 +349,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
 };
 
 export default LoginForm;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { 
   Plus, Upload, BarChart3, Settings, 
@@ -171,4 +173,8 @@ const ClothesSecondaryNav: React.FC<ClothesSecondaryNavProps> = ({
 };
 
 export default ClothesSecondaryNav;
+
+
+
+
 

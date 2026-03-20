@@ -1,3 +1,5 @@
+'use client'
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { Product, ArtWork } from '../types';
 import { ProductService } from '../services/supabaseService';
@@ -307,3 +309,7 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     </ProductContext.Provider>
   );
 };
+
+
+
+

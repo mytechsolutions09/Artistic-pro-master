@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 export interface DownloadResult {
@@ -186,3 +188,7 @@ export class DownloadService {
     return { isValid: true };
   }
 }
+
+
+
+

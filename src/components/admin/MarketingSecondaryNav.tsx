@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { TrendingUp, Search, CheckCircle } from 'lucide-react';
 
@@ -85,3 +87,7 @@ const MarketingSecondaryNav: React.FC<MarketingSecondaryNavProps> = ({
 };
 
 export default MarketingSecondaryNav;
+
+
+
+

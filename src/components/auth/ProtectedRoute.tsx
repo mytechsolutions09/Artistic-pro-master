@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import LoginForm from './LoginForm';
@@ -25,3 +27,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 };
 
 export default ProtectedRoute;
+
+
+
+

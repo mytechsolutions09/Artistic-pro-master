@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 
 interface ImageSkeletonProps {
@@ -52,3 +54,7 @@ const ImageSkeleton: React.FC<ImageSkeletonProps> = ({
 };
 
 export default ImageSkeleton;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Warehouse Name Error Display Component
  * Displays 401 error with warehouse name analysis and copy functionality
@@ -105,3 +107,7 @@ export const WarehouseNameErrorDisplay: React.FC<WarehouseNameErrorDisplayProps>
     </div>
   );
 };
+
+
+
+

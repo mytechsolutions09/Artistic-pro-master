@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 
 interface ArtLoaderProps {
@@ -72,3 +74,7 @@ const ArtLoader: React.FC<ArtLoaderProps> = ({ className = '' }) => {
 };
 
 export default ArtLoader;
+
+
+
+

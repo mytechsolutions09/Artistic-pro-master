@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabase';
 import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
 
@@ -263,3 +265,7 @@ export class MemoryOptimizedService {
 
 // Start cache cleanup on service initialization
 MemoryOptimizedService.startCacheCleanup();
+
+
+
+

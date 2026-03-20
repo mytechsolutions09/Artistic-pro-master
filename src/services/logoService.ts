@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 export interface LogoSettings {
@@ -231,3 +233,7 @@ export class LogoService {
     }
   }
 }
+
+
+
+

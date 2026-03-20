@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react';
 import { supabase } from '../services/supabaseService';
 
@@ -89,3 +91,7 @@ const GlobalSeoManager: React.FC = () => {
 };
 
 export default GlobalSeoManager;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Save, Bell, Mail, MessageSquare, Smartphone } from 'lucide-react';
 
@@ -454,3 +456,7 @@ const NotificationSettings: React.FC = () => {
 };
 
 export default NotificationSettings;
+
+
+
+

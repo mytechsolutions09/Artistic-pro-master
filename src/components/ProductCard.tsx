@@ -1,5 +1,7 @@
+'use client'
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/src/compat/router';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { Product } from '../types';
 import { generateProductUrl, generateSlug } from '../utils/slugUtils';
@@ -158,3 +160,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 };
 
 export default ProductCard;
+
+
+
+

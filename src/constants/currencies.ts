@@ -139,3 +139,6 @@ export const setCurrency = (currency: Currency): void => {
     localStorage.setItem(CURRENCY_STORAGE_KEY, currency.code);
   }
 };
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 export interface CommissionedArt {
@@ -241,4 +243,8 @@ class CommissionedArtService {
 }
 
 export default new CommissionedArtService();
+
+
+
+
 

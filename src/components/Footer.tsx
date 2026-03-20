@@ -1,5 +1,7 @@
+'use client'
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/src/compat/router';
 import { Heart, Mail, Phone, MapPin, Facebook, Instagram } from 'lucide-react';
 
 const Footer: React.FC = () => {
@@ -143,3 +145,7 @@ const Footer: React.FC = () => {
 };
 
 export default Footer;
+
+
+
+

@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { Review } from '../types';
 
@@ -446,3 +448,7 @@ export class ReviewService {
 }
 
 export default ReviewService;
+
+
+
+

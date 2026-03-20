@@ -2,47 +2,47 @@
 export const emailConfig = {
   // Hostinger SMTP settings
   smtp: {
-    host: import.meta.env.VITE_SMTP_HOST || 'smtp.hostinger.com',
-    port: parseInt(import.meta.env.VITE_SMTP_PORT || '465'),
-    secure: import.meta.env.VITE_SMTP_SECURE === 'true' || true, // true for 465, false for other ports
+    host: process.env.NEXT_PUBLIC_SMTP_HOST || 'smtp.hostinger.com',
+    port: parseInt(process.env.NEXT_PUBLIC_SMTP_PORT || '465'),
+    secure: process.env.NEXT_PUBLIC_SMTP_SECURE === 'true' || true, // true for 465, false for other ports
     auth: {
-      user: import.meta.env.VITE_SMTP_USER || '',
-      pass: import.meta.env.VITE_SMTP_PASS || ''
+      user: process.env.NEXT_PUBLIC_SMTP_USER || '',
+      pass: process.env.NEXT_PUBLIC_SMTP_PASS || ''
     }
   },
   
   // Hostinger IMAP settings
   imap: {
-    host: import.meta.env.VITE_IMAP_HOST || 'imap.hostinger.com',
-    port: parseInt(import.meta.env.VITE_IMAP_PORT || '993'),
+    host: process.env.NEXT_PUBLIC_IMAP_HOST || 'imap.hostinger.com',
+    port: parseInt(process.env.NEXT_PUBLIC_IMAP_PORT || '993'),
     secure: true, // IMAP over SSL
     auth: {
-      user: import.meta.env.VITE_IMAP_USER || '',
-      pass: import.meta.env.VITE_IMAP_PASS || ''
+      user: process.env.NEXT_PUBLIC_IMAP_USER || '',
+      pass: process.env.NEXT_PUBLIC_IMAP_PASS || ''
     }
   },
   
   // Hostinger POP settings
   pop: {
-    host: import.meta.env.VITE_POP_HOST || 'pop.hostinger.com',
-    port: parseInt(import.meta.env.VITE_POP_PORT || '995'),
+    host: process.env.NEXT_PUBLIC_POP_HOST || 'pop.hostinger.com',
+    port: parseInt(process.env.NEXT_PUBLIC_POP_PORT || '995'),
     secure: true, // POP over SSL
     auth: {
-      user: import.meta.env.VITE_POP_USER || '',
-      pass: import.meta.env.VITE_POP_PASS || ''
+      user: process.env.NEXT_PUBLIC_POP_USER || '',
+      pass: process.env.NEXT_PUBLIC_POP_PASS || ''
     }
   },
   
   // Email settings
   from: {
-    name: import.meta.env.VITE_EMAIL_FROM_NAME || 'Artistic Pro',
-    email: import.meta.env.VITE_EMAIL_FROM_EMAIL || ''
+    name: process.env.NEXT_PUBLIC_EMAIL_FROM_NAME || 'Artistic Pro',
+    email: process.env.NEXT_PUBLIC_EMAIL_FROM_EMAIL || ''
   },
   
   // Reply-to settings
   replyTo: {
-    name: import.meta.env.VITE_EMAIL_REPLY_NAME || 'Artistic Pro Support',
-    email: import.meta.env.VITE_EMAIL_REPLY_EMAIL || ''
+    name: process.env.NEXT_PUBLIC_EMAIL_REPLY_NAME || 'Artistic Pro Support',
+    email: process.env.NEXT_PUBLIC_EMAIL_REPLY_EMAIL || ''
   },
   
   // Email templates
@@ -89,3 +89,6 @@ export enum EmailPriority {
 }
 
 export default emailConfig;
+
+
+

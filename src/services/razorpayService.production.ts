@@ -1,11 +1,13 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import { LogoService } from './logoService';
 
 // Razorpay configuration
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
-const RAZORPAY_CURRENCY = import.meta.env.VITE_RAZORPAY_CURRENCY || 'INR';
-const RAZORPAY_COMPANY_NAME = import.meta.env.VITE_RAZORPAY_COMPANY_NAME || 'Lurevi';
-const RAZORPAY_THEME_COLOR = import.meta.env.VITE_RAZORPAY_THEME_COLOR || '#0d9488';
+const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+const RAZORPAY_CURRENCY = process.env.NEXT_PUBLIC_RAZORPAY_CURRENCY || 'INR';
+const RAZORPAY_COMPANY_NAME = process.env.NEXT_PUBLIC_RAZORPAY_COMPANY_NAME || 'Lurevi';
+const RAZORPAY_THEME_COLOR = process.env.NEXT_PUBLIC_RAZORPAY_THEME_COLOR || '#0d9488';
 
 // Razorpay types
 interface RazorpayOptions {
@@ -340,4 +342,8 @@ class RazorpayServiceProduction {
 }
 
 export default RazorpayServiceProduction.getInstance();
+
+
+
+
 

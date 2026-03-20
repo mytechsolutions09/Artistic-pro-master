@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 export interface UserAddress {
@@ -228,3 +230,7 @@ class AddressService {
 }
 
 export default AddressService;
+
+
+
+

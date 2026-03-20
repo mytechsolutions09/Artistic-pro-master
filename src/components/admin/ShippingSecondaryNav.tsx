@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { 
   Truck, 
@@ -151,3 +153,7 @@ const ShippingSecondaryNav: React.FC<ShippingSecondaryNavProps> = ({
 };
 
 export default ShippingSecondaryNav;
+
+
+
+

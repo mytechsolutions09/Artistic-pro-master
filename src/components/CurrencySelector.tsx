@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, DollarSign, Check } from 'lucide-react';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -159,3 +161,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
 };
 
 export default CurrencySelector;
+
+
+
+

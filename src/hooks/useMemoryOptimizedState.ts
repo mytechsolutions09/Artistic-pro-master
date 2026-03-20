@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 /**
@@ -82,3 +84,7 @@ export function useMemoryOptimizedState<T>(initialValue: T[] = []) {
     cleanup
   };
 }
+
+
+
+

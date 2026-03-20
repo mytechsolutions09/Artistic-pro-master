@@ -1,3 +1,5 @@
+'use client'
+
 // Meta (Facebook) Pixel Tracking Service
 // Supports dynamic Pixel ID from database or environment
 
@@ -8,7 +10,7 @@ declare global {
 }
 
 export class MetaPixelService {
-  private static pixelId = import.meta.env.VITE_META_PIXEL_ID || '1905415970060955';
+  private static pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1905415970060955';
 
   /**
    * Set pixel ID dynamically (e.g., from database)
@@ -243,4 +245,8 @@ export class MetaPixelService {
 }
 
 export default MetaPixelService;
+
+
+
+
 

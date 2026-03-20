@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { Smartphone, ArrowRight, RefreshCw, CheckCircle, Loader2 } from 'lucide-react';
 import phoneAuthService from '../../services/phoneAuthService';
@@ -267,4 +269,8 @@ export default function PhoneLogin({ onSuccess, onError }: PhoneLoginProps) {
     </div>
   );
 }
+
+
+
+
 

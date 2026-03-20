@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Save, Globe, Building, Mail } from 'lucide-react';
 
@@ -277,3 +279,7 @@ const GeneralSettings: React.FC = () => {
 };
 
 export default GeneralSettings;
+
+
+
+

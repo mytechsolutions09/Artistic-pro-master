@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { ImageUpload } from './ImageUpload';
 import { ImageUploadService, UploadResult } from '../../services/imageUploadService';
@@ -355,3 +357,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
     </form>
   );
 };
+
+
+
+

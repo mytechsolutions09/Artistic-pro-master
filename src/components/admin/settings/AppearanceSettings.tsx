@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../services/supabaseService';
 import { Palette, Image, Save, Upload, Eye, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
@@ -520,3 +522,7 @@ const AppearanceSettings: React.FC = () => {
 };
 
 export default AppearanceSettings;
+
+
+
+

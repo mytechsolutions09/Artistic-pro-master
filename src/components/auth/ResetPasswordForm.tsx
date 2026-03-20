@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from '@/src/compat/router';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useLogo } from '../../hooks/useLogo';
@@ -312,3 +314,7 @@ const ResetPasswordForm: React.FC = () => {
 };
 
 export default ResetPasswordForm;
+
+
+
+

@@ -30,7 +30,7 @@ export function checkEnvironmentVariables() {
 
   
   // Check development variables
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV === "development") {
 
 
 
@@ -42,7 +42,7 @@ export function checkEnvironmentVariables() {
 
 // Check if we're in development mode
 export function isDevelopment() {
-  return import.meta.env.DEV;
+  return process.env.NODE_ENV === "development";
 }
 
 // Get environment variable with fallback
@@ -63,9 +63,12 @@ export function getLocalhostConfig() {
 
 // Check if running on localhost
 export function isLocalhost() {
-  return import.meta.env.DEV && (
+  return process.env.NODE_ENV === "development" && (
     window.location.hostname === 'localhost' || 
     window.location.hostname === '127.0.0.1' ||
     window.location.hostname === '0.0.0.0'
   );
 }
+
+
+

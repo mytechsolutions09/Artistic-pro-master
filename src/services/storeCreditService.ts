@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 export interface StoreCreditTransaction {
@@ -258,4 +260,8 @@ export class StoreCreditService {
 }
 
 export default StoreCreditService;
+
+
+
+
 

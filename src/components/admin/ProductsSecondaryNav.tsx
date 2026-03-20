@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { 
   Plus, Upload, 
@@ -142,3 +144,7 @@ const ProductsSecondaryNav: React.FC<ProductsSecondaryNavProps> = ({
 };
 
 export default ProductsSecondaryNav;
+
+
+
+

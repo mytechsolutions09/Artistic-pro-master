@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Save, Shield, CreditCard, Banknote, Percent, AlertTriangle } from 'lucide-react';
 
@@ -395,3 +397,7 @@ const PaymentSettings: React.FC = () => {
 };
 
 export default PaymentSettings;
+
+
+
+

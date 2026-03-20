@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 
 const ProductPageSkeleton: React.FC = () => {
@@ -71,3 +73,7 @@ const ProductPageSkeleton: React.FC = () => {
 };
 
 export default ProductPageSkeleton;
+
+
+
+

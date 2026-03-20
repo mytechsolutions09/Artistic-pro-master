@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 import CurrencyService from './currencyService';
 import delhiveryService from './DelhiveryService';
@@ -687,3 +689,7 @@ export class CompleteOrderService {
     };
   }
 }
+
+
+
+

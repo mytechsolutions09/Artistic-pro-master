@@ -1,3 +1,5 @@
+'use client'
+
 import { supabase } from './supabaseService';
 
 // ============================================
@@ -518,4 +520,8 @@ class ShippingService {
 }
 
 export const shippingService = new ShippingService();
+
+
+
+
 
