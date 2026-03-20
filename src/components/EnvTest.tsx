@@ -7,6 +7,13 @@ const EnvTest: React.FC = () => {
   const envValid = checkEnvironmentVariables();
   const localhostConfig = getLocalhostConfig();
   const isLocal = isLocalhost();
+  const publicEnvVars = [
+    ['NEXT_PUBLIC_SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL],
+    ['NEXT_PUBLIC_SUPABASE_ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY],
+    ['NEXT_PUBLIC_APP_URL', process.env.NEXT_PUBLIC_APP_URL],
+    ['NEXT_PUBLIC_API_URL', process.env.NEXT_PUBLIC_API_URL],
+    ['NEXT_PUBLIC_ADMIN_URL', process.env.NEXT_PUBLIC_ADMIN_URL],
+  ] as const;
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md max-w-2xl mx-auto">
@@ -81,9 +88,7 @@ const EnvTest: React.FC = () => {
         <div className="bg-yellow-50 p-3 rounded">
           <h3 className="font-semibold text-yellow-800 mb-2">Environment Variables</h3>
           <div className="text-sm space-y-1">
-            {Object.entries(import.meta.env)
-              .filter(([key]) => key.startsWith('VITE_'))
-              .map(([key, value]) => (
+            {publicEnvVars.map(([key, value]) => (
                 <div key={key} className="flex justify-between">
                   <span className="font-medium">{key}:</span>
                   <span className="text-gray-600 truncate max-w-xs">
