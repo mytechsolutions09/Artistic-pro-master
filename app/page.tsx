@@ -34,6 +34,57 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Crawlable server-rendered homepage content for non-JS and low-JS crawlers */}
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Lurevi - Luxury That Stays With You</h1>
+        <p className="mt-2 text-sm text-gray-700">
+          Discover curated digital art, premium wall prints, and luxury collections crafted for modern spaces.
+        </p>
+
+        <nav aria-label="Primary discovery links" className="mt-4">
+          <ul className="flex flex-wrap gap-3 text-sm">
+            <li><a href="/categories" className="text-pink-700 hover:underline">Explore Luxury Collections</a></li>
+            <li><a href="/shop" className="text-pink-700 hover:underline">Shop Premium Picks</a></li>
+            <li><a href="/browse" className="text-pink-700 hover:underline">Browse Curated Artworks</a></li>
+            <li><a href="/contact-us" className="text-pink-700 hover:underline">Contact Lurevi Concierge</a></li>
+          </ul>
+        </nav>
+
+        {categories && categories.length > 0 && (
+          <section className="mt-5">
+            <h2 className="text-lg font-medium text-gray-900">Popular Categories</h2>
+            <ul className="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+              {categories.slice(0, 10).map((cat) => (
+                <li key={cat.id}>
+                  <a href={`/${cat.slug}`} className="hover:underline">
+                    {cat.name}
+                  </a>
+                  {cat.description ? ` - ${cat.description}` : ''}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {featuredProducts && featuredProducts.length > 0 && (
+          <section className="mt-5">
+            <h2 className="text-lg font-medium text-gray-900">Featured Artworks</h2>
+            <ul className="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
+              {featuredProducts.slice(0, 10).map((p) => {
+                const categorySlug = Array.isArray(p.categories) ? p.categories[0] : 'browse';
+                return (
+                  <li key={p.id}>
+                    <a href={`/${categorySlug}/${p.slug}`} className="hover:underline">
+                      {p.title}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+      </main>
+
       {/* Server-rendered SEO content — visible to Google, hidden to users once JS loads */}
       <noscript>
         <main style={{ maxWidth: '72rem', margin: '0 auto', padding: '1rem', fontFamily: 'Inter, sans-serif' }}>

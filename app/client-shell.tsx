@@ -1,12 +1,9 @@
 'use client';
 
 /**
- * ClientShell — loaded with ssr: false so it only mounts on the client.
- * This prevents any browser-API calls (localStorage, window, etc.) from
- * running during Next.js server-side rendering or static generation.
- *
- * It wraps the app with all context providers, then renders the layout shell
- * (Header, Footer, BottomTabs, PromoBar) conditionally by pathname.
+ * ClientShell wraps providers and global UI chrome.
+ * It is a client component, but is rendered through the normal App Router
+ * boundary so server-rendered page content remains visible to crawlers.
  */
 
 import React from 'react';

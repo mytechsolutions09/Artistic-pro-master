@@ -1,12 +1,7 @@
 import type { Metadata } from 'next';
-import dynamic from 'next/dynamic';
+import Script from 'next/script';
+import ClientShell from './client-shell';
 import './globals.css';
-
-// Load the entire interactive shell (providers + header + footer) only on the
-// client side. This prevents any browser-API calls (localStorage, window, etc.)
-// from running during server-side rendering / static generation.
-// The SEO metadata and page content are still generated server-side.
-const ClientShell = dynamic(() => import('./client-shell'), { ssr: false });
 
 export const metadata: Metadata = {
   title: {
@@ -16,10 +11,21 @@ export const metadata: Metadata = {
   description:
     'Discover curated digital art, wall prints, and premium collections at Lurevi. Explore categories, browse unique pieces, and shop online.',
   metadataBase: new URL('https://lurevi.in'),
-  alternates: { canonical: '/' },
-  robots: { index: true, follow: true },
+  alternates: {
+    canonical: '/',
+    languages: {
+      'en-IN': 'https://lurevi.in',
+      'x-default': 'https://lurevi.in',
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
+  },
   openGraph: {
     type: 'website',
+    locale: 'en_IN',
     siteName: 'Lurevi',
     title: 'Lurevi | Luxury That Stays With You',
     description:
@@ -38,7 +44,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en-IN">
       <head>
         {/* Meta Domain Verification */}
         <meta name="facebook-domain-verification" content="bp9lo0nxdrgb7znneqsp73r4zyf6or" />
@@ -69,7 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   url: 'https://lurevi.in',
                   name: 'Lurevi',
                   publisher: { '@id': 'https://lurevi.in/#organization' },
-                  inLanguage: 'en',
+                  inLanguage: 'en-IN',
                   potentialAction: {
                     '@type': 'SearchAction',
                     target: 'https://lurevi.in/search?q={search_term_string}',
@@ -78,12 +84,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 },
               ],
             }),
-          }}
-        />
-        {/* Meta Pixel */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1905415970060955');fbq('track','PageView');`,
           }}
         />
       </head>
@@ -98,6 +98,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         </noscript>
         <ClientShell>{children}</ClientShell>
+        {/* Defer Meta Pixel to improve critical render path/Core Web Vitals */}
+        <Script id="fb-pixel" strategy="afterInteractive">
+          {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1905415970060955');fbq('track','PageView');`}
+        </Script>
       </body>
     </html>
   );
