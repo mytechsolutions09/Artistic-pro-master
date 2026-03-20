@@ -254,8 +254,7 @@ const FBPage: React.FC = () => {
 export default FBPage;
 
 // Add custom styles
-const style = document.createElement('style');
-style.textContent = `
+const customStyles = `
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -312,6 +311,8 @@ style.textContent = `
   }
 `;
 if (typeof document !== 'undefined' && !document.querySelector('style[data-fb-page-styles]')) {
+  const style = document.createElement('style');
+  style.textContent = customStyles;
   style.setAttribute('data-fb-page-styles', 'true');
   document.head.appendChild(style);
 }

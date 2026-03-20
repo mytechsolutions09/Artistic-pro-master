@@ -260,8 +260,7 @@ const MenClothingPage: React.FC = () => {
 export default MenClothingPage;
 
 // Add custom styles
-const style = document.createElement('style');
-style.textContent = `
+const customStyles = `
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -318,6 +317,8 @@ style.textContent = `
   }
 `;
 if (typeof document !== 'undefined' && !document.querySelector('style[data-custom-styles]')) {
+  const style = document.createElement('style');
+  style.textContent = customStyles;
   style.setAttribute('data-custom-styles', 'true');
   document.head.appendChild(style);
 }
