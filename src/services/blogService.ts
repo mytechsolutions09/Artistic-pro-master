@@ -53,6 +53,8 @@ The best luxury wall art is not only beautiful. It should improve mood, compleme
     seo_title: 'Luxury Wall Art India: Premium Picks for Modern Homes | Lurevi',
     seo_description:
       'Discover how to choose luxury wall art in India. Learn sizing, style matching, and premium print tips for elegant modern interiors.',
+    cover_image:
+      'https://images.unsplash.com/photo-1549887534-1541e9326642?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'Buy Digital Art Prints Online: A Smart Buyer Checklist',
@@ -72,6 +74,8 @@ Online art buying becomes easy when your process is simple: intent, shortlist, v
     seo_title: 'Buy Digital Art Prints Online: Complete Quality Checklist | Lurevi',
     seo_description:
       'Planning to buy digital art prints online? Follow this quality checklist to choose the right style, resolution, and room fit.',
+    cover_image:
+      'https://images.unsplash.com/photo-1567016432779-094069958ea5?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'Premium Wall Decor for Home: Styling Framework by Room',
@@ -91,6 +95,8 @@ Premium decor is less about quantity and more about curation quality.`,
     seo_title: 'Premium Wall Decor for Home: Room-Wise Styling Guide | Lurevi',
     seo_description:
       'Design a premium look with this room-by-room wall decor framework. Choose refined artwork that fits modern home aesthetics.',
+    cover_image:
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'How to Decorate with Wall Prints: Beginner-Friendly Step-by-Step Guide',
@@ -114,6 +120,8 @@ Great wall print styling is built on proportion and intention, not quantity.`,
     seo_title: 'How to Decorate with Wall Prints: Step-by-Step Guide | Lurevi',
     seo_description:
       'Learn how to decorate with wall prints using a practical 5-step method. Avoid common layout mistakes and style your home confidently.',
+    cover_image:
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'Indian Contemporary Art Online: What to Look for Before You Buy',
@@ -134,6 +142,8 @@ Contemporary art purchases perform best when guided by long-term relevance, not 
     seo_title: 'Indian Contemporary Art Online: Smart Buying Guide | Lurevi',
     seo_description:
       'Explore Indian contemporary art online with confidence. Learn what to evaluate before buying for modern Indian homes.',
+    cover_image:
+      'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'Modern Art Prints for Living Room: Layout and Color Strategy',
@@ -153,6 +163,8 @@ When in doubt, choose cleaner compositions with fewer elements. Modern spaces be
     seo_title: 'Modern Art Prints for Living Room: Complete Styling Guide | Lurevi',
     seo_description:
       'Choose modern art prints for living room spaces using proven layout and color rules. Improve balance, style, and visual depth.',
+    cover_image:
+      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'Digital Art Download High Resolution: Why Quality Specs Matter',
@@ -172,6 +184,8 @@ Resolution quality is the hidden factor that separates premium outcomes from ave
     seo_title: 'Digital Art Download High Resolution: Print Quality Guide | Lurevi',
     seo_description:
       'Learn how to evaluate high-resolution digital art downloads for sharp, premium print results across different frame sizes.',
+    cover_image:
+      'https://images.unsplash.com/photo-1618005182384-ae9021a400a0?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'Art Prints Gift India: Elegant Gift Ideas That Feel Personal',
@@ -191,6 +205,8 @@ A good art gift is not generic. It should match the recipient's space, taste, an
     seo_title: 'Art Prints Gift India: Premium Gift Ideas for Every Occasion | Lurevi',
     seo_description:
       'Discover premium art prints gift ideas in India for weddings, housewarmings, and personal milestones with elegant style fit.',
+    cover_image:
+      'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'Framed Art Prints for Bedroom India: Soft Luxury Styling Tips',
@@ -210,6 +226,8 @@ Bedroom art should support emotional reset. That is why composition and palette 
     seo_title: 'Framed Art Prints for Bedroom India: Luxury Styling Guide | Lurevi',
     seo_description:
       'Find the best framed art prints for bedroom spaces in India. Learn placement, palette, and frame choices for a calm luxury look.',
+    cover_image:
+      'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&q=80&auto=format&fit=crop',
   },
   {
     title: 'Unique Home Decor Gifts Online: Curated Picks That Stand Out',
@@ -229,6 +247,8 @@ Great decor gifting feels personal, elegant, and useful in real homes.`,
     seo_title: 'Unique Home Decor Gifts Online: Curated Premium Ideas | Lurevi',
     seo_description:
       'Shop unique home decor gifts online with curated premium picks that suit modern homes and thoughtful gifting occasions.',
+    cover_image:
+      'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=80&auto=format&fit=crop',
   },
 ];
 
@@ -286,10 +306,23 @@ export class BlogService {
   }
 
   static async createPost(input: BlogPostInput): Promise<BlogPost> {
+    const slug = input.slug.toLowerCase().trim();
+    const tags = input.tags || [];
+    const cover =
+      input.cover_image === undefined || input.cover_image === null
+        ? null
+        : String(input.cover_image).trim() || null;
+
     const payload = {
-      ...input,
-      slug: input.slug.toLowerCase().trim(),
-      tags: input.tags || [],
+      title: input.title.trim(),
+      slug,
+      excerpt: input.excerpt.trim(),
+      content: input.content.trim(),
+      cover_image: cover,
+      status: input.status,
+      tags,
+      seo_title: input.seo_title?.trim() || null,
+      seo_description: input.seo_description?.trim() || null,
       published_at: input.status === 'published' ? new Date().toISOString() : null,
     };
 
@@ -304,11 +337,41 @@ export class BlogService {
   }
 
   static async updatePost(id: string, input: BlogPostInput): Promise<BlogPost> {
+    const slug = input.slug.toLowerCase().trim();
+    const tags = input.tags || [];
+    const cover =
+      input.cover_image === undefined || input.cover_image === null
+        ? null
+        : String(input.cover_image).trim() || null;
+
+    const { data: existing, error: fetchErr } = await supabase
+      .from(TABLE)
+      .select('published_at, status')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (fetchErr) throw fetchErr;
+
+    let published_at: string | null = null;
+    if (input.status === 'published') {
+      if (existing?.status === 'published' && existing?.published_at) {
+        published_at = existing.published_at;
+      } else {
+        published_at = new Date().toISOString();
+      }
+    }
+
     const payload = {
-      ...input,
-      slug: input.slug.toLowerCase().trim(),
-      tags: input.tags || [],
-      published_at: input.status === 'published' ? new Date().toISOString() : null,
+      title: input.title.trim(),
+      slug,
+      excerpt: input.excerpt.trim(),
+      content: input.content.trim(),
+      cover_image: cover,
+      status: input.status,
+      tags,
+      seo_title: input.seo_title?.trim() || null,
+      seo_description: input.seo_description?.trim() || null,
+      published_at,
     };
 
     const { data, error } = await supabase

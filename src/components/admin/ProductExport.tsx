@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Download, FileText, CheckCircle, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import ProductCatalogExportService from '../../services/productCatalogExport';
+import ShopifyProductExportService from '../../services/shopifyProductExport';
 
 const ProductExport: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportingShopify, setExportingShopify] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [stats, setStats] = useState({
     total: 0,
@@ -59,6 +61,29 @@ const ProductExport: React.FC = () => {
     }
   };
 
+  const handleShopifyExport = async () => {
+    try {
+      setExportingShopify(true);
+      setMessage(null);
+      const result = await ShopifyProductExportService.exportToShopifyCsv();
+      if (result.success) {
+        setMessage({
+          type: 'success',
+          text: result.message,
+        });
+      } else {
+        setMessage({ type: 'error', text: result.message });
+      }
+    } catch (error: any) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to export Shopify CSV',
+      });
+    } finally {
+      setExportingShopify(false);
+    }
+  };
+
   const getExportCount = () => {
     return stats.total;
   };
@@ -77,7 +102,7 @@ const ProductExport: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Product Catalog Export</h1>
-            <p className="text-blue-100">Export products to CSV for Facebook/Instagram catalog</p>
+            <p className="text-blue-100">CSV for Meta catalog or Shopify import (with images)</p>
           </div>
         </div>
       </div>
@@ -184,6 +209,45 @@ const ProductExport: React.FC = () => {
               No products available to export. Add products first.
             </p>
           )}
+
+          <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <h3 className="font-semibold text-emerald-900 mb-1">Shopify import (CSV + images)</h3>
+            <p className="text-sm text-emerald-800 mb-3">
+              Shopify CSV: <strong>Body (HTML)</strong> explains that gallery images are previews and that the{' '}
+              <strong>full main image + PDF</strong> are delivered <strong>after order completion</strong>. Technical
+              URLs: <strong>PDF URL</strong>, <strong>Main image URL (full file)</strong> (uses{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">main_image_full_url</code> if set, else{' '}
+              <code className="text-xs bg-white/80 px-1 rounded">main_image</code>), and <strong>Fulfillment note</strong>{' '}
+              for your team. Shopify may ignore extra columns — keep the file for fulfillment mapping.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleShopifyExport()}
+              disabled={exportingShopify || stats.total === 0}
+              className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exportingShopify ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  <span>Building Shopify CSV…</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  <span>Export Shopify CSV (with images)</span>
+                </>
+              )}
+            </button>
+            <a
+              href="https://help.shopify.com/en/manual/products/import-export/using-csv"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1 text-sm text-emerald-800 underline hover:text-emerald-950"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Shopify CSV import guide
+            </a>
+          </div>
         </div>
       </div>
 

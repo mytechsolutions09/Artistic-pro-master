@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Avoid bundling Supabase into server vendor chunks (e.g. vendor-chunks/@supabase.js).
+  // On Windows, resolving that path can fail; externalizing uses node_modules instead.
+  experimental: {
+    serverComponentsExternalPackages: ['@supabase/supabase-js', '@supabase/ssr'],
+  },
+
   // Vite (esbuild) didn't type-check at build time — pre-existing TS errors exist.
   // Enable this flag temporarily to get the site building; fix errors incrementally.
   typescript: {

@@ -32,7 +32,7 @@ const EMPTY_FORM: BlogFormState = {
 };
 
 const BlogAdmin: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<BlogTabId>('list');
+  const [activeSubTab, setActiveSubTab] = useState<BlogTabId>('posts');
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -264,6 +264,15 @@ const BlogAdmin: React.FC = () => {
               placeholder="Cover image URL"
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2"
             />
+            <div className="md:col-span-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setForm((prev) => ({ ...prev, cover_image: '' }))}
+                className="text-xs text-gray-600 underline hover:text-gray-900"
+              >
+                Clear cover URL
+              </button>
+            </div>
             <div className="md:col-span-2">
               <label className="text-xs text-gray-600 block mb-1">Upload image from local</label>
               <label
@@ -333,6 +342,7 @@ const BlogAdmin: React.FC = () => {
             <div className="mt-3">
               <p className="text-xs text-gray-600 mb-2">Cover preview</p>
               <img
+                key={form.cover_image}
                 src={form.cover_image}
                 alt="Blog cover preview"
                 className="w-full max-w-md h-44 object-cover rounded-lg border border-gray-200"
@@ -484,6 +494,7 @@ const BlogAdmin: React.FC = () => {
             <div className="mt-3">
               <p className="text-xs text-gray-600 break-all">{form.cover_image}</p>
               <img
+                key={form.cover_image}
                 src={form.cover_image}
                 alt="Uploaded blog media"
                 className="mt-2 w-full max-w-md h-44 object-cover rounded-lg border border-gray-200"

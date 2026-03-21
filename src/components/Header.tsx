@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from '@/src/compat/router';
-import { Search, ShoppingCart, User, Menu, X, Heart, Clock, TrendingUp, ChevronDown, Settings } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Heart, Clock, TrendingUp, Settings } from 'lucide-react';
 import { CartManager } from '../services/orderService';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../utils/adminUtils';
@@ -75,6 +75,24 @@ const Header: React.FC = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isSearchOpen]);
+
+  useEffect(() => {
+    if (!showCategoriesDropdown) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (categoriesRef.current && !categoriesRef.current.contains(event.target as Node)) {
+        setShowCategoriesDropdown(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowCategoriesDropdown(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showCategoriesDropdown]);
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -236,20 +254,76 @@ const Header: React.FC = () => {
     <header className="bg-gray-50 sticky top-0 z-50 border-b border-gray-200 font-sans font-normal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex flex-col items-center leading-none text-center font-['Inter']">
-            <span className="text-black font-bold uppercase text-2xl">Lurevi</span>
-            <span className="text-[9px] sm:text-[10px] text-gray-600 tracking-[0.14em] uppercase mt-0.5">
-              Luxury That Stays With You
-            </span>
-          </Link>
+          <div className="flex items-center gap-3 lg:gap-7 min-w-0">
+            {/* Logo */}
+            <Link to="/" className="flex flex-col items-center leading-none text-center font-['Inter'] shrink-0">
+              <span className="text-black font-bold uppercase text-2xl">Lurevi</span>
+              <span className="text-[9px] sm:text-[10px] text-gray-600 tracking-[0.14em] uppercase mt-0.5">
+                Luxury That Stays With You
+              </span>
+            </Link>
 
+            {/* Categories - Desktop: right of logo, click to open panel under navbar */}
+            <div className="hidden lg:block relative shrink-0" ref={categoriesRef}>
+              <button
+                type="button"
+                className="p-2 text-black hover:text-gray-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCategoriesDropdown((open) => !open);
+                }}
+                aria-expanded={showCategoriesDropdown}
+                aria-haspopup="true"
+                title="Categories"
+                aria-label="Categories"
+              >
+                <Menu className="w-4 h-4" aria-hidden />
+              </button>
+
+              {showCategoriesDropdown && categories.length > 0 && (
+                <div
+                  className="fixed left-0 right-0 top-16 z-40 max-h-[50vh] overflow-y-auto border-b border-gray-200 bg-gray-50 shadow-lg"
+                  role="menu"
+                >
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div className="grid grid-cols-5 gap-2">
+                      {categories
+                        .filter(category => {
+                          const lowerName = category.name.toLowerCase();
+                          return !['men', 'women', 'clothing'].some(keyword => lowerName.includes(keyword));
+                        })
+                        .map((category) => (
+                          <Link
+                            key={category.id}
+                            to={`/${category.slug}`}
+                            role="menuitem"
+                            className="px-2.5 py-1.5 text-xs text-gray-700 hover:text-black rounded-md hover:bg-gray-100 font-normal text-center whitespace-nowrap overflow-hidden text-ellipsis font-sans uppercase"
+                            style={{ boxShadow: 'none' }}
+                            onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 0, 0, 0.15)'}
+                            onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                            onClick={() => setShowCategoriesDropdown(false)}
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <Link
+                        to="/categories"
+                        className="text-xs font-sans font-normal uppercase text-gray-600 hover:text-black"
+                        onClick={() => setShowCategoriesDropdown(false)}
+                      >
+                        View all categories
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Navigation - Desktop Only (lg+) */}
           <nav className="hidden lg:flex items-center space-x-4">
-            <Link to="/favorites" className="p-2 text-black hover:text-gray-600">
-              <Heart className="w-4 h-4" />
-            </Link>
             {/* Search Icon/Bar - Desktop */}
             <div className={`relative transition-all duration-200 ${isSearchOpen ? 'w-[360px]' : 'w-auto'}`} ref={searchRef}>
               {!isSearchOpen ? (
@@ -335,51 +409,9 @@ const Header: React.FC = () => {
                 </div>
               )}
             </div>
-            {/* Categories - Desktop with Dropdown */}
-            <div 
-              className="relative"
-              ref={categoriesRef}
-            >
-              <Link 
-                to="/categories" 
-                className="flex items-center gap-1 text-black hover:text-gray-600 text-sm font-normal font-sans uppercase"
-                onMouseEnter={() => setShowCategoriesDropdown(true)}
-              >
-                Categories
-                <ChevronDown className="w-3 h-3" />
-              </Link>
-
-              {/* Categories Dropdown */}
-              {showCategoriesDropdown && categories.length > 0 && (
-                <div 
-                  className="fixed top-16 left-1/2 -translate-x-1/2 mt-1 w-[90vw] max-w-[1100px] max-h-[50vh] bg-gray-50 border border-gray-200 rounded-xl shadow-2xl z-50 p-3 overflow-y-auto"
-                  style={{ maxWidth: 'min(90vw, 1100px)' }}
-                  onMouseEnter={() => setShowCategoriesDropdown(true)}
-                  onMouseLeave={() => setShowCategoriesDropdown(false)}
-                >
-                  <div className="grid grid-cols-5 gap-2">
-                    {categories
-                      .filter(category => {
-                        // Exclude clothing-related categories
-                        const lowerName = category.name.toLowerCase();
-                        return !['men', 'women', 'clothing'].some(keyword => lowerName.includes(keyword));
-                      })
-                      .map((category) => (
-                        <Link
-                          key={category.id}
-                          to={`/${category.slug}`}
-                          className="px-2.5 py-1.5 text-xs text-gray-700 hover:text-black rounded-md hover:bg-gray-100 font-normal text-center whitespace-nowrap overflow-hidden text-ellipsis font-sans uppercase"
-                          style={{ boxShadow: 'none' }}
-                          onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 0, 0, 0.15)'}
-                          onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <Link to="/favorites" className="p-2 text-black hover:text-gray-600">
+              <Heart className="w-4 h-4" />
+            </Link>
             <Link to="/browse" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
               Art
             </Link>

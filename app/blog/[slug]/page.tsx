@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { blogCoverUrl } from '@/lib/blogCover';
 
 const SITE_URL = 'https://lurevi.in';
 
@@ -60,6 +61,7 @@ export async function generateMetadata(
   const canonicalUrl = `${SITE_URL}/blog/${post.slug}`;
   const title = post.seo_title || `${post.title} | Lurevi Blog`;
   const description = post.seo_description || post.excerpt || 'Read this article on the Lurevi blog.';
+  const ogImage = blogCoverUrl(post.cover_image);
 
   return {
     title,
@@ -73,7 +75,7 @@ export async function generateMetadata(
       title,
       description,
       siteName: 'Lurevi',
-      images: post.cover_image ? [{ url: post.cover_image, alt: post.title }] : undefined,
+      images: [{ url: ogImage, alt: post.title }],
       publishedTime: post.published_at || post.created_at,
       tags: Array.isArray(post.tags) ? post.tags : undefined,
     },
@@ -81,7 +83,7 @@ export async function generateMetadata(
       card: 'summary_large_image',
       title,
       description,
-      images: post.cover_image ? [post.cover_image] : undefined,
+      images: [ogImage],
     },
   };
 }
@@ -101,7 +103,8 @@ export async function generateStaticParams() {
   }
 }
 
-export const revalidate = 1800;
+/** Always fetch fresh post so cover image edits from Admin appear immediately. */
+export const dynamic = 'force-dynamic';
 
 export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -113,7 +116,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.seo_description || post.excerpt || '',
-    image: post.cover_image || undefined,
+    image: blogCoverUrl(post.cover_image),
     datePublished: publishedISO,
     dateModified: publishedISO,
     url: `${SITE_URL}/blog/${post.slug}`,
@@ -137,13 +140,14 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
         {new Date(publishedISO).toLocaleDateString('en-IN')}
       </p>
 
-      {post.cover_image && (
-        <img
-          src={post.cover_image}
-          alt={post.title}
-          className="mt-5 w-full h-72 object-cover rounded-lg border border-gray-100"
-        />
-      )}
+      <img
+        src={blogCoverUrl(post.cover_image)}
+        alt={post.title}
+        className="mt-5 w-full h-72 object-cover rounded-lg border border-gray-100"
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
+      />
 
       {post.excerpt && <p className="mt-5 text-base text-gray-700">{post.excerpt}</p>}
 

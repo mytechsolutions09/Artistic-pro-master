@@ -1,18 +1,18 @@
 'use client'
 
 import React from 'react';
-import { TrendingUp, Search, CheckCircle, Wand2, LineChart } from 'lucide-react';
+import { TrendingUp, Search, CheckCircle, LineChart } from 'lucide-react';
 
 export interface MarketingTab {
-  id: 'tracking' | 'seo' | 'seo_studio' | 'keyword_tracking' | 'seo_daily';
+  id: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily';
   label: string;
   icon: React.ReactNode;
   description: string;
 }
 
 interface MarketingSecondaryNavProps {
-  activeTab: 'tracking' | 'seo' | 'seo_studio' | 'keyword_tracking' | 'seo_daily';
-  onTabChange: (tabId: 'tracking' | 'seo' | 'seo_studio' | 'keyword_tracking' | 'seo_daily') => void;
+  activeTab: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily';
+  onTabChange: (tabId: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily') => void;
   className?: string;
 }
 
@@ -27,13 +27,7 @@ const MARKETING_TABS: MarketingTab[] = [
     id: 'seo',
     label: 'SEO',
     icon: <Search className="w-4 h-4" />,
-    description: 'Search metadata and Open Graph',
-  },
-  {
-    id: 'seo_studio',
-    label: 'SEO Studio',
-    icon: <Wand2 className="w-4 h-4" />,
-    description: 'One-tab SEO action workspace',
+    description: 'Metadata, internal links, workflow & tools',
   },
   {
     id: 'keyword_tracking',

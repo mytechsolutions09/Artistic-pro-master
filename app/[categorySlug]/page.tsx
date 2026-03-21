@@ -26,7 +26,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       category.description ||
       `Browse ${category.name} artworks and prints at Lurevi. Unique curated pieces for your space.`,
-    alternates: { canonical: `https://lurevi.in/${categorySlug}` },
+    alternates: {
+      canonical: `https://lurevi.in/${categorySlug}`,
+      languages: {
+        'en-IN': `https://lurevi.in/${categorySlug}`,
+        'x-default': `https://lurevi.in/${categorySlug}`,
+      },
+    },
     openGraph: {
       title: `${category.name} | Lurevi`,
       description:
@@ -61,6 +67,34 @@ export default async function CategoryPage({ params }: Props) {
 
   return (
     <>
+      {category && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'CollectionPage',
+                  '@id': `https://lurevi.in/${categorySlug}/#webpage`,
+                  url: `https://lurevi.in/${categorySlug}`,
+                  name: `${category.name} — Luxury Collection`,
+                  description: category.description ?? undefined,
+                  inLanguage: 'en-IN',
+                  isPartOf: { '@id': 'https://lurevi.in/#website' },
+                },
+                {
+                  '@type': 'BreadcrumbList',
+                  itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://lurevi.in' },
+                    { '@type': 'ListItem', position: 2, name: category.name, item: `https://lurevi.in/${categorySlug}` },
+                  ],
+                },
+              ],
+            }),
+          }}
+        />
+      )}
       {/* Server-rendered content for Google */}
       {category && (
         <noscript>

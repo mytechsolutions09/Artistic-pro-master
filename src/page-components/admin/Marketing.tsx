@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Wand2, Link2, FileText } from 'lucide-react';
+import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav';
 import { supabase } from '../../services/supabaseService';
@@ -66,7 +66,7 @@ type KeywordRow = {
 };
 
 const Marketing: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'seo_studio' | 'keyword_tracking' | 'seo_daily'>('tracking');
+  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily'>('tracking');
   const [settings, setSettings] = useState<MarketingSettings>({
     meta_pixel_id: '',
     meta_pixel_enabled: true,
@@ -1151,83 +1151,122 @@ const Marketing: React.FC = () => {
         </div>
         </div>
 
-        {/* SEO Sub-tab Content */}
+        {/* SEO: single tab (merged former SEO + SEO Studio — no duplicate fields) */}
         <div className={activeSubTab === 'seo' ? 'space-y-3' : 'hidden'}>
+          <div className="bg-violet-50 p-3 rounded-lg border border-violet-200">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <h3 className="text-sm font-semibold text-violet-900">SEO workflow</h3>
+              <span className="text-xs text-violet-700">
+                {Object.values(seoWorkflowState).filter(Boolean).length}/4 completed
+              </span>
+            </div>
+            <ol className="space-y-1 text-xs text-violet-900 list-decimal list-inside">
+              <li>Pick target focus (home / category / product).</li>
+              <li>Fill title (50–60 chars) and meta description (150–160).</li>
+              <li>Auto-generate internal links, edit, then save.</li>
+              <li>Copy links into homepage or content as needed.</li>
+            </ol>
+          </div>
+
           <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
               <div className="p-2 bg-emerald-100 rounded-lg">
                 <Search className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-800">SEO Settings</h2>
-                <p className="text-sm text-gray-500">Configure homepage metadata for better search visibility</p>
+                <h2 className="text-base font-semibold text-gray-800">Site SEO</h2>
+                <p className="text-sm text-gray-500">
+                  Homepage metadata (marketing settings) and internal linking — one place, no duplicate editors.
+                </p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
-                <input
-                  type="text"
-                  value={seoSettings.page_title}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, page_title: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="Artistic Pro | Premium Digital Art & Wall Prints"
-                />
-              </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Target page focus</label>
+              <select
+                value={seoStudioTarget}
+                onChange={(e) => setSeoStudioTarget(e.target.value as 'home' | 'category' | 'product')}
+                className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="home">Homepage</option>
+                <option value="category">Category page</option>
+                <option value="product">Product page</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Planning label — title/meta below map to global homepage fields in marketing settings.
+              </p>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
-                <textarea
-                  value={seoSettings.meta_description}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, meta_description: e.target.value })}
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="Discover curated digital artworks, premium prints, and exclusive collections."
-                />
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Page title</label>
+                  <input
+                    type="text"
+                    value={seoSettings.page_title}
+                    onChange={(e) => setSeoSettings({ ...seoSettings, page_title: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Lurevi | Luxury Lifestyle Brand India"
+                  />
+                  <p className={`text-xs mt-1 ${titleLength >= 50 && titleLength <= 60 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {titleLength}/60 (target: 50–60)
+                  </p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Meta Keywords</label>
-                <input
-                  type="text"
-                  value={seoSettings.meta_keywords}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, meta_keywords: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="digital art, wall art, prints, modern art, online gallery"
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meta description</label>
+                  <textarea
+                    value={seoSettings.meta_description}
+                    onChange={(e) => setSeoSettings({ ...seoSettings, meta_description: e.target.value })}
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Discover curated digital artworks, premium prints, and exclusive collections."
+                  />
+                  <p className={`text-xs mt-1 ${descriptionLength >= 150 && descriptionLength <= 160 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {descriptionLength}/160 (target: 150–160)
+                  </p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Open Graph Image URL</label>
-                <input
-                  type="text"
-                  value={seoSettings.og_image}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, og_image: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="https://your-domain.com/og-image.jpg"
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meta keywords</label>
+                  <input
+                    type="text"
+                    value={seoSettings.meta_keywords}
+                    onChange={(e) => setSeoSettings({ ...seoSettings, meta_keywords: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="digital art, wall art, prints, modern art, online gallery"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Robots Directive</label>
-                <select
-                  value={seoSettings.robots}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, robots: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="index, follow">index, follow (default)</option>
-                  <option value="noindex, follow">noindex, follow</option>
-                  <option value="index, nofollow">index, nofollow</option>
-                  <option value="noindex, nofollow">noindex, nofollow</option>
-                </select>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Open Graph image URL</label>
+                  <input
+                    type="text"
+                    value={seoSettings.og_image}
+                    onChange={(e) => setSeoSettings({ ...seoSettings, og_image: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="https://your-domain.com/og-image.jpg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Robots directive</label>
+                  <select
+                    value={seoSettings.robots}
+                    onChange={(e) => setSeoSettings({ ...seoSettings, robots: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="index, follow">index, follow (default)</option>
+                    <option value="noindex, follow">noindex, follow</option>
+                    <option value="index, nofollow">index, nofollow</option>
+                    <option value="noindex, nofollow">noindex, nofollow</option>
+                  </select>
+                </div>
               </div>
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between gap-3 mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Internal Linking Suggestions
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700">Internal linking suggestions</label>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -1235,14 +1274,14 @@ const Marketing: React.FC = () => {
                       disabled={generatingSuggestions}
                       className="px-2.5 py-1.5 text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-md transition-colors disabled:opacity-50"
                     >
-                      {generatingSuggestions ? 'Generating...' : 'Auto-generate suggestions'}
+                      {generatingSuggestions ? 'Generating...' : 'Auto-generate'}
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleCopySuggestions()}
                       className="px-2.5 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
                     >
-                      {copySuggestionsDone ? 'Copied' : 'Copy suggestions'}
+                      {copySuggestionsDone ? 'Copied' : 'Copy'}
                     </button>
                   </div>
                 </div>
@@ -1251,12 +1290,12 @@ const Marketing: React.FC = () => {
                   onChange={(e) =>
                     setSeoSettings({ ...seoSettings, internal_linking_suggestions: e.target.value })
                   }
-                  rows={6}
+                  rows={12}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                   placeholder={`Homepage -> /categories (anchor: Explore Luxury Collections)\n/categories -> /shop (anchor: Shop Bestsellers)\n/shop -> /contact-us (anchor: Contact Lurevi Concierge)`}
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  Tip: Use format <code>source -&gt; target (anchor: text)</code> so content editors can apply links quickly.
+                  Tip: <code>source -&gt; target (anchor: text)</code>
                 </p>
                 {seoSettings.internal_linking_suggestions.trim() && (
                   <div className="mt-3 border-t border-gray-200 pt-3">
@@ -1281,160 +1320,59 @@ const Marketing: React.FC = () => {
           </div>
 
           <div className="sticky bottom-3 bg-white border border-gray-200 p-2.5 rounded-lg shadow-md">
-            <button
-              onClick={handleSaveSeo}
-              disabled={savingSeo}
-              className="w-full px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {savingSeo ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  <span>Save SEO Settings</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* SEO Studio Sub-tab Content */}
-        <div className={activeSubTab === 'seo_studio' ? 'space-y-3' : 'hidden'}>
-          <div className="bg-violet-50 p-3 rounded-lg border border-violet-200">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <h3 className="text-sm font-semibold text-violet-900">SEO Studio Workflow</h3>
-              <span className="text-xs text-violet-700">
-                {Object.values(seoWorkflowState).filter(Boolean).length}/4 completed
-              </span>
-            </div>
-            <ol className="space-y-1.5 text-xs text-violet-900">
-              <li>1. Pick one target page this week (home/category/product).</li>
-              <li>2. Fill Page Title (50-60 chars) and Meta Description (150-160 chars).</li>
-              <li>3. Click Auto-generate suggestions.</li>
-              <li>4. Review/edit internal link lines.</li>
-              <li>5. Click Apply SEO Changes.</li>
-              <li>6. Click Copy Internal Links.</li>
-              <li>7. Open Homepage Editor and place links in content.</li>
-            </ol>
-          </div>
-
-          <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-violet-100 rounded-lg">
-                <Wand2 className="w-5 h-5 text-violet-600" />
-              </div>
-              <div>
-                <h2 className="text-base font-semibold text-gray-800">SEO Studio (All-in-One)</h2>
-                <p className="text-xs text-gray-500">Update title/meta + internal links from one workspace.</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Target Page This Week</label>
-                  <select
-                    value={seoStudioTarget}
-                    onChange={(e) => setSeoStudioTarget(e.target.value as 'home' | 'category' | 'product')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  >
-                    <option value="home">Homepage</option>
-                    <option value="category">Category Page</option>
-                    <option value="product">Product Page</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Page Title</label>
-                  <input
-                    type="text"
-                    value={seoSettings.page_title}
-                    onChange={(e) => setSeoSettings({ ...seoSettings, page_title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    placeholder="Lurevi | Luxury Lifestyle Brand India"
-                  />
-                  <p className={`text-xs mt-1 ${titleLength >= 50 && titleLength <= 60 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {titleLength}/60 characters (target: 50-60)
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Meta Description</label>
-                  <textarea
-                    value={seoSettings.meta_description}
-                    onChange={(e) => setSeoSettings({ ...seoSettings, meta_description: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    placeholder="Write a 150-160 character search snippet for your selected page."
-                  />
-                  <p className={`text-xs mt-1 ${descriptionLength >= 150 && descriptionLength <= 160 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {descriptionLength}/160 characters (target: 150-160)
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-sm font-medium text-gray-700">Internal Linking Suggestions</label>
-                    <button
-                      type="button"
-                      onClick={() => void handleAutoGenerateSuggestions()}
-                      className="px-2 py-1 text-xs bg-violet-100 hover:bg-violet-200 text-violet-700 rounded-md transition-colors"
-                    >
-                      Auto-generate
-                    </button>
-                  </div>
-                  <textarea
-                    value={seoSettings.internal_linking_suggestions}
-                    onChange={(e) => setSeoSettings({ ...seoSettings, internal_linking_suggestions: e.target.value })}
-                    rows={8}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    placeholder={`Homepage -> /categories (anchor: Explore Luxury Collections)\n/categories -> /shop (anchor: Shop Bestsellers)`}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleSaveSeo}
+                disabled={savingSeo}
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingSeo ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    <span>Save SEO settings</span>
+                  </>
+                )}
+              </button>
               <button
                 onClick={() => void runSeoStudioAction()}
                 disabled={savingSeo}
                 className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
-                <span>{savingSeo ? 'Applying...' : 'Apply SEO Changes'}</span>
+                <span>{savingSeo ? 'Saving…' : 'Save & copy links'}</span>
               </button>
               <button
                 onClick={() => void handleCopySuggestions()}
                 className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm"
               >
                 <Link2 className="w-4 h-4" />
-                <span>{copySuggestionsDone ? 'Copied' : 'Copy Internal Links'}</span>
+                <span>{copySuggestionsDone ? 'Copied' : 'Copy links only'}</span>
               </button>
               <button
                 onClick={openHomepageEditorFromStudio}
                 className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm"
               >
                 <FileText className="w-4 h-4" />
-                <span>Open Homepage Editor</span>
+                <span>Homepage editor</span>
               </button>
               <button
+                type="button"
                 onClick={() => window.open('https://search.google.com/search-console', '_blank', 'noopener,noreferrer')}
                 className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm"
               >
                 <ExternalLink className="w-4 h-4" />
-                <span>Open Search Console</span>
+                <span>Search Console</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* SEO Daily Sub-tab Content */}
+        {/* Keyword tracking */}
         <div className={activeSubTab === 'keyword_tracking' ? 'space-y-3' : 'hidden'}>
           <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
             <div className="flex items-start justify-between gap-3 mb-3">

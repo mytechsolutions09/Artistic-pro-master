@@ -1,11 +1,26 @@
 'use client'
 
-// SSR-safe localStorage wrapper
-const _storage = typeof window !== 'undefined' ? window.localStorage : {
-  getItem: (_k: string) => null,
-  setItem: (_k: string, _v: string) => {},
-  removeItem: (_k: string) => {},
-};
+// SSR-safe localStorage wrapper (never use window._storage — that property does not exist)
+function getStorage(): Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> {
+  if (typeof window === 'undefined') {
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
+  }
+  try {
+    const ls = window.localStorage;
+    if (ls && typeof ls.getItem === 'function') return ls;
+  } catch {
+    // private mode / sandbox / blocked storage
+  }
+  return {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  };
+}
 
 export type NavigationSection = 'clothes' | 'fb';
 
@@ -73,7 +88,7 @@ const readSettings = (): NavigationVisibilitySettings => {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS;
 
   try {
-    const raw = window._storage.getItem(STORAGE_KEY);
+    const raw = getStorage().getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
 
     const parsed = JSON.parse(raw);
@@ -90,7 +105,7 @@ const readSettings = (): NavigationVisibilitySettings => {
 const persistSettings = (settings: NavigationVisibilitySettings) => {
   if (typeof window === 'undefined') return;
 
-  window._storage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  getStorage().setItem(STORAGE_KEY, JSON.stringify(settings));
   window.dispatchEvent(new Event(UPDATE_EVENT));
 };
 

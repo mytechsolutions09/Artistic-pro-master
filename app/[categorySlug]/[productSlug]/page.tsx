@@ -30,7 +30,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${product.title} | Lurevi`,
     description,
-    alternates: { canonical: `https://lurevi.in/${categorySlug}/${productSlug}` },
+    alternates: {
+      canonical: `https://lurevi.in/${categorySlug}/${productSlug}`,
+      languages: {
+        'en-IN': `https://lurevi.in/${categorySlug}/${productSlug}`,
+        'x-default': `https://lurevi.in/${categorySlug}/${productSlug}`,
+      },
+    },
     openGraph: {
       type: 'og:product' as 'website',
       title: `${product.title} | Lurevi`,
@@ -65,6 +71,47 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
+      {product && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'Product',
+                  '@id': `https://lurevi.in/${categorySlug}/${productSlug}/#product`,
+                  name: product.title,
+                  description: product.description?.replace(/<[^>]*>/g, '') ?? undefined,
+                  image: Array.isArray(product.images) ? product.images : product.images ? [product.images] : [],
+                  brand: { '@type': 'Brand', name: 'Lurevi' },
+                  offers: {
+                    '@type': 'Offer',
+                    url: `https://lurevi.in/${categorySlug}/${productSlug}`,
+                    priceCurrency: 'INR',
+                    price: product.price,
+                    availability: 'https://schema.org/InStock',
+                    seller: { '@id': 'https://lurevi.in/#organization' },
+                  },
+                },
+                {
+                  '@type': 'BreadcrumbList',
+                  itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://lurevi.in' },
+                    {
+                      '@type': 'ListItem',
+                      position: 2,
+                      name: categorySlug.replace(/-/g, ' '),
+                      item: `https://lurevi.in/${categorySlug}`,
+                    },
+                    { '@type': 'ListItem', position: 3, name: product.title, item: `https://lurevi.in/${categorySlug}/${productSlug}` },
+                  ],
+                },
+              ],
+            }),
+          }}
+        />
+      )}
       {/* Server-rendered product content for Google */}
       {product && (
         <noscript>

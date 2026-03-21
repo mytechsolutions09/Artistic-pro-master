@@ -1,5 +1,5 @@
 -- Run this after blog_posts_schema.sql
--- Seeds 10 SEO-focused blog posts for target keywords.
+-- Seeds 10 SEO-focused blog posts for target keywords (includes cover_image URLs).
 
 insert into public.blog_posts (
   title,
@@ -10,7 +10,8 @@ insert into public.blog_posts (
   tags,
   seo_title,
   seo_description,
-  published_at
+  published_at,
+  cover_image
 )
 values
 (
@@ -28,7 +29,8 @@ If you are exploring collections, compare options on /categories and shortlist p
   array['luxury wall art India','premium wall decor for home','modern wall art'],
   'Luxury Wall Art India: Premium Picks for Modern Homes | Lurevi',
   'Discover how to choose luxury wall art in India. Learn sizing, style matching, and premium print tips for elegant modern interiors.',
-  now() - interval '10 day'
+  now() - interval '10 day',
+  'https://images.unsplash.com/photo-1549887534-1541e9326642?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'Buy Digital Art Prints Online: A Smart Buyer Checklist',
@@ -45,7 +47,8 @@ For a curated path, browse /categories first and complete selection on /shop.',
   array['buy digital art prints online','digital art prints','shop wall art'],
   'Buy Digital Art Prints Online: Complete Quality Checklist | Lurevi',
   'Planning to buy digital art prints online? Follow this quality checklist to choose the right style, resolution, and room fit.',
-  now() - interval '9 day'
+  now() - interval '9 day',
+  'https://images.unsplash.com/photo-1567016432779-094069958ea5?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'Premium Wall Decor for Home: Styling Framework by Room',
@@ -62,7 +65,8 @@ Explore ideas in /categories and then shortlist purchasable options in /shop.',
   array['premium wall decor for home','luxury interiors','wall decor ideas'],
   'Premium Wall Decor for Home: Room-Wise Styling Guide | Lurevi',
   'Design a premium look with this room-by-room wall decor framework. Choose refined artwork that fits modern home aesthetics.',
-  now() - interval '8 day'
+  now() - interval '8 day',
+  'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'How to Decorate with Wall Prints: Beginner-Friendly Step-by-Step Guide',
@@ -76,12 +80,15 @@ Step 3: Select one hero print.
 Step 4: Add supporting prints only if needed.
 Step 5: Maintain spacing consistency.
 
-Common mistakes include choosing prints that are too small, mixing unrelated color families, and hanging pieces too high. Keep center alignment close to eye level.',
+Common mistakes include choosing prints that are too small, mixing unrelated color families, and hanging pieces too high. Keep center alignment close to eye level.
+
+For quick curation, discover themes on /categories and compare final options on /shop.',
   'published',
   array['how to decorate with wall prints','wall print guide','home decor tips'],
   'How to Decorate with Wall Prints: Step-by-Step Guide | Lurevi',
   'Learn how to decorate with wall prints using a practical 5-step method. Avoid common layout mistakes and style your home confidently.',
-  now() - interval '7 day'
+  now() - interval '7 day',
+  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'Indian Contemporary Art Online: What to Look for Before You Buy',
@@ -91,12 +98,15 @@ Common mistakes include choosing prints that are too small, mixing unrelated col
 
 Evaluate each artwork on three points: visual character, print quality, and contextual fit. The strongest selections feel modern while still emotionally warm in Indian home environments.
 
-Look for clean product metadata, clear previews, and practical details about print quality. This is especially important when buying for primary spaces such as living rooms and studios.',
+Look for clean product metadata, clear previews, and practical details about print quality. This is especially important when buying for primary spaces such as living rooms and studios.
+
+Use /categories for discovery and /shop for purchase decisions. Keep a shortlist and compare side by side before final checkout.',
   'published',
   array['Indian contemporary art online','contemporary art India','modern Indian interiors'],
   'Indian Contemporary Art Online: Smart Buying Guide | Lurevi',
   'Explore Indian contemporary art online with confidence. Learn what to evaluate before buying for modern Indian homes.',
-  now() - interval '6 day'
+  now() - interval '6 day',
+  'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'Modern Art Prints for Living Room: Layout and Color Strategy',
@@ -113,7 +123,8 @@ Need options quickly? Browse /categories for modern styles and finalize ready-to
   array['modern art prints for living room','living room wall art','modern wall prints'],
   'Modern Art Prints for Living Room: Complete Styling Guide | Lurevi',
   'Choose modern art prints for living room spaces using proven layout and color rules. Improve balance, style, and visual depth.',
-  now() - interval '5 day'
+  now() - interval '5 day',
+  'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'Digital Art Download High Resolution: Why Quality Specs Matter',
@@ -123,12 +134,15 @@ Need options quickly? Browse /categories for modern styles and finalize ready-to
 
 Before purchase, check available dimensions and print ratio compatibility. A mismatch between file ratio and frame size can lead to cropping issues.
 
-For home decor use, always prioritize clarity at your target print size. Lower-quality files may look fine on screen but lose fidelity in physical output.',
+For home decor use, always prioritize clarity at your target print size. Lower-quality files may look fine on screen but lose fidelity in physical output.
+
+Browse /shop for ready options and compare quality details before selecting. You can also use /categories to find styles suited for larger print displays.',
   'published',
   array['digital art download high resolution','high resolution art prints','digital print quality'],
   'Digital Art Download High Resolution: Print Quality Guide | Lurevi',
   'Learn how to evaluate high-resolution digital art downloads for sharp, premium print results across different frame sizes.',
-  now() - interval '4 day'
+  now() - interval '4 day',
+  'https://images.unsplash.com/photo-1618005182384-ae9021a400a0?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'Art Prints Gift India: Elegant Gift Ideas That Feel Personal',
@@ -143,7 +157,8 @@ Presentation matters. Frame-ready prints with clean typography and premium mater
   array['art prints gift India','home decor gifts','gift wall art'],
   'Art Prints Gift India: Premium Gift Ideas for Every Occasion | Lurevi',
   'Discover premium art prints gift ideas in India for weddings, housewarmings, and personal milestones with elegant style fit.',
-  now() - interval '3 day'
+  now() - interval '3 day',
+  'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'Framed Art Prints for Bedroom India: Soft Luxury Styling Tips',
@@ -158,7 +173,8 @@ Avoid over-saturation in bedroom visuals. Softer tones and moderate contrast cre
   array['framed art prints for bedroom India','bedroom wall art','framed decor India'],
   'Framed Art Prints for Bedroom India: Luxury Styling Guide | Lurevi',
   'Find the best framed art prints for bedroom spaces in India. Learn placement, palette, and frame choices for a calm luxury look.',
-  now() - interval '2 day'
+  now() - interval '2 day',
+  'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&q=80&auto=format&fit=crop'
 ),
 (
   'Unique Home Decor Gifts Online: Curated Picks That Stand Out',
@@ -173,7 +189,8 @@ Look for stores with clear product context and quality details. Ambiguity reduce
   array['unique home decor gifts online','decor gift ideas','premium home gifts'],
   'Unique Home Decor Gifts Online: Curated Premium Ideas | Lurevi',
   'Shop unique home decor gifts online with curated premium picks that suit modern homes and thoughtful gifting occasions.',
-  now() - interval '1 day'
+  now() - interval '1 day',
+  'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=80&auto=format&fit=crop'
 )
 on conflict (slug)
 do update set
@@ -185,5 +202,5 @@ do update set
   seo_title = excluded.seo_title,
   seo_description = excluded.seo_description,
   published_at = excluded.published_at,
+  cover_image = excluded.cover_image,
   updated_at = now();
-
