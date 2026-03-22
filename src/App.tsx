@@ -56,7 +56,7 @@ import Tasks from './pages/admin/Tasks';
 import Activities from './pages/admin/Activities';
 import Settings from './pages/admin/Settings';
 import Marketing from './pages/admin/Marketing';
-import SocialPosting from './pages/admin/SocialPosting';
+import SocialPosting from './page-components/admin/SocialPosting';
 import HomepageManagement from './pages/admin/HomepageManagement';
 import Reviews from './pages/admin/Reviews';
 import DatabaseManagement from './pages/admin/Database';
