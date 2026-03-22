@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import TasksSecondaryNav from '../../components/admin/TasksSecondaryNav';
 import { NotificationManager } from '../../components/Notification';
 import { TaskService, type TaskData } from '../../services/supabaseService';
 import {
@@ -374,6 +375,7 @@ const Tasks: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [tasksViewTab, setTasksViewTab] = useState<'board' | 'list'>('board');
 
   const loadTasks = useCallback(async (opts?: { soft?: boolean }) => {
     if (opts?.soft) setRefreshing(true);
@@ -423,6 +425,41 @@ const Tasks: React.FC = () => {
     ).slice(0, 6);
     return { total, shown, avatars };
   }, [taskList.length, filteredTasks]);
+
+  const filtersActive =
+    showFilters ||
+    statusFilter !== 'all' ||
+    priorityFilter !== 'all' ||
+    assigneeFilter !== 'all';
+
+  const handleTasksNav = (tabId: string) => {
+    if (tabId === 'board') {
+      setTasksViewTab('board');
+    } else if (tabId === 'list') {
+      setTasksViewTab('list');
+    } else if (tabId === 'new') {
+      setShowCreateModal(true);
+    } else if (tabId === 'refresh') {
+      void loadTasks({ soft: true });
+    } else if (tabId === 'filters') {
+      setShowFilters((open) => !open);
+    }
+  };
+
+  const statusLabel = (s: BoardStatus) => {
+    switch (s) {
+      case 'todo':
+        return 'To do';
+      case 'inprogress':
+        return 'In progress';
+      case 'review':
+        return 'In review';
+      case 'done':
+        return 'Done';
+      default:
+        return s;
+    }
+  };
 
   const createTask = async (newTask: Record<string, unknown>) => {
     setSaving(true);
@@ -599,9 +636,26 @@ const Tasks: React.FC = () => {
     year: 'numeric'
   });
 
+  const scrollToTaskColumn = (elementId: string) => {
+    document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const columnNav = [
+    { id: 'task-col-todo', status: 'todo' as const, label: 'To do', dot: 'bg-blue-500' },
+    { id: 'task-col-inprogress', status: 'inprogress' as const, label: 'In progress', dot: 'bg-orange-500' },
+    { id: 'task-col-review', status: 'review' as const, label: 'In review', dot: 'bg-violet-500' },
+    { id: 'task-col-done', status: 'done' as const, label: 'Done', dot: 'bg-green-500' },
+  ];
+
   return (
     <AdminLayout title="Tasks" noHeader>
-      <div className="min-h-0 space-y-4 px-4 py-5 sm:px-6">
+      <TasksSecondaryNav
+        activeTab={tasksViewTab}
+        onTabChange={handleTasksNav}
+        filtersActive={filtersActive}
+        taskCount={subbarSummary.total}
+      />
+      <div className="ml-24 min-h-0 space-y-4 px-4 py-5 sm:px-6">
         <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm sm:p-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
@@ -725,18 +779,22 @@ const Tasks: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50/90 px-3 py-2 shadow-sm">
-          <div className="flex items-center gap-1.5 text-xs text-gray-700">
-            <CheckSquare className="h-4 w-4 shrink-0 text-gray-500" aria-hidden />
-            <span className="font-semibold text-gray-900">Board</span>
-            <span className="text-gray-400">·</span>
-            <span className="text-gray-500">Kanban</span>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+        {tasksViewTab === 'board' ? (
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          <aside className="rounded-lg border border-gray-200 bg-gray-50/90 p-3 shadow-sm lg:sticky lg:top-4 lg:w-52 lg:shrink-0 lg:self-start">
+            <div className="mb-3 flex items-start gap-2 border-b border-gray-200/80 pb-3">
+              <div className="rounded-md border border-gray-200 bg-white p-1.5 shadow-sm">
+                <CheckSquare className="h-4 w-4 text-gray-600" aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-900">Board</p>
+              </div>
+            </div>
+
             {loading && taskList.length === 0 ? (
-              <span className="text-[11px] text-gray-500">Loading…</span>
+              <p className="mb-3 text-[11px] text-gray-500">Loading…</p>
             ) : (
-              <p className="text-[11px] tabular-nums text-gray-500">
+              <p className="mb-3 text-[11px] tabular-nums leading-snug text-gray-600">
                 {subbarSummary.shown === subbarSummary.total ? (
                   <>
                     {subbarSummary.total} task{subbarSummary.total === 1 ? '' : 's'}
@@ -748,9 +806,13 @@ const Tasks: React.FC = () => {
                 )}
               </p>
             )}
-            {!loading || taskList.length > 0 ? (
-              subbarSummary.avatars.length > 0 ? (
-                <div className="flex min-h-[1.5rem] items-center -space-x-1.5" aria-label="Assignees on this board">
+
+            {subbarSummary.avatars.length > 0 ? (
+              <div
+                className="mb-3 flex min-h-[1.5rem] flex-wrap items-center gap-1 border-b border-gray-200/80 pb-3"
+                aria-label="Assignees on this board"
+              >
+                <div className="flex -space-x-1.5">
                   {subbarSummary.avatars.map((avatar, index) => (
                     <div
                       key={`${avatar}-${index}`}
@@ -761,20 +823,45 @@ const Tasks: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              ) : null
+              </div>
             ) : null}
-          </div>
-        </div>
 
+            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-gray-400">Columns</p>
+            <nav className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-1" aria-label="Jump to column">
+              {columnNav.map((col) => {
+                const n = getColumnTasks(col.status).length;
+                return (
+                  <button
+                    key={col.id}
+                    type="button"
+                    onClick={() => scrollToTaskColumn(col.id)}
+                    disabled={loading && taskList.length === 0}
+                    className="inline-flex min-w-0 w-full items-center justify-between gap-2 rounded-md border border-transparent bg-white/80 px-2 py-1.5 text-left text-[11px] font-medium text-gray-800 shadow-sm hover:border-gray-200 hover:bg-white disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${col.dot}`} aria-hidden />
+                      <span className="truncate">{col.label}</span>
+                    </span>
+                    <span className="shrink-0 tabular-nums text-gray-500">{n}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+
+          <div className="min-w-0 flex-1">
         {loading && taskList.length === 0 ? (
           <div className="flex min-h-[12rem] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 bg-gray-50/80 py-12">
             <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
             <p className="text-xs text-gray-500">Loading tasks…</p>
           </div>
         ) : (
-        <div className={`relative grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4 ${refreshing ? 'opacity-60' : ''}`}>
+        <div
+          id="task-board"
+          className={`relative grid grid-cols-1 gap-3 scroll-mt-4 md:grid-cols-2 lg:grid-cols-4 ${refreshing ? 'opacity-60' : ''}`}
+        >
           {/* To do Column */}
-          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+          <div id="task-col-todo" className="scroll-mt-4 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
@@ -857,7 +944,7 @@ const Tasks: React.FC = () => {
           </div>
 
           {/* In Progress Column */}
-          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+          <div id="task-col-inprogress" className="scroll-mt-4 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />
@@ -954,7 +1041,7 @@ const Tasks: React.FC = () => {
           </div>
 
           {/* In Review Column */}
-          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+          <div id="task-col-review" className="scroll-mt-4 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="h-2 w-2 shrink-0 rounded-full bg-violet-500" />
@@ -1051,7 +1138,7 @@ const Tasks: React.FC = () => {
           </div>
 
           {/* Done Column */}
-          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+          <div id="task-col-done" className="scroll-mt-4 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="h-2 w-2 shrink-0 rounded-full bg-green-500" />
@@ -1133,6 +1220,69 @@ const Tasks: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
+          </div>
+        </div>
+        ) : loading && taskList.length === 0 ? (
+          <div className="flex min-h-[12rem] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 bg-gray-50/80 py-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+            <p className="text-xs text-gray-500">Loading tasks…</p>
+          </div>
+        ) : (
+          <div
+            className={`overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm ${refreshing ? 'opacity-60' : ''}`}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] border-collapse text-left text-[11px] text-gray-800">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    <th className="px-3 py-2.5">Task</th>
+                    <th className="px-3 py-2.5">Status</th>
+                    <th className="px-3 py-2.5">Priority</th>
+                    <th className="px-3 py-2.5">Assignee</th>
+                    <th className="px-3 py-2.5">Due</th>
+                    <th className="px-3 py-2.5">Progress</th>
+                    <th className="w-10 px-3 py-2.5 text-right"> </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTasks.map((task) => (
+                    <tr key={task.id} className="border-b border-gray-100 transition-colors hover:bg-gray-50/90">
+                      <td className="max-w-[14rem] px-3 py-2">
+                        <span className={`font-medium text-gray-900 ${task.status === 'done' ? 'line-through opacity-70' : ''}`}>
+                          {task.title}
+                        </span>
+                        {task.description ? (
+                          <p className="mt-0.5 line-clamp-1 text-[10px] text-gray-500">{task.description}</p>
+                        ) : null}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 text-gray-600">{statusLabel(task.status)}</td>
+                      <td className="whitespace-nowrap px-3 py-2 capitalize text-gray-600">{task.priority}</td>
+                      <td className="whitespace-nowrap px-3 py-2 text-gray-600">{task.assignee || '—'}</td>
+                      <td className="whitespace-nowrap px-3 py-2 tabular-nums text-gray-600">
+                        {task.dueDate || '—'}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 tabular-nums text-gray-600">{task.progress}%</td>
+                      <td className="px-3 py-2 text-right">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(task)}
+                          className="inline-flex rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
+                          title="Edit task"
+                          aria-label="Edit task"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filteredTasks.length === 0 ? (
+              <p className="px-4 py-10 text-center text-xs text-gray-500">No tasks match your filters.</p>
+            ) : null}
+          </div>
         )}
 
         {/* Create Task Modal */}

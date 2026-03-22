@@ -1,7 +1,28 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Save, Eye, Plus, Trash2, Settings, Layout, Image, Star, Palette, TrendingUp, Mail, Grid, BarChart3, Upload, Check, X, LayoutGrid, Megaphone } from 'lucide-react';
+import {
+  Save,
+  Eye,
+  Plus,
+  Trash2,
+  Settings,
+  Layout,
+  Image,
+  Star,
+  Palette,
+  TrendingUp,
+  Mail,
+  Grid,
+  BarChart3,
+  Upload,
+  Check,
+  X,
+  LayoutGrid,
+  Megaphone,
+  ChevronDown,
+} from 'lucide-react';
+import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { HeroSectionConfig, ImageSliderConfig, FeaturedGridConfig, BestSellersConfig, FeaturedArtworkConfig, CategoriesConfig, TrendingCollectionsConfig, StatsConfig, NewsletterConfig } from '../../types';
 import { ProductService, CategoryService } from '../../services/supabaseService';
@@ -9,13 +30,36 @@ import { HomepageSettingsService } from '../../services/homepageSettingsService'
 import { ImageUploadService } from '../../services/imageUploadService';
 // import categoryService from '../../services/categoryService';
 
+/** Native select with hidden system arrow + lucide chevron (bento W/H pickers) */
+const BentoSpanSelect: React.FC<{
+  value: number;
+  onChange: (n: number) => void;
+}> = ({ value, onChange }) => (
+  <div className="relative inline-flex shrink-0">
+    <select
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="h-7 w-[2.875rem] cursor-pointer appearance-none rounded-md border border-gray-200 bg-white bg-none py-0 pl-2 pr-7 text-center text-xs font-semibold tabular-nums text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+    >
+      <option value={1}>1</option>
+      <option value={2}>2</option>
+      <option value={3}>3</option>
+    </select>
+    <ChevronDown
+      className="pointer-events-none absolute right-1 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500"
+      strokeWidth={2.25}
+      aria-hidden
+    />
+  </div>
+);
 
 const HomepageManagement: React.FC = () => {
   const [selectedSection, setSelectedSection] = useState<string>('hero');
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
-  
+  const { navRef, onNavScroll } = usePreserveNavScroll([selectedSection]);
+
   // Real data state
   const [realProducts, setRealProducts] = useState<any[]>([]);
   const [realCategories, setRealCategories] = useState<any[]>([]);
@@ -367,28 +411,28 @@ const HomepageManagement: React.FC = () => {
         icon: 'Palette', 
         value: realStats ? `${realStats.totalProducts || 0}` : '0', 
         label: 'Artworks', 
-        color: 'bg-pink-100' 
+        color: 'bg-gray-100' 
       },
       { 
         id: '2', 
         icon: 'Users', 
         value: realStats ? `${realStats.totalArtists || 0}` : '0', 
         label: 'Artists', 
-        color: 'bg-pink-100' 
+        color: 'bg-gray-100' 
       },
       { 
         id: '3', 
         icon: 'TrendingUp', 
         value: realStats ? `${realStats.totalDownloads || 0}` : '0', 
         label: 'Downloads', 
-        color: 'bg-pink-100' 
+        color: 'bg-gray-100' 
       },
       { 
         id: '4', 
         icon: 'Award', 
         value: realStats ? `${(realStats.averageRating || 0).toFixed(1)}` : '0.0', 
         label: 'Avg Rating', 
-        color: 'bg-pink-100' 
+        color: 'bg-gray-100' 
       }
     ]
   });
@@ -481,19 +525,20 @@ const HomepageManagement: React.FC = () => {
   };
 
   const getSectionIcon = (type: string) => {
+    const ic = 'h-3.5 w-3.5';
     switch (type) {
-      case 'promoBar': return <Megaphone className="w-5 h-5" />;
-      case 'bentoHero': return <LayoutGrid className="w-5 h-5" />;
-      case 'hero': return <Layout className="w-5 h-5" />;
-      case 'imageSlider': return <Image className="w-5 h-5" />;
-      case 'featuredGrid': return <Grid className="w-5 h-5" />;
-      case 'bestSellers': return <Star className="w-5 h-5" />;
-      case 'featuredArtwork': return <Palette className="w-5 h-5" />;
-      case 'categories': return <Grid className="w-5 h-5" />;
-      case 'trendingCollections': return <TrendingUp className="w-5 h-5" />;
-      case 'stats': return <BarChart3 className="w-5 h-5" />;
-      case 'newsletter': return <Mail className="w-5 h-5" />;
-      default: return <Settings className="w-5 h-5" />;
+      case 'promoBar': return <Megaphone className={ic} />;
+      case 'bentoHero': return <LayoutGrid className={ic} />;
+      case 'hero': return <Layout className={ic} />;
+      case 'imageSlider': return <Image className={ic} />;
+      case 'featuredGrid': return <Grid className={ic} />;
+      case 'bestSellers': return <Star className={ic} />;
+      case 'featuredArtwork': return <Palette className={ic} />;
+      case 'categories': return <Grid className={ic} />;
+      case 'trendingCollections': return <TrendingUp className={ic} />;
+      case 'stats': return <BarChart3 className={ic} />;
+      case 'newsletter': return <Mail className={ic} />;
+      default: return <Settings className={ic} />;
     }
   };
 
@@ -568,15 +613,15 @@ const HomepageManagement: React.FC = () => {
     switch (selectedSection) {
       case 'promoBar':
         return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-800 text-lg border-b border-gray-200 pb-3 mb-5">Promotional Bar</h4>
-              <p className="text-sm text-gray-500 mb-6">A thin announcement strip shown at the very top of the homepage. Use it for sales, free shipping, discount codes, or any announcement.</p>
+          <div className="space-y-3">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Promotional bar</h4>
+              <p className="mb-3 text-[11px] text-gray-500">Top-of-page strip for sales, shipping, or codes.</p>
 
               {/* Live preview */}
               {promoBar.text && (
                 <div
-                  className="rounded-xl flex items-center justify-center px-8 py-3 text-sm font-medium mb-6 relative"
+                  className="relative mb-3 flex items-center justify-center rounded-md px-4 py-2 text-xs font-medium"
                   style={{ backgroundColor: promoBar.bgColor, color: promoBar.textColor }}
                 >
                   <span>{promoBar.text}</span>
@@ -589,7 +634,7 @@ const HomepageManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {/* Enabled toggle */}
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
@@ -599,7 +644,7 @@ const HomepageManagement: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setPromoBar((p: any) => ({ ...p, enabled: !p.enabled }))}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${promoBar.enabled ? 'bg-pink-500' : 'bg-gray-300'}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${promoBar.enabled ? 'bg-gray-900' : 'bg-gray-300'}`}
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${promoBar.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
@@ -612,7 +657,7 @@ const HomepageManagement: React.FC = () => {
                     type="text"
                     value={promoBar.text}
                     onChange={(e) => setPromoBar((p: any) => ({ ...p, text: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 text-sm"
                     placeholder="🎨 Free shipping on orders above ₹999"
                   />
                 </div>
@@ -625,7 +670,7 @@ const HomepageManagement: React.FC = () => {
                       type="text"
                       value={promoBar.linkText}
                       onChange={(e) => setPromoBar((p: any) => ({ ...p, linkText: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 text-sm"
                       placeholder="Shop Now"
                     />
                   </div>
@@ -635,7 +680,7 @@ const HomepageManagement: React.FC = () => {
                       type="text"
                       value={promoBar.link}
                       onChange={(e) => setPromoBar((p: any) => ({ ...p, link: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 text-sm"
                       placeholder="/browse"
                     />
                   </div>
@@ -656,7 +701,7 @@ const HomepageManagement: React.FC = () => {
                         type="text"
                         value={promoBar.bgColor}
                         onChange={(e) => setPromoBar((p: any) => ({ ...p, bgColor: e.target.value }))}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-mono"
+                        className="flex-1 rounded-md border border-gray-200 px-2 py-1.5 font-mono text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                         placeholder="#111827"
                       />
                     </div>
@@ -674,7 +719,7 @@ const HomepageManagement: React.FC = () => {
                         type="text"
                         value={promoBar.textColor}
                         onChange={(e) => setPromoBar((p: any) => ({ ...p, textColor: e.target.value }))}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-mono"
+                        className="flex-1 rounded-md border border-gray-200 px-2 py-1.5 font-mono text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                         placeholder="#ffffff"
                       />
                     </div>
@@ -690,7 +735,7 @@ const HomepageManagement: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setPromoBar((p: any) => ({ ...p, dismissible: !p.dismissible }))}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${promoBar.dismissible ? 'bg-pink-500' : 'bg-gray-300'}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${promoBar.dismissible ? 'bg-gray-900' : 'bg-gray-300'}`}
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${promoBar.dismissible ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
@@ -701,15 +746,15 @@ const HomepageManagement: React.FC = () => {
         );
       case 'bentoHero':
         return (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-800 text-lg border-b border-gray-200 pb-3 mb-2">Bento Hero Cards</h4>
+          <div className="space-y-3">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Bento hero cards</h4>
               <p className="text-sm text-gray-500 mb-6">
                 Configure the bento hero cards. First 6 cards use the featured bento layout, extra cards appear below in a responsive grid.
               </p>
 
               {/* Layout Preview */}
-              <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+              <div className="mb-3 rounded-md border border-dashed border-gray-300 bg-gray-50/80 p-2.5">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Desktop Layout Preview</p>
                 <div className="grid grid-cols-3 gap-1.5 text-xs text-center font-medium text-white auto-rows-[50px] grid-flow-row-dense">
                   {bentoHero.cards.map((card, idx) => {
@@ -740,25 +785,15 @@ const HomepageManagement: React.FC = () => {
                       <div key={`size-${card.id || idx}`} className="flex items-center gap-2 text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-gray-50">
                         <span className="font-semibold text-gray-700 w-12 flex-shrink-0">Card {idx + 1}</span>
                         <label className="text-gray-500">W</label>
-                        <select
+                        <BentoSpanSelect
                           value={Number(card.desktopColSpan || 1)}
-                          onChange={(e) => updateBentoCardSpan(idx, 'desktopColSpan', Number(e.target.value))}
-                          className="px-1.5 py-1 border border-gray-200 rounded text-xs"
-                        >
-                          <option value={1}>1</option>
-                          <option value={2}>2</option>
-                          <option value={3}>3</option>
-                        </select>
+                          onChange={(n) => updateBentoCardSpan(idx, 'desktopColSpan', n)}
+                        />
                         <label className="text-gray-500">H</label>
-                        <select
+                        <BentoSpanSelect
                           value={Number(card.desktopRowSpan || 1)}
-                          onChange={(e) => updateBentoCardSpan(idx, 'desktopRowSpan', Number(e.target.value))}
-                          className="px-1.5 py-1 border border-gray-200 rounded text-xs"
-                        >
-                          <option value={1}>1</option>
-                          <option value={2}>2</option>
-                          <option value={3}>3</option>
-                        </select>
+                          onChange={(n) => updateBentoCardSpan(idx, 'desktopRowSpan', n)}
+                        />
                       </div>
                     ))}
                   </div>
@@ -770,19 +805,19 @@ const HomepageManagement: React.FC = () => {
                 <button
                   type="button"
                   onClick={addBentoCard}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition-colors"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-gray-900 px-3 text-xs font-medium text-white transition-colors hover:bg-gray-800"
                 >
                   <Plus className="w-4 h-4" />
                   Add Card
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {bentoHero.cards.map((card, idx) => (
-                  <div key={card.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <div key={card.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {idx + 1}
                         </div>
                         <h5 className="font-semibold text-gray-700 text-sm">
@@ -822,7 +857,7 @@ const HomepageManagement: React.FC = () => {
                           type="text"
                           value={card.title}
                           onChange={(e) => updateBentoCard(idx, 'title', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                          className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 text-sm"
                           placeholder="e.g. Paintings"
                         />
                       </div>
@@ -832,7 +867,7 @@ const HomepageManagement: React.FC = () => {
                           type="text"
                           value={card.subtitle || ''}
                           onChange={(e) => updateBentoCard(idx, 'subtitle', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                          className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 text-sm"
                           placeholder="e.g. Explore Collection"
                         />
                       </div>
@@ -842,14 +877,14 @@ const HomepageManagement: React.FC = () => {
                         <div className="mb-2">
                           <label
                             htmlFor={`bento-upload-${idx}`}
-                            className={`flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg border-2 border-dashed cursor-pointer text-sm font-medium transition-colors
+                            className={`flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border-2 border-dashed px-2 py-1.5 text-[11px] font-medium transition-colors
                               ${bentoCardUploadState[idx] === 'uploading'
-                                ? 'border-pink-300 bg-pink-50 text-pink-500 cursor-not-allowed'
+                                ? 'border-gray-300 bg-gray-50 text-gray-700 cursor-not-allowed'
                                 : bentoCardUploadState[idx] === 'done'
                                 ? 'border-green-300 bg-green-50 text-green-600'
                                 : bentoCardUploadState[idx] === 'error'
                                 ? 'border-red-300 bg-red-50 text-red-600'
-                                : 'border-gray-300 bg-white text-gray-600 hover:border-pink-400 hover:bg-pink-50 hover:text-pink-600'}`}
+                                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}
                           >
                             {bentoCardUploadState[idx] === 'uploading' && (
                               <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>Uploading…</>
@@ -889,7 +924,7 @@ const HomepageManagement: React.FC = () => {
                           type="text"
                           value={card.image || ''}
                           onChange={(e) => updateBentoCard(idx, 'image', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-mono"
+                          className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 text-sm font-mono"
                           placeholder="https://..."
                         />
                       </div>
@@ -899,7 +934,7 @@ const HomepageManagement: React.FC = () => {
                           type="text"
                           value={card.link}
                           onChange={(e) => updateBentoCard(idx, 'link', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                          className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 text-sm"
                           placeholder="/categories/paintings"
                         />
                       </div>
@@ -916,7 +951,7 @@ const HomepageManagement: React.FC = () => {
                             type="text"
                             value={card.bgColor || '#f5f5f5'}
                             onChange={(e) => updateBentoCard(idx, 'bgColor', e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-mono"
+                            className="flex-1 rounded-md border border-gray-200 px-2 py-1.5 font-mono text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="#f5f5f5"
                           />
                         </div>
@@ -932,13 +967,13 @@ const HomepageManagement: React.FC = () => {
   return (
           <div className="space-y-8">
                         {/* Editor Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               {/* Main Card Editor */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Main Card</h4>
-          <div className="space-y-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Main Card</h4>
+          <div className="space-y-2">
             <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Title</label>
               <input
                 type="text"
                     value={heroSection.mainCard.title}
@@ -946,12 +981,12 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       mainCard: { ...heroSection.mainCard, title: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter main title"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+              <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
               <textarea
                     value={heroSection.mainCard.subtitle}
                     onChange={(e) => setHeroSection({
@@ -959,12 +994,12 @@ const HomepageManagement: React.FC = () => {
                       mainCard: { ...heroSection.mainCard, subtitle: e.target.value }
                     })}
                 rows={3}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter subtitle"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+              <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Text</label>
               <input
                 type="text"
                     value={heroSection.mainCard.buttonText}
@@ -972,12 +1007,12 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       mainCard: { ...heroSection.mainCard, buttonText: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter button text"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Button Link</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Link</label>
                   <input
                     type="text"
                     value={heroSection.mainCard.buttonLink}
@@ -985,12 +1020,12 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       mainCard: { ...heroSection.mainCard, buttonLink: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter button link"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Gradient</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Gradient</label>
                   <div className="grid grid-cols-2 gap-2">
                     <select
                       value={heroSection.mainCard.gradientColors?.[0] || 'from-orange-200'}
@@ -1001,7 +1036,7 @@ const HomepageManagement: React.FC = () => {
                           gradientColors: [e.target.value, heroSection.mainCard.gradientColors?.[1] || 'to-orange-300']
                         }
                       })}
-                      className="px-2 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                      className="h-8 rounded-md border border-gray-200 px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     >
                       <option value="from-orange-200">Orange</option>
                       <option value="from-pink-200">Pink</option>
@@ -1018,7 +1053,7 @@ const HomepageManagement: React.FC = () => {
                           gradientColors: [heroSection.mainCard.gradientColors?.[0] || 'from-orange-200', e.target.value]
                         }
                       })}
-                      className="px-2 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"
+                      className="h-8 rounded-md border border-gray-200 px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     >
                       <option value="to-orange-300">Orange</option>
                       <option value="to-pink-300">Pink</option>
@@ -1032,11 +1067,11 @@ const HomepageManagement: React.FC = () => {
               </div>
 
               {/* Featured Card Editor */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Featured Card</h4>
-                <div className="space-y-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Featured Card</h4>
+                <div className="space-y-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Title</label>
                   <input
                     type="text"
                     value={heroSection.featuredCard.title}
@@ -1044,12 +1079,12 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       featuredCard: { ...heroSection.featuredCard, title: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter featured title"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
                   <input
                     type="text"
                     value={heroSection.featuredCard.subtitle}
@@ -1057,12 +1092,12 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       featuredCard: { ...heroSection.featuredCard, subtitle: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter featured subtitle"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Image</label>
                   <div className="space-y-3">
                     {/* URL Input */}
                     <input
@@ -1072,7 +1107,7 @@ const HomepageManagement: React.FC = () => {
                         ...heroSection,
                         featuredCard: { ...heroSection.featuredCard, image: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter image URL"
                     />
                     
@@ -1094,13 +1129,13 @@ const HomepageManagement: React.FC = () => {
                       />
                       <label
                         htmlFor="featured-image-upload"
-                        className={`w-full flex items-center justify-center px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-pink-400 transition-colors ${
-                          uploadingImage === 'featured' ? 'bg-pink-50' : 'hover:bg-gray-50'
+                        className={`flex w-full cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-gray-300 px-2 py-1.5 text-[11px] transition-colors hover:border-gray-400 ${
+                          uploadingImage === 'featured' ? 'bg-gray-50' : 'hover:bg-gray-50'
                         }`}
                       >
                         <Upload className="w-4 h-4 mr-2 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          {uploadingImage === 'featured' ? 'Uploading...' : 'Upload Image'}
+                        <span className="text-[11px] text-gray-600">
+                          {uploadingImage === 'featured' ? 'Uploading...' : 'Upload image'}
                         </span>
                       </label>
                     </div>
@@ -1118,7 +1153,7 @@ const HomepageManagement: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Link</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Link</label>
                   <input
                     type="text"
                     value={heroSection.featuredCard.link}
@@ -1126,7 +1161,7 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       featuredCard: { ...heroSection.featuredCard, link: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                                         placeholder="Enter link"
               />
             </div>
@@ -1134,11 +1169,11 @@ const HomepageManagement: React.FC = () => {
               </div>
 
               {/* Categories Card Editor */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Categories Card</h4>
-                <div className="space-y-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Categories Card</h4>
+                <div className="space-y-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Title</label>
                   <input
                     type="text"
                     value={heroSection.categoriesCard.title}
@@ -1146,12 +1181,12 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       categoriesCard: { ...heroSection.categoriesCard, title: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter categories title"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
                   <input
                     type="text"
                     value={heroSection.categoriesCard.subtitle}
@@ -1159,12 +1194,12 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       categoriesCard: { ...heroSection.categoriesCard, subtitle: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter categories subtitle"
                   />
                 </div>
                                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Image</label>
                   <div className="space-y-3">
                     {/* URL Input */}
                     <input
@@ -1174,7 +1209,7 @@ const HomepageManagement: React.FC = () => {
                         ...heroSection,
                         categoriesCard: { ...heroSection.categoriesCard, image: e.target.value }
                       })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter image URL"
                     />
                     
@@ -1196,8 +1231,8 @@ const HomepageManagement: React.FC = () => {
                       />
                       <label
                         htmlFor="categories-image-upload"
-                        className={`w-full flex items-center justify-center px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-pink-400 transition-colors ${
-                          uploadingImage === 'categories' ? 'bg-pink-50' : 'hover:bg-gray-50'
+                        className={`flex w-full cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-gray-300 px-2 py-1.5 text-[11px] transition-colors hover:border-gray-400 ${
+                          uploadingImage === 'categories' ? 'bg-gray-50' : 'hover:bg-gray-50'
                         }`}
                       >
                         <Upload className="w-4 h-4 mr-2 text-gray-400" />
@@ -1220,7 +1255,7 @@ const HomepageManagement: React.FC = () => {
                   </div>
             </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Link</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Link</label>
                   <input
                     type="text"
                     value={heroSection.categoriesCard.link}
@@ -1228,7 +1263,7 @@ const HomepageManagement: React.FC = () => {
                       ...heroSection,
                       categoriesCard: { ...heroSection.categoriesCard, link: e.target.value }
                     })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     placeholder="Enter link"
                   />
             </div>
@@ -1237,9 +1272,9 @@ const HomepageManagement: React.FC = () => {
       </div>
 
             {/* Preview Section */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-6">Live Preview</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* Main Card Preview */}
                 <div className={`bg-gradient-to-br ${heroSection.mainCard.gradientColors?.[0] || 'from-orange-200'} ${heroSection.mainCard.gradientColors?.[1] || 'to-orange-300'} rounded-2xl p-8 flex flex-col justify-center min-h-[300px] relative`}>
                   <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -1294,10 +1329,10 @@ const HomepageManagement: React.FC = () => {
         return (
           <div className="space-y-8">
             {/* Slider Settings */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Slider Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Slider Settings</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="space-y-2">
                   <div className="flex items-center space-x-4">
                     <label className="flex items-center cursor-pointer">
                       <input
@@ -1307,7 +1342,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        imageSlider.autoPlay ? 'bg-pink-500' : 'bg-gray-200'
+                        imageSlider.autoPlay ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           imageSlider.autoPlay ? 'translate-x-4' : ''
@@ -1317,12 +1352,12 @@ const HomepageManagement: React.FC = () => {
                     <span className="text-sm font-medium text-gray-700">Auto-play</span>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Interval (ms)</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Interval (ms)</label>
                     <input
                       type="number"
                       value={imageSlider.interval}
                       onChange={(e) => setImageSlider({ ...imageSlider, interval: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       min="1000"
                       max="10000"
                       step="500"
@@ -1330,7 +1365,7 @@ const HomepageManagement: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div className="flex items-center space-x-4">
                     <label className="flex items-center cursor-pointer">
                       <input
@@ -1340,7 +1375,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        imageSlider.showDots ? 'bg-pink-500' : 'bg-gray-200'
+                        imageSlider.showDots ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           imageSlider.showDots ? 'translate-x-4' : ''
@@ -1358,7 +1393,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        imageSlider.showArrows ? 'bg-pink-500' : 'bg-gray-200'
+                        imageSlider.showArrows ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           imageSlider.showArrows ? 'translate-x-4' : ''
@@ -1369,7 +1404,7 @@ const HomepageManagement: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div className="flex items-center space-x-4">
                     <label className="flex items-center cursor-pointer">
                       <input
@@ -1379,7 +1414,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        imageSlider.showArtistInfo ? 'bg-pink-500' : 'bg-gray-200'
+                        imageSlider.showArtistInfo ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           imageSlider.showArtistInfo ? 'translate-x-4' : ''
@@ -1396,9 +1431,9 @@ const HomepageManagement: React.FC = () => {
             </div>
 
             {/* Slides Editor */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
               <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
-                <h4 className="font-semibold text-gray-800">Slides Management</h4>
+                <h4 className="text-xs font-semibold text-gray-900">Slides</h4>
                 <button
                   onClick={() => {
                     const newSlide = {
@@ -1415,16 +1450,16 @@ const HomepageManagement: React.FC = () => {
                       slides: [...imageSlider.slides, newSlide]
                     });
                   }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-gray-900 px-3 text-xs font-medium text-white transition-colors hover:bg-gray-800"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Slide</span>
                 </button>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {imageSlider.slides.map((slide, index) => (
-                  <div key={slide.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                  <div key={slide.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                     <div className="flex items-center justify-between mb-4">
                       <h5 className="font-medium text-gray-800">Slide {index + 1}</h5>
                       <div className="flex items-center space-x-2">
@@ -1466,10 +1501,10 @@ const HomepageManagement: React.FC = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="space-y-2">
             <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Title</label>
               <input
                 type="text"
                             value={slide.title}
@@ -1478,12 +1513,12 @@ const HomepageManagement: React.FC = () => {
                               newSlides[index] = { ...slide, title: e.target.value };
                               setImageSlider({ ...imageSlider, slides: newSlides });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter slide title"
               />
             </div>
             <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
               <input
                 type="text"
                             value={slide.subtitle || ''}
@@ -1492,12 +1527,12 @@ const HomepageManagement: React.FC = () => {
                               newSlides[index] = { ...slide, subtitle: e.target.value };
                               setImageSlider({ ...imageSlider, slides: newSlides });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter slide subtitle"
               />
             </div>
             <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Description</label>
               <textarea
                             value={slide.description}
                             onChange={(e) => {
@@ -1506,12 +1541,12 @@ const HomepageManagement: React.FC = () => {
                               setImageSlider({ ...imageSlider, slides: newSlides });
                             }}
                 rows={3}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter slide description"
               />
             </div>
             <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Artist</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Artist</label>
               <input
                 type="text"
                             value={slide.artist}
@@ -1520,12 +1555,12 @@ const HomepageManagement: React.FC = () => {
                               newSlides[index] = { ...slide, artist: e.target.value };
                               setImageSlider({ ...imageSlider, slides: newSlides });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter artist name"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Link</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Link</label>
                           <input
                             type="text"
                             value={slide.link || ''}
@@ -1534,15 +1569,15 @@ const HomepageManagement: React.FC = () => {
                               newSlides[index] = { ...slide, link: e.target.value };
                               setImageSlider({ ...imageSlider, slides: newSlides });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter slide link"
               />
             </div>
           </div>
           
-                      <div className="space-y-4">
+                      <div className="space-y-2">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Image</label>
                           <div className="space-y-3">
                             <input
                               type="url"
@@ -1552,7 +1587,7 @@ const HomepageManagement: React.FC = () => {
                                 newSlides[index] = { ...slide, images: [e.target.value] };
                                 setImageSlider({ ...imageSlider, slides: newSlides });
                               }}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                              className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                               placeholder="Enter image URL"
                             />
                             
@@ -1592,19 +1627,19 @@ const HomepageManagement: React.FC = () => {
                               />
                               <label
                                 htmlFor={`slide-image-upload-${index}`}
-                                className={`w-full flex items-center justify-center px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-pink-400 transition-colors ${
-                                  uploadingImage === `slide-${index}` ? 'bg-pink-50' : 'hover:bg-gray-50'
+                                className={`flex w-full cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-gray-300 px-2 py-1.5 text-[11px] transition-colors hover:border-gray-400 ${
+                                  uploadingImage === `slide-${index}` ? 'bg-gray-50' : 'hover:bg-gray-50'
                                 }`}
                               >
                                 {uploadingImage === `slide-${index}` ? (
                                   <div className="flex items-center space-x-2">
-                                    <div className="w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="text-sm text-pink-600">Uploading...</span>
+                                    <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                                    <span className="text-sm text-gray-600">Uploading...</span>
                                   </div>
                                 ) : (
                                   <>
                                     <Upload className="w-4 h-4 mr-2 text-gray-400" />
-                                    <span className="text-sm text-gray-600">Upload Image</span>
+                                    <span className="text-[11px] text-gray-600">Upload image</span>
                                   </>
                                 )}
                               </label>
@@ -1629,8 +1664,8 @@ const HomepageManagement: React.FC = () => {
       </div>
 
             {/* Preview Section */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-6">Live Preview</h4>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
               <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg">
                 {imageSlider.slides.length > 0 && (
                   <div className="relative h-96">
@@ -1702,56 +1737,56 @@ const HomepageManagement: React.FC = () => {
         return (
           <div className="space-y-8">
             {/* Section Settings Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Section Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Section Settings</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Section Title</label>
                     <input
                       type="text"
                       value={featuredGrid.title}
                       onChange={(e) => setFeaturedGrid({ ...featuredGrid, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter section title"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+              <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
               <textarea
                       value={featuredGrid.subtitle}
                       onChange={(e) => setFeaturedGrid({ ...featuredGrid, subtitle: e.target.value })}
                 rows={3}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter subtitle"
               />
             </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+              <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Text</label>
               <input
                 type="text"
                       value={featuredGrid.buttonText}
                       onChange={(e) => setFeaturedGrid({ ...featuredGrid, buttonText: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button text"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Link</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Link</label>
                     <input
                       type="text"
                       value={featuredGrid.buttonLink}
                       onChange={(e) => setFeaturedGrid({ ...featuredGrid, buttonLink: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button link"
               />
             </div>
           </div>
           
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div className="flex items-center space-x-4">
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -1761,7 +1796,7 @@ const HomepageManagement: React.FC = () => {
                       className="sr-only"
                     />
                     <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        featuredGrid.showButton ? 'bg-pink-500' : 'bg-gray-200'
+                        featuredGrid.showButton ? 'bg-gray-900' : 'bg-gray-200'
                     }`}>
                       <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           featuredGrid.showButton ? 'translate-x-4' : ''
@@ -1771,11 +1806,11 @@ const HomepageManagement: React.FC = () => {
                     <span className="text-sm font-medium text-gray-700">Show Button</span>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Grid Layout</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Grid Layout</label>
                     <select
                       value={featuredGrid.gridLayout}
                       onChange={(e) => setFeaturedGrid({ ...featuredGrid, gridLayout: e.target.value as 'two-column' | 'three-column' | 'four-column' })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     >
                       <option value="two-column">2 Columns</option>
                       <option value="three-column">3 Columns</option>
@@ -1790,9 +1825,9 @@ const HomepageManagement: React.FC = () => {
             </div>
 
             {/* Grid Items Management - Placeholder for now */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
               <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
-                <h4 className="font-semibold text-gray-800">Grid Items Management</h4>
+                <h4 className="text-xs font-semibold text-gray-900">Grid items</h4>
                 <button
                   onClick={() => {
                     const newItem = {
@@ -1810,15 +1845,15 @@ const HomepageManagement: React.FC = () => {
                       items: [...featuredGrid.items, newItem]
                     });
                   }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-gray-900 px-3 text-xs font-medium text-white transition-colors hover:bg-gray-800"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Item</span>
               </button>
             </div>
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {featuredGrid.items.map((item, index) => (
-                  <div key={item.id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                  <div key={item.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                     <div className="flex items-center justify-between mb-4">
                       <h5 className="font-medium text-gray-800">Item {index + 1}</h5>
                       <div className="flex items-center space-x-2">
@@ -1860,10 +1895,10 @@ const HomepageManagement: React.FC = () => {
           </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                      <div className="space-y-2">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Title</label>
                           <input
                             type="text"
                             value={item.title}
@@ -1872,12 +1907,12 @@ const HomepageManagement: React.FC = () => {
                               newItems[index] = { ...item, title: e.target.value };
                               setFeaturedGrid({ ...featuredGrid, items: newItems });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter item title"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
                           <input
                             type="text"
                             value={item.subtitle}
@@ -1886,12 +1921,12 @@ const HomepageManagement: React.FC = () => {
                               newItems[index] = { ...item, subtitle: e.target.value };
                               setFeaturedGrid({ ...featuredGrid, items: newItems });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter item subtitle"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Description</label>
                           <textarea
                             value={item.description || ''}
                             onChange={(e) => {
@@ -1900,12 +1935,12 @@ const HomepageManagement: React.FC = () => {
                               setFeaturedGrid({ ...featuredGrid, items: newItems });
                             }}
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter item description"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Link</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Link</label>
                           <input
                             type="text"
                             value={item.link}
@@ -1914,15 +1949,15 @@ const HomepageManagement: React.FC = () => {
                               newItems[index] = { ...item, link: e.target.value };
                               setFeaturedGrid({ ...featuredGrid, items: newItems });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter item link"
                           />
         </div>
       </div>
 
-                      <div className="space-y-4">
+                      <div className="space-y-2">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Image</label>
                           <div className="space-y-3">
                             <input
                               type="url"
@@ -1932,7 +1967,7 @@ const HomepageManagement: React.FC = () => {
                                 newItems[index] = { ...item, images: [e.target.value] };
                                 setFeaturedGrid({ ...featuredGrid, items: newItems });
                               }}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                              className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                               placeholder="Enter image URL"
                             />
                             
@@ -1982,10 +2017,10 @@ const HomepageManagement: React.FC = () => {
                               />
                               <label
                                 htmlFor={`grid-item-image-upload-${index}`}
-                                className="w-full flex items-center justify-center px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-pink-400 transition-colors hover:bg-gray-50"
+                                className="flex w-full cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-gray-300 px-2 py-1.5 text-[11px] transition-colors hover:border-gray-400 hover:bg-gray-50"
                               >
                                 <Upload className="w-4 h-4 mr-2 text-gray-400" />
-                                <span className="text-sm text-gray-600">Upload Image</span>
+                                <span className="text-[11px] text-gray-600">Upload image</span>
                               </label>
                             </div>
                             
@@ -2002,7 +2037,7 @@ const HomepageManagement: React.FC = () => {
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Overlay Style</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Overlay Style</label>
                           <select
                             value={item.overlayStyle}
                             onChange={(e) => {
@@ -2010,7 +2045,7 @@ const HomepageManagement: React.FC = () => {
                               newItems[index] = { ...item, overlayStyle: e.target.value as 'gradient' | 'solid' | 'none' };
                               setFeaturedGrid({ ...featuredGrid, items: newItems });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                           >
                             <option value="gradient">Gradient</option>
                             <option value="solid">Solid</option>
@@ -2019,7 +2054,7 @@ const HomepageManagement: React.FC = () => {
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Text Position</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Text Position</label>
                           <select
                             value={item.textPosition}
                             onChange={(e) => {
@@ -2027,7 +2062,7 @@ const HomepageManagement: React.FC = () => {
                               newItems[index] = { ...item, textPosition: e.target.value as any };
                               setFeaturedGrid({ ...featuredGrid, items: newItems });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                           >
                             <option value="bottom-left">Bottom Left</option>
                             <option value="bottom-right">Bottom Right</option>
@@ -2044,8 +2079,8 @@ const HomepageManagement: React.FC = () => {
             </div>
 
             {/* Preview Section */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-6">Live Preview</h4>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
               <div className="bg-white rounded-2xl p-8 shadow-lg">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-gray-800 mb-4">{featuredGrid.title}</h2>
@@ -2058,13 +2093,13 @@ const HomepageManagement: React.FC = () => {
           </div>
                 
                 {featuredGrid.items.length > 0 && (
-                  <div className={`grid gap-6 ${
+                  <div className={`grid gap-3 ${
                     featuredGrid.gridLayout === 'two-column' ? 'grid-cols-1 md:grid-cols-2' :
                     featuredGrid.gridLayout === 'three-column' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' :
                     'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
                   }`}>
                     {featuredGrid.items.map((item) => (
-                      <div key={item.id} className="relative rounded-xl overflow-hidden group cursor-pointer">
+                      <div key={item.id} className="relative rounded-lg overflow-hidden group cursor-pointer">
                         <img
                           src={item.images?.[0] || '/placeholder-image.jpg'}
                           alt={item.title}
@@ -2120,67 +2155,67 @@ const HomepageManagement: React.FC = () => {
         return (
           <div className="space-y-8">
             {/* Section Settings */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Section Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Section Settings</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Section Title</label>
                     <input
                       type="text"
                       value={bestSellers.title}
                       onChange={(e) => setBestSellers({ ...bestSellers, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter section title"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
                     <textarea
                       value={bestSellers.subtitle}
                       onChange={(e) => setBestSellers({ ...bestSellers, subtitle: e.target.value })}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter subtitle"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Text</label>
                     <input
                       type="text"
                       value={bestSellers.buttonText}
                       onChange={(e) => setBestSellers({ ...bestSellers, buttonText: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button text"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Link</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Link</label>
                     <input
                       type="text"
                       value={bestSellers.buttonLink}
                       onChange={(e) => setBestSellers({ ...bestSellers, buttonLink: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button link"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Items to Display</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Max Items to Display</label>
                     <input
                       type="number"
                       value={bestSellers.maxItems}
                       onChange={(e) => setBestSellers({ ...bestSellers, maxItems: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       min="1"
                       max="10"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div className="flex items-center space-x-4">
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -2190,7 +2225,7 @@ const HomepageManagement: React.FC = () => {
                       className="sr-only"
                     />
                     <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        bestSellers.showButton ? 'bg-pink-500' : 'bg-gray-200'
+                        bestSellers.showButton ? 'bg-gray-900' : 'bg-gray-200'
                     }`}>
                       <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           bestSellers.showButton ? 'translate-x-4' : ''
@@ -2208,7 +2243,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        bestSellers.showRating ? 'bg-pink-500' : 'bg-gray-200'
+                        bestSellers.showRating ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           bestSellers.showRating ? 'translate-x-4' : ''
@@ -2226,7 +2261,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        bestSellers.showDownloads ? 'bg-pink-500' : 'bg-gray-200'
+                        bestSellers.showDownloads ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           bestSellers.showDownloads ? 'translate-x-4' : ''
@@ -2244,7 +2279,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        bestSellers.showBadge ? 'bg-pink-500' : 'bg-gray-200'
+                        bestSellers.showBadge ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           bestSellers.showBadge ? 'translate-x-4' : ''
@@ -2263,9 +2298,9 @@ const HomepageManagement: React.FC = () => {
             {/* Product Selection Interface */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Available Products */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
                 <div className="border-b border-gray-200 pb-3 mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-4">Available Products</h4>
+                  <h4 className="mb-2 text-xs font-semibold text-gray-900">Available products</h4>
                   
                   {/* Search and Filter */}
                   <div className="space-y-3">
@@ -2275,7 +2310,7 @@ const HomepageManagement: React.FC = () => {
                         placeholder="Search products..."
                         value={productSearchTerm}
                         onChange={(e) => setProductSearchTerm(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -2285,7 +2320,7 @@ const HomepageManagement: React.FC = () => {
                           onClick={() => setSelectedCategory(category)}
                           className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                             selectedCategory === category
-                              ? 'bg-pink-500 text-white'
+                              ? 'bg-gray-900 text-white'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                         >
@@ -2304,7 +2339,7 @@ const HomepageManagement: React.FC = () => {
                         key={product.id}
                         className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
                           isSelected 
-                            ? 'border-pink-300 bg-pink-50' 
+                            ? 'border-gray-300 bg-gray-50' 
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                         onClick={() => {
@@ -2340,7 +2375,7 @@ const HomepageManagement: React.FC = () => {
                         </div>
                         <div className="flex-shrink-0">
                           {isSelected ? (
-                            <div className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
+                            <div className="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
                               <Check className="w-4 h-4 text-white" />
                             </div>
                           ) : (
@@ -2348,7 +2383,7 @@ const HomepageManagement: React.FC = () => {
                               className={`w-6 h-6 border-2 rounded-full flex items-center justify-center transition-colors ${
                                 bestSellers.selectedProducts.length >= bestSellers.maxItems
                                   ? 'border-gray-300 cursor-not-allowed'
-                                  : 'border-gray-300 hover:border-pink-500'
+                                  : 'border-gray-300 hover:border-gray-900'
                               }`}
                               disabled={bestSellers.selectedProducts.length >= bestSellers.maxItems}
                             >
@@ -2370,9 +2405,9 @@ const HomepageManagement: React.FC = () => {
               </div>
 
               {/* Selected Products */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
                 <div className="border-b border-gray-200 pb-3 mb-6">
-                  <h4 className="font-semibold text-gray-800">Selected Products ({bestSellers.selectedProducts.length}/{bestSellers.maxItems})</h4>
+                  <h4 className="text-xs font-semibold text-gray-900">Selected ({bestSellers.selectedProducts.length}/{bestSellers.maxItems})</h4>
                   <p className="text-sm text-gray-600">Drag to reorder, click to edit badges</p>
                 </div>
                 
@@ -2413,7 +2448,7 @@ const HomepageManagement: React.FC = () => {
                                 setBestSellers({ ...bestSellers, selectedProducts: updatedProducts });
                               }}
                               placeholder="Badge text"
-                              className="w-20 px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-pink-300"
+                              className="w-20 px-2 py-1 text-xs border border-gray-200 rounded focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             />
                             <select
                               value={product.badgeColor || 'pink'}
@@ -2422,7 +2457,7 @@ const HomepageManagement: React.FC = () => {
                                 updatedProducts[index] = { ...product, badgeColor: e.target.value };
                                 setBestSellers({ ...bestSellers, selectedProducts: updatedProducts });
                               }}
-                              className="px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-pink-300"
+                              className="px-2 py-1 text-xs border border-gray-200 rounded focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             >
                               <option value="pink">Pink</option>
                               <option value="blue">Blue</option>
@@ -2458,8 +2493,8 @@ const HomepageManagement: React.FC = () => {
             </div>
 
             {/* Preview Section */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-6">Live Preview</h4>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
               <div className="bg-white rounded-2xl p-8 shadow-lg">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-gray-800 mb-4">{bestSellers.title}</h2>
@@ -2467,9 +2502,9 @@ const HomepageManagement: React.FC = () => {
                 </div>
                 
                 {bestSellers.selectedProducts.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-8">
                     {bestSellers.selectedProducts.slice(0, bestSellers.maxItems).map((product) => (
-                      <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow">
+                      <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow">
                         <div className="relative">
                           <img
                             src={product.image}
@@ -2478,13 +2513,13 @@ const HomepageManagement: React.FC = () => {
                           />
                           {bestSellers.showBadge && product.badge && (
                             <div className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium text-white ${
-                              product.badgeColor === 'pink' ? 'bg-pink-500' :
+                              product.badgeColor === 'pink' ? 'bg-gray-900' :
                               product.badgeColor === 'blue' ? 'bg-blue-500' :
                               product.badgeColor === 'green' ? 'bg-green-500' :
                               product.badgeColor === 'yellow' ? 'bg-yellow-500' :
                               product.badgeColor === 'red' ? 'bg-red-500' :
                               product.badgeColor === 'purple' ? 'bg-purple-500' :
-                              'bg-pink-500'
+                              'bg-gray-900'
                             }`}>
                               {product.badge}
                             </div>
@@ -2505,7 +2540,7 @@ const HomepageManagement: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <button className="w-full mt-3 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-lg transition-colors">
+                          <button type="button" className="mt-2 w-full rounded-md bg-gray-900 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-800">
                             View Details
             </button>
           </div>
@@ -2516,7 +2551,7 @@ const HomepageManagement: React.FC = () => {
                 
                 {bestSellers.showButton && (
                   <div className="text-center">
-                    <button className="px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-full transition-colors">
+                    <button className="px-8 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-full transition-colors">
                       {bestSellers.buttonText}
                     </button>
                   </div>
@@ -2553,67 +2588,67 @@ const HomepageManagement: React.FC = () => {
         return (
           <div className="space-y-8">
             {/* Section Settings */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Section Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Section Settings</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Section Title</label>
                     <input
                       type="text"
                       value={featuredArtwork.title}
                       onChange={(e) => setFeaturedArtwork({ ...featuredArtwork, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter section title"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
                     <textarea
                       value={featuredArtwork.subtitle}
                       onChange={(e) => setFeaturedArtwork({ ...featuredArtwork, subtitle: e.target.value })}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter subtitle"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Text</label>
                     <input
                       type="text"
                       value={featuredArtwork.buttonText}
                       onChange={(e) => setFeaturedArtwork({ ...featuredArtwork, buttonText: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button text"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Link</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Link</label>
                     <input
                       type="text"
                       value={featuredArtwork.buttonLink}
                       onChange={(e) => setFeaturedArtwork({ ...featuredArtwork, buttonLink: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button link"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Items to Display</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Max Items to Display</label>
                     <input
                       type="number"
                       value={featuredArtwork.maxItems}
                       onChange={(e) => setFeaturedArtwork({ ...featuredArtwork, maxItems: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       min="1"
                       max="10"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                 <div className="flex items-center space-x-4">
                     <label className="flex items-center cursor-pointer">
                       <input
@@ -2623,7 +2658,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        featuredArtwork.showButton ? 'bg-pink-500' : 'bg-gray-200'
+                        featuredArtwork.showButton ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           featuredArtwork.showButton ? 'translate-x-4' : ''
@@ -2641,7 +2676,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        featuredArtwork.showRating ? 'bg-pink-500' : 'bg-gray-200'
+                        featuredArtwork.showRating ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           featuredArtwork.showRating ? 'translate-x-4' : ''
@@ -2659,7 +2694,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        featuredArtwork.showDownloads ? 'bg-pink-500' : 'bg-gray-200'
+                        featuredArtwork.showDownloads ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           featuredArtwork.showDownloads ? 'translate-x-4' : ''
@@ -2677,7 +2712,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        featuredArtwork.showBadge ? 'bg-pink-500' : 'bg-gray-200'
+                        featuredArtwork.showBadge ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           featuredArtwork.showBadge ? 'translate-x-4' : ''
@@ -2696,9 +2731,9 @@ const HomepageManagement: React.FC = () => {
             {/* Product Selection Interface */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Available Products */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
                 <div className="border-b border-gray-200 pb-3 mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-4">Available Products</h4>
+                  <h4 className="mb-2 text-xs font-semibold text-gray-900">Available products</h4>
                   
                   {/* Search and Filter */}
                   <div className="space-y-3">
@@ -2708,7 +2743,7 @@ const HomepageManagement: React.FC = () => {
                         placeholder="Search products..."
                         value={featuredProductSearchTerm}
                         onChange={(e) => setFeaturedProductSearchTerm(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       />
                   </div>
                     <div className="flex flex-wrap gap-2">
@@ -2804,9 +2839,9 @@ const HomepageManagement: React.FC = () => {
               </div>
 
               {/* Selected Products */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
                 <div className="border-b border-gray-200 pb-3 mb-6">
-                  <h4 className="font-semibold text-gray-800">Selected Products ({featuredArtwork.selectedProducts.length}/{featuredArtwork.maxItems})</h4>
+                  <h4 className="text-xs font-semibold text-gray-900">Selected ({featuredArtwork.selectedProducts.length}/{featuredArtwork.maxItems})</h4>
                   <p className="text-sm text-gray-600">Drag to reorder, click to edit badges</p>
                 </div>
                 
@@ -2893,8 +2928,8 @@ const HomepageManagement: React.FC = () => {
             </div>
 
             {/* Preview Section */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-6">Live Preview</h4>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
               <div className="bg-white rounded-2xl p-8 shadow-lg">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-gray-800 mb-4">{featuredArtwork.title}</h2>
@@ -2902,9 +2937,9 @@ const HomepageManagement: React.FC = () => {
                 </div>
                 
                 {featuredArtwork.selectedProducts.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
                     {featuredArtwork.selectedProducts.slice(0, featuredArtwork.maxItems).map((product) => (
-                      <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow">
+                      <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow">
                         <div className="relative">
                           <img
                             src={product.image}
@@ -2913,7 +2948,7 @@ const HomepageManagement: React.FC = () => {
                           />
                           {featuredArtwork.showBadge && product.badge && (
                             <div className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium text-white ${
-                              product.badgeColor === 'pink' ? 'bg-pink-500' :
+                              product.badgeColor === 'pink' ? 'bg-gray-900' :
                               product.badgeColor === 'blue' ? 'bg-blue-500' :
                               product.badgeColor === 'green' ? 'bg-green-500' :
                               product.badgeColor === 'yellow' ? 'bg-yellow-500' :
@@ -2941,7 +2976,7 @@ const HomepageManagement: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <button className="w-full mt-3 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors">
+                          <button type="button" className="mt-2 w-full rounded-md bg-gray-800 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-900">
                             View Details
                           </button>
                         </div>
@@ -2988,67 +3023,67 @@ const HomepageManagement: React.FC = () => {
         return (
           <div className="space-y-8">
             {/* Section Settings */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Section Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Section Settings</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Section Title</label>
                     <input
                       type="text"
                       value={categoriesSection.title}
                       onChange={(e) => setCategoriesSection({ ...categoriesSection, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter section title"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
                     <textarea
                       value={categoriesSection.subtitle}
                       onChange={(e) => setCategoriesSection({ ...categoriesSection, subtitle: e.target.value })}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter subtitle"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Text</label>
                     <input
                       type="text"
                       value={categoriesSection.buttonText}
                       onChange={(e) => setCategoriesSection({ ...categoriesSection, buttonText: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button text"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Link</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Link</label>
                     <input
                       type="text"
                       value={categoriesSection.buttonLink}
                       onChange={(e) => setCategoriesSection({ ...categoriesSection, buttonLink: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button link"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Categories to Display</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Max Categories to Display</label>
                     <input
                       type="number"
                       value={categoriesSection.maxCategories}
                       onChange={(e) => setCategoriesSection({ ...categoriesSection, maxCategories: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       min="1"
                       max="12"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div className="flex items-center space-x-4">
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -3058,7 +3093,7 @@ const HomepageManagement: React.FC = () => {
                       className="sr-only"
                     />
                     <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        categoriesSection.showButton ? 'bg-pink-500' : 'bg-gray-200'
+                        categoriesSection.showButton ? 'bg-gray-900' : 'bg-gray-200'
                     }`}>
                       <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           categoriesSection.showButton ? 'translate-x-4' : ''
@@ -3076,7 +3111,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        categoriesSection.showProductCount ? 'bg-pink-500' : 'bg-gray-200'
+                        categoriesSection.showProductCount ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           categoriesSection.showProductCount ? 'translate-x-4' : ''
@@ -3095,9 +3130,9 @@ const HomepageManagement: React.FC = () => {
             {/* Category Selection Interface */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Available Categories */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
                 <div className="border-b border-gray-200 pb-3 mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-4">Available Categories</h4>
+                  <h4 className="mb-2 text-xs font-semibold text-gray-900">Available categories</h4>
                   
                   {/* Search */}
                   <div className="space-y-3">
@@ -3107,7 +3142,7 @@ const HomepageManagement: React.FC = () => {
                         placeholder="Search categories..."
                         value={categorySearchTerm}
                         onChange={(e) => setCategorySearchTerm(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       />
                     </div>
                   </div>
@@ -3185,9 +3220,9 @@ const HomepageManagement: React.FC = () => {
               </div>
 
               {/* Selected Categories */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
                 <div className="border-b border-gray-200 pb-3 mb-6">
-                  <h4 className="font-semibold text-gray-800">Selected Categories ({categoriesSection.selectedCategories.length}/{categoriesSection.maxCategories})</h4>
+                  <h4 className="text-xs font-semibold text-gray-900">Selected ({categoriesSection.selectedCategories.length}/{categoriesSection.maxCategories})</h4>
                   <p className="text-sm text-gray-600">Drag to reorder, toggle featured status</p>
                 </div>
                 
@@ -3266,8 +3301,8 @@ const HomepageManagement: React.FC = () => {
             </div>
 
             {/* Preview Section */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-6">Live Preview</h4>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
               <div className="bg-white rounded-2xl p-8 shadow-lg">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-gray-800 mb-4">{categoriesSection.title}</h2>
@@ -3275,10 +3310,10 @@ const HomepageManagement: React.FC = () => {
                 </div>
                 
                 {categoriesSection.selectedCategories.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
                     {categoriesSection.selectedCategories.slice(0, categoriesSection.maxCategories).map((category) => (
                       <div key={category.id} className="relative group cursor-pointer">
-                        <div className="relative overflow-hidden rounded-xl">
+                        <div className="relative overflow-hidden rounded-lg">
                           <img
                             src={category.image}
                             alt={category.name}
@@ -3334,56 +3369,56 @@ const HomepageManagement: React.FC = () => {
         return (
           <div className="space-y-8">
             {/* Section Settings */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Section Settings</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Section Settings</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Section Title</label>
                     <input
                       type="text"
                       value={trendingCollections.title}
                       onChange={(e) => setTrendingCollections({ ...trendingCollections, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter section title"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
                     <textarea
                       value={trendingCollections.subtitle}
                       onChange={(e) => setTrendingCollections({ ...trendingCollections, subtitle: e.target.value })}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter subtitle"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Text</label>
                     <input
                       type="text"
                       value={trendingCollections.buttonText}
                       onChange={(e) => setTrendingCollections({ ...trendingCollections, buttonText: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button text"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Button Link</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Link</label>
                     <input
                       type="text"
                       value={trendingCollections.buttonLink}
                       onChange={(e) => setTrendingCollections({ ...trendingCollections, buttonLink: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter button link"
                     />
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <div className="flex items-center space-x-4">
                     <label className="flex items-center cursor-pointer">
                       <input
@@ -3393,7 +3428,7 @@ const HomepageManagement: React.FC = () => {
                         className="sr-only"
                       />
                       <div className={`relative w-10 h-6 rounded-full transition-colors ${
-                        trendingCollections.showButton ? 'bg-pink-500' : 'bg-gray-200'
+                        trendingCollections.showButton ? 'bg-gray-900' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
                           trendingCollections.showButton ? 'translate-x-4' : ''
@@ -3410,9 +3445,9 @@ const HomepageManagement: React.FC = () => {
             </div>
 
             {/* Collections Management */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
               <div className="border-b border-gray-200 pb-3 mb-6">
-                <h4 className="font-semibold text-gray-800 mb-2">Collections Management</h4>
+                <h4 className="mb-1.5 text-xs font-semibold text-gray-900">Collections</h4>
                 <p className="text-sm text-gray-600">Edit images, text, and links for each collection</p>
                 <button
                   onClick={() => {
@@ -3433,16 +3468,16 @@ const HomepageManagement: React.FC = () => {
                       collections: [...trendingCollections.collections, newCollection]
                     });
                   }}
-                  className="mt-4 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2"
+                  className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-md bg-gray-900 px-3 text-xs font-medium text-white transition-colors hover:bg-gray-800"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Collection</span>
                 </button>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {trendingCollections.collections.map((collection, index) => (
-                  <div key={collection.id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <div key={collection.id} className="rounded-lg bg-gray-50 p-3 border border-gray-200">
                     <div className="flex items-center justify-between mb-4">
                       <h5 className="font-semibold text-gray-800">Collection {index + 1}</h5>
                       <div className="flex items-center space-x-2">
@@ -3484,11 +3519,11 @@ const HomepageManagement: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       {/* Collection Details */}
-                      <div className="space-y-4">
+                      <div className="space-y-2">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Collection Title</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Collection Title</label>
                           <input
                             type="text"
                             value={collection.title}
@@ -3497,13 +3532,13 @@ const HomepageManagement: React.FC = () => {
                               updatedCollections[index] = { ...collection, title: e.target.value };
                               setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter collection title"
                           />
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Description</label>
                           <textarea
                             value={collection.description}
                             onChange={(e) => {
@@ -3512,14 +3547,14 @@ const HomepageManagement: React.FC = () => {
                               setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                             }}
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter collection description"
                           />
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Artwork Count</label>
+                            <label className="mb-1 block text-[11px] font-medium text-gray-600">Artwork Count</label>
                             <input
                               type="number"
                               value={collection.artworkCount}
@@ -3528,12 +3563,12 @@ const HomepageManagement: React.FC = () => {
                                 updatedCollections[index] = { ...collection, artworkCount: parseInt(e.target.value) || 0 };
                                 setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                               }}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                               placeholder="0"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Link</label>
+                            <label className="mb-1 block text-[11px] font-medium text-gray-600">Link</label>
                             <input
                               type="text"
                               value={collection.link}
@@ -3542,7 +3577,7 @@ const HomepageManagement: React.FC = () => {
                                 updatedCollections[index] = { ...collection, link: e.target.value };
                                 setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                               }}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                               placeholder="/collections/..."
                             />
                           </div>
@@ -3550,7 +3585,7 @@ const HomepageManagement: React.FC = () => {
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Badge Text</label>
+                            <label className="mb-1 block text-[11px] font-medium text-gray-600">Badge Text</label>
                             <input
                               type="text"
                               value={collection.badge || ''}
@@ -3559,12 +3594,12 @@ const HomepageManagement: React.FC = () => {
                                 updatedCollections[index] = { ...collection, badge: e.target.value };
                                 setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                               }}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                               placeholder="Badge text"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Badge Color</label>
+                            <label className="mb-1 block text-[11px] font-medium text-gray-600">Badge Color</label>
                             <select
                               value={collection.badgeColor || 'purple'}
                               onChange={(e) => {
@@ -3572,7 +3607,7 @@ const HomepageManagement: React.FC = () => {
                                 updatedCollections[index] = { ...collection, badgeColor: e.target.value };
                                 setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                               }}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             >
                               <option value="orange">Orange</option>
                               <option value="green">Green</option>
@@ -3585,7 +3620,7 @@ const HomepageManagement: React.FC = () => {
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Update Frequency</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Update Frequency</label>
                           <input
                             type="text"
                             value={collection.updateFrequency || ''}
@@ -3594,16 +3629,16 @@ const HomepageManagement: React.FC = () => {
                               updatedCollections[index] = { ...collection, updateFrequency: e.target.value };
                               setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="e.g., Updated daily, Weekly updates"
                           />
                         </div>
                       </div>
                       
                       {/* Image Management */}
-                      <div className="space-y-4">
+                      <div className="space-y-2">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Collection Image</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Collection Image</label>
                           <div className="space-y-3">
                             <img
                               src={collection.image}
@@ -3618,7 +3653,7 @@ const HomepageManagement: React.FC = () => {
                                 updatedCollections[index] = { ...collection, image: e.target.value };
                                 setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                               }}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                               placeholder="Enter image URL"
                             />
                             <input
@@ -3659,13 +3694,13 @@ const HomepageManagement: React.FC = () => {
                                   }
                                 }
                               }}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
                             />
                           </div>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Status</label>
                           <select
                             value={collection.status || 'new'}
                             onChange={(e) => {
@@ -3673,7 +3708,7 @@ const HomepageManagement: React.FC = () => {
                               updatedCollections[index] = { ...collection, status: e.target.value as 'trending' | 'popular' | 'new' };
                               setTrendingCollections({ ...trendingCollections, collections: updatedCollections });
                             }}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                           >
                             <option value="trending">Trending</option>
                             <option value="popular">Popular</option>
@@ -3688,8 +3723,8 @@ const HomepageManagement: React.FC = () => {
             </div>
 
             {/* Preview Section */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-6">Live Preview</h4>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
               <div className="bg-white rounded-2xl p-8 shadow-lg">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-gray-800 mb-4">{trendingCollections.title}</h2>
@@ -3697,9 +3732,9 @@ const HomepageManagement: React.FC = () => {
                 </div>
                 
                 {trendingCollections.collections.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
                     {trendingCollections.collections.map((collection) => (
-                      <div key={collection.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow">
+                      <div key={collection.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden group hover:shadow-lg transition-shadow">
                         <div className="relative">
                           <img
                             src={collection.image}
@@ -3712,7 +3747,7 @@ const HomepageManagement: React.FC = () => {
                               collection.badgeColor === 'green' ? 'bg-green-500' :
                               collection.badgeColor === 'blue' ? 'bg-blue-500' :
                               collection.badgeColor === 'purple' ? 'bg-purple-500' :
-                              collection.badgeColor === 'pink' ? 'bg-pink-500' :
+                              collection.badgeColor === 'pink' ? 'bg-gray-900' :
                               collection.badgeColor === 'red' ? 'bg-red-500' :
                               'bg-purple-500'
                             }`}>
@@ -3723,12 +3758,12 @@ const HomepageManagement: React.FC = () => {
                             <p className="text-xs font-medium">{collection.artworkCount}+ artworks</p>
                           </div>
                         </div>
-                        <div className="p-6">
-                          <h3 className="font-semibold text-gray-800 mb-2">{collection.title}</h3>
-                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{collection.description}</p>
+                        <div className="p-3">
+                          <h3 className="mb-1 text-sm font-semibold text-gray-900">{collection.title}</h3>
+                          <p className="mb-2 line-clamp-2 text-[11px] text-gray-600">{collection.description}</p>
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-500">{collection.updateFrequency}</span>
-                            <button className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-lg transition-colors">
+                            <button type="button" className="rounded-md bg-gray-900 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-gray-800">
                               Explore Collection →
                             </button>
                           </div>
@@ -3740,7 +3775,7 @@ const HomepageManagement: React.FC = () => {
                 
                 {trendingCollections.showButton && (
                   <div className="text-center">
-                    <button className="px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-full transition-colors">
+                    <button className="px-8 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-full transition-colors">
                       {trendingCollections.buttonText}
                     </button>
                   </div>
@@ -3757,7 +3792,7 @@ const HomepageManagement: React.FC = () => {
                 )}
                 
                 {isPreviewMode && (
-                  <div className="absolute top-4 right-4 bg-pink-500 text-white px-2 py-1 rounded text-xs">
+                  <div className="absolute top-4 right-4 bg-gray-900 text-white px-2 py-1 rounded text-xs">
                     Live Preview
                   </div>
                 )}
@@ -3768,10 +3803,10 @@ const HomepageManagement: React.FC = () => {
 
       case 'stats':
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-700">Statistics Configuration</h4>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-gray-900">Statistics</h4>
                 <p className="text-sm text-gray-500">Configure the statistics displayed in the stats section. Each stat shows an icon, value, and label.</p>
                 
                 <div className="space-y-3">
@@ -3787,7 +3822,7 @@ const HomepageManagement: React.FC = () => {
                             setStatsSection({ ...statsSection, stats: newStats });
                           }}
                           placeholder="Value"
-                          className="px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                          className="h-8 rounded-md border border-gray-200 px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                         />
                         <input
                           type="text"
@@ -3798,7 +3833,7 @@ const HomepageManagement: React.FC = () => {
                             setStatsSection({ ...statsSection, stats: newStats });
                           }}
                           placeholder="Label"
-                          className="px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                          className="h-8 rounded-md border border-gray-200 px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                         />
                         <select
                           value={stat.color}
@@ -3807,9 +3842,9 @@ const HomepageManagement: React.FC = () => {
                             newStats[index].color = e.target.value;
                             setStatsSection({ ...statsSection, stats: newStats });
                           }}
-                          className="px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                          className="h-8 rounded-md border border-gray-200 px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                         >
-                          <option value="bg-pink-100">Pink</option>
+                          <option value="bg-gray-100">Gray</option>
                           <option value="bg-blue-100">Blue</option>
                           <option value="bg-green-100">Green</option>
                           <option value="bg-purple-100">Purple</option>
@@ -3822,11 +3857,11 @@ const HomepageManagement: React.FC = () => {
               </div>
               
               {/* Preview */}
-              <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
                 <div className="grid grid-cols-2 gap-4">
                   {statsSection.stats.map((stat) => (
-                    <div key={stat.id} className="bg-white rounded-xl shadow-lg p-4 text-center border border-gray-100">
-                      <div className={`inline-flex items-center justify-center w-12 h-12 ${stat.color} rounded-xl mb-3`}>
+                    <div key={stat.id} className="bg-white rounded-lg shadow-lg p-4 text-center border border-gray-100">
+                      <div className={`inline-flex items-center justify-center w-12 h-12 ${stat.color} rounded-lg mb-3`}>
                         {getSectionIcon(stat.icon)}
                       </div>
                       <div className="text-2xl font-bold text-gray-800 mb-1">{stat.value}</div>
@@ -3841,59 +3876,62 @@ const HomepageManagement: React.FC = () => {
 
       case 'newsletter':
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div className="space-y-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Section Title</label>
                   <input
                     type="text"
                     value={newsletterSection.title}
                     onChange={(e) => setNewsletterSection({ ...newsletterSection, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Subtitle</label>
                   <textarea
                     value={newsletterSection.subtitle}
                     onChange={(e) => setNewsletterSection({ ...newsletterSection, subtitle: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Placeholder</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Email Placeholder</label>
                   <input
                     type="text"
                     value={newsletterSection.placeholder}
                     onChange={(e) => setNewsletterSection({ ...newsletterSection, placeholder: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Button Text</label>
                   <input
                     type="text"
                     value={newsletterSection.buttonText}
                     onChange={(e) => setNewsletterSection({ ...newsletterSection, buttonText: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                 </div>
               </div>
               
               {/* Preview */}
-              <div className="bg-white p-8 rounded-xl border border-pink-100">
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <div className="text-center">
-                  <h2 className="text-3xl font-bold text-gray-800 mb-4">{newsletterSection.title}</h2>
-                  <p className="text-gray-600 mb-8">{newsletterSection.subtitle}</p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                  <h2 className="mb-2 text-lg font-semibold text-gray-900">{newsletterSection.title}</h2>
+                  <p className="mb-4 text-xs text-gray-600">{newsletterSection.subtitle}</p>
+                  <div className="mx-auto flex max-w-sm flex-col justify-center gap-2 sm:flex-row">
                     <input
                       type="email"
                       placeholder={newsletterSection.placeholder}
-                      className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="flex-1 rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
-                    <button className="px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors">
+                    <button
+                      type="button"
+                      className="rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-800"
+                    >
                       {newsletterSection.buttonText}
                     </button>
                   </div>
@@ -3904,7 +3942,11 @@ const HomepageManagement: React.FC = () => {
         );
 
       default:
-        return <div>Select a section to edit</div>;
+        return (
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/80 px-4 py-8 text-center text-[11px] text-gray-500">
+            Select a section in the left rail to edit.
+          </div>
+        );
     }
   };
 
@@ -3923,128 +3965,120 @@ const HomepageManagement: React.FC = () => {
   ];
 
   return (
-    <AdminLayout title="" noHeader={true}>
-      <div className="flex h-screen bg-gray-50">
-        {/* Left Sidebar - Section Navigation */}
-        <div 
-          className="bg-white border-r border-gray-200 w-20 h-full fixed top-0 left-20 z-20"
-        >
-          {/* Sidebar Header */}
-          <div className="p-4 border-b border-gray-200">
+    <AdminLayout title="Homepage" noHeader>
+      <div className="flex min-h-0 w-full bg-gray-50">
+        <div className="fixed left-20 top-0 z-20 flex h-screen w-[4.25rem] flex-col border-r border-gray-200 bg-white">
+          <div className="shrink-0 border-b border-gray-200 p-2">
             <div className="flex items-center justify-center">
-              <div className="p-2 bg-pink-100 rounded-lg">
-                <Layout className="w-6 h-6 text-pink-600" />
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-1">
+                <Layout className="h-4 w-4 text-gray-800" />
               </div>
             </div>
           </div>
 
-          {/* Navigation Menu */}
-          <div className="py-4">
-            <nav className="space-y-1 px-3">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => setSelectedSection(section.id)}
-                  className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 group relative ${
+          <nav
+            ref={navRef}
+            onScroll={onNavScroll}
+            className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-1.5 py-2"
+          >
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setSelectedSection(section.id)}
+                className={`group relative flex w-full items-center justify-center rounded-md p-2 transition-colors ${
+                  selectedSection === section.id
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                }`}
+                title={section.name}
+              >
+                {selectedSection === section.id && (
+                  <div className="absolute bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-gray-900" />
+                )}
+                <span
+                  className={
                     selectedSection === section.id
-                      ? 'bg-gray-50 text-black'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                  title={section.name}
+                      ? 'text-gray-900'
+                      : 'text-gray-500 group-hover:text-gray-700'
+                  }
                 >
-                  {/* Active indicator */}
-                  {selectedSection === section.id && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-black rounded-r-full" />
-                  )}
-                  
-                  <span className={`flex-shrink-0 transition-colors ${
-                    selectedSection === section.id ? 'text-black' : 'text-gray-500 group-hover:text-gray-700'
-                  }`}>
-                    {getSectionIcon(section.type)}
-                  </span>
-                  
-                  {/* Tooltip for collapsed state */}
-                  <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                    {section.name}
-                    <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
-                  </div>
-                </button>
-              ))}
-            </nav>
-          </div>
-
-
+                  {getSectionIcon(section.type)}
+                </span>
+                <div className="pointer-events-none absolute left-full top-1/2 z-50 ml-1.5 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1.5 text-xs text-white opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100">
+                  {section.name}
+                  <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+                </div>
+              </button>
+            ))}
+          </nav>
         </div>
 
-        {/* Right Side - Section Editor with left margin to account for fixed sidebars */}
-        <div className="flex-1 flex flex-col overflow-hidden ml-20">
-          {/* Content Header */}
-          <div className="px-6 py-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="text-pink-600">
-                    {getSectionIcon(sections.find(s => s.id === selectedSection)?.type || 'hero')}
-                  </span>
-                  <div>
-                    <h1 className="text-lg font-semibold text-gray-800">
-                      {sections.find(s => s.id === selectedSection)?.name} Editor
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pl-[4.25rem]">
+          <div className="shrink-0 px-3 py-3 sm:px-5">
+            <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-2">
+                  <div className="mt-0.5 rounded-md border border-gray-100 bg-gray-50 p-1 text-gray-700">
+                    {getSectionIcon(sections.find((s) => s.id === selectedSection)?.type || 'hero')}
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="text-sm font-semibold text-gray-900">
+                      {sections.find((s) => s.id === selectedSection)?.name}
                     </h1>
-                    <p className="text-sm text-gray-600">
-                      Configure the {sections.find(s => s.id === selectedSection)?.name.toLowerCase()} section
+                    <p className="text-[11px] text-gray-500">
+                      Edit homepage section content
                     </p>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {settingsLoaded && (
-                    <div className="flex items-center space-x-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                      <Check className="w-3 h-3" />
-                      <span>Settings Loaded</span>
+                    <div className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-800">
+                      <Check className="h-3 w-3" />
+                      Loaded
                     </div>
                   )}
-                  <button 
+                  <button
+                    type="button"
                     onClick={handlePreview}
-                    className={`flex items-center space-x-2 px-3 py-2 border border-gray-200 rounded-lg transition-colors text-sm ${
-                      isPreviewMode 
-                        ? 'bg-green-50 text-green-700 border-green-200' 
-                        : 'text-gray-600 hover:bg-gray-50'
+                    className={`inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium ${
+                      isPreviewMode
+                        ? 'border-green-200 bg-green-50 text-green-800'
+                        : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
-                    <Eye className="w-4 h-4" />
-                    <span>{isPreviewMode ? 'Exit Preview' : 'Preview'}</span>
+                    <Eye className="h-3.5 w-3.5" />
+                    {isPreviewMode ? 'Exit preview' : 'Preview'}
                   </button>
-                  <button 
+                  <button
+                    type="button"
                     onClick={handleSaveChanges}
                     disabled={saveStatus === 'saving' || loading}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors text-sm ${
+                    className={`inline-flex h-8 items-center gap-1 rounded-md px-3 text-xs font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 ${
                       saveStatus === 'saving' || loading
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        ? 'bg-gray-400'
                         : saveStatus === 'saved'
-                        ? 'bg-green-500 text-white'
-                        : saveStatus === 'error'
-                        ? 'bg-red-500 text-white'
-                        : 'bg-pink-500 hover:bg-pink-600 text-white'
+                          ? 'bg-green-600'
+                          : saveStatus === 'error'
+                            ? 'bg-red-600'
+                            : 'bg-gray-900 hover:bg-gray-800'
                     }`}
                   >
-                    <Save className="w-4 h-4" />
-                    <span>
-                      {loading && 'Loading...'}
-                      {saveStatus === 'saving' && 'Saving...'}
-                      {saveStatus === 'saved' && 'Saved!'}
-                      {saveStatus === 'error' && 'Error - Try Again'}
-                      {saveStatus === 'idle' && !loading && 'Save Changes'}
-                    </span>
+                    <Save className="h-3.5 w-3.5" />
+                    {loading && 'Loading…'}
+                    {saveStatus === 'saving' && 'Saving…'}
+                    {saveStatus === 'saved' && 'Saved'}
+                    {saveStatus === 'error' && 'Retry'}
+                    {saveStatus === 'idle' && !loading && 'Save'}
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="px-6 pb-6">
-              {renderSectionEditor()}
-            </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="px-3 pb-4 sm:px-5 sm:pb-5">{renderSectionEditor()}</div>
           </div>
         </div>
       </div>
