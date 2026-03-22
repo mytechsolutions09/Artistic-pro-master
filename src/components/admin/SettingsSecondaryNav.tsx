@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react';
+import React from 'react';
+import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 import { 
   Globe, Shield, Bell, Palette, DollarSign, Users, 
   Database, Mail, Lock, Zap, Monitor,
@@ -119,7 +120,7 @@ const SettingsSecondaryNav: React.FC<SettingsSecondaryNavProps> = ({
   onTabChange,
   className = ''
 }) => {
-  const activeTabData = SETTINGS_TABS.find(tab => tab.id === activeTab);
+  const { navRef, onNavScroll } = usePreserveNavScroll([activeTab]);
 
   return (
     <div 
@@ -136,25 +137,31 @@ const SettingsSecondaryNav: React.FC<SettingsSecondaryNavProps> = ({
 
       {/* Navigation Menu */}
       <div className="py-4 flex-1 overflow-hidden">
-        <nav className="space-y-1 px-3 h-full overflow-y-auto scrollbar-hide">
+        <nav
+          ref={navRef}
+          onScroll={onNavScroll}
+          className="scrollbar-hide h-full space-y-1 overflow-y-auto px-3"
+        >
           {SETTINGS_TABS.map((tab) => (
             <button
               key={tab.id}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onTabChange(tab.id)}
-              className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 group relative ${
-                activeTab === tab.id
-                  ? 'bg-pink-50 text-pink-700'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-              }`}
+                className={`group relative flex w-full items-center justify-center rounded-lg p-3 transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-gray-50 text-black'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               title={tab.label}
             >
               {/* Active indicator */}
               {activeTab === tab.id && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-pink-500 rounded-r-full" />
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-black rounded-r-full" />
               )}
               
               <span className={`flex-shrink-0 transition-colors ${
-                activeTab === tab.id ? 'text-pink-600' : 'text-gray-500 group-hover:text-gray-700'
+                activeTab === tab.id ? 'text-black' : 'text-gray-500 group-hover:text-gray-700'
               }`}>
                 {tab.icon}
               </span>

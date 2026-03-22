@@ -7,6 +7,18 @@ import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav'
 import { supabase } from '../../services/supabaseService';
 import MetaPixelService from '../../services/metaPixelService';
 
+const inputCls =
+  'h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+const textareaCls =
+  'w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+const labelCls = 'block text-[11px] font-medium text-gray-600 mb-1';
+const cardCls = 'rounded-lg border border-gray-200 bg-white p-3 shadow-sm';
+const stickyBarCls = 'sticky bottom-2 z-10 rounded-lg border border-gray-200 bg-white p-2 shadow-md';
+const btnPrimary =
+  'inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed';
+const btnOutline =
+  'inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50';
+
 interface MarketingSettings {
   meta_pixel_id: string;
   meta_pixel_enabled: boolean;
@@ -860,401 +872,349 @@ const Marketing: React.FC = () => {
 
   if (loading) {
     return (
-      <AdminLayout title="Marketing & Analytics">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+      <AdminLayout title="Marketing" noHeader>
+        <div className="flex flex-col items-center justify-center gap-2 py-16">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+          <span className="text-[11px] text-gray-500">Loading marketing settings…</span>
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title="Marketing & Analytics" noHeader={true}>
+    <AdminLayout title="Marketing" noHeader>
       <MarketingSecondaryNav activeTab={activeSubTab} onTabChange={setActiveSubTab} />
-      <div className="flex-1 flex flex-col overflow-hidden ml-24">
-      <div className="space-y-2 p-3">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-3 rounded-lg shadow-sm">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-              <TrendingUp className="w-6 h-6 text-white" />
+      <div className="ml-24 flex flex-1 flex-col overflow-hidden">
+      <div className="space-y-3 px-3 py-4 sm:px-5">
+        <div className={cardCls}>
+          <div className="flex items-start gap-2">
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+              <TrendingUp className="h-4 w-4 text-gray-800" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Marketing & Analytics</h1>
-              <p className="text-sm text-pink-100">Track user behavior and optimize ad campaigns</p>
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold text-gray-900">Marketing &amp; analytics</h1>
+              <p className="text-[11px] text-gray-500">Tracking pixels, SEO, and keyword routines</p>
             </div>
           </div>
         </div>
 
-        {/* Status Message */}
         {message && (
-          <div className={`p-3 rounded-lg flex items-center space-x-2 ${
-            message.type === 'success' 
-              ? 'bg-green-50 border border-green-200 text-green-800' 
-              : 'bg-red-50 border border-red-200 text-red-800'
-          }`}>
+          <div
+            className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 text-xs ${
+              message.type === 'success'
+                ? 'border-green-200 bg-green-50 text-green-800'
+                : 'border-red-200 bg-red-50 text-red-800'
+            }`}
+          >
             {message.type === 'success' ? (
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             ) : (
-              <AlertCircle className="w-5 h-5" />
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             )}
-            <span className="font-medium">{message.text}</span>
+            <span className="font-medium leading-snug">{message.text}</span>
           </div>
         )}
 
         <div className={activeSubTab === 'tracking' ? 'space-y-3' : 'hidden'}>
-        {/* Meta (Facebook) Pixel */}
-        <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Facebook className="w-6 h-6 text-blue-600" />
+        <div className={cardCls}>
+          <div className="mb-2 flex flex-wrap items-start justify-between gap-2 border-b border-gray-100 pb-2">
+            <div className="flex min-w-0 items-start gap-2">
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+                <Facebook className="h-4 w-4 text-gray-700" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-800">Meta (Facebook) Pixel</h2>
-                <p className="text-sm text-gray-500">Track conversions and optimize Facebook Ads</p>
+                <h2 className="text-xs font-semibold text-gray-900">Meta (Facebook) Pixel</h2>
+                <p className="text-[11px] text-gray-500">Conversions and ad optimization</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1 ${
-                pixelStatus === 'active' 
-                  ? 'bg-green-100 text-green-700' 
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                pixelStatus === 'active'
+                  ? 'bg-green-50 text-green-800'
                   : pixelStatus === 'inactive'
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-gray-100 text-gray-700'
-              }`}>
-                <Eye className="w-4 h-4" />
-                <span>
-                  {pixelStatus === 'active' ? 'Active' : pixelStatus === 'inactive' ? 'Inactive' : 'Checking...'}
-                </span>
-              </span>
-            </div>
+                    ? 'bg-red-50 text-red-800'
+                    : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              <Eye className="h-3 w-3" />
+              {pixelStatus === 'active' ? 'Active' : pixelStatus === 'inactive' ? 'Inactive' : 'Checking…'}
+            </span>
           </div>
 
-          <div className="space-y-3">
-            {/* Pixel ID Input */}
+          <div className="space-y-2.5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Meta Pixel ID
-              </label>
-              <div className="flex space-x-2">
+              <label className={labelCls}>Meta Pixel ID</label>
+              <div className="flex gap-1.5">
                 <input
                   type="text"
                   value={settings.meta_pixel_id}
                   onChange={(e) => setSettings({ ...settings, meta_pixel_id: e.target.value })}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  className={`${inputCls} min-w-0 flex-1`}
                   placeholder="1234567890123456"
                 />
                 <button
+                  type="button"
                   onClick={handleCopyPixelId}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center space-x-2"
+                  className={btnOutline}
                   title="Copy Pixel ID"
                 >
-                  {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
-                  <span>{copied ? 'Copied!' : 'Copy'}</span>
+                  {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? 'Copied' : 'Copy'}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Find your Pixel ID in Meta Events Manager
-              </p>
+              <p className="mt-0.5 text-[10px] text-gray-500">From Meta Events Manager</p>
             </div>
 
-            {/* Enable/Disable Toggle */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-700">Enable Meta Pixel</p>
-                <p className="text-sm text-gray-500">Track page views, conversions, and user behavior</p>
+            <div className="flex items-center justify-between gap-2 rounded-md border border-gray-100 bg-gray-50/80 px-2.5 py-2">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-800">Enable Meta Pixel</p>
+                <p className="text-[10px] text-gray-500">Page views, conversions, behavior</p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex cursor-pointer items-center">
                 <input
                   type="checkbox"
                   checked={settings.meta_pixel_enabled}
                   onChange={(e) => setSettings({ ...settings, meta_pixel_enabled: e.target.checked })}
-                  className="sr-only peer"
+                  className="peer sr-only"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+                <div className="relative h-5 w-9 shrink-0 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all peer-checked:bg-gray-900 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-300" />
               </label>
             </div>
 
-            {/* Test Pixel Button */}
-            <div className="flex space-x-2">
-              <button
-                onClick={testPixel}
-                className="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium"
-              >
-                <BarChart3 className="w-5 h-5" />
-                <span>Test Pixel</span>
+            <div className="flex flex-wrap gap-1.5">
+              <button type="button" onClick={testPixel} className={`${btnPrimary} flex-1 min-w-[8rem]`}>
+                <BarChart3 className="h-3.5 w-3.5" />
+                Test pixel
               </button>
               <a
                 href="https://business.facebook.com/events_manager"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center space-x-2 font-medium"
+                className={btnOutline}
               >
-                <ExternalLink className="w-5 h-5" />
-                <span>Events Manager</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+                Events Manager
               </a>
             </div>
 
-            {/* Info Box */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Events Being Tracked:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• PageView - All page views</li>
-                <li>• ViewContent - Product views</li>
-                <li>• AddToCart - Cart additions</li>
-                <li>• InitiateCheckout - Checkout starts</li>
-                <li>• Purchase - Completed orders</li>
-                <li>• CompleteRegistration - User sign-ups</li>
-                <li>• AddToWishlist - Favorites</li>
+            <div className="rounded-md border border-gray-200 bg-gray-50 px-2.5 py-2">
+              <h4 className="mb-1 text-[11px] font-semibold text-gray-800">Events tracked</h4>
+              <ul className="grid gap-0.5 text-[10px] text-gray-600 sm:grid-cols-2">
+                <li>PageView</li>
+                <li>ViewContent</li>
+                <li>AddToCart</li>
+                <li>InitiateCheckout</li>
+                <li>Purchase</li>
+                <li>CompleteRegistration</li>
+                <li>AddToWishlist</li>
               </ul>
             </div>
           </div>
         </div>
 
-        {/* Google Analytics (Coming Soon) */}
-        <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm opacity-60">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <BarChart3 className="w-6 h-6 text-orange-600" />
+        <div className={`${cardCls} opacity-60`}>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-start gap-2">
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+                <BarChart3 className="h-4 w-4 text-gray-600" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-800">Google Analytics</h2>
-                <p className="text-sm text-gray-500">Website traffic and user insights</p>
+                <h2 className="text-xs font-semibold text-gray-900">Google Analytics</h2>
+                <p className="text-[11px] text-gray-500">Traffic &amp; behavior (GA4)</p>
               </div>
             </div>
-            <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
-              Coming Soon
-            </span>
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Soon</span>
           </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Measurement ID
-              </label>
-              <input
-                type="text"
-                value={settings.google_analytics_id}
-                onChange={(e) => setSettings({ ...settings, google_analytics_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="G-XXXXXXXXXX"
-                disabled
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Google Analytics 4 (GA4) tracking ID
-              </p>
-            </div>
+          <div>
+            <label className={labelCls}>Measurement ID</label>
+            <input
+              type="text"
+              value={settings.google_analytics_id}
+              onChange={(e) => setSettings({ ...settings, google_analytics_id: e.target.value })}
+              className={`${inputCls} opacity-80`}
+              placeholder="G-XXXXXXXXXX"
+              disabled
+            />
+            <p className="mt-0.5 text-[10px] text-gray-500">GA4 measurement ID</p>
           </div>
         </div>
 
-        {/* Google Tag Manager (Coming Soon) */}
-        <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm opacity-60">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Eye className="w-6 h-6 text-purple-600" />
+        <div className={`${cardCls} opacity-60`}>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-2">
+            <div className="flex items-start gap-2">
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+                <Eye className="h-4 w-4 text-gray-600" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-800">Google Tag Manager</h2>
-                <p className="text-sm text-gray-500">Manage marketing tags without code changes</p>
+                <h2 className="text-xs font-semibold text-gray-900">Google Tag Manager</h2>
+                <p className="text-[11px] text-gray-500">Tags without deploys</p>
               </div>
             </div>
-            <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
-              Coming Soon
-            </span>
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Soon</span>
           </div>
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Container ID
-              </label>
-              <input
-                type="text"
-                value={settings.google_tag_manager_id}
-                onChange={(e) => setSettings({ ...settings, google_tag_manager_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="GTM-XXXXXXX"
-                disabled
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Your GTM container ID
-              </p>
-            </div>
+          <div>
+            <label className={labelCls}>Container ID</label>
+            <input
+              type="text"
+              value={settings.google_tag_manager_id}
+              onChange={(e) => setSettings({ ...settings, google_tag_manager_id: e.target.value })}
+              className={`${inputCls} opacity-80`}
+              placeholder="GTM-XXXXXXX"
+              disabled
+            />
+            <p className="mt-0.5 text-[10px] text-gray-500">GTM container ID</p>
           </div>
         </div>
 
-        {/* Save Button */}
-        <div className="sticky bottom-3 bg-white border border-gray-200 p-2.5 rounded-lg shadow-md">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+        <div className={stickyBarCls}>
+          <button type="button" onClick={handleSave} disabled={saving} className={`${btnPrimary} w-full`}>
             {saving ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>Saving...</span>
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                Saving…
               </>
             ) : (
               <>
-                <Save className="w-5 h-5" />
-                <span>Save Marketing Settings</span>
+                <Save className="h-3.5 w-3.5" />
+                Save marketing settings
               </>
             )}
           </button>
         </div>
 
-        {/* Quick Links */}
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200">
-          <h3 className="font-semibold text-gray-800 mb-3">Quick Links & Resources</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <a
-              href="https://business.facebook.com/events_manager"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 p-3 bg-white hover:bg-gray-50 rounded border border-gray-200 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 text-blue-500" />
-              <span className="text-sm text-gray-700">Meta Events Manager</span>
-            </a>
-            <a
-              href="https://developers.facebook.com/docs/meta-pixel"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 p-3 bg-white hover:bg-gray-50 rounded border border-gray-200 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 text-blue-500" />
-              <span className="text-sm text-gray-700">Meta Pixel Docs</span>
-            </a>
-            <a
-              href="https://chrome.google.com/webstore/detail/meta-pixel-helper/fdgfkebogiimcoedlicjlajpkdmockpc"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 p-3 bg-white hover:bg-gray-50 rounded border border-gray-200 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 text-blue-500" />
-              <span className="text-sm text-gray-700">Meta Pixel Helper</span>
-            </a>
-            <a
-              href="https://www.facebook.com/business/help/952192354843755"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 p-3 bg-white hover:bg-gray-50 rounded border border-gray-200 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 text-blue-500" />
-              <span className="text-sm text-gray-700">Setup Guide</span>
-            </a>
+        <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-3">
+          <h3 className="mb-2 text-xs font-semibold text-gray-900">Quick links</h3>
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            {[
+              ['https://business.facebook.com/events_manager', 'Meta Events Manager'],
+              ['https://developers.facebook.com/docs/meta-pixel', 'Meta Pixel docs'],
+              [
+                'https://chrome.google.com/webstore/detail/meta-pixel-helper/fdgfkebogiimcoedlicjlajpkdmockpc',
+                'Pixel Helper',
+              ],
+              ['https://www.facebook.com/business/help/952192354843755', 'Setup guide'],
+            ].map(([href, label]) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-[11px] text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <ExternalLink className="h-3 w-3 shrink-0 text-gray-500" />
+                {label}
+              </a>
+            ))}
           </div>
         </div>
         </div>
 
         {/* SEO: single tab (merged former SEO + SEO Studio — no duplicate fields) */}
         <div className={activeSubTab === 'seo' ? 'space-y-3' : 'hidden'}>
-          <div className="bg-violet-50 p-3 rounded-lg border border-violet-200">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <h3 className="text-sm font-semibold text-violet-900">SEO workflow</h3>
-              <span className="text-xs text-violet-700">
-                {Object.values(seoWorkflowState).filter(Boolean).length}/4 completed
+          <div className="rounded-lg border border-gray-200 bg-gray-50/90 p-2.5">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <h3 className="text-xs font-semibold text-gray-900">SEO workflow</h3>
+              <span className="text-[10px] font-medium text-gray-500">
+                {Object.values(seoWorkflowState).filter(Boolean).length}/4
               </span>
             </div>
-            <ol className="space-y-1 text-xs text-violet-900 list-decimal list-inside">
-              <li>Pick target focus (home / category / product).</li>
-              <li>Fill title (50–60 chars) and meta description (150–160).</li>
-              <li>Auto-generate internal links, edit, then save.</li>
-              <li>Copy links into homepage or content as needed.</li>
+            <ol className="list-inside list-decimal space-y-0.5 text-[11px] text-gray-600">
+              <li>Pick target (home / category / product).</li>
+              <li>Title 50–60 chars, meta 150–160.</li>
+              <li>Auto-generate internal links, edit, save.</li>
+              <li>Copy links into content as needed.</li>
             </ol>
           </div>
 
-          <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <Search className="w-5 h-5 text-emerald-600" />
+          <div className={cardCls}>
+            <div className="mb-2 flex items-start gap-2 border-b border-gray-100 pb-2">
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+                <Search className="h-4 w-4 text-gray-700" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-800">Site SEO</h2>
-                <p className="text-sm text-gray-500">
-                  Homepage metadata (marketing settings) and internal linking — one place, no duplicate editors.
+                <h2 className="text-xs font-semibold text-gray-900">Site SEO</h2>
+                <p className="text-[11px] text-gray-500">
+                  Homepage metadata and internal linking in one place.
                 </p>
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Target page focus</label>
+            <div className="mb-3">
+              <label className={labelCls}>Target page focus</label>
               <select
                 value={seoStudioTarget}
                 onChange={(e) => setSeoStudioTarget(e.target.value as 'home' | 'category' | 'product')}
-                className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className={`${inputCls} max-w-md`}
               >
                 <option value="home">Homepage</option>
                 <option value="category">Category page</option>
                 <option value="product">Product page</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Planning label — title/meta below map to global homepage fields in marketing settings.
-              </p>
+              <p className="mt-0.5 text-[10px] text-gray-500">Planning label — maps to global marketing fields.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <div className="space-y-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Page title</label>
+                  <label className={labelCls}>Page title</label>
                   <input
                     type="text"
                     value={seoSettings.page_title}
                     onChange={(e) => setSeoSettings({ ...seoSettings, page_title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={inputCls}
                     placeholder="Lurevi | Luxury Lifestyle Brand India"
                   />
-                  <p className={`text-xs mt-1 ${titleLength >= 50 && titleLength <= 60 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {titleLength}/60 (target: 50–60)
+                  <p
+                    className={`mt-0.5 text-[10px] ${titleLength >= 50 && titleLength <= 60 ? 'text-green-700' : 'text-amber-700'}`}
+                  >
+                    {titleLength}/60 (50–60)
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Meta description</label>
+                  <label className={labelCls}>Meta description</label>
                   <textarea
                     value={seoSettings.meta_description}
                     onChange={(e) => setSeoSettings({ ...seoSettings, meta_description: e.target.value })}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    rows={3}
+                    className={textareaCls}
                     placeholder="Discover curated digital artworks, premium prints, and exclusive collections."
                   />
-                  <p className={`text-xs mt-1 ${descriptionLength >= 150 && descriptionLength <= 160 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {descriptionLength}/160 (target: 150–160)
+                  <p
+                    className={`mt-0.5 text-[10px] ${descriptionLength >= 150 && descriptionLength <= 160 ? 'text-green-700' : 'text-amber-700'}`}
+                  >
+                    {descriptionLength}/160 (150–160)
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Meta keywords</label>
+                  <label className={labelCls}>Meta keywords</label>
                   <input
                     type="text"
                     value={seoSettings.meta_keywords}
                     onChange={(e) => setSeoSettings({ ...seoSettings, meta_keywords: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={inputCls}
                     placeholder="digital art, wall art, prints, modern art, online gallery"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Open Graph image URL</label>
+                  <label className={labelCls}>Open Graph image URL</label>
                   <input
                     type="text"
                     value={seoSettings.og_image}
                     onChange={(e) => setSeoSettings({ ...seoSettings, og_image: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={inputCls}
                     placeholder="https://your-domain.com/og-image.jpg"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Robots directive</label>
+                  <label className={labelCls}>Robots directive</label>
                   <select
                     value={seoSettings.robots}
                     onChange={(e) => setSeoSettings({ ...seoSettings, robots: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={inputCls}
                   >
                     <option value="index, follow">index, follow (default)</option>
                     <option value="noindex, follow">noindex, follow</option>
@@ -1264,22 +1224,22 @@ const Marketing: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <label className="block text-sm font-medium text-gray-700">Internal linking suggestions</label>
-                  <div className="flex items-center gap-2">
+              <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-2.5">
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1.5">
+                  <label className="text-[11px] font-medium text-gray-700">Internal linking</label>
+                  <div className="flex flex-wrap gap-1">
                     <button
                       type="button"
                       onClick={() => void handleAutoGenerateSuggestions()}
                       disabled={generatingSuggestions}
-                      className="px-2.5 py-1.5 text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-md transition-colors disabled:opacity-50"
+                      className="inline-flex h-7 items-center rounded-md border border-gray-200 bg-white px-2 text-[10px] font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
                     >
-                      {generatingSuggestions ? 'Generating...' : 'Auto-generate'}
+                      {generatingSuggestions ? 'Generating…' : 'Auto-generate'}
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleCopySuggestions()}
-                      className="px-2.5 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+                      className="inline-flex h-7 items-center rounded-md border border-gray-200 bg-white px-2 text-[10px] font-medium text-gray-700 hover:bg-gray-50"
                     >
                       {copySuggestionsDone ? 'Copied' : 'Copy'}
                     </button>
@@ -1290,25 +1250,25 @@ const Marketing: React.FC = () => {
                   onChange={(e) =>
                     setSeoSettings({ ...seoSettings, internal_linking_suggestions: e.target.value })
                   }
-                  rows={12}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  rows={10}
+                  className={`${textareaCls} min-h-[8rem] bg-white`}
                   placeholder={`Homepage -> /categories (anchor: Explore Luxury Collections)\n/categories -> /shop (anchor: Shop Bestsellers)\n/shop -> /contact-us (anchor: Contact Lurevi Concierge)`}
                 />
-                <p className="text-xs text-gray-500 mt-2">
-                  Tip: <code>source -&gt; target (anchor: text)</code>
+                <p className="mt-1 text-[10px] text-gray-500">
+                  Tip: <code className="rounded bg-gray-100 px-0.5">source -&gt; target (anchor: text)</code>
                 </p>
                 {seoSettings.internal_linking_suggestions.trim() && (
-                  <div className="mt-3 border-t border-gray-200 pt-3">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Quick preview</p>
-                    <ul className="space-y-1">
+                  <div className="mt-2 border-t border-gray-200 pt-2">
+                    <p className="mb-1 text-[10px] font-medium text-gray-600">Preview</p>
+                    <ul className="space-y-0.5">
                       {seoSettings.internal_linking_suggestions
                         .split('\n')
                         .map((line) => line.trim())
                         .filter(Boolean)
                         .slice(0, 8)
                         .map((line, idx) => (
-                          <li key={`${line}-${idx}`} className="text-sm text-gray-700 flex items-start gap-2">
-                            <span className="text-emerald-600 mt-0.5">•</span>
+                          <li key={`${line}-${idx}`} className="flex items-start gap-1.5 text-[11px] text-gray-700">
+                            <span className="mt-0.5 text-gray-400">•</span>
                             <span>{line}</span>
                           </li>
                         ))}
@@ -1319,54 +1279,45 @@ const Marketing: React.FC = () => {
             </div>
           </div>
 
-          <div className="sticky bottom-3 bg-white border border-gray-200 p-2.5 rounded-lg shadow-md">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={handleSaveSeo}
-                disabled={savingSeo}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+          <div className={stickyBarCls}>
+            <div className="flex flex-wrap gap-1.5">
+              <button type="button" onClick={handleSaveSeo} disabled={savingSeo} className={btnPrimary}>
                 {savingSeo ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Saving...</span>
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    Saving…
                   </>
                 ) : (
                   <>
-                    <Save className="w-5 h-5" />
-                    <span>Save SEO settings</span>
+                    <Save className="h-3.5 w-3.5" />
+                    Save SEO
                   </>
                 )}
               </button>
               <button
+                type="button"
                 onClick={() => void runSeoStudioAction()}
                 disabled={savingSeo}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+                className={`${btnPrimary} bg-gray-700 hover:bg-gray-600`}
               >
-                <Save className="w-4 h-4" />
-                <span>{savingSeo ? 'Saving…' : 'Save & copy links'}</span>
+                <Save className="h-3.5 w-3.5" />
+                {savingSeo ? 'Saving…' : 'Save & copy links'}
               </button>
-              <button
-                onClick={() => void handleCopySuggestions()}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm"
-              >
-                <Link2 className="w-4 h-4" />
-                <span>{copySuggestionsDone ? 'Copied' : 'Copy links only'}</span>
+              <button type="button" onClick={() => void handleCopySuggestions()} className={btnOutline}>
+                <Link2 className="h-3.5 w-3.5" />
+                {copySuggestionsDone ? 'Copied' : 'Links only'}
               </button>
-              <button
-                onClick={openHomepageEditorFromStudio}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm"
-              >
-                <FileText className="w-4 h-4" />
-                <span>Homepage editor</span>
+              <button type="button" onClick={openHomepageEditorFromStudio} className={btnOutline}>
+                <FileText className="h-3.5 w-3.5" />
+                Homepage
               </button>
               <button
                 type="button"
                 onClick={() => window.open('https://search.google.com/search-console', '_blank', 'noopener,noreferrer')}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors flex items-center gap-2 text-sm"
+                className={btnOutline}
               >
-                <ExternalLink className="w-4 h-4" />
-                <span>Search Console</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+                Search Console
               </button>
             </div>
           </div>
@@ -1374,70 +1325,71 @@ const Marketing: React.FC = () => {
 
         {/* Keyword tracking */}
         <div className={activeSubTab === 'keyword_tracking' ? 'space-y-3' : 'hidden'}>
-          <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-            <div className="flex items-start justify-between gap-3 mb-3">
+          <div className={cardCls}>
+            <div className="mb-2 flex flex-wrap items-start justify-between gap-2 border-b border-gray-100 pb-2">
               <div>
-                <h2 className="text-base font-semibold text-gray-800">Keyword Tracking</h2>
-                <p className="text-sm text-gray-500">
-                  Add 3-10 priority keywords and record movement (previous vs current position).
-                </p>
+                <h2 className="text-xs font-semibold text-gray-900">Keyword tracking</h2>
+                <p className="text-[11px] text-gray-500">3–10 keywords, previous vs current rank.</p>
               </div>
               {keywordTrackingSavedAt && (
-                <span className="text-xs text-gray-500">
-                  Last saved: {new Date(keywordTrackingSavedAt).toLocaleString()}
+                <span className="text-[10px] text-gray-500">
+                  Saved {new Date(keywordTrackingSavedAt).toLocaleString()}
                 </span>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {keywordRows.map((row, index) => (
-                <div key={`keyword-row-${index}`} className="grid grid-cols-1 lg:grid-cols-12 gap-2 p-2.5 border border-gray-200 rounded-lg">
+                <div
+                  key={`keyword-row-${index}`}
+                  className="grid grid-cols-1 gap-1.5 rounded-md border border-gray-200 p-2 lg:grid-cols-12"
+                >
                   <div className="lg:col-span-4">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Keyword {index + 1}</label>
+                    <label className={labelCls}>Keyword {index + 1}</label>
                     <input
                       type="text"
                       value={row.keyword}
                       onChange={(e) => handleKeywordRowChange(index, 'keyword', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className={inputCls}
                       placeholder="e.g. luxury wall art india"
                     />
                   </div>
                   <div className="lg:col-span-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Previous</label>
+                    <label className={labelCls}>Prev</label>
                     <input
                       type="number"
                       min={1}
                       value={row.previousPosition}
                       onChange={(e) => handleKeywordRowChange(index, 'previousPosition', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className={inputCls}
                       placeholder="#"
                     />
                   </div>
                   <div className="lg:col-span-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Current</label>
+                    <label className={labelCls}>Curr</label>
                     <input
                       type="number"
                       min={1}
                       value={row.currentPosition}
                       onChange={(e) => handleKeywordRowChange(index, 'currentPosition', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className={inputCls}
                       placeholder="#"
                     />
                   </div>
                   <div className="lg:col-span-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Move</label>
-                    <div className="h-10 px-2 border border-gray-200 rounded-lg bg-gray-50 flex items-center text-sm text-gray-700">
+                    <label className={labelCls}>Δ</label>
+                    <div className="flex h-8 items-center rounded-md border border-gray-200 bg-gray-50 px-2 text-xs tabular-nums text-gray-800">
                       {getMovementDelta(row)}
                     </div>
                   </div>
                   <div className="lg:col-span-3">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+                    <label className={labelCls}>Notes</label>
                     <input
                       type="text"
                       value={row.movementNote}
                       onChange={(e) => handleKeywordRowChange(index, 'movementNote', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                      placeholder="why it moved / action"
+                      className={inputCls}
+                      placeholder="why / action"
                     />
                   </div>
                 </div>
@@ -1445,81 +1397,72 @@ const Marketing: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm space-y-2">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={saveKeywordTracking}
-                disabled={savingKeywordTracking}
-                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+          <div className={`${cardCls} space-y-2`}>
+            <div className="flex flex-wrap gap-1.5">
+              <button type="button" onClick={saveKeywordTracking} disabled={savingKeywordTracking} className={btnPrimary}>
                 {savingKeywordTracking ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Saving...</span>
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    Saving…
                   </>
                 ) : (
                   <>
-                    <Save className="w-5 h-5" />
-                    <span>Save Keyword Tracking</span>
+                    <Save className="h-3.5 w-3.5" />
+                    Save keywords
                   </>
                 )}
               </button>
               <button
+                type="button"
                 onClick={() => void autofillKeywordsFromContent()}
                 disabled={autofillingKeywords}
-                className="px-4 py-2 bg-violet-100 hover:bg-violet-200 text-violet-800 rounded-lg transition-colors font-medium disabled:opacity-50"
+                className={btnOutline}
               >
-                {autofillingKeywords ? 'Auto-filling...' : 'Auto-fill Keywords'}
+                {autofillingKeywords ? 'Filling…' : 'Auto-fill'}
               </button>
-              <button
-                onClick={generateKeywordActionPlan}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
-              >
-                Generate Rank-Higher Actions
+              <button type="button" onClick={generateKeywordActionPlan} className={btnOutline}>
+                Rank actions
               </button>
-              <button
-                onClick={() => void copyKeywordActionPlan()}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
-              >
-                {copiedKeywordPlan ? 'Copied' : 'Copy Action Plan'}
+              <button type="button" onClick={() => void copyKeywordActionPlan()} className={btnOutline}>
+                {copiedKeywordPlan ? 'Copied' : 'Copy plan'}
               </button>
             </div>
             <textarea
               value={keywordActionPlan}
               onChange={(e) => setKeywordActionPlan(e.target.value)}
-              rows={8}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-              placeholder="Generated weekly action plan will appear here..."
+              rows={6}
+              className={textareaCls}
+              placeholder="Generated action plan…"
             />
           </div>
         </div>
 
         {/* SEO Daily Sub-tab Content */}
         <div className={activeSubTab === 'seo_daily' ? 'space-y-3' : 'hidden'}>
-          <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+          <div className={cardCls}>
+            <div className="mb-2 flex flex-wrap items-start justify-between gap-2 border-b border-gray-100 pb-2">
+              <div className="flex items-start gap-2">
+                <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+                  <CheckCircle className="h-4 w-4 text-gray-700" />
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-gray-800">SEO Daily Checklist</h2>
-                  <p className="text-sm text-gray-500">Use this routine every day to steadily improve rankings.</p>
+                  <h2 className="text-xs font-semibold text-gray-900">SEO daily checklist</h2>
+                  <p className="text-[11px] text-gray-500">Short routine for steady gains.</p>
                 </div>
               </div>
-              <span className="px-3 py-1 rounded-full text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                {completedDailyTasks}/{DAILY_SEO_TASKS.length} done
+              <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-medium text-gray-800">
+                {completedDailyTasks}/{DAILY_SEO_TASKS.length}
               </span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               {DAILY_SEO_TASKS.map((task) => (
                 <label
                   key={task.id}
-                  className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                  className={`flex cursor-pointer items-start gap-2 rounded-md border p-2 transition-colors ${
                     dailyChecklist[task.id]
-                      ? 'bg-emerald-50 border-emerald-200'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                      ? 'border-gray-300 bg-gray-50'
+                      : 'border-gray-200 bg-white hover:bg-gray-50/80'
                   }`}
                 >
                   <input
@@ -1527,19 +1470,19 @@ const Marketing: React.FC = () => {
                     checked={Boolean(dailyChecklist[task.id])}
                     onChange={() => void toggleDailyTask(task.id)}
                     disabled={runningTaskId === task.id}
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                    className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                   />
-                  <div className="flex-1">
-                    <span className={`text-sm block ${dailyChecklist[task.id] ? 'text-emerald-800' : 'text-gray-700'}`}>
+                  <div className="min-w-0 flex-1">
+                    <span className={`block text-[11px] leading-snug ${dailyChecklist[task.id] ? 'text-gray-900' : 'text-gray-700'}`}>
                       {task.label}
                     </span>
                     {dailyTaskStatus[task.id] && (
-                      <span className="text-xs text-gray-500 mt-1 block">
-                        Last run: {new Date(dailyTaskStatus[task.id].lastRunAt).toLocaleTimeString()}
+                      <span className="mt-0.5 block text-[10px] text-gray-500">
+                        {new Date(dailyTaskStatus[task.id].lastRunAt).toLocaleTimeString()}
                       </span>
                     )}
                     {runningTaskId === task.id && (
-                      <span className="text-xs text-emerald-600 mt-1 block">Running automation...</span>
+                      <span className="mt-0.5 block text-[10px] text-gray-600">Running…</span>
                     )}
                   </div>
                 </label>
@@ -1547,15 +1490,10 @@ const Marketing: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-gray-600">
-              Checklist resets by date and is stored in your browser for quick daily tracking.
-            </p>
-            <button
-              onClick={resetDailyChecklist}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
-            >
-              Reset Today
+          <div className={`${cardCls} flex flex-wrap items-center justify-between gap-2`}>
+            <p className="text-[11px] text-gray-600">Stored in this browser; resets by date.</p>
+            <button type="button" onClick={resetDailyChecklist} className={btnOutline}>
+              Reset today
             </button>
           </div>
         </div>

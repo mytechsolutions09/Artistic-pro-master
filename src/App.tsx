@@ -56,6 +56,7 @@ import Tasks from './pages/admin/Tasks';
 import Activities from './pages/admin/Activities';
 import Settings from './pages/admin/Settings';
 import Marketing from './pages/admin/Marketing';
+import SocialPosting from './pages/admin/SocialPosting';
 import HomepageManagement from './pages/admin/HomepageManagement';
 import Reviews from './pages/admin/Reviews';
 import DatabaseManagement from './pages/admin/Database';
@@ -153,6 +154,7 @@ function AppContent() {
                   <Route path="/admin/email" element={<AdminProtectedRoute><EmailManagement /></AdminProtectedRoute>} />
                   <Route path="/admin/analytics" element={<AdminProtectedRoute><Analytics /></AdminProtectedRoute>} />
                   <Route path="/admin/marketing" element={<AdminProtectedRoute><Marketing /></AdminProtectedRoute>} />
+                  <Route path="/admin/social-posting" element={<AdminProtectedRoute><SocialPosting /></AdminProtectedRoute>} />
                   <Route path="/admin/homepage" element={<AdminProtectedRoute><HomepageManagement /></AdminProtectedRoute>} />
                   <Route path="/admin/reviews" element={<AdminProtectedRoute><Reviews /></AdminProtectedRoute>} />
                   <Route path="/admin/database" element={<AdminProtectedRoute><DatabaseManagement /></AdminProtectedRoute>} />

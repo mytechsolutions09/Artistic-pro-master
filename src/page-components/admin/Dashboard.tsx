@@ -1,21 +1,41 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, LabelList } from 'recharts';
-import { 
-  DollarSign, Users, ShoppingBag, TrendingUp, Eye, Download, Star, 
-  Calendar, Clock, Bell, Settings, Plus, ArrowRight, Filter, Search,
-  CheckCircle, AlertCircle, XCircle, Activity, CreditCard, Package,
-  UserPlus, ShoppingCart, Heart, MessageSquare, Image, Palette, RefreshCw,
-  Zap, Target, BarChart3, PieChart as PieChartIcon, TrendingDown, CheckSquare
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import {
+  DollarSign,
+  Users,
+  TrendingUp,
+  Settings,
+  Plus,
+  ArrowRight,
+  CheckCircle,
+  Activity,
+  CreditCard,
+  Package,
+  UserPlus,
+  ShoppingCart,
+  Image,
+  RefreshCw,
+  Zap,
+  Target,
+  BarChart3,
+  CheckSquare,
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { AnalyticsService, TaskService, UserService, ProductService } from '../../services/supabaseService';
+import { AnalyticsService } from '../../services/supabaseService';
 import { useCurrency } from '../../contexts/CurrencyContext';
+
+const inputCls =
+  'h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+const dateInputCls =
+  'h-7 rounded-md border border-gray-200 bg-white px-1.5 text-[11px] text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+const cardCls = 'rounded-lg border border-gray-200 bg-white p-3 shadow-sm';
+const btnOutline =
+  'inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50';
 
 const Dashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState('7d');
-  const [notifications, setNotifications] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [realtimeStats, setRealtimeStats] = useState<any>(null);
@@ -329,45 +349,35 @@ const Dashboard: React.FC = () => {
 
   const quickActions = [
     {
-      title: 'Add New Artwork',
-      description: 'Upload and manage artworks',
+      title: 'Add artwork',
+      description: 'Products catalog',
       icon: Plus,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      action: () => window.location.href = '/admin/products'
+      action: () => { window.location.href = '/admin/products'; },
     },
     {
-      title: 'Manage Users',
-      description: 'View and manage user accounts',
+      title: 'Users',
+      description: 'Accounts',
       icon: Users,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-      action: () => window.location.href = '/admin/users'
+      action: () => { window.location.href = '/admin/users'; },
     },
     {
-      title: 'View Analytics',
-      description: 'Detailed analytics and reports',
+      title: 'Analytics',
+      description: 'Reports',
       icon: BarChart3,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      action: () => window.location.href = '/admin/analytics'
+      action: () => { window.location.href = '/admin/analytics'; },
     },
     {
-      title: 'Task Management',
-      description: 'Manage project tasks',
+      title: 'Tasks',
+      description: 'Projects',
       icon: CheckSquare,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-      action: () => window.location.href = '/admin/tasks'
+      action: () => { window.location.href = '/admin/tasks'; },
     },
     {
-      title: 'System Settings',
-      description: 'Configure system settings',
+      title: 'Settings',
+      description: 'System',
       icon: Settings,
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-100',
-      action: () => window.location.href = '/admin/settings'
-    }
+      action: () => { window.location.href = '/admin/settings'; },
+    },
   ];
 
   const getStatusColor = (status: string) => {
@@ -381,45 +391,42 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <AdminLayout title="">
-      <div className="space-y-4">
-        {/* Header Section - Compact */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-3 py-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-base font-semibold text-gray-900 font-sans font-normal">Admin Dashboard</h1>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="text-xs text-gray-600 font-sans font-normal">Welcome back!</span>
+    <AdminLayout title="Dashboard" noHeader>
+      <div className="space-y-3 px-4 py-5 sm:px-6">
+        <div className={cardCls}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold text-gray-900">Admin dashboard</h1>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-500">
+                <span>Welcome back</span>
                 {realtimeStats && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-800">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-50" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
+                    </span>
                     Live
                   </span>
                 )}
-                <DollarSign className="w-3 h-3 text-green-600" />
-                <span className="text-xs text-gray-500 font-sans font-normal">
-                  All amounts in <strong className="font-sans font-normal">{currencySettings.defaultCurrency}</strong>
+                <span className="text-gray-400">·</span>
+                <span>
+                  Amounts in <span className="font-medium text-gray-700">{currencySettings.defaultCurrency}</span>
                 </span>
               </div>
             </div>
-            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
+                type="button"
                 onClick={fetchDashboardData}
                 disabled={refreshing}
-                className="flex items-center space-x-1 px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors text-xs"
+                className={btnOutline}
                 title="Refresh data"
               >
-                <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
-                <span>Refresh</span>
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
               </button>
-              <div className="text-xs text-gray-500">
-                {currentTime.toLocaleDateString()}
-              </div>
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-pink-500 text-xs"
-              >
+              <span className="text-[11px] tabular-nums text-gray-500">{currentTime.toLocaleString()}</span>
+              <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)} className={`${inputCls} w-[4.5rem]`}>
                 <option value="7d">7d</option>
                 <option value="30d">30d</option>
                 <option value="90d">90d</option>
@@ -428,25 +435,23 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Stats Cards - Compact */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="flex flex-wrap gap-1.5">
           {mainStats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.title} className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-gray-500 text-xs font-medium">{stat.title}</p>
-                    <p className="text-xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                    <div className="flex items-center mt-1">
-                      <span className={`text-xs font-medium ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                        {stat.change}
-                      </span>
-                      <span className="text-gray-500 text-xs ml-1">{stat.description}</span>
-                    </div>
-                  </div>
-                  <div className={`${stat.bgColor} p-2 rounded-lg`}>
-                    <Icon className={`w-5 h-5 ${stat.color}`} />
+              <div
+                key={stat.title}
+                className="inline-flex min-w-[7.5rem] flex-1 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2 py-1 sm:min-w-0"
+              >
+                <Icon className="h-3.5 w-3.5 shrink-0 text-gray-600" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] text-gray-500">{stat.title}</div>
+                  <div className="truncate text-xs font-semibold tabular-nums text-gray-900">{stat.value}</div>
+                  <div className="flex flex-wrap items-baseline gap-1 text-[10px]">
+                    <span className={stat.trend === 'up' ? 'font-medium text-green-700' : 'font-medium text-red-700'}>
+                      {stat.change}
+                    </span>
+                    <span className="text-gray-400">{stat.description}</span>
                   </div>
                 </div>
               </div>
@@ -454,148 +459,136 @@ const Dashboard: React.FC = () => {
           })}
         </div>
 
-        {/* Quick Stats Row - Compact */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {quickStats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.title} className="bg-white p-2 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex items-center space-x-2">
-                  <div className={`${stat.bgColor} p-1.5 rounded-md relative`}>
-                    <Icon className={`w-4 h-4 ${stat.color}`} />
-                    {stat.isRealtime && (
-                      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    )}
+              <div
+                key={stat.title}
+                className="inline-flex min-w-[5.5rem] flex-1 items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50/80 px-2 py-1 sm:min-w-0"
+              >
+                <Icon className="h-3.5 w-3.5 shrink-0 text-gray-600" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-0.5 text-[10px] text-gray-500">
+                    {stat.title}
+                    {stat.isRealtime && <Zap className="h-2.5 w-2.5 shrink-0 text-green-600" />}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-500 text-xs flex items-center truncate font-sans font-normal">
-                      {stat.title}
-                      {stat.isRealtime && (
-                        <Zap className="w-2.5 h-2.5 ml-1 text-green-500 flex-shrink-0" />
-                      )}
-                    </p>
-                    <p className="text-sm font-bold text-gray-900 truncate font-sans font-normal">{stat.value}</p>
-                  </div>
+                  <div className="truncate text-xs font-semibold tabular-nums text-gray-900">{stat.value}</div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Revenue Chart - Full Width */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-900 font-sans font-normal">Revenue & Orders</h3>
-            <div className="flex items-center space-x-2 text-xs">
-              <div className="flex items-center space-x-2">
+        <div className={cardCls}>
+          <div className="mb-2 flex flex-col gap-2 border-b border-gray-100 pb-2 lg:flex-row lg:items-center lg:justify-between">
+            <h3 className="text-xs font-semibold text-gray-900">Revenue &amp; orders</h3>
+            <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-600">
+              <div className="flex flex-wrap items-center gap-1">
                 <input
                   type="date"
                   value={chartDateFrom}
                   onChange={(e) => setChartDateFrom(e.target.value)}
-                  className="px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 text-[11px]"
+                  className={dateInputCls}
                   title="From date"
                 />
-                <span className="text-gray-400 text-[11px]">to</span>
+                <span className="text-gray-400">–</span>
                 <input
                   type="date"
                   value={chartDateTo}
                   onChange={(e) => setChartDateTo(e.target.value)}
-                  className="px-2 py-1 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 text-[11px]"
+                  className={dateInputCls}
                   title="To date"
                 />
                 {(chartDateFrom || chartDateTo) && (
                   <button
+                    type="button"
                     onClick={() => {
                       setChartDateFrom('');
                       setChartDateTo('');
                     }}
-                    className="px-2 py-1 text-[11px] text-gray-600 hover:text-gray-900 border border-gray-200 rounded-md hover:bg-gray-50"
+                    className="h-7 rounded-md border border-gray-200 px-2 text-[11px] text-gray-700 hover:bg-gray-50"
                   >
                     Reset
                   </button>
                 )}
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2.5 h-2.5 bg-pink-500 rounded-full"></div>
-                <span className="text-gray-600 font-sans font-normal text-[11px]">Revenue</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-                <span className="text-gray-600 font-sans font-normal text-[11px]">Orders</span>
-              </div>
+              <span className="hidden sm:inline text-gray-300">|</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-gray-900" /> Revenue
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-blue-600" /> Orders
+              </span>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={filteredRevenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" stroke="#6b7280" tick={{ fontSize: 11 }} />
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={filteredRevenueData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <XAxis dataKey="month" stroke="#9ca3af" tick={{ fontSize: 10 }} />
               <YAxis
                 yAxisId="revenue"
-                stroke="#6b7280"
+                stroke="#9ca3af"
                 tickFormatter={(value: number) => formatCurrency(value, currencySettings.defaultCurrency)}
-                tick={{ fontSize: 11 }}
-                width={90}
+                tick={{ fontSize: 10 }}
+                width={72}
               />
               <YAxis
                 yAxisId="orders"
                 orientation="right"
-                stroke="#6b7280"
+                stroke="#9ca3af"
                 allowDecimals={false}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: 10 }}
+                width={32}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  fontSize: '12px'
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+                  fontSize: '11px',
                 }}
                 formatter={(value: any, name: string) => [
                   name === 'revenue'
                     ? formatCurrency(Number(value || 0), currencySettings.defaultCurrency)
                     : Number(value || 0),
-                  name === 'revenue' ? 'Revenue' : 'Orders'
+                  name === 'revenue' ? 'Revenue' : 'Orders',
                 ]}
               />
               <Bar
                 yAxisId="revenue"
                 dataKey="revenue"
-                fill="#ec4899"
-                radius={[4, 4, 0, 0]}
-                barSize={14}
+                fill="#111827"
+                radius={[3, 3, 0, 0]}
+                barSize={12}
                 isAnimationActive={false}
               />
               <Bar
                 yAxisId="orders"
                 dataKey="orders"
-                fill="#3b82f6"
-                radius={[4, 4, 0, 0]}
-                barSize={14}
+                fill="#2563eb"
+                radius={[3, 3, 0, 0]}
+                barSize={12}
                 isAnimationActive={false}
               />
             </BarChart>
           </ResponsiveContainer>
           {chartLoading && (
-            <div className="mt-3 text-xs text-gray-500 text-center font-sans font-normal">
-              Updating chart for selected date range...
-            </div>
+            <div className="mt-2 text-center text-[11px] text-gray-500">Updating chart…</div>
           )}
           {!hasRevenueData && (
-            <div className="mt-3 text-xs text-gray-500 text-center font-sans font-normal">
-              No revenue/order data available for recent months yet.
-            </div>
+            <div className="mt-2 text-center text-[11px] text-gray-500">No revenue/order data for this range.</div>
           )}
         </div>
 
-        {/* Category Sales Graph */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Category Sales</h3>
-            <span className="text-xs text-gray-500 font-sans font-normal">{convertedCategoryData.length} categories</span>
+        <div className={cardCls}>
+          <div className="mb-2 flex items-center justify-between border-b border-gray-100 pb-2">
+            <h3 className="text-xs font-semibold text-gray-900">Category sales</h3>
+            <span className="text-[10px] text-gray-500">{convertedCategoryData.length} categories</span>
           </div>
           {convertedCategoryData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart
                 data={[...convertedCategoryData]
                   .sort((a, b) => (b.sales || 0) - (a.sales || 0))
@@ -603,26 +596,21 @@ const Dashboard: React.FC = () => {
                 margin={{ top: 4, right: 10, left: 10, bottom: 4 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 11 }}
-                  stroke="#6b7280"
-                  interval={0}
-                />
+                <XAxis dataKey="name" tick={{ fontSize: 9 }} stroke="#9ca3af" interval={0} />
                 <YAxis
                   type="number"
-                  tick={{ fontSize: 11 }}
-                  stroke="#6b7280"
-                  width={80}
+                  tick={{ fontSize: 10 }}
+                  stroke="#9ca3af"
+                  width={68}
                   tickFormatter={(value: number) => formatCurrency(value, currencySettings.defaultCurrency)}
                 />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: '#fff',
                     border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    fontSize: '12px'
+                    borderRadius: '6px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+                    fontSize: '11px',
                   }}
                   formatter={(value: any, _name: string, props: any) => {
                     const salesAmount = formatCurrency(Number(value || 0), currencySettings.defaultCurrency);
@@ -639,7 +627,7 @@ const Dashboard: React.FC = () => {
                     dataKey="salesCount"
                     position="top"
                     formatter={(value: any) => `${Number(value || 0)} sales`}
-                    style={{ fill: '#6b7280', fontSize: 11 }}
+                    style={{ fill: '#6b7280', fontSize: 9 }}
                   />
                   {convertedCategoryData
                     .sort((a, b) => (b.sales || 0) - (a.sales || 0))
@@ -651,200 +639,155 @@ const Dashboard: React.FC = () => {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-center py-8">
-              <Package className="w-5 h-5 text-gray-400 mx-auto mb-2" />
-              <p className="text-xs text-gray-500 font-sans font-normal">No category sales data available</p>
+            <div className="py-6 text-center">
+              <Package className="mx-auto mb-1 h-4 w-4 text-gray-400" />
+              <p className="text-[11px] text-gray-500">No category sales data</p>
             </div>
           )}
         </div>
 
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Orders */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Recent Orders</h3>
-                <button className="text-pink-600 hover:text-pink-700 text-sm font-medium">
-                  View all
-                </button>
-              </div>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className={`${cardCls} overflow-hidden p-0`}>
+            <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+              <h3 className="text-xs font-semibold text-gray-900">Recent orders</h3>
+              <a
+                href="/admin/orders"
+                className="text-[11px] font-medium text-gray-700 hover:text-gray-900"
+              >
+                All
+              </a>
             </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {convertedRecentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                      {order.avatar}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{order.customer}</p>
-                      <p className="text-sm text-gray-500 truncate">{order.artwork}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">{formatAmountInDefault(order.amount, order.originalCurrency || 'INR')}</p>
-                      {currencySettings.defaultCurrency !== (order.originalCurrency || 'INR') && (
-                        <div className="text-xs text-gray-400">{order.originalCurrency || 'INR'} {order.originalAmount.toFixed(2)}</div>
-                      )}
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                        {order.status}
-                      </span>
-                    </div>
+            <div className="space-y-2 p-3">
+              {convertedRecentOrders.map((order) => (
+                <div key={order.id} className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[11px] font-medium text-gray-700">
+                    {order.avatar}
                   </div>
-                ))}
-              </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] font-medium text-gray-900">{order.customer}</p>
+                    <p className="truncate text-[10px] text-gray-500">{order.artwork}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-[11px] font-medium tabular-nums text-gray-900">
+                      {formatAmountInDefault(order.amount, order.originalCurrency || 'INR')}
+                    </p>
+                    {currencySettings.defaultCurrency !== (order.originalCurrency || 'INR') && (
+                      <div className="text-[10px] text-gray-400">
+                        {order.originalCurrency || 'INR'} {order.originalAmount.toFixed(2)}
+                      </div>
+                    )}
+                    <span
+                      className={`mt-0.5 inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium ${getStatusColor(order.status)}`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Recent Activities */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Recent Activities</h3>
+          <div className={`${cardCls} overflow-hidden p-0`}>
+            <div className="border-b border-gray-100 px-3 py-2">
+              <h3 className="text-xs font-semibold text-gray-900">Activity</h3>
             </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {convertedRecentActivities.map((activity, index) => {
+            <div className="space-y-2 p-3">
+              {loading ? (
+                <div className="flex items-center justify-center gap-2 py-6">
+                  <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />
+                  <span className="text-[11px] text-gray-500">Loading…</span>
+                </div>
+              ) : (
+                convertedRecentActivities.map((activity, index) => {
                   const Icon = activity.icon;
                   return (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div className={`${activity.bgColor} p-2 rounded-lg`}>
-                        <Icon className={`w-4 h-4 ${activity.color}`} />
+                    <div key={index} className="flex gap-2">
+                      <div className="rounded-md border border-gray-100 bg-gray-50 p-1.5">
+                        <Icon className="h-3.5 w-3.5 text-gray-600" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 font-sans font-normal">{activity.message}</p>
-                        <p className="text-sm text-gray-500">{activity.details}</p>
-                        <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-medium leading-snug text-gray-900">{activity.message}</p>
+                        <p className="text-[10px] text-gray-500">{activity.details}</p>
+                        <p className="mt-0.5 text-[10px] text-gray-400">{activity.time}</p>
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                })
+              )}
             </div>
           </div>
 
-          {/* Top Artworks */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Top Artworks</h3>
-                <button className="text-pink-600 hover:text-pink-700 text-sm font-medium">
-                  View all
-                </button>
-              </div>
+          <div className={`${cardCls} overflow-hidden p-0`}>
+            <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+              <h3 className="text-xs font-semibold text-gray-900">Top artworks</h3>
+              <a href="/admin/products" className="text-[11px] font-medium text-gray-700 hover:text-gray-900">
+                All
+              </a>
             </div>
-            <div className="p-6">
+            <div className="p-3">
               {convertedTopArtworks.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {convertedTopArtworks.map((artwork) => (
-                    <div key={artwork.id} className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                    <div key={artwork.id} className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-100 bg-gray-50">
                         {artwork.image && artwork.image !== '/api/placeholder/60/60' ? (
-                          <img 
-                            src={artwork.image} 
-                            alt={artwork.title}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={artwork.image} alt="" className="h-full w-full object-cover" />
                         ) : (
-                          <Image className="w-6 h-6 text-gray-400" />
+                          <Image className="h-4 w-4 text-gray-400" />
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate font-sans font-normal">{artwork.title}</p>
-                        <p className="text-sm text-gray-500">{artwork.artist}</p>
-                        <div className="flex items-center space-x-4 text-xs text-gray-400 mt-1">
-                          <span>{artwork.views} views</span>
-                          <span>{artwork.downloads} downloads</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-medium text-gray-900">{artwork.title}</p>
+                        <p className="truncate text-[10px] text-gray-500">{artwork.artist}</p>
+                        <div className="mt-0.5 flex gap-2 text-[10px] text-gray-400">
+                          <span>{artwork.views} v</span>
+                          <span>{artwork.downloads} dl</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900 font-sans font-normal">{formatAmountInDefault(artwork.revenue, 'INR')}</p>
+                      <div className="shrink-0 text-right">
+                        <p className="text-[11px] font-medium tabular-nums text-gray-900">
+                          {formatAmountInDefault(artwork.revenue, 'INR')}
+                        </p>
                         {currencySettings.defaultCurrency !== 'INR' && (
-                          <div className="text-xs text-gray-400">INR ₹{artwork.originalRevenue.toLocaleString()}</div>
+                          <div className="text-[10px] text-gray-400">INR {artwork.originalRevenue.toLocaleString()}</div>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <h4 className="text-sm font-medium text-gray-900 mb-1">No Top Artworks</h4>
-                  <p className="text-xs text-gray-500">Products with downloads will appear here</p>
+                <div className="py-6 text-center">
+                  <Image className="mx-auto mb-1 h-8 w-8 text-gray-300" />
+                  <p className="text-[11px] text-gray-500">No download data yet</p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Real-time Activity & Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Real-time Activity Feed */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Real-time Activity</h3>
-                <div className="flex items-center space-x-2 text-sm text-green-600">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span>Live</span>
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
-                  <span className="ml-2 text-gray-500">Loading activity...</span>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {convertedRecentActivities.map((activity, index) => {
-                    const Icon = activity.icon;
-                    return (
-                      <div key={index} className="flex items-start space-x-3">
-                        <div className={`${activity.bgColor} p-2 rounded-lg`}>
-                          <Icon className={`w-4 h-4 ${activity.color}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 font-sans font-normal">{activity.message}</p>
-                          <p className="text-sm text-gray-500">{activity.details}</p>
-                          <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+        <div className={cardCls}>
+          <div className="mb-2 border-b border-gray-100 pb-2">
+            <h3 className="text-xs font-semibold text-gray-900">Quick actions</h3>
           </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 font-sans font-normal">Quick Actions</h3>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 gap-4">
-                {quickActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <button
-                      key={action.title}
-                      onClick={action.action}
-                      className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-pink-300 hover:bg-pink-50 transition-colors group w-full text-left"
-                    >
-                      <div className={`${action.bgColor} p-3 rounded-lg group-hover:scale-110 transition-transform`}>
-                        <Icon className={`w-6 h-6 ${action.color}`} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{action.title}</p>
-                        <p className="text-sm text-gray-500">{action.description}</p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-pink-500 ml-auto" />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.title}
+                  type="button"
+                  onClick={action.action}
+                  className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-2 py-2 text-left transition-colors hover:border-gray-300 hover:bg-gray-50"
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0 text-gray-700" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-medium text-gray-900">{action.title}</p>
+                    <p className="truncate text-[10px] text-gray-500">{action.description}</p>
+                  </div>
+                  <ArrowRight className="h-3 w-3 shrink-0 text-gray-400" />
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

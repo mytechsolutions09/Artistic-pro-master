@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from '@/src/compat/router';
+import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 import {
   BarChart3,
   ShoppingBag,
@@ -25,7 +26,8 @@ import {
   Layers,
   UtensilsCrossed,
   Shirt,
-  FileText
+  FileText,
+  Share2
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -38,6 +40,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick, onExpand, onLogout }) => {
   const location = useLocation();
+  const { navRef, onNavScroll } = usePreserveNavScroll([location.pathname]);
   
   const menuItems = [
     { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/admin/tasks' },
@@ -54,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, path: '/admin/analytics' },
     { id: 'homepage', label: 'Homepage', icon: Home, path: '/admin/homepage' },
     { id: 'marketing', label: 'Marketing', icon: TrendingUp, path: '/admin/marketing' },
+    { id: 'social-posting', label: 'Social posting', icon: Share2, path: '/admin/social-posting' },
     { id: 'database', label: 'Database', icon: Database, path: '/admin/database' },
     { id: 'fb', label: 'F & B', icon: UtensilsCrossed, path: '/admin/fb' },
     { id: 'clothes', label: 'Clothes', icon: Shirt, path: '/admin/clothes' },
@@ -61,9 +65,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
   ];
 
   return (
-    <div className={`${collapsed ? 'w-20' : 'w-64'} bg-white h-screen shadow-lg border-r border-pink-100 fixed left-0 top-0 z-40 transition-all duration-300 flex flex-col`}>
+    <div className={`${collapsed ? 'w-20' : 'w-64'} bg-white h-screen shadow-lg border-r border-gray-200 fixed left-0 top-0 z-40 transition-all duration-300 flex flex-col`}>
       {/* Logo */}
-      <div className="p-4 border-b border-pink-100 flex-shrink-0">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <Link to="/" className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'}`}>
           <img 
             src="/logo.png" 
@@ -79,7 +83,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
       </div>
 
       {/* Navigation with invisible scrollbar */}
-      <nav className="p-2 flex-1 overflow-y-auto overflow-x-hidden scrollbar-invisible sidebar-scroll min-h-0 relative">
+      <nav
+        ref={navRef}
+        onScroll={onNavScroll}
+        className="sidebar-scroll relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2 scrollbar-invisible"
+      >
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -91,13 +99,23 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
                 <div className="relative group">
                   <Link
                     to={item.path}
-                    className={`flex items-center ${collapsed ? 'justify-center px-3 py-2' : 'space-x-3 px-4 py-2'} rounded-lg transition-all duration-200 ${
+                    onMouseDown={(e) => e.preventDefault()}
+                    className={`relative flex items-center ${collapsed ? 'justify-center px-3 py-2' : 'space-x-3 px-4 py-2'} rounded-lg transition-all duration-200 ${
                       isActive
-                        ? 'bg-pink-100 text-pink-700 border-l-4 border-pink-500'
-                        : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'
+                        ? 'bg-gray-100 text-black'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
-                    <Icon className={`${collapsed ? 'w-4 h-4' : 'w-4 h-4'} ${isActive ? 'text-pink-600' : 'text-gray-500 group-hover:text-pink-500'}`} />
+                    {isActive && (
+                      <span
+                        className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-black pointer-events-none"
+                        aria-hidden
+                      />
+                    )}
+                    <Icon
+                      className={`relative z-10 shrink-0 ${collapsed ? 'w-4 h-4' : 'w-4 h-4'} ${isActive ? 'text-gray-800' : 'text-gray-500 group-hover:text-gray-700'}`}
+                      strokeWidth={2}
+                    />
                     {!collapsed && <span className="font-medium">{item.label}</span>}
                   </Link>
                   
@@ -116,7 +134,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
       </nav>
 
       {/* Bottom Section - Logout Button */}
-      <div className="p-2 border-t border-pink-100 flex-shrink-0">
+      <div className="p-2 border-t border-gray-200 flex-shrink-0">
         {collapsed ? (
           <div className="relative group">
             <button 

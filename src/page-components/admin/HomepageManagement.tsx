@@ -3947,18 +3947,18 @@ const HomepageManagement: React.FC = () => {
                   onClick={() => setSelectedSection(section.id)}
                   className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 group relative ${
                     selectedSection === section.id
-                      ? 'bg-pink-50 text-pink-700'
+                      ? 'bg-gray-50 text-black'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                   title={section.name}
                 >
                   {/* Active indicator */}
                   {selectedSection === section.id && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-pink-500 rounded-r-full" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-black rounded-r-full" />
                   )}
                   
                   <span className={`flex-shrink-0 transition-colors ${
-                    selectedSection === section.id ? 'text-pink-600' : 'text-gray-500 group-hover:text-gray-700'
+                    selectedSection === section.id ? 'text-black' : 'text-gray-500 group-hover:text-gray-700'
                   }`}>
                     {getSectionIcon(section.type)}
                   </span>

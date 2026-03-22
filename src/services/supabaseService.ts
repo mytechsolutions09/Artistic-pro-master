@@ -256,34 +256,69 @@ export class TaskService {
     }
   }
 
+  private static deriveAvatar(assignee?: string | null): string {
+    const s = (assignee || '').trim();
+    if (!s) return '?';
+    const initials = s
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase();
+    return (initials || '?').slice(0, 6);
+  }
+
   static async createTask(task: Omit<TaskData, 'id'>): Promise<TaskData | null> {
+    const tags = Array.isArray(task.tags) ? task.tags : [];
+    const row = {
+      title: task.title,
+      description: task.description ?? null,
+      priority: task.priority,
+      status: task.status,
+      due_date: task.due_date || null,
+      assignee: task.assignee || null,
+      avatar: task.avatar || TaskService.deriveAvatar(task.assignee),
+      tags,
+      color: task.color || 'blue',
+      progress: task.progress ?? 0,
+      comments: task.comments ?? 0,
+      attachments: task.attachments ?? 0,
+      estimated_hours: task.estimated_hours ?? 0,
+      category_id: task.category_id ?? null,
+      template_id: task.template_id ?? null,
+    };
+
     try {
-      const { data, error } = await supabase
-        .rpc('create_task', {
-          p_title: task.title,
-          p_description: task.description,
-          p_priority: task.priority,
-          p_status: task.status,
-          p_due_date: task.due_date,
-          p_assignee: task.assignee,
-          p_tags: JSON.stringify(task.tags || []),
-          p_category_id: task.category_id,
-          p_template_id: task.template_id,
-          p_color: task.color || 'blue',
-          p_estimated_hours: task.estimated_hours || 0
-        });
+      const { data: rpcId, error } = await supabase.rpc('create_task', {
+        p_title: task.title,
+        p_description: task.description ?? null,
+        p_priority: task.priority,
+        p_status: task.status,
+        p_due_date: task.due_date || null,
+        p_assignee: task.assignee || null,
+        p_tags: tags,
+        p_category_id: task.category_id ?? null,
+        p_template_id: task.template_id ?? null,
+        p_color: task.color || 'blue',
+        p_estimated_hours: task.estimated_hours ?? 0,
+      });
 
+      if (!error && rpcId != null) {
+        const { data: newTask, error: fetchError } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('id', rpcId)
+          .single();
+        if (!fetchError && newTask) return newTask;
+      }
+    } catch (e) {
+      console.warn('create_task RPC unavailable or failed, using direct insert:', e);
+    }
+
+    try {
+      const { data, error } = await supabase.from('tasks').insert(row).select().single();
       if (error) throw error;
-
-      // Fetch the created task
-      const { data: newTask, error: fetchError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('id', data)
-        .single();
-
-      if (fetchError) throw fetchError;
-      return newTask;
+      return data;
     } catch (error) {
       console.error('Error creating task:', error);
       return null;

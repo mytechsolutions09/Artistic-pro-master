@@ -9,7 +9,8 @@ import {
   Search, ChevronDown, ChevronUp, Edit, Shield, Key
 } from 'lucide-react';
 import { CompleteOrderService } from '../services/completeOrderService';
-import { Order } from '../types';
+import { Order, Product } from '../types';
+import { productBelongsToCategoryLabel } from '../utils/productFilterUtils';
 // import { SITE_COLORS } from '../constants/colors';
 import { getProgressToNextLevel } from '../constants/memberLevels';
 import { useProducts } from '../contexts/ProductContext';
@@ -134,11 +135,11 @@ const UserDashboard: React.FC = () => {
   const applyFavoriteFilters = React.useCallback(() => {
     let filtered = [...userFavorites];
 
-    // Category filter
+    // Category filter (categories[] + legacy category)
     if (favoriteFilters.category) {
-      filtered = filtered.filter(artwork => {
-        return (artwork as any).category === favoriteFilters.category;
-      });
+      filtered = filtered.filter((artwork) =>
+        productBelongsToCategoryLabel(artwork as Product, favoriteFilters.category!)
+      );
     }
 
     // Product type filter

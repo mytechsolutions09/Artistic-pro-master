@@ -1,9 +1,27 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { RotateCcw, Clock, CheckCircle, XCircle, Package, Truck, Eye, MessageSquare, DollarSign, Calendar, MapPin, ChevronDown, ChevronUp, Search, X as XIcon } from 'lucide-react';
+import {
+  RotateCcw,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Package,
+  Truck,
+  Eye,
+  Calendar,
+  MapPin,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  X as XIcon,
+  RefreshCw,
+} from 'lucide-react';
 import { ReturnService, ReturnRequestData } from '../../services/returnService';
 import AdminLayout from '../../components/admin/AdminLayout';
+
+const inputCls =
+  'h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
 
 const Returns: React.FC = () => {
   const [returns, setReturns] = useState<ReturnRequestData[]>([]);
@@ -25,13 +43,14 @@ const Returns: React.FC = () => {
     customerPincode: '',
     pickupDate: '',
     timeSlot: '',
-    specialInstructions: ''
+    specialInstructions: '',
   });
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
   const [expandedReturns, setExpandedReturns] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadReturns();
@@ -40,28 +59,38 @@ const Returns: React.FC = () => {
   const loadReturns = async () => {
     try {
       setLoading(true);
+      setError(null);
       const returnRequests = await ReturnService.getAllReturns();
       setReturns(returnRequests);
-    } catch (error) {
-      console.error('Error loading returns:', error);
+    } catch (e) {
+      console.error('Error loading returns:', e);
       setError('Failed to load return requests');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusUpdate = async (returnId: string, newStatus: string) => {
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadReturns();
+    setRefreshing(false);
+  };
+
+  const handleStatusUpdate = async (
+    returnId: string,
+    newStatus: 'approved' | 'rejected' | 'processing' | 'completed'
+  ) => {
     try {
       const result = await ReturnService.updateReturnStatus(
         returnId,
-        newStatus as any,
+        newStatus,
         adminNotes,
         refundAmount || undefined,
         refundMethod || undefined
       );
 
       if (result.success) {
-        await loadReturns(); // Refresh the list
+        await loadReturns();
         setShowModal(false);
         setSelectedReturn(null);
         setAdminNotes('');
@@ -70,8 +99,8 @@ const Returns: React.FC = () => {
       } else {
         alert('Failed to update return status: ' + result.error);
       }
-    } catch (error) {
-      console.error('Error updating return status:', error);
+    } catch (e) {
+      console.error('Error updating return status:', e);
       alert('Failed to update return status');
     }
   };
@@ -88,21 +117,20 @@ const Returns: React.FC = () => {
           address: pickupDetails.customerAddress,
           city: pickupDetails.customerCity,
           state: pickupDetails.customerState,
-          pincode: pickupDetails.customerPincode
+          pincode: pickupDetails.customerPincode,
         },
         {
           date: pickupDetails.pickupDate,
           timeSlot: pickupDetails.timeSlot,
-          specialInstructions: pickupDetails.specialInstructions
+          specialInstructions: pickupDetails.specialInstructions,
         }
       );
 
       if (result.success) {
-        alert(`Pickup scheduled successfully! Tracking Number: ${result.trackingNumber}`);
+        alert(`Pickup scheduled. Tracking: ${result.trackingNumber}`);
         await loadReturns();
         setShowPickupModal(false);
         setSelectedReturn(null);
-        // Reset pickup details
         setPickupDetails({
           customerName: '',
           customerPhone: '',
@@ -112,13 +140,13 @@ const Returns: React.FC = () => {
           customerPincode: '',
           pickupDate: '',
           timeSlot: '',
-          specialInstructions: ''
+          specialInstructions: '',
         });
       } else {
         alert('Failed to schedule pickup: ' + result.error);
       }
-    } catch (error) {
-      console.error('Error scheduling pickup:', error);
+    } catch (e) {
+      console.error('Error scheduling pickup:', e);
       alert('Failed to schedule pickup');
     }
   };
@@ -128,43 +156,44 @@ const Returns: React.FC = () => {
       try {
         const slots = await ReturnService.getPickupTimeSlots(pincode, date);
         setTimeSlots(slots);
-      } catch (error) {
-        console.error('Error loading time slots:', error);
+      } catch (e) {
+        console.error('Error loading time slots:', e);
       }
     }
   };
 
   const getStatusIcon = (status: string) => {
+    const cls = 'w-3 h-3 shrink-0';
     switch (status) {
       case 'pending':
-        return <Clock className="w-3 h-3 text-yellow-500" />;
+        return <Clock className={`${cls} text-amber-600`} />;
       case 'approved':
-        return <CheckCircle className="w-3 h-3 text-green-500" />;
+        return <CheckCircle className={`${cls} text-green-600`} />;
       case 'rejected':
-        return <XCircle className="w-3 h-3 text-red-500" />;
+        return <XCircle className={`${cls} text-red-600`} />;
       case 'processing':
-        return <Package className="w-3 h-3 text-blue-500" />;
+        return <Package className={`${cls} text-blue-600`} />;
       case 'completed':
-        return <CheckCircle className="w-3 h-3 text-green-600" />;
+        return <CheckCircle className={`${cls} text-green-700`} />;
       default:
-        return <Clock className="w-3 h-3 text-gray-500" />;
+        return <Clock className={`${cls} text-gray-500`} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-50 text-amber-900 ring-1 ring-inset ring-amber-600/20';
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-50 text-green-900 ring-1 ring-inset ring-green-600/20';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-50 text-red-900 ring-1 ring-inset ring-red-600/20';
       case 'processing':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-50 text-blue-900 ring-1 ring-inset ring-blue-600/20';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-50 text-green-900 ring-1 ring-inset ring-green-700/20';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 ring-1 ring-inset ring-gray-500/20';
     }
   };
 
@@ -174,61 +203,63 @@ const Returns: React.FC = () => {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'INR'
+      currency: 'INR',
     }).format(amount);
   };
 
   const toggleAccordion = (returnId: string) => {
-    setExpandedReturns(prev => ({
+    setExpandedReturns((prev) => ({
       ...prev,
-      [returnId]: !prev[returnId]
+      [returnId]: !prev[returnId],
     }));
   };
 
-  const filteredReturns = returns.filter(returnRequest => {
-    // Status filter
+  const filteredReturns = returns.filter((returnRequest) => {
     const matchesStatus = statusFilter === 'all' || returnRequest.status === statusFilter;
-    
-    // Search filter (search in product title, customer email, return ID, order ID)
-    const matchesSearch = !searchQuery || 
+    const matchesSearch =
+      !searchQuery ||
       returnRequest.product_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       returnRequest.requested_by.toLowerCase().includes(searchQuery.toLowerCase()) ||
       returnRequest.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       returnRequest.order_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       returnRequest.reason.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Date filter
     const requestDate = new Date(returnRequest.requested_at);
     const matchesStartDate = !startDate || requestDate >= new Date(startDate);
     const matchesEndDate = !endDate || requestDate <= new Date(endDate + 'T23:59:59');
-    
     return matchesStatus && matchesSearch && matchesStartDate && matchesEndDate;
   });
 
   const statusCounts = {
     all: returns.length,
-    pending: returns.filter(r => r.status === 'pending').length,
-    approved: returns.filter(r => r.status === 'approved').length,
-    processing: returns.filter(r => r.status === 'processing').length,
-    completed: returns.filter(r => r.status === 'completed').length,
-    rejected: returns.filter(r => r.status === 'rejected').length
+    pending: returns.filter((r) => r.status === 'pending').length,
+    approved: returns.filter((r) => r.status === 'approved').length,
+    processing: returns.filter((r) => r.status === 'processing').length,
+    completed: returns.filter((r) => r.status === 'completed').length,
+    rejected: returns.filter((r) => r.status === 'rejected').length,
   };
+
+  const statItems: { label: string; value: number; Icon: typeof RotateCcw; iconClass: string }[] = [
+    { label: 'Total', value: statusCounts.all, Icon: RotateCcw, iconClass: 'text-blue-600' },
+    { label: 'Pending', value: statusCounts.pending, Icon: Clock, iconClass: 'text-amber-600' },
+    { label: 'Approved', value: statusCounts.approved, Icon: CheckCircle, iconClass: 'text-green-600' },
+    { label: 'Processing', value: statusCounts.processing, Icon: Package, iconClass: 'text-blue-600' },
+    { label: 'Done', value: statusCounts.completed, Icon: CheckCircle, iconClass: 'text-teal-600' },
+    { label: 'Rejected', value: statusCounts.rejected, Icon: XCircle, iconClass: 'text-red-600' },
+  ];
 
   if (loading) {
     return (
       <AdminLayout title="Returns">
-        <div className="p-6">
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-            <span className="ml-2 text-gray-600">Loading return requests...</span>
-          </div>
+        <div className="flex items-center justify-center gap-2 py-12 text-sm text-gray-500">
+          <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />
+          Loading returns…
         </div>
       </AdminLayout>
     );
@@ -236,432 +267,331 @@ const Returns: React.FC = () => {
 
   return (
     <AdminLayout title="Returns">
-      <div className="p-3 space-y-3">
-        {/* Statistics Subbar */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-          <div className="bg-white p-2 rounded border border-gray-100">
-            <div className="flex items-center space-x-1.5">
-              <RotateCcw className="w-3.5 h-3.5 text-blue-600" />
-              <div>
-                <p className="text-[10px] text-gray-500">Total</p>
-                <p className="text-base font-bold text-gray-900">{statusCounts.all}</p>
-              </div>
+      <div className="space-y-2">
+        <p className="text-xs text-gray-500">Review and process return requests</p>
+
+        <div className="flex flex-wrap gap-1.5 rounded-lg border border-gray-200 bg-gray-50/90 p-2">
+          {statItems.map(({ label, value, Icon, iconClass }) => (
+            <div
+              key={label}
+              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1"
+            >
+              <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClass}`} />
+              <span className="text-[11px] text-gray-500">{label}</span>
+              <span className="text-xs font-semibold tabular-nums text-gray-900">{value}</span>
             </div>
-          </div>
-          <div className="bg-white p-2 rounded border border-gray-100">
-            <div className="flex items-center space-x-1.5">
-              <Clock className="w-3.5 h-3.5 text-yellow-600" />
-              <div>
-                <p className="text-[10px] text-gray-500">Pending</p>
-                <p className="text-base font-bold text-gray-900">{statusCounts.pending}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-2 rounded border border-gray-100">
-            <div className="flex items-center space-x-1.5">
-              <CheckCircle className="w-3.5 h-3.5 text-green-600" />
-              <div>
-                <p className="text-[10px] text-gray-500">Approved</p>
-                <p className="text-base font-bold text-gray-900">{statusCounts.approved}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-2 rounded border border-gray-100">
-            <div className="flex items-center space-x-1.5">
-              <Package className="w-3.5 h-3.5 text-blue-600" />
-              <div>
-                <p className="text-[10px] text-gray-500">Processing</p>
-                <p className="text-base font-bold text-gray-900">{statusCounts.processing}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-2 rounded border border-gray-100">
-            <div className="flex items-center space-x-1.5">
-              <CheckCircle className="w-3.5 h-3.5 text-teal-600" />
-              <div>
-                <p className="text-[10px] text-gray-500">Completed</p>
-                <p className="text-base font-bold text-gray-900">{statusCounts.completed}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-2 rounded border border-gray-100">
-            <div className="flex items-center space-x-1.5">
-              <XCircle className="w-3.5 h-3.5 text-red-600" />
-              <div>
-                <p className="text-[10px] text-gray-500">Rejected</p>
-                <p className="text-base font-bold text-gray-900">{statusCounts.rejected}</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-      {/* Search and Date Filter */}
-      <div className="bg-white rounded-lg shadow-sm p-2.5">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          {/* Search Bar */}
-          <div className="md:col-span-2 relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by product, customer, return ID, order ID, or reason..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-8 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <XIcon className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Date Range Filter */}
-          <div className="flex items-center space-x-2">
-            <div className="flex-1">
+        <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-[12rem] flex-1 max-w-md">
+              <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="Start Date"
+                type="text"
+                placeholder="Product, customer, ID, order, reason…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`${inputCls} w-full pl-7 pr-7`}
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Clear search"
+                >
+                  <XIcon className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
-            <span className="text-xs text-gray-500">to</span>
-            <div className="flex-1">
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="End Date"
-              />
-            </div>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputCls} />
+            <span className="text-[11px] text-gray-400">–</span>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputCls} />
             {(startDate || endDate) && (
               <button
+                type="button"
                 onClick={() => {
                   setStartDate('');
                   setEndDate('');
                 }}
-                className="text-gray-400 hover:text-gray-600"
-                title="Clear dates"
+                className="inline-flex h-8 items-center px-2 text-xs text-gray-600 hover:text-gray-900"
               >
-                <XIcon className="w-3.5 h-3.5" />
+                Clear dates
               </button>
             )}
-          </div>
-        </div>
-
-        {/* Active Filters Display */}
-        {(searchQuery || startDate || endDate) && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-gray-500">Active filters:</span>
-            {searchQuery && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-teal-100 text-teal-800">
-                Search: "{searchQuery}"
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="ml-1 hover:text-teal-900"
-                >
-                  <XIcon className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {startDate && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">
-                From: {new Date(startDate).toLocaleDateString('en-IN')}
-                <button
-                  onClick={() => setStartDate('')}
-                  className="ml-1 hover:text-blue-900"
-                >
-                  <XIcon className="w-3 h-3" />
-                </button>
-              </span>
-            )}
-            {endDate && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">
-                To: {new Date(endDate).toLocaleDateString('en-IN')}
-                <button
-                  onClick={() => setEndDate('')}
-                  className="ml-1 hover:text-blue-900"
-                >
-                  <XIcon className="w-3 h-3" />
-                </button>
-              </span>
-            )}
             <button
-              onClick={() => {
-                setSearchQuery('');
-                setStartDate('');
-                setEndDate('');
-              }}
-              className="text-xs text-red-600 hover:text-red-800 underline"
+              type="button"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="ml-auto inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
             >
-              Clear all
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
             </button>
           </div>
-        )}
-      </div>
 
-      {/* Status Filter */}
-      <div className="bg-white rounded-lg shadow-sm p-2.5">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            <h2 className="text-sm font-semibold text-gray-900">Status Filter</h2>
-            <span className="text-xs text-gray-500">
-              ({filteredReturns.length} of {returns.length} returns)
+          <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-2">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Status</span>
+            <span className="text-[10px] text-gray-400">
+              ({filteredReturns.length}/{returns.length})
             </span>
+            {Object.entries(statusCounts).map(([status, count]) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setStatusFilter(status)}
+                className={`rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                  statusFilter === status
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
+              </button>
+            ))}
           </div>
-          <button
-            onClick={loadReturns}
-            className="bg-teal-600 text-white px-2.5 py-1 rounded text-xs hover:bg-teal-700 transition-colors"
-          >
-            Refresh
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {Object.entries(statusCounts).map(([status, count]) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                statusFilter === status
-                  ? 'bg-teal-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Returns List */}
-      <div className="bg-white rounded-lg shadow-sm">
-        {error && (
-          <div className="p-4 bg-red-50 border-b border-red-200">
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {filteredReturns.length === 0 ? (
-          <div className="p-8 text-center">
-            <RotateCcw className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Return Requests</h3>
-            <p className="text-gray-600">
-              {statusFilter === 'all' 
-                ? 'No return requests found.' 
-                : `No ${statusFilter} return requests found.`
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            {filteredReturns.map((returnRequest) => {
-              const isExpanded = expandedReturns[returnRequest.id];
-              return (
-                <div key={returnRequest.id} className="bg-white border border-gray-200 rounded overflow-hidden">
-                  {/* Accordion Header */}
-                  <button
-                    onClick={() => toggleAccordion(returnRequest.id)}
-                    className="w-full p-2.5 text-left hover:bg-gray-50 transition-colors focus:outline-none focus:ring-1 focus:ring-teal-500 focus:ring-inset"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <RotateCcw className="w-4 h-4 text-teal-600" />
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-900">
-                            #{returnRequest.id.slice(-8).toUpperCase()}
-                          </h3>
-                          <p className="text-xs text-gray-600 truncate max-w-xl">
-                            {returnRequest.product_title} • {returnRequest.requested_by.split('@')[0]} • {formatDate(returnRequest.requested_at).split(',')[0]}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(returnRequest.status)}`}>
-                          {getStatusIcon(returnRequest.status)}
-                          <span className="ml-1">{returnRequest.status.charAt(0).toUpperCase() + returnRequest.status.slice(1)}</span>
-                        </span>
-                        {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-gray-400" />
-                        )}
-                      </div>
-                    </div>
+          {(searchQuery || startDate || endDate) && (
+            <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-2 text-[10px] text-gray-500">
+              <span>Filters:</span>
+              {searchQuery && (
+                <span className="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1.5 py-0.5">
+                  “{searchQuery.slice(0, 24)}
+                  {searchQuery.length > 24 ? '…' : ''}”
+                  <button type="button" onClick={() => setSearchQuery('')} className="text-gray-600 hover:text-gray-900">
+                    <XIcon className="h-3 w-3" />
                   </button>
+                </span>
+              )}
+              {startDate && <span>From {new Date(startDate).toLocaleDateString('en-IN')}</span>}
+              {endDate && <span>To {new Date(endDate).toLocaleDateString('en-IN')}</span>}
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className="text-red-600 hover:underline"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
 
-                  {/* Accordion Content */}
-                  {isExpanded && (
-                    <div className="px-2.5 pb-2.5 border-t border-gray-100">
-                      <div className="pt-2.5 space-y-2">
-                        {/* Product Details */}
-                        <div className="bg-gray-50 rounded p-2">
-                          <h4 className="text-xs font-medium text-gray-900 mb-1">Product Details</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
-                            <div>
-                              <span className="text-gray-600">Product:</span>
-                              <span className="ml-1 font-medium">{returnRequest.product_title}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Qty:</span>
-                              <span className="ml-1 font-medium">{returnRequest.quantity} × {formatCurrency(returnRequest.unit_price)} = {formatCurrency(returnRequest.total_price)}</span>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Order:</span>
-                              <span className="ml-1 font-medium">{returnRequest.order_id.slice(-8)}</span>
-                            </div>
-                          </div>
-                        </div>
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          {error && (
+            <div className="border-b border-red-100 bg-red-50 px-3 py-2">
+              <p className="text-xs text-red-700">{error}</p>
+            </div>
+          )}
 
-                        {/* Customer Information */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="text-gray-600">Customer:</span>
-                            <span className="ml-1 font-medium">{returnRequest.requested_by}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">Reason:</span>
-                            <span className="ml-1 font-medium">{returnRequest.reason}</span>
-                          </div>
-                        </div>
-
-                        {/* Customer Notes */}
-                        {returnRequest.customer_notes && (
-                          <div>
-                            <h5 className="text-xs font-medium text-gray-700 mb-0.5">Customer Notes:</h5>
-                            <p className="text-xs text-gray-600 bg-gray-50 rounded p-2">{returnRequest.customer_notes}</p>
-                          </div>
-                        )}
-
-                        {/* Admin Notes */}
-                        {returnRequest.admin_notes && (
-                          <div>
-                            <h5 className="text-xs font-medium text-gray-700 mb-0.5">Admin Notes:</h5>
-                            <p className="text-xs text-gray-600 bg-blue-50 rounded p-2">{returnRequest.admin_notes}</p>
-                          </div>
-                        )}
-
-                        {/* Refund Information */}
-                        {returnRequest.refund_amount && (
-                          <div className="bg-green-50 rounded p-2">
-                            <h5 className="text-xs font-medium text-green-800 mb-1">Refund Info</h5>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                              <div>
-                                <span className="text-green-700">Amount:</span>
-                                <span className="ml-1 font-medium text-green-800">{formatCurrency(returnRequest.refund_amount)}</span>
-                              </div>
-                              {returnRequest.refund_method && (
-                                <div>
-                                  <span className="text-green-700">Method:</span>
-                                  <span className="ml-1 font-medium text-green-800">{returnRequest.refund_method}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Action Button */}
-                        <div className="flex justify-end">
-                          <button
-                            onClick={() => {
-                              setSelectedReturn(returnRequest);
-                              setAdminNotes(returnRequest.admin_notes || '');
-                              setRefundAmount(returnRequest.refund_amount || 0);
-                              setRefundMethod(returnRequest.refund_method || '');
-                              setShowModal(true);
-                            }}
-                            className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+          {filteredReturns.length === 0 ? (
+            <div className="px-4 py-10 text-center">
+              <RotateCcw className="mx-auto h-8 w-8 text-gray-300" />
+              <p className="mt-2 text-sm font-medium text-gray-800">No returns</p>
+              <p className="text-xs text-gray-500">
+                {statusFilter === 'all' ? 'No requests match.' : `No ${statusFilter} requests.`}
+              </p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {filteredReturns.map((returnRequest) => {
+                const isExpanded = expandedReturns[returnRequest.id];
+                return (
+                  <li key={returnRequest.id} className="bg-white">
+                    <button
+                      type="button"
+                      onClick={() => toggleAccordion(returnRequest.id)}
+                      className="flex w-full items-center gap-2 p-2 text-left hover:bg-gray-50 sm:gap-3 sm:p-2.5"
+                    >
+                      <RotateCcw className="h-4 w-4 shrink-0 text-gray-500" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-mono text-xs font-semibold text-gray-900">
+                            #{returnRequest.id.slice(-8).toUpperCase()}
+                          </span>
+                          <span
+                            className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium capitalize ${getStatusColor(returnRequest.status)}`}
                           >
-                            <Eye className="w-3 h-3" />
-                            <span>Manage</span>
-                          </button>
+                            {getStatusIcon(returnRequest.status)}
+                            {returnRequest.status}
+                          </span>
+                        </div>
+                        <p className="truncate text-[11px] text-gray-600">
+                          {returnRequest.product_title} · {returnRequest.requested_by.split('@')[0]} ·{' '}
+                          {formatDate(returnRequest.requested_at).split(',')[0]}
+                        </p>
+                      </div>
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="border-t border-gray-100 bg-gray-50/80 px-2.5 pb-2.5 pt-2">
+                        <div className="space-y-2 text-xs">
+                          <div className="rounded-md border border-gray-200 bg-white p-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Product</p>
+                            <div className="mt-1 grid gap-1 sm:grid-cols-3">
+                              <p className="text-gray-800">
+                                <span className="text-gray-500">Title: </span>
+                                {returnRequest.product_title}
+                              </p>
+                              <p className="text-gray-800 tabular-nums">
+                                <span className="text-gray-500">Line: </span>
+                                {returnRequest.quantity} × {formatCurrency(returnRequest.unit_price)} ={' '}
+                                {formatCurrency(returnRequest.total_price)}
+                              </p>
+                              <p className="font-mono text-gray-800">
+                                <span className="text-gray-500">Order: </span>
+                                {returnRequest.order_id.slice(-8)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="grid gap-1 sm:grid-cols-2">
+                            <p className="text-gray-800">
+                              <span className="text-gray-500">Customer: </span>
+                              {returnRequest.requested_by}
+                            </p>
+                            <p className="text-gray-800">
+                              <span className="text-gray-500">Reason: </span>
+                              {returnRequest.reason}
+                            </p>
+                          </div>
+                          {returnRequest.customer_notes && (
+                            <div className="rounded border border-gray-200 bg-white p-2">
+                              <p className="text-[10px] font-medium text-gray-500">Customer notes</p>
+                              <p className="mt-0.5 text-gray-700">{returnRequest.customer_notes}</p>
+                            </div>
+                          )}
+                          {returnRequest.admin_notes && (
+                            <div className="rounded border border-gray-200 bg-white p-2">
+                              <p className="text-[10px] font-medium text-gray-500">Admin notes</p>
+                              <p className="mt-0.5 text-gray-700">{returnRequest.admin_notes}</p>
+                            </div>
+                          )}
+                          {returnRequest.refund_amount != null && returnRequest.refund_amount > 0 && (
+                            <div className="rounded border border-green-200 bg-green-50/50 p-2">
+                              <p className="text-[10px] font-semibold text-green-900">Refund</p>
+                              <p className="text-green-900 tabular-nums">
+                                {formatCurrency(returnRequest.refund_amount)}
+                                {returnRequest.refund_method && ` · ${returnRequest.refund_method}`}
+                              </p>
+                            </div>
+                          )}
+                          <div className="flex justify-end pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedReturn(returnRequest);
+                                setAdminNotes(returnRequest.admin_notes || '');
+                                setRefundAmount(returnRequest.refund_amount || 0);
+                                setRefundMethod(returnRequest.refund_method || '');
+                                setShowModal(true);
+                              }}
+                              className="inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-800 hover:bg-gray-50"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              Manage
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
 
-      {/* Modal for Managing Return */}
       {showModal && selectedReturn && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">
-                Manage Return #{selectedReturn.id.slice(-8).toUpperCase()}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
+          <div
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg sm:max-w-xl"
+            role="dialog"
+            aria-labelledby="return-modal-title"
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+              <h2 id="return-modal-title" className="text-sm font-semibold text-gray-900">
+                Return #{selectedReturn.id.slice(-8).toUpperCase()}
               </h2>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                aria-label="Close"
               >
-                <XCircle className="w-6 h-6" />
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="space-y-4">
-              {/* Return Details */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-2">Return Details</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p><strong>Product:</strong> {selectedReturn.product_title}</p>
-                    <p><strong>Customer:</strong> {selectedReturn.requested_by}</p>
-                    <p><strong>Reason:</strong> {selectedReturn.reason}</p>
-                  </div>
-                  <div>
-                    <p><strong>Amount:</strong> {formatCurrency(selectedReturn.total_price)}</p>
-                    <p><strong>Requested:</strong> {formatDate(selectedReturn.requested_at)}</p>
-                    <p><strong>Current Status:</strong> {selectedReturn.status}</p>
-                  </div>
+            <div className="space-y-3 p-3">
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-2 text-xs">
+                <div className="grid gap-1 sm:grid-cols-2">
+                  <p>
+                    <span className="text-gray-500">Product: </span>
+                    {selectedReturn.product_title}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Customer: </span>
+                    {selectedReturn.requested_by}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Reason: </span>
+                    {selectedReturn.reason}
+                  </p>
+                  <p className="tabular-nums">
+                    <span className="text-gray-500">Amount: </span>
+                    {formatCurrency(selectedReturn.total_price)}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Requested: </span>
+                    {formatDate(selectedReturn.requested_at)}
+                  </p>
+                  <p className="capitalize">
+                    <span className="text-gray-500">Status: </span>
+                    {selectedReturn.status}
+                  </p>
                 </div>
               </div>
 
-              {/* Admin Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Admin Notes
-                </label>
+                <label className="mb-1 block text-[11px] font-medium text-gray-600">Admin notes</label>
                 <textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="Add notes about this return request..."
+                  rows={2}
+                  className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="Internal notes…"
                 />
               </div>
 
-              {/* Refund Details */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Refund Amount (₹)
-                  </label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Refund (₹)</label>
                   <input
                     type="number"
-                    value={refundAmount}
-                    onChange={(e) => setRefundAmount(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    value={refundAmount || ''}
+                    onChange={(e) => setRefundAmount(parseInt(e.target.value, 10) || 0)}
+                    className={inputCls + ' w-full'}
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Refund Method
-                  </label>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Method</label>
                   <select
                     value={refundMethod}
                     onChange={(e) => setRefundMethod(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className={inputCls + ' w-full'}
                   >
-                    <option value="">Select method</option>
+                    <option value="">Select</option>
                     <option value="Credit Card">Credit Card</option>
                     <option value="UPI">UPI</option>
                     <option value="Debit Card">Debit Card</option>
@@ -670,61 +600,66 @@ const Returns: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
+              <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-2">
                 {selectedReturn.status === 'pending' && (
                   <>
                     <button
+                      type="button"
                       onClick={() => handleStatusUpdate(selectedReturn.id, 'approved')}
-                      className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                      className="inline-flex flex-1 min-w-[6rem] items-center justify-center gap-1 rounded-md bg-green-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-green-700"
                     >
-                      <CheckCircle className="w-4 h-4" />
-                      <span>Approve</span>
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      Approve
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleStatusUpdate(selectedReturn.id, 'rejected')}
-                      className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                      className="inline-flex flex-1 min-w-[6rem] items-center justify-center gap-1 rounded-md bg-red-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-red-700"
                     >
-                      <XCircle className="w-4 h-4" />
-                      <span>Reject</span>
+                      <XCircle className="h-3.5 w-3.5" />
+                      Reject
                     </button>
                   </>
                 )}
-                
+
                 {selectedReturn.status === 'approved' && (
                   <>
                     <button
+                      type="button"
                       onClick={() => setShowPickupModal(true)}
-                      className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+                      className="inline-flex flex-1 min-w-[7rem] items-center justify-center gap-1 rounded-md bg-violet-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-violet-700"
                     >
-                      <Truck className="w-4 h-4" />
-                      <span>Schedule Pickup</span>
+                      <Truck className="h-3.5 w-3.5" />
+                      Schedule pickup
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleStatusUpdate(selectedReturn.id, 'processing')}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                      className="inline-flex flex-1 min-w-[7rem] items-center justify-center gap-1 rounded-md bg-blue-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
                     >
-                      <Package className="w-4 h-4" />
-                      <span>Start Processing</span>
+                      <Package className="h-3.5 w-3.5" />
+                      Processing
                     </button>
                   </>
                 )}
 
                 {selectedReturn.status === 'processing' && (
                   <button
+                    type="button"
                     onClick={() => handleStatusUpdate(selectedReturn.id, 'completed')}
-                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-green-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-green-700"
                   >
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Complete</span>
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Complete
                   </button>
                 )}
 
                 <button
+                  type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center justify-center rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  Cancel
+                  Close
                 </button>
               </div>
             </div>
@@ -732,179 +667,182 @@ const Returns: React.FC = () => {
         </div>
       )}
 
-      {/* Pickup Scheduling Modal */}
       {showPickupModal && selectedReturn && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">
-                Schedule Return Pickup - #{selectedReturn.id.slice(-8).toUpperCase()}
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-3">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg sm:max-w-xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+              <h2 className="text-sm font-semibold text-gray-900">
+                Pickup · #{selectedReturn.id.slice(-8).toUpperCase()}
               </h2>
               <button
+                type="button"
                 onClick={() => setShowPickupModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="rounded p-1 text-gray-500 hover:bg-gray-100"
+                aria-label="Close"
               >
-                <XCircle className="w-6 h-6" />
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="space-y-4">
-              {/* Customer Details */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-3 flex items-center">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Customer Details
+            <div className="space-y-3 p-3">
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-2">
+                <h3 className="mb-2 flex items-center gap-1 text-[11px] font-semibold text-gray-800">
+                  <MapPin className="h-3.5 w-3.5" />
+                  Customer
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Customer Name *
-                    </label>
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">Name *</label>
                     <input
                       type="text"
                       value={pickupDetails.customerName}
-                      onChange={(e) => setPickupDetails({...pickupDetails, customerName: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Enter customer name"
+                      onChange={(e) =>
+                        setPickupDetails({ ...pickupDetails, customerName: e.target.value })
+                      }
+                      className={inputCls + ' w-full'}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number *
-                    </label>
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">Phone *</label>
                     <input
                       type="tel"
                       value={pickupDetails.customerPhone}
-                      onChange={(e) => setPickupDetails({...pickupDetails, customerPhone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Enter phone number"
+                      onChange={(e) =>
+                        setPickupDetails({ ...pickupDetails, customerPhone: e.target.value })
+                      }
+                      className={inputCls + ' w-full'}
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Address *
-                    </label>
+                  <div className="sm:col-span-2">
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">Address *</label>
                     <textarea
                       value={pickupDetails.customerAddress}
-                      onChange={(e) => setPickupDetails({...pickupDetails, customerAddress: e.target.value})}
+                      onChange={(e) =>
+                        setPickupDetails({ ...pickupDetails, customerAddress: e.target.value })
+                      }
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Enter full address"
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      City *
-                    </label>
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">City *</label>
                     <input
                       type="text"
                       value={pickupDetails.customerCity}
-                      onChange={(e) => setPickupDetails({...pickupDetails, customerCity: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Enter city"
+                      onChange={(e) =>
+                        setPickupDetails({ ...pickupDetails, customerCity: e.target.value })
+                      }
+                      className={inputCls + ' w-full'}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      State *
-                    </label>
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">State *</label>
                     <input
                       type="text"
                       value={pickupDetails.customerState}
-                      onChange={(e) => setPickupDetails({...pickupDetails, customerState: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Enter state"
+                      onChange={(e) =>
+                        setPickupDetails({ ...pickupDetails, customerState: e.target.value })
+                      }
+                      className={inputCls + ' w-full'}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Pincode *
-                    </label>
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">Pincode *</label>
                     <input
                       type="text"
                       value={pickupDetails.customerPincode}
                       onChange={(e) => {
-                        setPickupDetails({...pickupDetails, customerPincode: e.target.value});
-                        // Load time slots when pincode and date are available
-                        if (e.target.value && pickupDetails.pickupDate) {
-                          loadTimeSlots(e.target.value, pickupDetails.pickupDate);
+                        const v = e.target.value;
+                        setPickupDetails({ ...pickupDetails, customerPincode: v });
+                        if (v && pickupDetails.pickupDate) {
+                          loadTimeSlots(v, pickupDetails.pickupDate);
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Enter pincode"
+                      className={inputCls + ' w-full'}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Pickup Scheduling */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-3 flex items-center">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Pickup Schedule
+              <div className="rounded-md border border-gray-200 p-2">
+                <h3 className="mb-2 flex items-center gap-1 text-[11px] font-semibold text-gray-800">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Schedule
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Pickup Date *
-                    </label>
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">Date *</label>
                     <input
                       type="date"
                       value={pickupDetails.pickupDate}
                       onChange={(e) => {
-                        setPickupDetails({...pickupDetails, pickupDate: e.target.value});
-                        // Load time slots when pincode and date are available
-                        if (e.target.value && pickupDetails.customerPincode) {
-                          loadTimeSlots(pickupDetails.customerPincode, e.target.value);
+                        const v = e.target.value;
+                        setPickupDetails({ ...pickupDetails, pickupDate: v });
+                        if (v && pickupDetails.customerPincode) {
+                          loadTimeSlots(pickupDetails.customerPincode, v);
                         }
                       }}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className={inputCls + ' w-full'}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Time Slot *
-                    </label>
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">Slot *</label>
                     <select
                       value={pickupDetails.timeSlot}
-                      onChange={(e) => setPickupDetails({...pickupDetails, timeSlot: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      onChange={(e) =>
+                        setPickupDetails({ ...pickupDetails, timeSlot: e.target.value })
+                      }
+                      className={inputCls + ' w-full'}
                     >
-                      <option value="">Select time slot</option>
+                      <option value="">Select</option>
                       {timeSlots.map((slot, index) => (
-                        <option key={index} value={slot}>{slot}</option>
+                        <option key={index} value={slot}>
+                          {slot}
+                        </option>
                       ))}
                     </select>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Special Instructions
-                    </label>
+                  <div className="sm:col-span-2">
+                    <label className="mb-0.5 block text-[10px] font-medium text-gray-600">Instructions</label>
                     <textarea
                       value={pickupDetails.specialInstructions}
-                      onChange={(e) => setPickupDetails({...pickupDetails, specialInstructions: e.target.value})}
+                      onChange={(e) =>
+                        setPickupDetails({
+                          ...pickupDetails,
+                          specialInstructions: e.target.value,
+                        })
+                      }
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Any special instructions for pickup..."
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
+              <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-2">
                 <button
+                  type="button"
                   onClick={handleSchedulePickup}
-                  disabled={!pickupDetails.customerName || !pickupDetails.customerPhone || !pickupDetails.customerAddress || !pickupDetails.customerCity || !pickupDetails.customerState || !pickupDetails.customerPincode || !pickupDetails.pickupDate || !pickupDetails.timeSlot}
-                  className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+                  disabled={
+                    !pickupDetails.customerName ||
+                    !pickupDetails.customerPhone ||
+                    !pickupDetails.customerAddress ||
+                    !pickupDetails.customerCity ||
+                    !pickupDetails.customerState ||
+                    !pickupDetails.customerPincode ||
+                    !pickupDetails.pickupDate ||
+                    !pickupDetails.timeSlot
+                  }
+                  className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-violet-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Truck className="w-4 h-4" />
-                  <span>Schedule Pickup</span>
+                  <Truck className="h-3.5 w-3.5" />
+                  Confirm pickup
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowPickupModal(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center justify-center rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
@@ -913,13 +851,8 @@ const Returns: React.FC = () => {
           </div>
         </div>
       )}
-      </div>
     </AdminLayout>
   );
 };
 
 export default Returns;
-
-
-
-

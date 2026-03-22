@@ -1,16 +1,117 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { CheckSquare, Plus, Clock, User, Calendar, Filter, Search, MoreHorizontal, Star, MessageCircle, Paperclip, X, Edit3, ArrowRight, ArrowLeft, Check, RefreshCw, AlertCircle, Zap } from 'lucide-react';
-import { TaskService, TaskData, subscribeToTasks } from '../../services/supabaseService';
+import { NotificationManager } from '../../components/Notification';
+import { TaskService, type TaskData } from '../../services/supabaseService';
+import {
+  CheckSquare,
+  Plus,
+  Filter,
+  Search,
+  MoreHorizontal,
+  Star,
+  MessageCircle,
+  Paperclip,
+  X,
+  Edit3,
+  ArrowRight,
+  ArrowLeft,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react';
+
+const inputCls =
+  'h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+
+const textareaCls =
+  'min-h-[4rem] w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+
+const labelCls = 'mb-0.5 block text-[11px] font-medium text-gray-600';
+
+type BoardStatus = 'todo' | 'inprogress' | 'review' | 'done';
+
+export interface BoardTask {
+  id: number;
+  title: string;
+  description: string;
+  priority: string;
+  status: BoardStatus;
+  dueDate: string;
+  assignee: string;
+  avatar: string;
+  tags: string[];
+  progress: number;
+  comments: number;
+  attachments: number;
+  color: string;
+}
+
+function normalizeTags(tags: unknown): string[] {
+  if (Array.isArray(tags)) return tags.map(String);
+  if (typeof tags === 'string') {
+    try {
+      const p = JSON.parse(tags);
+      return Array.isArray(p) ? p.map(String) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function toDbStatus(status: string): TaskData['status'] {
+  if (status === 'done') return 'completed';
+  if (status === 'todo' || status === 'inprogress' || status === 'review') return status;
+  return 'todo';
+}
+
+function fromDbStatus(status: string): BoardStatus {
+  if (status === 'completed') return 'done';
+  if (status === 'todo' || status === 'inprogress' || status === 'review') return status;
+  return 'todo';
+}
+
+function taskRowToBoard(row: TaskData): BoardTask | null {
+  if (row.id == null) return null;
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description || '',
+    priority: row.priority,
+    status: fromDbStatus(row.status),
+    dueDate: row.due_date ? String(row.due_date).slice(0, 10) : '',
+    assignee: row.assignee || '',
+    avatar: row.avatar || '?',
+    tags: normalizeTags(row.tags),
+    progress: row.progress ?? 0,
+    comments: row.comments ?? 0,
+    attachments: row.attachments ?? 0,
+    color: row.color || 'blue',
+  };
+}
+
+function initialsFromAssignee(assignee: string): string {
+  const s = assignee.trim();
+  if (!s) return '?';
+  return (
+    s
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 6) || '?'
+  );
+}
 
 interface CreateTaskFormProps {
   onSubmit: (task: any) => void;
   onCancel: () => void;
+  disabled?: boolean;
 }
 
-const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit, onCancel }) => {
+const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit, onCancel, disabled }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -28,8 +129,8 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit, onCancel }) =
 
     const newTask = {
       ...formData,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      avatar: formData.assignee.split(' ').map(name => name[0]).join('').toUpperCase()
+      tags: formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+      avatar: initialsFromAssignee(formData.assignee),
     };
 
     onSubmit(newTask);
@@ -43,41 +144,22 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit, onCancel }) =
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <fieldset disabled={disabled} className="min-w-0 space-y-2 border-0 p-0">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-        <input
-          type="text"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter task title"
-          required
-        />
+        <label className={labelCls}>Title *</label>
+        <input type="text" name="title" value={formData.title} onChange={handleChange} className={inputCls} placeholder="Title" required />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter task description"
-        />
+        <label className={labelCls}>Description</label>
+        <textarea name="description" value={formData.description} onChange={handleChange} rows={3} className={textareaCls} placeholder="Details…" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-          <select
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          >
+          <label className={labelCls}>Priority</label>
+          <select name="priority" value={formData.priority} onChange={handleChange} className={inputCls}>
             <option value="normal">Normal</option>
             <option value="important">Important</option>
             <option value="urgent">Urgent</option>
@@ -85,13 +167,8 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit, onCancel }) =
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          >
+          <label className={labelCls}>Status</label>
+          <select name="status" value={formData.status} onChange={handleChange} className={inputCls}>
             <option value="todo">To Do</option>
             <option value="inprogress">In Progress</option>
             <option value="review">In Review</option>
@@ -101,48 +178,23 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit, onCancel }) =
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
-        <input
-          type="text"
-          name="assignee"
-          value={formData.assignee}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter assignee name"
-        />
+        <label className={labelCls}>Assignee</label>
+        <input type="text" name="assignee" value={formData.assignee} onChange={handleChange} className={inputCls} placeholder="Name" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-        <input
-          type="date"
-          name="dueDate"
-          value={formData.dueDate}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-        />
+        <label className={labelCls}>Due date</label>
+        <input type="date" name="dueDate" value={formData.dueDate} onChange={handleChange} className={inputCls} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-        <input
-          type="text"
-          name="tags"
-          value={formData.tags}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter tags separated by commas"
-        />
+        <label className={labelCls}>Tags</label>
+        <input type="text" name="tags" value={formData.tags} onChange={handleChange} className={inputCls} placeholder="Comma-separated" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Card Color</label>
-        <select
-          name="color"
-          value={formData.color}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-        >
+        <label className={labelCls}>Card color</label>
+        <select name="color" value={formData.color} onChange={handleChange} className={inputCls}>
           <option value="blue">Blue</option>
           <option value="orange">Orange</option>
           <option value="green">Green</option>
@@ -151,20 +203,23 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onSubmit, onCancel }) =
           <option value="red">Red</option>
         </select>
       </div>
+      </fieldset>
 
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end gap-2 border-t border-gray-100 pt-2">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          disabled={disabled}
+          className="h-8 rounded-md border border-gray-200 px-3 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+          disabled={disabled}
+          className="h-8 rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
-          Create Task
+          Create
         </button>
       </div>
     </form>
@@ -175,14 +230,19 @@ interface EditTaskFormProps {
   task: any;
   onSubmit: (task: any) => void;
   onCancel: () => void;
+  disabled?: boolean;
 }
 
-const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
+const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSubmit, onCancel, disabled }) => {
+  const [formData, setFormData] = useState(() => ({
     ...task,
-    tags: task.tags.join(', '),
-    dueDate: task.dueDate || ''
-  });
+    tags: Array.isArray(task.tags) ? task.tags.join(', ') : '',
+    dueDate: task.dueDate || '',
+    progress:
+      task.progress != null && task.progress !== ''
+        ? String(task.progress)
+        : '',
+  }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,8 +250,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSubmit, onCancel })
 
     const updatedTask = {
       ...formData,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      avatar: formData.assignee.split(' ').map(name => name[0]).join('').toUpperCase()
+      tags: formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+      avatar: initialsFromAssignee(formData.assignee || ''),
     };
 
     onSubmit(updatedTask);
@@ -205,41 +265,22 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSubmit, onCancel })
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <fieldset disabled={disabled} className="min-w-0 space-y-2 border-0 p-0">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-        <input
-          type="text"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter task title"
-          required
-        />
+        <label className={labelCls}>Title *</label>
+        <input type="text" name="title" value={formData.title} onChange={handleChange} className={inputCls} placeholder="Title" required />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter task description"
-        />
+        <label className={labelCls}>Description</label>
+        <textarea name="description" value={formData.description} onChange={handleChange} rows={3} className={textareaCls} placeholder="Details…" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-          <select
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          >
+          <label className={labelCls}>Priority</label>
+          <select name="priority" value={formData.priority} onChange={handleChange} className={inputCls}>
             <option value="normal">Normal</option>
             <option value="important">Important</option>
             <option value="urgent">Urgent</option>
@@ -247,13 +288,8 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSubmit, onCancel })
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          >
+          <label className={labelCls}>Status</label>
+          <select name="status" value={formData.status} onChange={handleChange} className={inputCls}>
             <option value="todo">To Do</option>
             <option value="inprogress">In Progress</option>
             <option value="review">In Review</option>
@@ -263,42 +299,22 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSubmit, onCancel })
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
-        <input
-          type="text"
-          name="assignee"
-          value={formData.assignee}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter assignee name"
-        />
+        <label className={labelCls}>Assignee</label>
+        <input type="text" name="assignee" value={formData.assignee} onChange={handleChange} className={inputCls} placeholder="Name" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-        <input
-          type="date"
-          name="dueDate"
-          value={formData.dueDate}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-        />
+        <label className={labelCls}>Due date</label>
+        <input type="date" name="dueDate" value={formData.dueDate} onChange={handleChange} className={inputCls} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-        <input
-          type="text"
-          name="tags"
-          value={formData.tags}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter tags separated by commas"
-        />
+        <label className={labelCls}>Tags</label>
+        <input type="text" name="tags" value={formData.tags} onChange={handleChange} className={inputCls} placeholder="Comma-separated" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Progress (%)</label>
+        <label className={labelCls}>Progress (%)</label>
         <input
           type="number"
           name="progress"
@@ -306,19 +322,14 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSubmit, onCancel })
           onChange={handleChange}
           min="0"
           max="100"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-          placeholder="Enter progress percentage"
+          className={inputCls}
+          placeholder="0–100"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Card Color</label>
-        <select
-          name="color"
-          value={formData.color}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-        >
+        <label className={labelCls}>Card color</label>
+        <select name="color" value={formData.color} onChange={handleChange} className={inputCls}>
           <option value="blue">Blue</option>
           <option value="orange">Orange</option>
           <option value="green">Green</option>
@@ -327,20 +338,23 @@ const EditTaskForm: React.FC<EditTaskFormProps> = ({ task, onSubmit, onCancel })
           <option value="red">Red</option>
         </select>
       </div>
+      </fieldset>
 
-      <div className="flex justify-end space-x-3 pt-4">
+      <div className="flex justify-end gap-2 border-t border-gray-100 pt-2">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          disabled={disabled}
+          className="h-8 rounded-md border border-gray-200 px-3 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+          disabled={disabled}
+          className="h-8 rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
-          Update Task
+          Save
         </button>
       </div>
     </form>
@@ -352,142 +366,43 @@ const Tasks: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<BoardTask | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
-  const initialTasks = [
-    {
-      id: 1,
-      title: 'Research landing page task process pages',
-      description: 'Research and analyze the best practices for landing page task process optimization',
-      priority: 'important',
-      status: 'todo',
-      dueDate: '2024-01-15',
-      assignee: 'Brooklyn Simmons',
-      avatar: 'BS',
-      tags: ['Research', 'Website'],
-      progress: 0,
-      comments: 2,
-      attachments: 1,
-      color: 'blue'
-    },
-    {
-      id: 2,
-      title: 'How to finish the online questionnaire',
-      description: 'Complete the user experience questionnaire for new features',
-      priority: 'normal',
-      status: 'inprogress',
-      dueDate: '2024-01-12',
-      assignee: 'Marketing Team',
-      avatar: 'MT',
-      tags: ['Questionnaire', 'UX'],
-      progress: 65,
-      comments: 5,
-      attachments: 0,
-      color: 'orange'
-    },
-    {
-      id: 3,
-      title: 'Milestone project full service launch',
-      description: 'Launch the complete service with all features integrated',
-      priority: 'urgent',
-      status: 'inprogress',
-      dueDate: '2024-01-10',
-      assignee: 'Development Team',
-      avatar: 'DT',
-      tags: ['Milestone', 'Launch'],
-      progress: 85,
-      comments: 12,
-      attachments: 3,
-      color: 'green'
-    },
-    {
-      id: 4,
-      title: 'Create a landing page task process pages',
-      description: 'Design and develop new landing pages for task management',
-      priority: 'normal',
-      status: 'todo',
-      dueDate: '2024-01-08',
-      assignee: 'Design Team',
-      avatar: 'DT',
-      tags: ['Design', 'Landing Page'],
-      progress: 0,
-      comments: 0,
-      attachments: 2,
-      color: 'purple'
-    },
-    {
-      id: 5,
-      title: 'Network video call definite web app design and develop',
-      description: 'Complete video calling feature integration',
-      priority: 'normal',
-      status: 'review',
-      dueDate: '2024-01-20',
-      assignee: 'Full Stack Team',
-      avatar: 'FS',
-      tags: ['Video Call', 'Development'],
-      progress: 95,
-      comments: 8,
-      attachments: 1,
-      color: 'pink'
-    },
-    {
-      id: 6,
-      title: 'Glyph app prototype for OLX optimization in figma',
-      description: 'Create app prototype with optimized user experience',
-      priority: 'normal',
-      status: 'review',
-      dueDate: '2024-01-18',
-      assignee: 'UI/UX Team',
-      avatar: 'UX',
-      tags: ['Prototype', 'Figma'],
-      progress: 100,
-      comments: 3,
-      attachments: 0,
-      color: 'blue'
-    },
-    {
-      id: 7,
-      title: 'Design CRM shop product page responsive website',
-      description: 'Create responsive design for CRM product pages',
-      priority: 'normal',
-      status: 'done',
-      dueDate: '2024-01-05',
-      assignee: 'Web Design Team',
-      avatar: 'WD',
-      tags: ['CRM', 'Responsive'],
-      progress: 100,
-      comments: 15,
-      attachments: 4,
-      color: 'green'
-    },
-    {
-      id: 8,
-      title: 'Online task app design pages redesign',
-      description: 'Redesign the task management interface for better UX',
-      priority: 'normal',
-      status: 'done',
-      dueDate: '2024-01-01',
-      assignee: 'Product Team',
-      avatar: 'PT',
-      tags: ['Redesign', 'UI/UX'],
-      progress: 100,
-      comments: 7,
-      attachments: 2,
-      color: 'red'
+  const [taskList, setTaskList] = useState<BoardTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const loadTasks = useCallback(async (opts?: { soft?: boolean }) => {
+    if (opts?.soft) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const rows = await TaskService.getAllTasks();
+      const boards = rows.map(taskRowToBoard).filter(Boolean) as BoardTask[];
+      setTaskList(boards);
+    } catch (e) {
+      console.error(e);
+      NotificationManager.error('Failed to load tasks');
+      setTaskList([]);
+    } finally {
+      if (opts?.soft) setRefreshing(false);
+      else setLoading(false);
     }
-  ];
+  }, []);
 
-  const [taskList, setTaskList] = useState(initialTasks);
+  useEffect(() => {
+    void loadTasks();
+  }, [loadTasks]);
 
-  // Filtered tasks based on search and filters
   const filteredTasks = useMemo(() => {
-    return taskList.filter(task => {
-      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           task.assignee.toLowerCase().includes(searchTerm.toLowerCase());
-      
+    return taskList.filter((task) => {
+      const matchesSearch =
+        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.assignee.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
       const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
       const matchesAssignee = assigneeFilter === 'all' || task.assignee === assigneeFilter;
@@ -496,95 +411,170 @@ const Tasks: React.FC = () => {
     });
   }, [taskList, searchTerm, statusFilter, priorityFilter, assigneeFilter]);
 
-  // Get unique assignees for filter dropdown
   const uniqueAssignees = useMemo(() => {
-    return Array.from(new Set(taskList.map(task => task.assignee)));
+    return Array.from(new Set(taskList.map((t) => t.assignee).filter(Boolean))).sort();
   }, [taskList]);
 
-  // Create new task
-  const createTask = (newTask: any) => {
-    const task = {
-      ...newTask,
-      id: Math.max(...taskList.map(t => t.id)) + 1,
-      comments: 0,
-      attachments: 0,
-      progress: 0
-    };
-    setTaskList([...taskList, task]);
-    setShowCreateModal(false);
-  };
+  const subbarSummary = useMemo(() => {
+    const total = taskList.length;
+    const shown = filteredTasks.length;
+    const avatars = Array.from(
+      new Set(filteredTasks.map((t) => t.avatar).filter((a) => a && a !== '?'))
+    ).slice(0, 6);
+    return { total, shown, avatars };
+  }, [taskList.length, filteredTasks]);
 
-  // Edit existing task
-  const editTask = (updatedTask: any) => {
-    setTaskList(taskList.map(task => 
-      task.id === updatedTask.id ? { ...task, ...updatedTask } : task
-    ));
-    setShowEditModal(false);
-    setEditingTask(null);
-  };
-
-  // Change task status
-  const changeTaskStatus = (taskId: number, newStatus: string) => {
-    setTaskList(taskList.map(task => {
-      if (task.id === taskId) {
-        let newProgress = task.progress;
-        // Auto-adjust progress based on status
-        if (newStatus === 'todo') newProgress = 0;
-        else if (newStatus === 'inprogress' && task.progress === 0) newProgress = 25;
-        else if (newStatus === 'review' && task.progress < 90) newProgress = 95;
-        else if (newStatus === 'done') newProgress = 100;
-        
-        return { ...task, status: newStatus, progress: newProgress };
+  const createTask = async (newTask: Record<string, unknown>) => {
+    setSaving(true);
+    try {
+      const payload: Omit<TaskData, 'id'> = {
+        title: String(newTask.title || '').trim(),
+        description: String(newTask.description || '').trim() || undefined,
+        priority: newTask.priority as TaskData['priority'],
+        status: toDbStatus(String(newTask.status)),
+        due_date: String(newTask.dueDate || '') || undefined,
+        assignee: String(newTask.assignee || '').trim() || undefined,
+        avatar: String(newTask.avatar || '?'),
+        tags: Array.isArray(newTask.tags) ? (newTask.tags as string[]) : [],
+        color: String(newTask.color || 'blue'),
+        progress: 0,
+        comments: 0,
+        attachments: 0,
+      };
+      const created = await TaskService.createTask(payload);
+      if (created) {
+        const b = taskRowToBoard(created);
+        if (b) setTaskList((prev) => [b, ...prev]);
+        setShowCreateModal(false);
+        NotificationManager.success('Task created');
+      } else {
+        NotificationManager.error('Could not create task. Check Supabase tasks table and RLS.');
       }
-      return task;
-    }));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // Open edit modal
-  const openEditModal = (task: any) => {
+  const editTask = async (updatedTask: Record<string, unknown>) => {
+    const id = Number(updatedTask.id);
+    if (!id) return;
+    setSaving(true);
+    try {
+      const updates: Partial<TaskData> = {
+        title: String(updatedTask.title || '').trim(),
+        description: String(updatedTask.description || '').trim() || undefined,
+        priority: updatedTask.priority as TaskData['priority'],
+        status: toDbStatus(String(updatedTask.status)),
+        due_date: String(updatedTask.dueDate || '') || undefined,
+        assignee: String(updatedTask.assignee || '').trim() || undefined,
+        avatar: String(updatedTask.avatar || '?'),
+        tags: Array.isArray(updatedTask.tags) ? (updatedTask.tags as string[]) : [],
+        progress: Math.min(100, Math.max(0, Number(updatedTask.progress) || 0)),
+        color: String(updatedTask.color || 'blue'),
+      };
+      const saved = await TaskService.updateTask(id, updates);
+      if (saved) {
+        const b = taskRowToBoard(saved);
+        if (b) setTaskList((prev) => prev.map((t) => (t.id === id ? b : t)));
+        setShowEditModal(false);
+        setEditingTask(null);
+        NotificationManager.success('Task updated');
+      } else {
+        NotificationManager.error('Could not update task');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changeTaskStatus = async (taskId: number, newUiStatus: BoardStatus) => {
+    const task = taskList.find((t) => t.id === taskId);
+    if (!task) return;
+
+    let newProgress = task.progress;
+    if (newUiStatus === 'todo') newProgress = 0;
+    else if (newUiStatus === 'inprogress' && task.progress === 0) newProgress = 25;
+    else if (newUiStatus === 'review' && task.progress < 90) newProgress = 95;
+    else if (newUiStatus === 'done') newProgress = 100;
+
+    const updates: Partial<TaskData> = {
+      status: toDbStatus(newUiStatus),
+      progress: newProgress,
+    };
+
+    const saved = await TaskService.updateTask(taskId, updates);
+    if (saved) {
+      const b = taskRowToBoard(saved);
+      if (b) setTaskList((prev) => prev.map((t) => (t.id === taskId ? b : t)));
+    } else {
+      NotificationManager.error('Could not move task');
+    }
+  };
+
+  const deleteEditingTask = async () => {
+    if (!editingTask) return;
+    if (!window.confirm('Delete this task?')) return;
+    setSaving(true);
+    try {
+      const ok = await TaskService.deleteTask(editingTask.id);
+      if (ok) {
+        setTaskList((prev) => prev.filter((t) => t.id !== editingTask.id));
+        setShowEditModal(false);
+        setEditingTask(null);
+        NotificationManager.success('Task deleted');
+      } else {
+        NotificationManager.error('Could not delete task');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openEditModal = (task: BoardTask) => {
     setEditingTask(task);
     setShowEditModal(true);
   };
 
-  // Get next status for quick actions
-  const getNextStatus = (currentStatus: string) => {
-    const statusFlow = {
-      'todo': 'inprogress',
-      'inprogress': 'review',
-      'review': 'done',
-      'done': 'todo'
+  const getNextStatus = (currentStatus: BoardStatus): BoardStatus => {
+    const statusFlow: Record<BoardStatus, BoardStatus> = {
+      todo: 'inprogress',
+      inprogress: 'review',
+      review: 'done',
+      done: 'todo',
     };
-    return statusFlow[currentStatus as keyof typeof statusFlow] || 'todo';
+    return statusFlow[currentStatus] ?? 'todo';
   };
 
-  // Get previous status for quick actions
-  const getPreviousStatus = (currentStatus: string) => {
-    const statusFlow = {
-      'todo': 'done',
-      'inprogress': 'todo',
-      'review': 'inprogress',
-      'done': 'review'
+  const getPreviousStatus = (currentStatus: BoardStatus): BoardStatus => {
+    const statusFlow: Record<BoardStatus, BoardStatus> = {
+      todo: 'done',
+      inprogress: 'todo',
+      review: 'inprogress',
+      done: 'review',
     };
-    return statusFlow[currentStatus as keyof typeof statusFlow] || 'todo';
+    return statusFlow[currentStatus] ?? 'todo';
   };
 
   const getCardColor = (color: string) => {
     const colors = {
-      blue: 'border-l-blue-500 bg-blue-50',
-      orange: 'border-l-orange-500 bg-orange-50', 
-      green: 'border-l-green-500 bg-green-50',
-      purple: 'border-l-purple-500 bg-purple-50',
-      pink: 'border-l-pink-500 bg-pink-50',
-      red: 'border-l-red-500 bg-red-50'
+      blue: 'border-l-blue-500 bg-blue-50/60',
+      orange: 'border-l-orange-500 bg-orange-50/60',
+      green: 'border-l-green-500 bg-green-50/60',
+      purple: 'border-l-violet-500 bg-violet-50/60',
+      pink: 'border-l-rose-500 bg-rose-50/60',
+      red: 'border-l-red-500 bg-red-50/60'
     };
-    return colors[color as keyof typeof colors] || 'border-l-gray-500 bg-gray-50';
+    return colors[color as keyof typeof colors] || 'border-l-gray-400 bg-gray-50/80';
   };
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case 'urgent': return <Star className="w-4 h-4 text-red-500 fill-red-500" />;
-      case 'important': return <Star className="w-4 h-4 text-orange-500 fill-orange-500" />;
-      default: return null;
+      case 'urgent':
+        return <Star className="h-3 w-3 shrink-0 fill-red-500 text-red-500" />;
+      case 'important':
+        return <Star className="h-3 w-3 shrink-0 fill-amber-500 text-amber-500" />;
+      default:
+        return null;
     }
   };
 
@@ -594,231 +584,255 @@ const Tasks: React.FC = () => {
 
   const getColumnColor = (status: string) => {
     const colors = {
-      todo: 'bg-blue-100 text-blue-800',
-      inprogress: 'bg-orange-100 text-orange-800',
-      review: 'bg-purple-100 text-purple-800',
-      done: 'bg-green-100 text-green-800'
+      todo: 'border-blue-200 bg-blue-50 text-blue-800',
+      inprogress: 'border-amber-200 bg-amber-50 text-amber-900',
+      review: 'border-violet-200 bg-violet-50 text-violet-800',
+      done: 'border-green-200 bg-green-50 text-green-800'
     };
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[status as keyof typeof colors] || 'border-gray-200 bg-gray-50 text-gray-800';
   };
 
+  const todayLabel = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
   return (
-    <AdminLayout title="">
-      <div className="h-full bg-gray-50 px-6 pb-6">
-        {/* Header */}
-        <div className="mb-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div>
-                  <h1 className="text-lg font-semibold text-gray-900">May</h1>
-                  <p className="text-sm text-gray-500">Today is Saturday, Jul 8th, 2023</p>
-                </div>
+    <AdminLayout title="Tasks" noHeader>
+      <div className="min-h-0 space-y-4 px-4 py-5 sm:px-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm sm:p-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold text-gray-900">Tasks</h1>
+              <p className="text-[11px] text-gray-500">{todayLabel}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <div className="relative min-w-[10rem] flex-1 sm:max-w-xs">
+                <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`${inputCls} pl-7`}
+                />
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Find something"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
-                  />
-                </div>
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center space-x-2 px-3 py-2 border rounded-lg transition-colors text-sm ${
-                      showFilters || statusFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all'
-                        ? 'border-pink-500 bg-pink-50 text-pink-700'
-                        : 'border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Filter className="w-4 h-4" />
-                    <span>Filters</span>
-                    {(statusFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all') && (
-                      <span className="w-2 h-2 bg-pink-500 rounded-full"></span>
-                    )}
-                  </button>
-                  
-                  {showFilters && (
-                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-gray-900">Filters</h3>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-xs font-medium ${
+                    showFilters || statusFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all'
+                      ? 'border-gray-900 bg-gray-900 text-white'
+                      : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Filter className="h-3.5 w-3.5" />
+                  Filters
+                  {(statusFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all') && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
+                  )}
+                </button>
+
+                {showFilters && (
+                  <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-lg border border-gray-200 bg-white p-2 shadow-lg sm:w-80">
+                    <div className="mb-2 flex items-center justify-between border-b border-gray-100 pb-1.5">
+                      <h3 className="text-xs font-semibold text-gray-900">Filters</h3>
+                      <button type="button" onClick={() => setShowFilters(false)} className="rounded p-0.5 text-gray-500 hover:bg-gray-100">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <label className={labelCls}>Status</label>
+                        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={inputCls}>
+                          <option value="all">All</option>
+                          <option value="todo">To Do</option>
+                          <option value="inprogress">In Progress</option>
+                          <option value="review">In Review</option>
+                          <option value="done">Done</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className={labelCls}>Priority</label>
+                        <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className={inputCls}>
+                          <option value="all">All</option>
+                          <option value="urgent">Urgent</option>
+                          <option value="important">Important</option>
+                          <option value="normal">Normal</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className={labelCls}>Assignee</label>
+                        <select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)} className={inputCls}>
+                          <option value="all">All</option>
+                          {uniqueAssignees.map((assignee) => (
+                            <option key={assignee} value={assignee}>
+                              {assignee}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex justify-between gap-2 border-t border-gray-100 pt-2">
                         <button
-                          onClick={() => setShowFilters(false)}
-                          className="text-gray-400 hover:text-gray-600"
+                          type="button"
+                          onClick={() => {
+                            setStatusFilter('all');
+                            setPriorityFilter('all');
+                            setAssigneeFilter('all');
+                          }}
+                          className="text-[11px] text-gray-600 hover:text-gray-900"
                         >
-                          <X className="w-4 h-4" />
+                          Clear
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowFilters(false)}
+                          className="h-8 rounded-md bg-gray-900 px-2.5 text-xs font-medium text-white hover:bg-gray-800"
+                        >
+                          Done
                         </button>
                       </div>
-                      
-                      <div className="space-y-4">
-                        {/* Status Filter */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                          <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                          >
-                            <option value="all">All Statuses</option>
-                            <option value="todo">To Do</option>
-                            <option value="inprogress">In Progress</option>
-                            <option value="review">In Review</option>
-                            <option value="done">Done</option>
-                          </select>
-                        </div>
-                        
-                        {/* Priority Filter */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                          <select
-                            value={priorityFilter}
-                            onChange={(e) => setPriorityFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                          >
-                            <option value="all">All Priorities</option>
-                            <option value="urgent">Urgent</option>
-                            <option value="important">Important</option>
-                            <option value="normal">Normal</option>
-                          </select>
-                        </div>
-                        
-                        {/* Assignee Filter */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Assignee</label>
-                          <select
-                            value={assigneeFilter}
-                            onChange={(e) => setAssigneeFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                          >
-                            <option value="all">All Assignees</option>
-                            {uniqueAssignees.map(assignee => (
-                              <option key={assignee} value={assignee}>{assignee}</option>
-                            ))}
-                          </select>
-                        </div>
-                        
-                        {/* Clear Filters */}
-                        <div className="flex justify-between pt-2">
-                          <button
-                            onClick={() => {
-                              setStatusFilter('all');
-                              setPriorityFilter('all');
-                              setAssigneeFilter('all');
-                            }}
-                            className="text-sm text-gray-600 hover:text-gray-800"
-                          >
-                            Clear all filters
-                          </button>
-                          <button
-                            onClick={() => setShowFilters(false)}
-                            className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors text-sm"
-                          >
-                            Apply Filters
-                          </button>
-                        </div>
-                      </div>
                     </div>
-                  )}
-                </div>
-                <button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Create task</span>
-                </button>
+                  </div>
+                )}
               </div>
+              <button
+                type="button"
+                onClick={() => void loadTasks({ soft: true })}
+                disabled={loading || refreshing}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                title="Refresh tasks"
+                aria-label="Refresh tasks"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex h-8 items-center gap-1 rounded-md bg-gray-900 px-2.5 text-xs font-medium text-white hover:bg-gray-800"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                New task
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Board Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <CheckSquare className="w-5 h-5 text-gray-600" />
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50/90 px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-1.5 text-xs text-gray-700">
+            <CheckSquare className="h-4 w-4 shrink-0 text-gray-500" aria-hidden />
             <span className="font-semibold text-gray-900">Board</span>
-            <span className="text-gray-500">- Daily Tasks</span>
+            <span className="text-gray-400">·</span>
+            <span className="text-gray-500">Kanban</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="flex -space-x-2">
-              {['BS', 'MT', 'DT', 'FS'].map((avatar, index) => (
-                <div
-                  key={index}
-                  className="w-8 h-8 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-medium border-2 border-white"
-                >
-                  {avatar}
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            {loading && taskList.length === 0 ? (
+              <span className="text-[11px] text-gray-500">Loading…</span>
+            ) : (
+              <p className="text-[11px] tabular-nums text-gray-500">
+                {subbarSummary.shown === subbarSummary.total ? (
+                  <>
+                    {subbarSummary.total} task{subbarSummary.total === 1 ? '' : 's'}
+                  </>
+                ) : (
+                  <>
+                    Showing {subbarSummary.shown} of {subbarSummary.total}
+                  </>
+                )}
+              </p>
+            )}
+            {!loading || taskList.length > 0 ? (
+              subbarSummary.avatars.length > 0 ? (
+                <div className="flex min-h-[1.5rem] items-center -space-x-1.5" aria-label="Assignees on this board">
+                  {subbarSummary.avatars.map((avatar, index) => (
+                    <div
+                      key={`${avatar}-${index}`}
+                      className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-[9px] font-semibold text-gray-700"
+                      title={avatar}
+                    >
+                      {avatar}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              ) : null
+            ) : null}
           </div>
         </div>
 
-        {/* Kanban Board */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-full">
+        {loading && taskList.length === 0 ? (
+          <div className="flex min-h-[12rem] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 bg-gray-50/80 py-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+            <p className="text-xs text-gray-500">Loading tasks…</p>
+          </div>
+        ) : (
+        <div className={`relative grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4 ${refreshing ? 'opacity-60' : ''}`}>
           {/* To do Column */}
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <h3 className="font-medium text-gray-900">To do list</h3>
-                <span className={`px-2 py-1 text-xs font-medium rounded ${getColumnColor('todo')}`}>
+                <div className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                <h3 className="text-xs font-semibold text-gray-900">To do</h3>
+                <span className={`rounded border px-1.5 py-px text-[10px] font-medium ${getColumnColor('todo')}`}>
                   {getColumnTasks('todo').length}
                 </span>
               </div>
-              <MoreHorizontal className="w-4 h-4 text-gray-400" />
+              <MoreHorizontal className="h-3.5 w-3.5 text-gray-300" />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {getColumnTasks('todo').map((task) => (
                 <div
                   key={task.id}
-                  className={`p-4 rounded-lg border-l-4 ${getCardColor(task.color)} hover:shadow-md transition-shadow cursor-pointer`}
+                  className={`cursor-pointer rounded-md border border-gray-100 border-l-2 p-2.5 transition-shadow hover:shadow-sm ${getCardColor(task.color)}`}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="mb-1 flex items-start justify-between">
                     <div className="flex items-center space-x-2">
                       {getPriorityIcon(task.priority)}
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={() => openEditModal(task)}
-                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Edit task"
                       >
                         <Edit3 className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => changeTaskStatus(task.id, getPreviousStatus(task.status))}
-                        className="p-1 text-gray-400 hover:text-orange-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move back"
                       >
                         <ArrowLeft className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => changeTaskStatus(task.id, getNextStatus(task.status))}
-                        className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move forward"
                       >
                         <ArrowRight className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
-                  <h4 className="font-medium text-gray-900 mb-2 text-sm leading-tight">
+                  <h4 className="mb-1 text-[11px] font-medium leading-snug text-gray-900">
                     {task.title}
                   </h4>
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {task.tags.map((tag, index) => (
+                  <div className="mb-2 flex flex-wrap gap-0.5">
+                    {(task.tags ?? []).map((tag, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                        className="rounded border border-gray-200 bg-gray-50 px-1 py-px text-[10px] text-gray-600"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-[10px] text-gray-500">
                     <div className="flex items-center space-x-3">
                       {task.comments > 0 && (
                         <div className="flex items-center space-x-1">
@@ -833,7 +847,7 @@ const Tasks: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <div className="w-6 h-6 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[9px] font-semibold text-gray-700">
                       {task.avatar}
                     </div>
                   </div>
@@ -843,67 +857,67 @@ const Tasks: React.FC = () => {
           </div>
 
           {/* In Progress Column */}
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                <h3 className="font-medium text-gray-900">In Progress</h3>
-                <span className={`px-2 py-1 text-xs font-medium rounded ${getColumnColor('inprogress')}`}>
+                <div className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />
+                <h3 className="text-xs font-semibold text-gray-900">In progress</h3>
+                <span className={`rounded border px-1.5 py-px text-[10px] font-medium ${getColumnColor('inprogress')}`}>
                   {getColumnTasks('inprogress').length}
                 </span>
               </div>
-              <MoreHorizontal className="w-4 h-4 text-gray-400" />
+              <MoreHorizontal className="h-3.5 w-3.5 text-gray-300" />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {getColumnTasks('inprogress').map((task) => (
                 <div
                   key={task.id}
-                  className={`p-4 rounded-lg border-l-4 ${getCardColor(task.color)} hover:shadow-md transition-shadow cursor-pointer`}
+                  className={`cursor-pointer rounded-md border border-gray-100 border-l-2 p-2.5 transition-shadow hover:shadow-sm ${getCardColor(task.color)}`}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="mb-1 flex items-start justify-between">
                     <div className="flex items-center space-x-2">
                       {getPriorityIcon(task.priority)}
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={() => openEditModal(task)}
-                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Edit task"
                       >
                         <Edit3 className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => changeTaskStatus(task.id, getPreviousStatus(task.status))}
-                        className="p-1 text-gray-400 hover:text-orange-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move back"
                       >
                         <ArrowLeft className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => changeTaskStatus(task.id, getNextStatus(task.status))}
-                        className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move forward"
                       >
                         <ArrowRight className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
-                  <h4 className="font-medium text-gray-900 mb-2 text-sm leading-tight">
+                  <h4 className="mb-1 text-[11px] font-medium leading-snug text-gray-900">
                     {task.title}
                   </h4>
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {task.tags.map((tag, index) => (
+                  <div className="mb-2 flex flex-wrap gap-0.5">
+                    {(task.tags ?? []).map((tag, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                        className="rounded border border-gray-200 bg-gray-50 px-1 py-px text-[10px] text-gray-600"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
                   {task.progress > 0 && (
-                    <div className="mb-3">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <div className="mb-2">
+                      <div className="mb-0.5 flex justify-between text-[10px] text-gray-500">
                         <span>Progress</span>
                         <span>{task.progress}%</span>
                       </div>
@@ -915,7 +929,7 @@ const Tasks: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-[10px] text-gray-500">
                     <div className="flex items-center space-x-3">
                       {task.comments > 0 && (
                         <div className="flex items-center space-x-1">
@@ -930,7 +944,7 @@ const Tasks: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <div className="w-6 h-6 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[9px] font-semibold text-gray-700">
                       {task.avatar}
                     </div>
                   </div>
@@ -940,67 +954,67 @@ const Tasks: React.FC = () => {
           </div>
 
           {/* In Review Column */}
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                <h3 className="font-medium text-gray-900">In Review</h3>
-                <span className={`px-2 py-1 text-xs font-medium rounded ${getColumnColor('review')}`}>
+                <div className="h-2 w-2 shrink-0 rounded-full bg-violet-500" />
+                <h3 className="text-xs font-semibold text-gray-900">In review</h3>
+                <span className={`rounded border px-1.5 py-px text-[10px] font-medium ${getColumnColor('review')}`}>
                   {getColumnTasks('review').length}
                 </span>
               </div>
-              <MoreHorizontal className="w-4 h-4 text-gray-400" />
+              <MoreHorizontal className="h-3.5 w-3.5 text-gray-300" />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {getColumnTasks('review').map((task) => (
                 <div
                   key={task.id}
-                  className={`p-4 rounded-lg border-l-4 ${getCardColor(task.color)} hover:shadow-md transition-shadow cursor-pointer`}
+                  className={`cursor-pointer rounded-md border border-gray-100 border-l-2 p-2.5 transition-shadow hover:shadow-sm ${getCardColor(task.color)}`}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="mb-1 flex items-start justify-between">
                     <div className="flex items-center space-x-2">
                       {getPriorityIcon(task.priority)}
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={() => openEditModal(task)}
-                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Edit task"
                       >
                         <Edit3 className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => changeTaskStatus(task.id, getPreviousStatus(task.status))}
-                        className="p-1 text-gray-400 hover:text-orange-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move back"
                       >
                         <ArrowLeft className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => changeTaskStatus(task.id, getNextStatus(task.status))}
-                        className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move forward"
                       >
                         <ArrowRight className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
-                  <h4 className="font-medium text-gray-900 mb-2 text-sm leading-tight">
+                  <h4 className="mb-1 text-[11px] font-medium leading-snug text-gray-900">
                     {task.title}
                   </h4>
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {task.tags.map((tag, index) => (
+                  <div className="mb-2 flex flex-wrap gap-0.5">
+                    {(task.tags ?? []).map((tag, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                        className="rounded border border-gray-200 bg-gray-50 px-1 py-px text-[10px] text-gray-600"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
                   {task.progress > 0 && (
-                    <div className="mb-3">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <div className="mb-2">
+                      <div className="mb-0.5 flex justify-between text-[10px] text-gray-500">
                         <span>Progress</span>
                         <span>{task.progress}%</span>
                       </div>
@@ -1012,7 +1026,7 @@ const Tasks: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-[10px] text-gray-500">
                     <div className="flex items-center space-x-3">
                       {task.comments > 0 && (
                         <div className="flex items-center space-x-1">
@@ -1027,7 +1041,7 @@ const Tasks: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <div className="w-6 h-6 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[9px] font-semibold text-gray-700">
                       {task.avatar}
                     </div>
                   </div>
@@ -1037,65 +1051,65 @@ const Tasks: React.FC = () => {
           </div>
 
           {/* Done Column */}
-          <div className="bg-white rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <h3 className="font-medium text-gray-900">Done</h3>
-                <span className={`px-2 py-1 text-xs font-medium rounded ${getColumnColor('done')}`}>
+                <div className="h-2 w-2 shrink-0 rounded-full bg-green-500" />
+                <h3 className="text-xs font-semibold text-gray-900">Done</h3>
+                <span className={`rounded border px-1.5 py-px text-[10px] font-medium ${getColumnColor('done')}`}>
                   {getColumnTasks('done').length}
                 </span>
               </div>
-              <MoreHorizontal className="w-4 h-4 text-gray-400" />
+              <MoreHorizontal className="h-3.5 w-3.5 text-gray-300" />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {getColumnTasks('done').map((task) => (
                 <div
                   key={task.id}
-                  className={`p-4 rounded-lg border-l-4 ${getCardColor(task.color)} hover:shadow-md transition-shadow cursor-pointer opacity-75`}
+                  className={`cursor-pointer rounded-md border border-gray-100 border-l-2 p-2.5 opacity-80 transition-shadow hover:shadow-sm ${getCardColor(task.color)}`}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="mb-1 flex items-start justify-between">
                     <div className="flex items-center space-x-2">
                       {getPriorityIcon(task.priority)}
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={() => openEditModal(task)}
-                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Edit task"
                       >
                         <Edit3 className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => changeTaskStatus(task.id, getPreviousStatus(task.status))}
-                        className="p-1 text-gray-400 hover:text-orange-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move back"
                       >
                         <ArrowLeft className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => changeTaskStatus(task.id, getNextStatus(task.status))}
-                        className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move forward"
                       >
                         <ArrowRight className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
-                  <h4 className="font-medium text-gray-900 mb-2 text-sm leading-tight line-through">
+                  <h4 className="mb-1 text-[11px] font-medium leading-snug text-gray-900 line-through">
                     {task.title}
                   </h4>
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {task.tags.map((tag, index) => (
+                  <div className="mb-2 flex flex-wrap gap-0.5">
+                    {(task.tags ?? []).map((tag, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                        className="rounded border border-gray-200 bg-gray-50 px-1 py-px text-[10px] text-gray-600"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-[10px] text-gray-500">
                     <div className="flex items-center space-x-3">
                       {task.comments > 0 && (
                         <div className="flex items-center space-x-1">
@@ -1110,7 +1124,7 @@ const Tasks: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <div className="w-6 h-6 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[9px] font-semibold text-gray-700">
                       {task.avatar}
                     </div>
                   </div>
@@ -1119,47 +1133,69 @@ const Tasks: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
 
         {/* Create Task Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
-              <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Create New Task</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
+            <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+              <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+                <h3 className="text-sm font-semibold text-gray-900">New task</h3>
                 <button
+                  type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="rounded p-1 text-gray-500 hover:bg-gray-100"
+                  aria-label="Close"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
-              
-              <div className="flex-1 overflow-y-auto p-6">
-                <CreateTaskForm onSubmit={createTask} onCancel={() => setShowCreateModal(false)} />
+
+              <div className="flex-1 overflow-y-auto p-3">
+                <CreateTaskForm
+                  onSubmit={createTask}
+                  onCancel={() => setShowCreateModal(false)}
+                  disabled={saving}
+                />
               </div>
             </div>
           </div>
         )}
 
-        {/* Edit Task Modal */}
         {showEditModal && editingTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
-              <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Edit Task</h3>
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
+            <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+              <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-3 py-2">
+                <h3 className="text-sm font-semibold text-gray-900">Edit task</h3>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => void deleteEditingTask()}
+                    disabled={saving}
+                    className="rounded p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    title="Delete task"
+                    aria-label="Delete task"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="rounded p-1 text-gray-500 hover:bg-gray-100"
+                    aria-label="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-              
-              <div className="flex-1 overflow-y-auto p-6">
-                <EditTaskForm 
-                  task={editingTask} 
-                  onSubmit={editTask} 
-                  onCancel={() => setShowEditModal(false)} 
+
+              <div className="flex-1 overflow-y-auto p-3">
+                <EditTaskForm
+                  key={editingTask.id}
+                  task={editingTask}
+                  onSubmit={editTask}
+                  onCancel={() => setShowEditModal(false)}
+                  disabled={saving}
                 />
               </div>
             </div>

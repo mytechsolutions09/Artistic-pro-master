@@ -21,7 +21,7 @@ export const HeroSectionSkeleton: React.FC = () => {
   );
 
   return (
-    <section className="py-8 px-4">
+    <section className="py-8 px-4 bg-[#ffffff]">
       <div className="max-w-7xl mx-auto">
         {/* Desktop bento skeleton */}
         <div className="hidden lg:grid grid-cols-3 gap-3 auto-rows-[160px] grid-flow-row-dense">
@@ -83,7 +83,7 @@ export const ImageSliderSkeleton: React.FC = () => {
 // Featured Grid Skeleton
 export const FeaturedGridSkeleton: React.FC = () => {
   return (
-    <section className="py-12 px-4 bg-gray-50">
+    <section className="py-12 px-4 bg-[#ffffff]">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-4 animate-pulse"></div>
@@ -188,7 +188,7 @@ export const CategoryGridSkeleton: React.FC = () => {
 // Trending Collections Skeleton
 export const TrendingCollectionsSkeleton: React.FC = () => {
   return (
-    <section className="py-12 px-4 bg-gray-50">
+    <section className="py-12 px-4 bg-[#ffffff]">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-4 animate-pulse"></div>
@@ -270,7 +270,7 @@ export const NewsletterSkeleton: React.FC = () => {
 // Complete Homepage Skeleton
 export const HomepageSkeleton: React.FC = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#ffffff]">
       <HeroSectionSkeleton />
       <ImageSliderSkeleton />
       <FeaturedGridSkeleton />

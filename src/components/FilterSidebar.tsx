@@ -26,34 +26,47 @@ interface FilterSidebarProps {
     status?: 'active' | 'inactive' | 'all';
   }>) => void;
   products: Product[];
+  /** When set, category & tag options come only from these products (e.g. current grid). Price slider still uses `products`. */
+  productsForCategoryAndTags?: Product[];
   onClose?: () => void;
   displayedCount?: number;
   filteredCount?: number;
 }
 
-const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, products, onClose, displayedCount, filteredCount }) => {
+const FilterSidebar: React.FC<FilterSidebarProps> = ({
+  filters,
+  onFilterChange,
+  products,
+  productsForCategoryAndTags,
+  onClose,
+  displayedCount,
+  filteredCount,
+}) => {
   const { currentCurrency, formatCurrency } = useCurrency();
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Calculate dynamic price range from products
+  // Calculate dynamic price range from products (matches default "full range" in category/browse pages)
   const productPrices = products.map(p => p.price);
   const maxPrice = Math.max(...productPrices, 10000);
   const minPrice = Math.min(...productPrices, 0);
+  const priceSpan = Math.max(maxPrice - minPrice, 1);
 
-  // Get unique tags from products (exclude clothing-related tags)
-  const allTags = Array.from(new Set(products.flatMap(p => p.tags || []))).filter(tag => {
+  const metaProducts = productsForCategoryAndTags ?? products;
+
+  // Get unique tags from current page / result set (exclude clothing-related tags)
+  const allTags = Array.from(new Set(metaProducts.flatMap(p => p.tags || []))).filter(tag => {
     const lowerTag = tag.toLowerCase();
     return !['men', 'women', 'clothing', 'xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl'].some(keyword => 
       lowerTag.includes(keyword) || lowerTag === keyword
     );
   });
 
-  // Get unique categories from products (exclude clothing-related categories)
-  const productCategories = Array.from(new Set(products.flatMap(p => p.categories || []))).filter(cat => {
+  // Categories present on products currently shown / in the filtered result set
+  const productCategories = Array.from(new Set(metaProducts.flatMap(p => p.categories || []))).filter(cat => {
     const lowerCat = cat.toLowerCase();
     return !['men', 'women', 'clothing'].some(keyword => lowerCat.includes(keyword));
-  });
+  }).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
   useEffect(() => {
     setSelectedTags(filters.tags || []);
@@ -236,36 +249,6 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
             </div>
           )}
 
-          {/* Special Features */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-100 pb-2">Special Features</h4>
-            <div className="space-y-3 pl-1">
-              <label className="flex items-center space-x-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={filters.featured}
-                  onChange={(e) => onFilterChange({ featured: e.target.checked })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"
-                />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Featured Artworks</span>
-              </label>
-              <label className="flex items-center space-x-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"
-                />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">On Sale</span>
-              </label>
-              <label className="flex items-center space-x-3 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"
-                />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">New Arrivals</span>
-              </label>
-            </div>
-          </div>
-
           {/* Price Range */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-100 pb-2">Price</h4>
@@ -278,12 +261,12 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
                 {/* Static gray background track */}
                 <div className="absolute w-full h-full bg-gray-200 rounded-lg"></div>
                 
-                {/* Teal fill for the selected range */}
+                {/* Selected range fill */}
                 <div
-                  className="absolute h-full bg-teal-800 rounded-lg z-[5]"
+                  className="absolute h-full bg-black rounded-lg z-[5]"
                   style={{
-                    left: `${((filters.priceRange[0] - minPrice) / (maxPrice - minPrice)) * 100}%`,
-                    width: `${((filters.priceRange[1] - filters.priceRange[0]) / (maxPrice - minPrice)) * 100}%`,
+                    left: `${((filters.priceRange[0] - minPrice) / priceSpan) * 100}%`,
+                    width: `${((filters.priceRange[1] - filters.priceRange[0]) / priceSpan) * 100}%`,
                   }}
                 ></div>
                 
@@ -480,27 +463,27 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ filters, onFilterChange, 
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: #115e59;
+          background: #000000;
           cursor: pointer;
           border: 2px solid white;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           transition: background-color 0.2s ease;
         }
         .slider:hover::-webkit-slider-thumb {
-          background: #0f524d;
+          background: #262626;
         }
         .slider::-moz-range-thumb {
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: #115e59;
+          background: #000000;
           cursor: pointer;
           border: 2px solid white;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           transition: background-color 0.2s ease;
         }
         .slider:hover::-moz-range-thumb {
-          background: #0f524d;
+          background: #262626;
         }
         
         /* Hide default select arrow completely */

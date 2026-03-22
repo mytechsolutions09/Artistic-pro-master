@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 import { FileText, Image as ImageIcon, BookOpen, List } from 'lucide-react';
 
 export type BlogTabId = 'posts' | 'list' | 'media' | 'guide';
@@ -48,35 +49,41 @@ const BlogSecondaryNav: React.FC<BlogSecondaryNavProps> = ({
   onTabChange,
   className = '',
 }) => {
+  const { navRef, onNavScroll } = usePreserveNavScroll([activeTab]);
+
   return (
-    <div className={`bg-white border-r border-gray-200 w-20 h-screen fixed top-0 left-20 z-30 ${className}`}>
-      <div className="p-4 border-b border-gray-200">
+    <div
+      className={`fixed left-20 top-0 z-30 flex h-screen w-20 flex-col border-r border-gray-200 bg-white ${className}`}
+    >
+      <div className="shrink-0 border-b border-gray-200 p-4">
         <div className="flex items-center justify-center">
-          <div className="p-1.5 bg-gray-100 rounded-lg">
-            <FileText className="w-5 h-5 text-gray-700" />
+          <div className="rounded-lg bg-gray-100 p-1.5">
+            <FileText className="h-5 w-5 text-gray-700" />
           </div>
         </div>
       </div>
 
-      <div className="py-4">
+      <div ref={navRef} onScroll={onNavScroll} className="min-h-0 flex-1 overflow-y-auto py-4">
         <nav className="space-y-1 px-2.5">
           {BLOG_TABS.map((tab) => (
             <button
               key={tab.id}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => onTabChange(tab.id)}
               className={`w-full flex items-center justify-center p-2.5 rounded-lg transition-all duration-200 group relative ${
                 activeTab === tab.id
-                  ? 'bg-gray-100 text-gray-900'
+                  ? 'bg-gray-50 text-black'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
               }`}
               title={tab.label}
             >
               {activeTab === tab.id && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-700 rounded-r-full" />
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-black rounded-r-full" />
               )}
               <span
                 className={`w-5 h-5 flex items-center justify-center ${
-                  activeTab === tab.id ? 'text-gray-800' : 'text-gray-500 group-hover:text-gray-700'
+                  activeTab === tab.id ? 'text-black' : 'text-gray-500 group-hover:text-gray-700'
                 }`}
               >
                 {tab.icon}

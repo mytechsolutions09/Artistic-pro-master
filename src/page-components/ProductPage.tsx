@@ -299,7 +299,7 @@ const ProductPage: React.FC = () => {
   // Show product not found only after loading is complete
   if (!product && !loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="text-center px-4">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Package className="w-8 h-8 text-gray-400" />
@@ -558,7 +558,7 @@ const ProductPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50" onContextMenu={handleContextMenu}>
+    <div className="min-h-screen bg-[#ffffff]" onContextMenu={handleContextMenu}>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-4 lg:py-6">
         {/* Product Top Section - Matching Image Layout */}
         <div className="grid grid-cols-[auto_1fr] lg:grid-cols-12 gap-2 sm:gap-4 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">

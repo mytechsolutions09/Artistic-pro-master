@@ -10,6 +10,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import FilterSidebar from '../components/FilterSidebar';
 import ProductCard from '../components/ProductCard';
 import { NavigationVisibilityService } from '../services/navigationVisibilityService';
+import { productBelongsToCategoryLabel } from '../utils/productFilterUtils';
 
 interface SearchResult extends Product {
   itemType?: 'product' | 'normal_item' | 'fb_item';
@@ -44,14 +45,12 @@ const SearchResults: React.FC = () => {
   const performSearch = async () => {
     setLoading(true);
     try {
+      // Category is applied client-side so `categories[]` and slug/name matching work (API only has legacy `category` eq).
       const searchFilters = {
-        category: filters.category || undefined,
         minPrice: filters.priceRange[0] || undefined,
         maxPrice: filters.priceRange[1] || undefined,
         featured: filters.featured || undefined,
-        productType: filters.productType !== 'all' ? filters.productType : undefined,
-        tags: filters.tags && filters.tags.length > 0 ? filters.tags : undefined,
-        status: filters.status !== 'all' ? filters.status : undefined
+        status: filters.status !== 'all' ? filters.status : undefined,
       };
 
       // Search across all product types in parallel
@@ -126,21 +125,34 @@ const SearchResults: React.FC = () => {
       // Apply visibility rules from admin nav toggles (F&B / Clothes)
       allResults.splice(0, allResults.length, ...NavigationVisibilityService.filterProductsByVisibility(allResults));
 
-      // Apply filters
-      let filteredResults = allResults.filter(result => {
+      // Apply filters (category/tags/rating/featured client-side for full data-model support)
+      let filteredResults = allResults.filter((result) => {
+        if (filters.category && !productBelongsToCategoryLabel(result, filters.category)) {
+          return false;
+        }
+
+        if (filters.tags && filters.tags.length > 0) {
+          const pTags = result.tags || [];
+          if (!filters.tags.some((t) => pTags.includes(t))) return false;
+        }
+
+        if (filters.rating > 0 && (result.rating || 0) < filters.rating) return false;
+
+        if (filters.featured && !result.featured) return false;
+
         // Price filter
         if (filters.priceRange[0] > 0 && result.price < filters.priceRange[0]) return false;
         if (filters.priceRange[1] < 10000 && result.price > filters.priceRange[1]) return false;
-        
+
         // Status filter
         if (filters.status !== 'all' && result.status !== filters.status) return false;
-        
+
         // Product type filter (only for products, not normal items)
         if (filters.productType !== 'all' && result.itemType === 'product') {
           if (filters.productType === 'digital' && result.productType !== 'digital') return false;
           if (filters.productType === 'poster' && result.productType !== 'poster') return false;
         }
-        
+
         return true;
       });
       

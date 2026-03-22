@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from '@/src/compat/router';
 import { useProducts } from '../contexts/ProductContext';
 import FilterSidebar from '../components/FilterSidebar';
@@ -10,6 +10,7 @@ import CategoryPageSkeleton from '../components/CategoryPageSkeleton';
 import { categoryImageService } from '../services/categoryImageService';
 import { Product } from '../types';
 import { generateCategorySlug, generateSlug } from '../utils/slugUtils';
+import { productBelongsToCategoryLabel } from '../utils/productFilterUtils';
 
 const CategoryDetailPage: React.FC = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
@@ -23,11 +24,53 @@ const CategoryDetailPage: React.FC = () => {
     priceRange: [1, 10000] as [number, number],
     rating: 0,
     featured: false,
-    sortBy: 'relevance'
+    sortBy: 'relevance',
+    /** Narrow grid to one of the product's category labels (multi-category products) */
+    category: undefined as string | undefined,
   });
   const [showFilters, setShowFilters] = useState(false);
   
   const PRODUCTS_PER_PAGE = 8;
+
+  /** Products belonging to this category URL (same rules as applyFilters base set) — price range */
+  const categoryScopeProducts = useMemo(() => {
+    if (!categorySlug || adminProducts.length === 0) return [];
+    return adminProducts.filter((product) => {
+      const categories = (product.categories || []).map((c: string) => c.toLowerCase());
+      const tags = ((product as any).tags || []).map((t: string) => t.toLowerCase());
+      const combined = [...categories, ...tags].join(' ');
+
+      const isFB =
+        combined.includes('food & beverage') ||
+        combined.includes('f&b') ||
+        combined.includes('f & b') ||
+        combined.includes('dry fruit') ||
+        combined.includes('dried fruit') ||
+        combined.includes('spice');
+      if (isFB) return false;
+
+      if (product.categories && Array.isArray(product.categories)) {
+        return product.categories.some((category) => {
+          if (category === categorySlug) return true;
+          const productCategorySlug = generateCategorySlug(category);
+          const incomingCategorySlug = generateCategorySlug(categorySlug);
+          return productCategorySlug === incomingCategorySlug;
+        });
+      }
+      if ((product as any).category) {
+        const category = (product as any).category;
+        if (category === categorySlug) return true;
+        const productCategorySlug = generateCategorySlug(category);
+        const incomingCategorySlug = generateCategorySlug(categorySlug);
+        return productCategorySlug === incomingCategorySlug;
+      }
+      return false;
+    });
+  }, [categorySlug, adminProducts]);
+
+  useEffect(() => {
+    setFilters((prev) => ({ ...prev, category: undefined }));
+  }, [categorySlug]);
 
   useEffect(() => {
     if (categorySlug && adminProducts.length > 0) {
@@ -104,14 +147,14 @@ const CategoryDetailPage: React.FC = () => {
       
       setFilteredProducts(categoryProducts);
       
-      // Update price range based on actual products
+      // Default price filter = full slider range (same bounds as FilterSidebar), not tight min/max of listed prices
       if (categoryProducts.length > 0) {
         const prices = categoryProducts.map(p => p.price);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
+        const sliderMin = Math.min(...prices, 0);
+        const sliderMax = Math.max(...prices, 10000);
         setFilters(prev => ({
           ...prev,
-          priceRange: [minPrice, maxPrice],
+          priceRange: [sliderMin, sliderMax],
           sortBy: 'relevance'
         }));
       }
@@ -202,8 +245,13 @@ const CategoryDetailPage: React.FC = () => {
         
         return false;
       });
-    
 
+    // Optional sidebar category: show only products that also have this category label
+    if (filters.category) {
+      filtered = filtered.filter((product) =>
+        productBelongsToCategoryLabel(product, filters.category!)
+      );
+    }
 
     // Price filter
     filtered = filtered.filter(product => 
@@ -287,7 +335,7 @@ const CategoryDetailPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 mb-4">
             <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -303,7 +351,7 @@ const CategoryDetailPage: React.FC = () => {
 
   if (!category) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="text-center">
           <div className="text-gray-400 mb-4">
             <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -321,7 +369,7 @@ const CategoryDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#ffffff]">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
         {/* All Filters Button */}
@@ -390,20 +438,8 @@ const CategoryDetailPage: React.FC = () => {
         <FilterSidebar 
           filters={filters}
           onFilterChange={updateFilters}
-          products={adminProducts.filter(product => {
-            // Handle both old single category and new categories array
-            if (product.categories && Array.isArray(product.categories)) {
-              return product.categories.some(category => {
-                const productCategorySlug = generateCategorySlug(category);
-                return productCategorySlug === categorySlug;
-              });
-            } else if ((product as any).category) {
-              // Fallback for old data structure
-              const productCategorySlug = generateCategorySlug((product as any).category);
-              return productCategorySlug === categorySlug;
-            }
-            return false;
-          })}
+          products={categoryScopeProducts}
+          productsForCategoryAndTags={categoryScopeProducts}
           onClose={() => setShowFilters(false)}
           displayedCount={displayedProducts.length}
           filteredCount={filteredProducts.length}

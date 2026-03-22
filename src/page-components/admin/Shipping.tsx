@@ -61,6 +61,11 @@ interface Shipment {
   last_pickup_attempt?: string;
 }
 
+const inputCls =
+  'h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+
+const cardCls = 'rounded-lg border border-gray-200 bg-white p-3 shadow-sm';
+
 const Shipping: React.FC = () => {
   const [activeTab, setActiveTab] = useState('shipments');
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -1279,33 +1284,51 @@ const Shipping: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'picked_up': return 'text-blue-600 bg-blue-100';
-      case 'in_transit': return 'text-purple-600 bg-purple-100';
-      case 'delivered': return 'text-green-600 bg-green-100';
-      case 'cancelled': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'pending':
+        return 'border-amber-200 bg-amber-50 text-amber-900';
+      case 'picked_up':
+        return 'border-blue-200 bg-blue-50 text-blue-900';
+      case 'in_transit':
+        return 'border-violet-200 bg-violet-50 text-violet-900';
+      case 'delivered':
+        return 'border-green-200 bg-green-50 text-green-900';
+      case 'cancelled':
+        return 'border-red-200 bg-red-50 text-red-900';
+      default:
+        return 'border-gray-200 bg-gray-50 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
+    const ic = 'h-3 w-3 shrink-0';
     switch (status) {
-      case 'pending': return <Clock className="w-4 h-4" />;
-      case 'picked_up': return <Package className="w-4 h-4" />;
-      case 'in_transit': return <Truck className="w-4 h-4" />;
-      case 'delivered': return <CheckCircle className="w-4 h-4" />;
-      case 'cancelled': return <XCircle className="w-4 h-4" />;
-      default: return <AlertCircle className="w-4 h-4" />;
+      case 'pending':
+        return <Clock className={ic} />;
+      case 'picked_up':
+        return <Package className={ic} />;
+      case 'in_transit':
+        return <Truck className={ic} />;
+      case 'delivered':
+        return <CheckCircle className={ic} />;
+      case 'cancelled':
+        return <XCircle className={ic} />;
+      default:
+        return <AlertCircle className={ic} />;
     }
   };
 
   const getPickupStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'text-blue-600 bg-blue-100';
-      case 'picked_up': return 'text-green-600 bg-green-100';
-      case 'failed': return 'text-red-600 bg-red-100';
-      case 'cancelled': return 'text-gray-600 bg-gray-100';
-      default: return 'text-yellow-600 bg-yellow-100';
+      case 'scheduled':
+        return 'border-blue-200 bg-blue-50 text-blue-900';
+      case 'picked_up':
+        return 'border-green-200 bg-green-50 text-green-900';
+      case 'failed':
+        return 'border-red-200 bg-red-50 text-red-900';
+      case 'cancelled':
+        return 'border-gray-200 bg-gray-100 text-gray-800';
+      default:
+        return 'border-amber-200 bg-amber-50 text-amber-900';
     }
   };
 
@@ -1334,18 +1357,20 @@ const Shipping: React.FC = () => {
         activeTab={activeTab} 
         onTabChange={setActiveTab}
       />
-      <div className="ml-20 p-6">
-        {/* Tab Content */}
+      <div className="ml-[9.25rem] px-4 py-5 sm:px-6">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold text-gray-900">Shipping</h2>
+          <p className="text-[11px] text-gray-500">Delhivery tools, warehouses, and pickups</p>
+        </div>
         {activeTab === 'shipments' && (
-          <div>
-          {/* Filters */}
-          <div className="mb-4 flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <div className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1 max-w-md">
+              <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search shipments..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                placeholder="Search shipments…"
+                className={`${inputCls} pl-7`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -1353,7 +1378,7 @@ const Shipping: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              className={`${inputCls} w-full shrink-0 sm:w-auto sm:min-w-[8rem]`}
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -1364,104 +1389,113 @@ const Shipping: React.FC = () => {
             </select>
           </div>
 
-          {/* Shipments Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-200 text-left text-[11px]">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                       Waybill
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                       Customer
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                       Address
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                       Status
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                       Pickup
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      COD Amount
+                    <th className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      COD
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100 bg-white">
                   {filteredShipments.map((shipment) => (
-                    <tr key={shipment.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{shipment.waybill}</div>
-                        <div className="text-xs text-gray-500">{shipment.created_at}</div>
+                    <tr key={shipment.id} className="hover:bg-gray-50/80">
+                      <td className="whitespace-nowrap px-3 py-2">
+                        <div className="font-medium text-gray-900">{shipment.waybill}</div>
+                        <div className="text-[10px] text-gray-500">{shipment.created_at}</div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{shipment.customer_name}</div>
-                        <div className="text-xs text-gray-500">{shipment.customer_phone}</div>
+                      <td className="whitespace-nowrap px-3 py-2">
+                        <div className="font-medium text-gray-900">{shipment.customer_name}</div>
+                        <div className="text-[10px] text-gray-500">{shipment.customer_phone}</div>
                       </td>
-                      <td className="px-4 py-2">
-                        <div className="text-sm text-gray-900">{shipment.delivery_address}</div>
-                        <div className="text-xs text-gray-500">{shipment.delivery_pincode}</div>
+                      <td className="max-w-[14rem] px-3 py-2">
+                        <div className="text-gray-900">{shipment.delivery_address}</div>
+                        <div className="text-[10px] text-gray-500">{shipment.delivery_pincode}</div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(shipment.status)}`}>
+                      <td className="whitespace-nowrap px-3 py-2">
+                        <span
+                          className={`inline-flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize ${getStatusColor(shipment.status)}`}
+                        >
                           {getStatusIcon(shipment.status)}
-                          <span className="ml-1 capitalize">{shipment.status.replace('_', ' ')}</span>
+                          {shipment.status.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
+                      <td className="whitespace-nowrap px-3 py-2">
                         {shipment.pickup_id ? (
-                          <div className="text-sm">
+                          <div>
                             <div className="flex items-center">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getPickupStatusColor(shipment.pickup_status || 'scheduled')}`}>
+                              <span
+                                className={`inline-flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize ${getPickupStatusColor(shipment.pickup_status || 'scheduled')}`}
+                              >
                                 {getPickupStatusIcon(shipment.pickup_status || 'scheduled')}
-                                <span className="ml-1 capitalize">{shipment.pickup_status?.replace('_', ' ') || 'Scheduled'}</span>
+                                {shipment.pickup_status?.replace('_', ' ') || 'Scheduled'}
                               </span>
                             </div>
                             {shipment.pickup_date && (
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="mt-0.5 text-[10px] text-gray-500">
                                 {new Date(shipment.pickup_date).toLocaleDateString()}
-                                {shipment.pickup_time && ` at ${shipment.pickup_time}`}
+                                {shipment.pickup_time && ` · ${shipment.pickup_time}`}
                               </div>
                             )}
                             {shipment.pickup_attempts && shipment.pickup_attempts > 0 && (
-                              <div className="text-xs text-orange-600">
+                              <div className="text-[10px] text-amber-700">
                                 {shipment.pickup_attempts} attempt{shipment.pickup_attempts > 1 ? 's' : ''}
                               </div>
                             )}
                           </div>
                         ) : (
-                          <div className="text-sm text-gray-400">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Not Scheduled
+                          <div className="text-gray-400">
+                            <span className="inline-flex items-center gap-0.5 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
+                              <Clock className="h-3 w-3" />
+                              None
                             </span>
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        Rs {shipment.cod_amount}
+                      <td className="whitespace-nowrap px-3 py-2 tabular-nums text-gray-900">
+                        ₹{shipment.cod_amount}
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium space-x-1">
+                      <td className="whitespace-nowrap px-2 py-2">
+                        <div className="flex items-center gap-0.5">
                         <button
+                          type="button"
                           onClick={() => handleTrackShipment(shipment.waybill)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                          title="Track"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="h-3.5 w-3.5" />
                         </button>
                         {shipment.status !== 'delivered' && shipment.status !== 'cancelled' && (
                           <button
+                            type="button"
                             onClick={() => handleCancelShipment(shipment.waybill)}
-                            className="text-red-600 hover:text-red-900"
+                            className="rounded-md p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600"
+                            title="Cancel"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1473,8 +1507,8 @@ const Shipping: React.FC = () => {
         )}
 
         {activeTab === 'pincheck' && (
-          <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Pin Code Serviceability Check</h2>
+          <div className={cardCls}>
+          <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Pin Code Serviceability Check</h2>
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -1484,14 +1518,14 @@ const Shipping: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Enter pin code"
-                  className="flex-1 px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 h-8 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={pinCodeCheck.pinCode}
                   onChange={(e) => setPinCodeCheck(prev => ({ ...prev, pinCode: e.target.value }))}
                 />
                 <button
                   onClick={handlePinCodeCheck}
                   disabled={pinCodeCheck.loading}
-                  className="px-3 py-1.5 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
+                  className="inline-flex h-8 items-center rounded-md bg-gray-900 px-2.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
                 >
                   {pinCodeCheck.loading ? 'Checking...' : 'Check'}
                 </button>
@@ -1547,7 +1581,7 @@ const Shipping: React.FC = () => {
                                 <span className="inline-flex px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded">Pickup</span>
                               )}
                               {code.reverse === 'Y' && (
-                                <span className="inline-flex px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded">Reverse</span>
+                                <span className="inline-flex rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-800">Reverse</span>
                               )}
                             </div>
                           </td>
@@ -1631,8 +1665,8 @@ const Shipping: React.FC = () => {
         )}
 
         {activeTab === 'rates' && (
-          <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Shipping Rate Calculator</h2>
+          <div className={cardCls}>
+          <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Shipping Rate Calculator</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -1641,7 +1675,7 @@ const Shipping: React.FC = () => {
               <input
                 type="text"
                 placeholder="400001"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={rateCalculation.pickupPincode}
                 onChange={(e) => setRateCalculation(prev => ({ ...prev, pickupPincode: e.target.value }))}
               />
@@ -1653,7 +1687,7 @@ const Shipping: React.FC = () => {
               <input
                 type="text"
                 placeholder="110001"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={rateCalculation.deliveryPincode}
                 onChange={(e) => setRateCalculation(prev => ({ ...prev, deliveryPincode: e.target.value }))}
               />
@@ -1666,7 +1700,7 @@ const Shipping: React.FC = () => {
                 type="number"
                 step="0.1"
                 placeholder="0.5"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={rateCalculation.weight}
                 onChange={(e) => setRateCalculation(prev => ({ ...prev, weight: e.target.value }))}
               />
@@ -1678,7 +1712,7 @@ const Shipping: React.FC = () => {
               <input
                 type="number"
                 placeholder="1500"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={rateCalculation.codAmount}
                 onChange={(e) => setRateCalculation(prev => ({ ...prev, codAmount: e.target.value }))}
               />
@@ -1688,7 +1722,7 @@ const Shipping: React.FC = () => {
             <button
               onClick={handleRateCalculation}
               disabled={rateCalculation.loading}
-              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
+              className="inline-flex h-8 items-center rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {rateCalculation.loading ? 'Calculating...' : 'Calculate Rates'}
             </button>
@@ -1706,9 +1740,9 @@ const Shipping: React.FC = () => {
         )}
 
         {activeTab === 'create' && (
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className={cardCls}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">Create New Shipment</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Create New Shipment</h2>
             <button
               onClick={() => {
                 loadAvailableOrders();
@@ -1727,7 +1761,7 @@ const Shipping: React.FC = () => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b">
-                  <h3 className="text-lg font-semibold text-gray-900">Select Order to Import</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">Select Order to Import</h3>
                   <button
                     onClick={() => setShowOrderImport(false)}
                     className="text-gray-400 hover:text-gray-600"
@@ -1812,7 +1846,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.customer_name}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, customer_name: e.target.value }))}
               />
@@ -1823,7 +1857,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.customer_phone}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, customer_phone: e.target.value }))}
               />
@@ -1834,7 +1868,7 @@ const Shipping: React.FC = () => {
               </label>
               <textarea
                 rows={2}
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.delivery_address}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, delivery_address: e.target.value }))}
               />
@@ -1845,7 +1879,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.delivery_pincode}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, delivery_pincode: e.target.value }))}
               />
@@ -1856,7 +1890,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.delivery_city}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, delivery_city: e.target.value }))}
               />
@@ -1867,7 +1901,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.delivery_state}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, delivery_state: e.target.value }))}
               />
@@ -1879,7 +1913,7 @@ const Shipping: React.FC = () => {
               <input
                 type="number"
                 step="0.1"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.weight}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, weight: e.target.value }))}
               />
@@ -1890,7 +1924,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="number"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.cod_amount}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, cod_amount: e.target.value }))}
               />
@@ -1901,7 +1935,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="number"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.length}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, length: e.target.value }))}
               />
@@ -1912,7 +1946,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="number"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.width}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, width: e.target.value }))}
               />
@@ -1923,7 +1957,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="number"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.height}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, height: e.target.value }))}
               />
@@ -1934,7 +1968,7 @@ const Shipping: React.FC = () => {
               </label>
               <textarea
                 rows={2}
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={newShipment.products_desc}
                 onChange={(e) => setNewShipment(prev => ({ ...prev, products_desc: e.target.value }))}
               />
@@ -1944,7 +1978,7 @@ const Shipping: React.FC = () => {
             <button
               onClick={handleCreateShipment}
               disabled={loading}
-              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
+              className="inline-flex h-8 items-center rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {loading ? 'Creating...' : 'Create Shipment'}
             </button>
@@ -1960,8 +1994,8 @@ const Shipping: React.FC = () => {
         )}
 
         {activeTab === 'waybills' && (
-          <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Generate Waybills</h2>
+          <div className={cardCls}>
+          <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Generate Waybills</h2>
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -1971,7 +2005,7 @@ const Shipping: React.FC = () => {
                 type="number"
                 min="1"
                 max="100"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={waybillGeneration.count}
                 onChange={(e) => setWaybillGeneration(prev => ({ ...prev, count: e.target.value }))}
                 placeholder="Enter number of waybills to generate"
@@ -1980,7 +2014,7 @@ const Shipping: React.FC = () => {
             <button
               onClick={handleGenerateWaybills}
               disabled={waybillGeneration.loading}
-              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
+              className="inline-flex h-8 items-center rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {waybillGeneration.loading ? 'Generating...' : 'Generate Waybills'}
             </button>
@@ -2002,8 +2036,8 @@ const Shipping: React.FC = () => {
         )}
 
         {activeTab === 'tat' && (
-          <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Expected TAT Calculator</h2>
+          <div className={cardCls}>
+          <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Expected TAT Calculator</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -2011,7 +2045,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={expectedTAT.origin_pin}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, origin_pin: e.target.value }))}
                 placeholder="e.g., 122003"
@@ -2023,7 +2057,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={expectedTAT.destination_pin}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, destination_pin: e.target.value }))}
                 placeholder="e.g., 136118"
@@ -2034,7 +2068,7 @@ const Shipping: React.FC = () => {
                 Mode of Transport
               </label>
               <select
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={expectedTAT.mot}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, mot: e.target.value }))}
               >
@@ -2048,7 +2082,7 @@ const Shipping: React.FC = () => {
                 Product Type
               </label>
               <select
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={expectedTAT.pdt}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, pdt: e.target.value }))}
               >
@@ -2062,7 +2096,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="date"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={expectedTAT.expected_pickup_date}
                 onChange={(e) => setExpectedTAT(prev => ({ ...prev, expected_pickup_date: e.target.value }))}
               />
@@ -2072,7 +2106,7 @@ const Shipping: React.FC = () => {
             <button
               onClick={handleCalculateTAT}
               disabled={expectedTAT.loading}
-              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
+              className="inline-flex h-8 items-center rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {expectedTAT.loading ? 'Calculating...' : 'Calculate TAT'}
             </button>
@@ -2092,8 +2126,8 @@ const Shipping: React.FC = () => {
         {activeTab === 'pickup' && (
           <div className="space-y-4">
           {/* Pending Shipments for Pickup */}
-          <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Shipments Ready for Pickup</h2>
+          <div className={cardCls}>
+            <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Shipments Ready for Pickup</h2>
             <p className="text-sm text-gray-600 mb-4">Select shipments to include in pickup request</p>
             
             {shipments.filter(s => s.status === 'pending').length === 0 ? (
@@ -2109,8 +2143,8 @@ const Shipping: React.FC = () => {
                     key={shipment.waybill}
                     className={`border rounded-lg p-3 cursor-pointer transition-all ${
                       selectedShipmentsForPickup.includes(shipment.waybill)
-                        ? 'border-pink-500 bg-pink-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-gray-900 bg-gray-50'
+                        : 'border-gray-200 hover:border-gray-400'
                     }`}
                     onClick={() => {
                       setSelectedShipmentsForPickup(prev => 
@@ -2126,11 +2160,11 @@ const Shipping: React.FC = () => {
                           type="checkbox"
                           checked={selectedShipmentsForPickup.includes(shipment.waybill)}
                           onChange={() => {}}
-                          className="mt-1 h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                         />
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <span className="font-mono font-semibold text-pink-600">{shipment.waybill}</span>
+                            <span className="font-mono font-semibold text-gray-900">{shipment.waybill}</span>
                             <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">
                               Pending Pickup
                             </span>
@@ -2171,8 +2205,8 @@ const Shipping: React.FC = () => {
           </div>
 
           {/* Pickup Request Form */}
-          <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Pickup Details</h2>
+          <div className={cardCls}>
+            <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Pickup Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -2193,7 +2227,7 @@ const Shipping: React.FC = () => {
               ) : (
                 <>
                   <select
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={pickupRequest.pickup_location}
                     onChange={(e) => setPickupRequest(prev => ({ ...prev, pickup_location: e.target.value }))}
                   >
@@ -2218,7 +2252,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="date"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={pickupRequest.pickup_date}
                 onChange={(e) => setPickupRequest(prev => ({ ...prev, pickup_date: e.target.value }))}
               />
@@ -2229,7 +2263,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="time"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={pickupRequest.pickup_time}
                 onChange={(e) => setPickupRequest(prev => ({ ...prev, pickup_time: e.target.value }))}
               />
@@ -2241,7 +2275,7 @@ const Shipping: React.FC = () => {
               <input
                 type="number"
                 min="1"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={pickupRequest.expected_package_count}
                 onChange={(e) => setPickupRequest(prev => ({ ...prev, expected_package_count: parseInt(e.target.value) }))}
               />
@@ -2252,7 +2286,7 @@ const Shipping: React.FC = () => {
             <button
               onClick={handleRequestPickup}
               disabled={pickupRequest.loading}
-              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
+              className="inline-flex h-8 items-center rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {pickupRequest.loading ? 'Requesting...' : 'Request Pickup'}
             </button>
@@ -2288,11 +2322,11 @@ const Shipping: React.FC = () => {
           <div className="space-y-4">
           {/* Saved Warehouses List */}
           {warehouses.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Saved Warehouses</h2>
+            <div className={cardCls}>
+              <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Saved Warehouses</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {warehouses.map((warehouse) => (
-                  <div key={warehouse.id} className="border border-gray-200 rounded-lg p-3 hover:border-pink-300 transition-colors">
+                  <div key={warehouse.id} className="rounded-lg border border-gray-200 p-3 transition-colors hover:border-gray-400">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h3 className="font-semibold text-gray-900">{warehouse.name}</h3>
@@ -2366,9 +2400,9 @@ const Shipping: React.FC = () => {
 
           {/* Edit Warehouse */}
           {showWarehouseEdit && selectedWarehouse && (
-            <div className="bg-white rounded-lg shadow p-4 border-2 border-blue-300">
+            <div className={`${cardCls} border-gray-300`}>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-gray-900">Edit Warehouse: {selectedWarehouse.name}</h2>
+                <h2 className="text-sm font-semibold text-gray-900">Edit Warehouse: {selectedWarehouse.name}</h2>
                 <div className="flex items-center space-x-2">
                   <span className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
                     <span className="font-medium">Editing</span>
@@ -2391,7 +2425,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.name}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, name: e.target.value })}
                   />
@@ -2402,7 +2436,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.phone}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, phone: e.target.value })}
                   />
@@ -2413,7 +2447,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="email"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.email}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, email: e.target.value })}
                   />
@@ -2424,7 +2458,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <textarea
                     rows={2}
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.address}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, address: e.target.value })}
                   />
@@ -2435,7 +2469,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.city}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, city: e.target.value })}
                   />
@@ -2446,7 +2480,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.pin}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, pin: e.target.value })}
                   />
@@ -2457,7 +2491,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.registered_name}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, registered_name: e.target.value })}
                   />
@@ -2468,7 +2502,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.return_address}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, return_address: e.target.value })}
                   />
@@ -2479,7 +2513,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.return_city}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, return_city: e.target.value })}
                   />
@@ -2490,7 +2524,7 @@ const Shipping: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                    className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     value={warehouseEdit.return_pin}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, return_pin: e.target.value })}
                   />
@@ -2501,7 +2535,7 @@ const Shipping: React.FC = () => {
                     id="edit-warehouse-active"
                     checked={warehouseEdit.is_active}
                     onChange={(e) => setWarehouseEdit({ ...warehouseEdit, is_active: e.target.checked })}
-                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                    className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                   />
                   <label htmlFor="edit-warehouse-active" className="text-sm text-gray-700">
                     Active Warehouse
@@ -2530,9 +2564,9 @@ const Shipping: React.FC = () => {
           )}
 
           {/* Create Warehouse */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className={cardCls}>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-gray-900">Create New Warehouse</h2>
+              <h2 className="text-sm font-semibold text-gray-900">Create New Warehouse</h2>
               <div className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
                 <span className="font-medium">Tip:</span> All fields marked with * are required
               </div>
@@ -2544,7 +2578,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.name}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Enter warehouse name"
@@ -2556,7 +2590,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="tel"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.phone}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="9876543210"
@@ -2570,7 +2604,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="email"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.email}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="abc@gmail.com"
@@ -2582,7 +2616,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.city}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, city: e.target.value }))}
                   placeholder="Kota"
@@ -2594,7 +2628,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.pin}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, pin: e.target.value }))}
                   placeholder="400001"
@@ -2609,7 +2643,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.country}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, country: e.target.value }))}
                   placeholder="India"
@@ -2621,7 +2655,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <textarea
                   rows={2}
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.address}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="Enter warehouse address"
@@ -2633,7 +2667,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.registered_name}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, registered_name: e.target.value }))}
                   placeholder="registered_account_name"
@@ -2645,7 +2679,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.return_pin}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, return_pin: e.target.value }))}
                   placeholder="110042"
@@ -2657,7 +2691,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.return_city}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, return_city: e.target.value }))}
                   placeholder="Kota"
@@ -2669,7 +2703,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.return_state}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, return_state: e.target.value }))}
                   placeholder="Delhi"
@@ -2681,7 +2715,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <textarea
                   rows={2}
-                  className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseCreate.return_address}
                   onChange={(e) => setWarehouseCreate(prev => ({ ...prev, return_address: e.target.value }))}
                   placeholder="return_address"
@@ -2692,7 +2726,7 @@ const Shipping: React.FC = () => {
               <button
                 onClick={handleCreateWarehouse}
                 disabled={warehouseCreate.loading}
-                className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
+                className="inline-flex h-8 items-center rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
               >
                 {warehouseCreate.loading ? 'Creating...' : 'Create Warehouse'}
               </button>
@@ -2735,7 +2769,7 @@ const Shipping: React.FC = () => {
 
           {/* Edit Warehouse - Deprecated: Now using inline edit in warehouse list */}
           {false && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className={`${cardCls} p-4`}>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Edit Warehouse (Deprecated)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -2744,7 +2778,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseEdit.name}
                   onChange={(e) => setWarehouseEdit(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="registered_wh_name"
@@ -2756,7 +2790,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseEdit.phone}
                   onChange={(e) => setWarehouseEdit(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="9988******"
@@ -2768,7 +2802,7 @@ const Shipping: React.FC = () => {
                 </label>
                 <textarea
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   value={warehouseEdit.address}
                   onChange={(e) => setWarehouseEdit(prev => ({ ...prev, address: e.target.value }))}
                   placeholder="HUDA Market, Gurugram, Haryana - 122001"
@@ -2779,7 +2813,7 @@ const Shipping: React.FC = () => {
               <button
                 onClick={handleEditWarehouse}
                 disabled={warehouseEdit.loading}
-                className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50"
+                className="inline-flex h-9 items-center rounded-md bg-gray-900 px-4 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
               >
                 {warehouseEdit.loading ? 'Updating...' : 'Update Warehouse'}
               </button>
@@ -2819,8 +2853,8 @@ const Shipping: React.FC = () => {
         )}
 
         {activeTab === 'advanced' && (
-          <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Advanced Shipment Creation</h2>
+          <div className={cardCls}>
+          <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Advanced Shipment Creation</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -2828,7 +2862,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.client}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, client: e.target.value }))}
                 placeholder="pass the registered client name"
@@ -2840,7 +2874,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.order}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, order: e.target.value }))}
                 placeholder="1234567890"
@@ -2852,7 +2886,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.name}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Jitendra Singh"
@@ -2864,7 +2898,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.phone}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="1234567890"
@@ -2876,7 +2910,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.weight}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, weight: e.target.value }))}
                 placeholder="150.0 gm"
@@ -2888,7 +2922,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="number"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.quantity}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, quantity: parseInt(e.target.value) }))}
                 placeholder="1"
@@ -2900,7 +2934,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.city}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, city: e.target.value }))}
                 placeholder="Meerjapuram"
@@ -2912,7 +2946,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.pin}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, pin: e.target.value }))}
                 placeholder="521111"
@@ -2924,7 +2958,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.state}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, state: e.target.value }))}
                 placeholder="Andhra Pradesh"
@@ -2936,7 +2970,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="number"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.total_amount}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, total_amount: e.target.value }))}
                 placeholder="749"
@@ -2947,7 +2981,7 @@ const Shipping: React.FC = () => {
                 Shipping Mode
               </label>
               <select
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.shipping_mode}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, shipping_mode: e.target.value }))}
               >
@@ -2961,7 +2995,7 @@ const Shipping: React.FC = () => {
                 Payment Mode
               </label>
               <select
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.payment_mode}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, payment_mode: e.target.value }))}
               >
@@ -2976,7 +3010,7 @@ const Shipping: React.FC = () => {
               </label>
               <textarea
                 rows={2}
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.add}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, add: e.target.value }))}
                 placeholder="7 106 abc road, 2020 building"
@@ -2988,7 +3022,7 @@ const Shipping: React.FC = () => {
               </label>
               <textarea
                 rows={2}
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.products_desc}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, products_desc: e.target.value }))}
                 placeholder="NEW EI PIKOK (PURPAL-ORANGE)"
@@ -3000,7 +3034,7 @@ const Shipping: React.FC = () => {
               </label>
               <input
                 type="text"
-                className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-pink-500 focus:border-transparent"
+                className="h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 value={advancedShipment.pickup_location_name}
                 onChange={(e) => setAdvancedShipment(prev => ({ ...prev, pickup_location_name: e.target.value }))}
                 placeholder="pass the registered pickup WH name"
@@ -3011,7 +3045,7 @@ const Shipping: React.FC = () => {
             <button
               onClick={handleCreateAdvancedShipment}
               disabled={advancedShipment.loading}
-              className="px-4 py-2 bg-pink-600 text-white text-sm rounded-md hover:bg-pink-700 disabled:opacity-50"
+              className="inline-flex h-8 items-center rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {advancedShipment.loading ? 'Creating...' : 'Create Advanced Shipment'}
             </button>

@@ -642,7 +642,7 @@ const Homepage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#ffffff]">
 
       {/* Bento Hero Section */}
       <BentoHeroSection
@@ -979,7 +979,7 @@ const Homepage: React.FC = () => {
       </section>
 
       {/* Featured Artwork Section */}
-      <section className="py-12 px-4 bg-gray-50">
+      <section className="py-12 px-4 bg-[#ffffff]">
         <div className="max-w-7xl mx-auto">
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1119,7 +1119,7 @@ const Homepage: React.FC = () => {
       </section>
 
       {/* Trending Collections Section */}
-      <section className="py-12 px-4 bg-gray-50">
+      <section className="py-12 px-4 bg-[#ffffff]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4 font-sans font-normal">{trendingCollections.title}</h2>

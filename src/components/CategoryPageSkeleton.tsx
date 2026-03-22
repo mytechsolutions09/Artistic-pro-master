@@ -13,7 +13,7 @@ const CategoryPageSkeleton: React.FC<CategoryPageSkeletonProps> = ({
   productCount = 8 
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#ffffff]">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
         {/* All Filters Button Skeleton */}

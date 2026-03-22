@@ -251,7 +251,7 @@ const Header: React.FC = () => {
   }
 
   return (
-    <header className="bg-gray-50 sticky top-0 z-50 border-b border-gray-200 font-sans font-normal">
+    <header className="bg-[#ffffff] sticky top-0 z-50 border-b border-gray-200 font-sans font-normal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3 lg:gap-7 min-w-0">
@@ -282,7 +282,7 @@ const Header: React.FC = () => {
 
               {showCategoriesDropdown && categories.length > 0 && (
                 <div
-                  className="fixed left-0 right-0 top-16 z-40 max-h-[50vh] overflow-y-auto border-b border-gray-200 bg-gray-50 shadow-lg"
+                  className="fixed left-0 right-0 top-16 z-40 max-h-[50vh] overflow-y-auto border-b border-gray-200 bg-[#ffffff] shadow-lg"
                   role="menu"
                 >
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -558,7 +558,7 @@ const Header: React.FC = () => {
 
         {/* Mobile & Tablet Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-gray-200 bg-gray-50">
+          <div className="lg:hidden py-4 border-t border-gray-200 bg-[#ffffff]">
             <div className="mb-4">
               <div className="relative" ref={searchRef}>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />

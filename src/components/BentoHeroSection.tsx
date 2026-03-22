@@ -167,7 +167,7 @@ const BentoHeroSection: React.FC<BentoHeroSectionProps> = ({ cards }) => {
   );
 
   return (
-    <section className="pt-3 pb-8 px-4">
+    <section className="pt-3 pb-8 px-4 bg-[#ffffff]">
       <div className="max-w-7xl mx-auto">
 
         {/* Desktop: adjustable bento spans */}

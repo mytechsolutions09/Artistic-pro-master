@@ -10,6 +10,9 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { RealUserService, RealUser, UserStats } from '../../services/realUserService';
 import StoreCreditService from '../../services/storeCreditService';
 
+const inputCls =
+  'h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+
 const Users: React.FC = () => {
   const [users, setUsers] = useState<RealUser[]>([]);
   const [stats, setStats] = useState<UserStats>({
@@ -264,19 +267,28 @@ const Users: React.FC = () => {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'artist': return 'bg-purple-100 text-purple-800';
-      case 'customer': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'admin':
+        return 'bg-red-50 text-red-900 ring-1 ring-inset ring-red-600/20';
+      case 'artist':
+        return 'bg-violet-50 text-violet-900 ring-1 ring-inset ring-violet-600/20';
+      case 'customer':
+        return 'bg-blue-50 text-blue-900 ring-1 ring-inset ring-blue-600/20';
+      default:
+        return 'bg-gray-100 text-gray-800 ring-1 ring-inset ring-gray-500/20';
     }
   };
 
   const getRoleIcon = (role: string) => {
+    const cls = 'w-3 h-3 shrink-0';
     switch (role) {
-      case 'admin': return <Crown className="w-4 h-4" />;
-      case 'artist': return <Shield className="w-4 h-4" />;
-      case 'customer': return <UsersIcon className="w-4 h-4" />;
-      default: return <UsersIcon className="w-4 h-4" />;
+      case 'admin':
+        return <Crown className={cls} />;
+      case 'artist':
+        return <Shield className={cls} />;
+      case 'customer':
+        return <UsersIcon className={cls} />;
+      default:
+        return <UsersIcon className={cls} />;
     }
   };
 
@@ -296,116 +308,75 @@ const Users: React.FC = () => {
     return new Date(user.last_sign_in_at) > thirtyDaysAgo;
   };
 
+  const statItems: { label: string; value: number; Icon: typeof UsersIcon; iconClass: string }[] = [
+    { label: 'Total', value: stats.total, Icon: UsersIcon, iconClass: 'text-blue-600' },
+    { label: 'Confirmed', value: stats.confirmed, Icon: CheckCircle, iconClass: 'text-green-600' },
+    { label: 'Unconfirmed', value: stats.unconfirmed, Icon: XCircle, iconClass: 'text-amber-600' },
+    { label: 'Active 30d', value: stats.active, Icon: Calendar, iconClass: 'text-green-600' },
+    { label: 'Inactive', value: stats.inactive, Icon: UserX, iconClass: 'text-red-600' },
+    { label: 'New 30d', value: stats.recent_signups, Icon: Plus, iconClass: 'text-violet-600' },
+  ];
+
   return (
     <AdminLayout title="Users" noHeader={true}>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-            <p className="text-gray-600">Manage user accounts and permissions from Supabase Auth</p>
-            {!process.env.SUPABASE_SERVICE_ROLE_KEY && (
-              <p className="text-sm text-orange-600 mt-1">
-                ⚠️ Service role key not configured. Showing sample data. Add SUPABASE_SERVICE_ROLE_KEY to access real user data.
-              </p>
-            )}
+      <div className="space-y-5 px-4 py-5 sm:px-6 sm:py-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 space-y-1">
+            <h2 className="text-lg font-semibold text-gray-900">User Management</h2>
+            <p className="text-xs text-gray-500">Supabase Auth users, roles, and store credit</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
+              type="button"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              className="inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
             </button>
-            <button 
+            <button
+              type="button"
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
+              className="inline-flex h-8 items-center gap-1 rounded-md bg-gray-900 px-2.5 text-xs font-medium text-white hover:bg-gray-800"
             >
-              <Plus className="w-4 h-4" />
-              <span>Add User</span>
+              <Plus className="h-3.5 w-3.5" />
+              Add user
             </button>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <UsersIcon className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-500">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              </div>
+        <div className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-gray-50/90 p-3">
+          {statItems.map(({ label, value, Icon, iconClass }) => (
+            <div
+              key={label}
+              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1.5"
+            >
+              <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClass}`} />
+              <span className="text-[11px] text-gray-500">{label}</span>
+              <span className="text-xs font-semibold tabular-nums text-gray-900">{value}</span>
             </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-500">Confirmed</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.confirmed}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <XCircle className="w-5 h-5 text-orange-600" />
-              <div>
-                <p className="text-sm text-gray-500">Unconfirmed</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.unconfirmed}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <Calendar className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-500">Active (30d)</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <UserX className="w-5 h-5 text-red-600" />
-              <div>
-                <p className="text-sm text-gray-500">Inactive</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.inactive}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <Plus className="w-5 h-5 text-purple-600" />
-              <div>
-                <p className="text-sm text-gray-500">New (30d)</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.recent_signups}</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Filters */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center space-x-2">
-              <Search className="w-4 h-4 text-gray-400" />
+        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="relative min-w-[10rem] flex-1 max-w-sm">
+              <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by email..."
+                placeholder="Search email…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 w-64"
+                className={`${inputCls} w-full pl-7`}
               />
             </div>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className={`${inputCls} min-w-[7rem]`}
             >
-              <option value="all">All Status</option>
+              <option value="all">All status</option>
               <option value="confirmed">Confirmed</option>
               <option value="unconfirmed">Unconfirmed</option>
               <option value="active">Active (30d)</option>
@@ -414,9 +385,9 @@ const Users: React.FC = () => {
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className={`${inputCls} min-w-[6.5rem]`}
             >
-              <option value="all">All Roles</option>
+              <option value="all">All roles</option>
               <option value="admin">Admin</option>
               <option value="artist">Artist</option>
               <option value="customer">Customer</option>
@@ -428,192 +399,225 @@ const Users: React.FC = () => {
                 setSortBy(field);
                 setSortOrder(order as 'asc' | 'desc');
               }}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className={`${inputCls} min-w-[8rem]`}
             >
-              <option value="created_at-desc">Newest First</option>
-              <option value="created_at-asc">Oldest First</option>
-              <option value="last_sign_in_at-desc">Last Active</option>
-              <option value="email-asc">Email A-Z</option>
-              <option value="email-desc">Email Z-A</option>
+              <option value="created_at-desc">Newest</option>
+              <option value="created_at-asc">Oldest</option>
+              <option value="last_sign_in_at-desc">Last active</option>
+              <option value="email-asc">Email A–Z</option>
+              <option value="email-desc">Email Z–A</option>
             </select>
           </div>
         </div>
 
-        {/* Bulk Actions */}
         {selectedUsers.length > 0 && (
-          <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-pink-800">
-                {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
-              </span>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={clearSelection}
-                  className="text-sm text-pink-600 hover:text-pink-700"
-                >
-                  Clear
-                </button>
-                <button
-                  onClick={() => {
-                    selectedUsers.forEach(id => handleBanUser(id, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()));
-                    setSelectedUsers([]);
-                  }}
-                  className="text-sm text-red-600 hover:text-red-700"
-                >
-                  Ban Selected
-                </button>
-                <button
-                  onClick={() => {
-                    selectedUsers.forEach(id => handleBanUser(id));
-                    setSelectedUsers([]);
-                  }}
-                  className="text-sm text-green-600 hover:text-green-700"
-                >
-                  Unban Selected
-                </button>
-              </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs">
+            <span className="font-medium text-gray-800">
+              {selectedUsers.length} selected
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={clearSelection} className="text-gray-600 hover:text-gray-900">
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  selectedUsers.forEach((id) =>
+                    handleBanUser(id, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+                  );
+                  setSelectedUsers([]);
+                }}
+                className="text-red-600 hover:underline"
+              >
+                Ban 7d
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  selectedUsers.forEach((id) => handleBanUser(id));
+                  setSelectedUsers([]);
+                }}
+                className="text-green-700 hover:underline"
+              >
+                Unban
+              </button>
             </div>
           </div>
         )}
 
-        {/* Users List */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Loading users...</span>
+          <div className="flex items-center justify-center gap-2 py-14 text-sm text-gray-500">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            Loading…
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="text-center py-12">
-            <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
-            <p className="text-gray-500">Try adjusting your search or filters</p>
+          <div className="rounded-lg border border-dashed border-gray-200 py-14 text-center">
+            <UsersIcon className="mx-auto h-8 w-8 text-gray-300" />
+            <p className="mt-2 text-sm font-medium text-gray-800">No users</p>
+            <p className="text-xs text-gray-500">Try search or filters</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="overflow-hidden">
-              <table className="w-full divide-y divide-gray-200">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] divide-y divide-gray-200 text-left">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <th className="w-10 px-3 py-2.5">
                       <input
                         type="checkbox"
-                        checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                        checked={
+                          selectedUsers.length === filteredUsers.length && filteredUsers.length > 0
+                        }
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedUsers(filteredUsers.map(u => u.id));
+                            setSelectedUsers(filteredUsers.map((u) => u.id));
                           } else {
                             setSelectedUsers([]);
                           }
                         }}
-                        className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                        className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                       />
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Status</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Role</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Store Credit</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Created</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Last Sign In</th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Actions</th>
+                    <th className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      User
+                    </th>
+                    <th className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      Status
+                    </th>
+                    <th className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      Role
+                    </th>
+                    <th className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      Credit
+                    </th>
+                    <th className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      Created
+                    </th>
+                    <th className="px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      Last in
+                    </th>
+                    <th className="w-40 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100 bg-white">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-3 whitespace-nowrap">
+                    <tr key={user.id} className="hover:bg-gray-50/80">
+                      <td className="px-3 py-2.5 align-middle">
                         <input
                           type="checkbox"
                           checked={selectedUsers.includes(user.id)}
                           onChange={() => toggleUserSelection(user.id)}
-                          className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                          className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                         />
                       </td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                      <td className="max-w-[200px] px-3 py-2.5 align-middle">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-700">
                             {user.email.charAt(0).toUpperCase()}
                           </div>
-                          <div className="ml-3 min-w-0 flex-1">
-                            <div className="text-sm font-medium text-gray-900 truncate">{user.email}</div>
-                            <div className="text-xs text-gray-500">ID: {user.id.slice(0, 8)}...</div>
+                          <div className="min-w-0">
+                            <div className="truncate text-xs font-medium text-gray-900">{user.email}</div>
+                            <div className="font-mono text-[10px] text-gray-400">{user.id.slice(0, 8)}…</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        <div className="flex flex-col space-y-1">
-                          <div className="flex items-center space-x-1">
+                      <td className="whitespace-nowrap px-3 py-2.5 align-middle">
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex items-center gap-0.5 text-[11px]">
                             {user.email_confirmed_at ? (
-                              <CheckCircle className="w-3 h-3 text-green-500" />
+                              <CheckCircle className="h-3 w-3 text-green-600" />
                             ) : (
-                              <XCircle className="w-3 h-3 text-orange-500" />
+                              <XCircle className="h-3 w-3 text-amber-600" />
                             )}
-                            <span className={`text-xs ${user.email_confirmed_at ? 'text-green-600' : 'text-orange-600'}`}>
-                              {user.email_confirmed_at ? 'Confirmed' : 'Unconfirmed'}
+                            <span className={user.email_confirmed_at ? 'text-green-800' : 'text-amber-800'}>
+                              {user.email_confirmed_at ? 'OK' : 'Pending'}
                             </span>
-                          </div>
+                          </span>
                           {isUserActive(user) && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                            <span className="w-fit rounded bg-green-50 px-1 py-0 text-[10px] font-medium text-green-800 ring-1 ring-inset ring-green-600/15">
                               Active
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role || 'customer')}`}>
+                      <td className="whitespace-nowrap px-3 py-2.5 align-middle">
+                        <span
+                          className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium capitalize ${getRoleColor(user.role || 'customer')}`}
+                        >
                           {getRoleIcon(user.role || 'customer')}
-                          <span className="ml-1 capitalize">{user.role || 'customer'}</span>
+                          {user.role || 'customer'}
                         </span>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        <div className="flex items-center space-x-1">
-                          <Wallet className="w-4 h-4 text-purple-500" />
-                          <span className="text-xs font-semibold text-gray-900">
-                            ₹{storeCreditBalances[user.id]?.toFixed(2) || '0.00'}
-                          </span>
-                        </div>
+                      <td className="whitespace-nowrap px-3 py-2.5 align-middle tabular-nums">
+                        <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-gray-900">
+                          <Wallet className="h-3.5 w-3.5 text-violet-600" />
+                          ₹{storeCreditBalances[user.id]?.toFixed(2) || '0.00'}
+                        </span>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-900">
+                      <td className="whitespace-nowrap px-3 py-2.5 align-middle text-[11px] text-gray-700">
                         {formatDate(user.created_at)}
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-900">
+                      <td className="whitespace-nowrap px-3 py-2.5 align-middle text-[11px] text-gray-700">
                         {formatDate(user.last_sign_in_at)}
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        <div className="flex items-center space-x-1">
+                      <td className="px-2 py-2 align-middle">
+                        <div className="flex flex-wrap items-center gap-0.5">
                           <button
+                            type="button"
                             onClick={() => handleViewUser(user)}
-                            className="text-gray-400 hover:text-gray-600"
-                            title="View Details"
+                            className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            title="View"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="h-3.5 w-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleEditUser(user)}
-                            className="text-gray-400 hover:text-gray-600"
-                            title="Edit User"
+                            className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            title="Edit role"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={() => handleBanUser(user.id, user.banned_until ? undefined : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())}
-                            className={user.banned_until ? "text-green-400 hover:text-green-600" : "text-yellow-400 hover:text-yellow-600"}
-                            title={user.banned_until ? "Unban User" : "Ban User"}
+                            type="button"
+                            onClick={() =>
+                              handleBanUser(
+                                user.id,
+                                user.banned_until
+                                  ? undefined
+                                  : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                              )
+                            }
+                            className={`rounded-md p-1.5 ${
+                              user.banned_until
+                                ? 'text-green-600 hover:bg-green-50'
+                                : 'text-amber-600 hover:bg-amber-50'
+                            }`}
+                            title={user.banned_until ? 'Unban' : 'Ban 7d'}
                           >
-                            {user.banned_until ? <Unlock className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                            {user.banned_until ? (
+                              <Unlock className="h-3.5 w-3.5" />
+                            ) : (
+                              <Ban className="h-3.5 w-3.5" />
+                            )}
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDeleteUser(user.id)}
-                            className="text-gray-400 hover:text-red-600"
-                            title="Delete User"
+                            className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                            title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleOpenStoreCreditModal(user)}
-                            className="text-purple-400 hover:text-purple-600"
-                            title="Manage Store Credit"
+                            className="rounded-md p-1.5 text-violet-500 hover:bg-violet-50 hover:text-violet-700"
+                            title="Store credit"
                           >
-                            <DollarSign className="w-4 h-4" />
+                            <DollarSign className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </td>
@@ -656,101 +660,104 @@ const Users: React.FC = () => {
           />
         )}
 
-        {/* Store Credit Management Modal */}
         {showStoreCreditModal && selectedUser && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-screen px-4">
-              <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowStoreCreditModal(false)} />
-              <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <Wallet className="w-5 h-5 text-purple-500 mr-2" />
-                    Manage Store Credit
-                  </h3>
-                  <button onClick={() => setShowStoreCreditModal(false)} className="text-gray-400 hover:text-gray-600">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                  <p className="text-sm text-gray-700"><strong>User:</strong> {selectedUser.email}</p>
-                  <p className="text-sm text-gray-700 mt-1">
-                    <strong>Current Balance:</strong> 
-                    <span className="text-purple-600 font-bold ml-2">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
+            <div
+              className="relative w-full max-w-md rounded-lg border border-gray-200 bg-white shadow-lg"
+              role="dialog"
+            >
+              <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                  <Wallet className="h-4 w-4 text-violet-600" />
+                  Store credit
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowStoreCreditModal(false)}
+                  className="rounded p-1 text-gray-500 hover:bg-gray-100"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="space-y-3 p-3">
+                <div className="rounded-md border border-violet-100 bg-violet-50/80 p-2 text-xs">
+                  <p className="truncate text-gray-800">
+                    <span className="text-gray-500">User: </span>
+                    {selectedUser.email}
+                  </p>
+                  <p className="mt-0.5 text-gray-800">
+                    <span className="text-gray-500">Balance: </span>
+                    <span className="font-semibold text-violet-700 tabular-nums">
                       ₹{storeCreditBalances[selectedUser.id]?.toFixed(2) || '0.00'}
                     </span>
                   </p>
                 </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Action</label>
-                    <div className="flex space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => setCreditAction('add')}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          creditAction === 'add'
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        Add Credit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCreditAction('deduct')}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          creditAction === 'deduct'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        Deduct Credit
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
-                    <input
-                      type="number"
-                      value={creditAmount}
-                      onChange={(e) => setCreditAmount(e.target.value)}
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
-                    <textarea
-                      value={creditDescription}
-                      onChange={(e) => setCreditDescription(e.target.value)}
-                      placeholder="Reason for credit adjustment..."
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-3 pt-2">
+                <div>
+                  <p className="mb-1 text-[11px] font-medium text-gray-600">Action</p>
+                  <div className="flex gap-1">
                     <button
-                      onClick={handleManageStoreCredit}
-                      disabled={!creditAmount || parseFloat(creditAmount) <= 0}
-                      className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      type="button"
+                      onClick={() => setCreditAction('add')}
+                      className={`flex-1 rounded-md py-1.5 text-xs font-medium ${
+                        creditAction === 'add'
+                          ? 'bg-green-600 text-white'
+                          : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
                     >
-                      {creditAction === 'add' ? 'Add' : 'Deduct'} Credit
+                      Add
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowStoreCreditModal(false)}
-                      className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                      onClick={() => setCreditAction('deduct')}
+                      className={`flex-1 rounded-md py-1.5 text-xs font-medium ${
+                        creditAction === 'deduct'
+                          ? 'bg-red-600 text-white'
+                          : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
                     >
-                      Cancel
+                      Deduct
                     </button>
                   </div>
+                </div>
+                <div>
+                  <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={creditAmount}
+                    onChange={(e) => setCreditAmount(e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    className={inputCls + ' w-full'}
+                  />
+                </div>
+                <div>
+                  <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Note (optional)</label>
+                  <textarea
+                    value={creditDescription}
+                    onChange={(e) => setCreditDescription(e.target.value)}
+                    placeholder="Reason…"
+                    rows={2}
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  />
+                </div>
+                <div className="flex gap-2 border-t border-gray-100 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleManageStoreCredit}
+                    disabled={!creditAmount || parseFloat(creditAmount) <= 0}
+                    className="flex-1 rounded-md bg-violet-600 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {creditAction === 'add' ? 'Add' : 'Deduct'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowStoreCreditModal(false)}
+                    className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
@@ -780,59 +787,59 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onSubmit, onClose }) 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-md w-full p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">Create New User</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
+      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white shadow-lg">
+        <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+          <h3 className="text-sm font-semibold text-gray-900">Create user</h3>
+          <button type="button" onClick={onClose} className="rounded p-1 text-gray-500 hover:bg-gray-100">
+            <X className="h-4 w-4" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-2 p-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Email</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className={inputCls + ' w-full'}
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Password</label>
             <input
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className={inputCls + ' w-full'}
               required
               minLength={6}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Role</label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className={inputCls + ' w-full'}
             >
               <option value="customer">Customer</option>
               <option value="artist">Artist</option>
               <option value="admin">Admin</option>
             </select>
           </div>
-          <div className="flex items-center space-x-3 pt-4">
+          <div className="flex gap-2 border-t border-gray-100 pt-2">
             <button
               type="submit"
-              className="flex-1 bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition-colors"
+              className="flex-1 rounded-md bg-gray-900 py-1.5 text-xs font-medium text-white hover:bg-gray-800"
             >
-              Create User
+              Create
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+              className="flex-1 rounded-md border border-gray-200 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -863,58 +870,58 @@ const ViewUserModal: React.FC<ViewUserModalProps> = ({ user, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-800">User Details</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+        <div className="sticky top-0 z-[1] flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2">
+          <h3 className="text-sm font-semibold text-gray-900">User details</h3>
+          <button type="button" onClick={onClose} className="rounded p-1 text-gray-500 hover:bg-gray-100">
+            <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xl font-medium">
+        <div className="space-y-3 p-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700">
               {user.email.charAt(0).toUpperCase()}
             </div>
-            <div>
-              <h4 className="text-lg font-medium text-gray-900">{user.email}</h4>
-              <p className="text-sm text-gray-600">ID: {user.id}</p>
+            <div className="min-w-0">
+              <h4 className="truncate text-sm font-medium text-gray-900">{user.email}</h4>
+              <p className="truncate font-mono text-[10px] text-gray-500">{user.id}</p>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Confirmed</label>
-              <p className={`text-sm ${user.email_confirmed_at ? 'text-green-600' : 'text-orange-600'}`}>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="rounded-md border border-gray-100 bg-gray-50/80 px-2 py-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Email confirmed</p>
+              <p className={`text-xs font-medium ${user.email_confirmed_at ? 'text-green-700' : 'text-amber-700'}`}>
                 {user.email_confirmed_at ? 'Yes' : 'No'}
               </p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <p className="text-sm text-gray-900 capitalize">{user.role || 'customer'}</p>
+            <div className="rounded-md border border-gray-100 bg-gray-50/80 px-2 py-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Role</p>
+              <p className="text-xs capitalize text-gray-900">{user.role || 'customer'}</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Created At</label>
-              <p className="text-sm text-gray-900">{formatDate(user.created_at)}</p>
+            <div className="rounded-md border border-gray-100 bg-gray-50/80 px-2 py-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Created</p>
+              <p className="text-xs text-gray-900">{formatDate(user.created_at)}</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Sign In</label>
-              <p className="text-sm text-gray-900">{formatDate(user.last_sign_in_at)}</p>
+            <div className="rounded-md border border-gray-100 bg-gray-50/80 px-2 py-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Last sign in</p>
+              <p className="text-xs text-gray-900">{formatDate(user.last_sign_in_at)}</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <p className="text-sm text-gray-900">{user.phone || 'Not provided'}</p>
+            <div className="rounded-md border border-gray-100 bg-gray-50/80 px-2 py-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Phone</p>
+              <p className="text-xs text-gray-900">{user.phone || '—'}</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Banned Until</label>
-              <p className="text-sm text-gray-900">{user.banned_until ? formatDate(user.banned_until) : 'Not banned'}</p>
+            <div className="rounded-md border border-gray-100 bg-gray-50/80 px-2 py-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">Banned until</p>
+              <p className="text-xs text-gray-900">{user.banned_until ? formatDate(user.banned_until) : '—'}</p>
             </div>
           </div>
 
           {user.user_metadata && Object.keys(user.user_metadata).length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">User Metadata</label>
-              <pre className="bg-gray-100 p-3 rounded-lg text-xs overflow-x-auto">
+              <p className="mb-1 text-[11px] font-medium text-gray-600">User metadata</p>
+              <pre className="max-h-32 overflow-auto rounded-md border border-gray-200 bg-gray-50 p-2 text-[10px] leading-relaxed">
                 {JSON.stringify(user.user_metadata, null, 2)}
               </pre>
             </div>
@@ -922,17 +929,18 @@ const ViewUserModal: React.FC<ViewUserModalProps> = ({ user, onClose }) => {
 
           {user.app_metadata && Object.keys(user.app_metadata).length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">App Metadata</label>
-              <pre className="bg-gray-100 p-3 rounded-lg text-xs overflow-x-auto">
+              <p className="mb-1 text-[11px] font-medium text-gray-600">App metadata</p>
+              <pre className="max-h-32 overflow-auto rounded-md border border-gray-200 bg-gray-50 p-2 text-[10px] leading-relaxed">
                 {JSON.stringify(user.app_metadata, null, 2)}
               </pre>
             </div>
           )}
         </div>
-        <div className="flex justify-end pt-6">
+        <div className="flex justify-end border-t border-gray-100 px-3 py-2">
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
           >
             Close
           </button>
@@ -958,47 +966,47 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onSubmit, onClose }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-md w-full p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">Edit User Role</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
+      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white shadow-lg">
+        <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+          <h3 className="text-sm font-semibold text-gray-900">Edit role</h3>
+          <button type="button" onClick={onClose} className="rounded p-1 text-gray-500 hover:bg-gray-100">
+            <X className="h-4 w-4" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-2 p-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Email</label>
             <input
               type="email"
               value={user.email}
               disabled
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+              className={inputCls + ' w-full cursor-not-allowed bg-gray-50 text-gray-500'}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className={inputCls + ' w-full'}
             >
               <option value="customer">Customer</option>
               <option value="artist">Artist</option>
               <option value="admin">Admin</option>
             </select>
           </div>
-          <div className="flex items-center space-x-3 pt-4">
+          <div className="flex gap-2 border-t border-gray-100 pt-2">
             <button
               type="submit"
-              className="flex-1 bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition-colors"
+              className="flex-1 rounded-md bg-gray-900 py-1.5 text-xs font-medium text-white hover:bg-gray-800"
             >
-              Update Role
+              Save
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+              className="flex-1 rounded-md border border-gray-200 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>

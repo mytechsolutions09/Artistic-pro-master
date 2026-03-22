@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 import { 
   Plus, Upload, BarChart3, Settings, 
   Shirt, Star, TrendingUp, Filter, Download, Package
@@ -101,19 +102,25 @@ const ClothesSecondaryNav: React.FC<ClothesSecondaryNavProps> = ({
   className = '',
   clothesCounts
 }) => {
+  const { navRef, onNavScroll } = usePreserveNavScroll([activeTab]);
+
   return (
-    <div className={`bg-white border-r border-gray-200 w-20 h-screen fixed top-0 left-20 z-30 ${className}`}>
-      {/* Sidebar Header */}
-      <div className="p-4 border-b border-gray-200">
+    <div
+      className={`fixed left-20 top-0 z-30 flex h-screen w-20 flex-col border-r border-gray-200 bg-white ${className}`}
+    >
+      <div className="shrink-0 border-b border-gray-200 p-4">
         <div className="flex items-center justify-center">
-          <div className="p-2 bg-pink-100 rounded-lg">
-            <Shirt className="w-6 h-6 text-pink-600" />
+          <div className="rounded-lg bg-pink-100 p-2">
+            <Shirt className="h-6 w-6 text-pink-600" />
           </div>
         </div>
       </div>
 
-      {/* Navigation Menu */}
-      <div className="py-4 overflow-y-auto h-[calc(100vh-80px)]">
+      <div
+        ref={navRef}
+        onScroll={onNavScroll}
+        className="min-h-0 flex-1 overflow-y-auto px-0 py-4"
+      >
         <nav className="space-y-1 px-3">
           {CLOTHES_TABS.map((tab) => {
             // Add badges for specific tabs
@@ -131,21 +138,23 @@ const ClothesSecondaryNav: React.FC<ClothesSecondaryNavProps> = ({
             return (
               <button
                 key={tab.id}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => onTabChange(tab.id)}
-                className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 group relative ${
+                className={`group relative flex w-full items-center justify-center rounded-lg p-3 transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'bg-pink-50 text-pink-700'
+                    ? 'bg-gray-50 text-black'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
                 title={tab.label}
               >
                 {/* Active indicator */}
                 {activeTab === tab.id && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-pink-500 rounded-r-full" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-black rounded-r-full" />
                 )}
                 
                 <span className={`flex-shrink-0 transition-colors ${
-                  activeTab === tab.id ? 'text-pink-600' : 'text-gray-500 group-hover:text-gray-700'
+                  activeTab === tab.id ? 'text-black' : 'text-gray-500 group-hover:text-gray-700'
                 }`}>
                   {tab.icon}
                 </span>

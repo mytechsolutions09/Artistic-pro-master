@@ -5,13 +5,21 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import NormalSecondaryNav, { NORMAL_TABS } from '../../components/admin/NormalSecondaryNav';
 import { NotificationManager } from '../../components/Notification';
 import NormalItemsService, { NormalItem } from '../../services/normalItemsService';
-import { ImageUploadService } from '../../services/imageUploadService';
 import { ProductService } from '../../services/supabaseService';
 import { generateSlug } from '../../utils/slugUtils';
-import { 
-  Plus, Edit2, Trash2, Eye, X, Upload, Image as ImageIcon,
-  Save, Search, RefreshCw
-} from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, X, Save, Search } from 'lucide-react';
+
+const inputCls =
+  'h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+const textareaCls =
+  'w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+const labelCls = 'mb-1 block text-[11px] font-medium text-gray-600';
+const cardCls = 'rounded-lg border border-gray-200 bg-white shadow-sm';
+const btnPrimary =
+  'inline-flex h-8 items-center justify-center gap-1.5 rounded-md bg-gray-900 px-3 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50';
+const btnOutline =
+  'inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50';
+const iconBtn = 'rounded p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900';
 
 const Normal: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -271,127 +279,131 @@ const Normal: React.FC = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Total Items</h3>
-                <p className="text-3xl font-bold text-pink-600">{stats.total}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Active Items</h3>
-                <p className="text-3xl font-bold text-green-600">{stats.active}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Inactive Items</h3>
-                <p className="text-3xl font-bold text-yellow-600">{stats.inactive}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Draft Items</h3>
-                <p className="text-3xl font-bold text-gray-600">{stats.draft}</p>
-              </div>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { k: 'Total', v: stats.total, hint: 'all' },
+                { k: 'Active', v: stats.active, hint: 'live' },
+                { k: 'Inactive', v: stats.inactive, hint: 'off' },
+                { k: 'Draft', v: stats.draft, hint: 'wip' },
+              ].map(({ k, v, hint }) => (
+                <div
+                  key={k}
+                  className="inline-flex min-w-[5.5rem] flex-1 items-baseline gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 sm:min-w-0"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] text-gray-500">{k}</div>
+                    <div className="text-sm font-semibold tabular-nums text-gray-900">{v}</div>
+                    <div className="text-[10px] text-gray-400">{hint}</div>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Items List */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-800">Normal Items</h2>
-                  <button
-                    onClick={openCreateModal}
-                    className="flex items-center space-x-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
-                  >
-                    <Plus className="w-5 h-5" />
-                    <span>Add Item</span>
-                  </button>
-                </div>
+            <div className={cardCls}>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-3 py-2">
+                <h2 className="text-xs font-semibold text-gray-900">Normal items</h2>
+                <button type="button" onClick={openCreateModal} className={btnPrimary}>
+                  <Plus className="h-3.5 w-3.5" />
+                  Add item
+                </button>
               </div>
 
-              {/* Search */}
-              <div className="p-4 border-b border-gray-200">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <div className="border-b border-gray-100 px-3 py-2">
+                <div className="relative max-w-md">
+                  <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search items..."
+                    placeholder="Search…"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className={`${inputCls} pl-8`}
                   />
                 </div>
               </div>
 
-              {/* Items Table */}
               {loading ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto"></div>
+                <div className="flex flex-col items-center gap-2 py-12">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+                  <span className="text-[11px] text-gray-500">Loading items…</span>
                 </div>
               ) : filteredItems.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  <p>No items found. Click "Add Item" to create your first item.</p>
-                </div>
+                <div className="px-3 py-8 text-center text-[11px] text-gray-500">No items match. Add one to get started.</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <table className="w-full min-w-[520px]">
+                    <thead>
+                      <tr className="border-b border-gray-100 bg-gray-50/80">
+                        <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                          Img
+                        </th>
+                        <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                          Title
+                        </th>
+                        <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                          Price
+                        </th>
+                        <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                          Status
+                        </th>
+                        <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="divide-y divide-gray-100">
                       {filteredItems.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
+                        <tr key={item.id} className="hover:bg-gray-50/80">
+                          <td className="whitespace-nowrap px-3 py-2">
                             <img
                               src={item.main_image || item.images[0] || '/placeholder.png'}
-                              alt={item.title}
-                              className="w-16 h-16 object-cover rounded"
+                              alt=""
+                              className="h-10 w-10 rounded border border-gray-100 object-cover"
                             />
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-gray-900">{item.title}</div>
+                          <td className="max-w-[200px] px-3 py-2">
+                            <div className="truncate text-xs font-medium text-gray-900">{item.title}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">₹{item.price}</div>
-                            {item.original_price && item.discount_percentage && (
-                              <div className="text-xs text-gray-500 line-through">₹{item.original_price}</div>
+                          <td className="whitespace-nowrap px-3 py-2">
+                            <div className="text-xs font-medium tabular-nums text-gray-900">₹{item.price}</div>
+                            {item.original_price != null && item.discount_percentage != null && (
+                              <div className="text-[10px] text-gray-400 line-through">₹{item.original_price}</div>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              item.status === 'active' ? 'bg-green-100 text-green-800' :
-                              item.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
+                          <td className="whitespace-nowrap px-3 py-2">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                item.status === 'active'
+                                  ? 'bg-green-50 text-green-800'
+                                  : item.status === 'inactive'
+                                    ? 'bg-amber-50 text-amber-800'
+                                    : 'bg-gray-100 text-gray-700'
+                              }`}
+                            >
                               {item.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-2">
+                          <td className="whitespace-nowrap px-3 py-2 text-right">
+                            <div className="inline-flex items-center gap-0.5">
                               <a
                                 href={`/${generateSlug(item.title)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-900"
+                                className={iconBtn}
                                 title={`View ${item.title}`}
                               >
-                                <Eye className="w-4 h-4" />
+                                <Eye className="h-3.5 w-3.5" />
                               </a>
-                              <button
-                                onClick={() => openEditModal(item)}
-                                className="text-pink-600 hover:text-pink-900"
-                              >
-                                <Edit2 className="w-4 h-4" />
+                              <button type="button" onClick={() => openEditModal(item)} className={iconBtn} title="Edit">
+                                <Edit2 className="h-3.5 w-3.5" />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => handleDeleteItem(item.id)}
-                                className="text-red-600 hover:text-red-900"
+                                className={`${iconBtn} hover:text-red-700`}
+                                title="Delete"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           </td>
@@ -404,15 +416,15 @@ const Normal: React.FC = () => {
             </div>
           </div>
         );
-      
+
       default:
         return (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              {NORMAL_TABS.find(tab => tab.id === activeTab)?.label || 'Page'}
+          <div className={`${cardCls} p-3`}>
+            <h2 className="text-xs font-semibold text-gray-900">
+              {NORMAL_TABS.find((tab) => tab.id === activeTab)?.label || 'Page'}
             </h2>
-            <p className="text-gray-600">
-              {NORMAL_TABS.find(tab => tab.id === activeTab)?.description || 'Content coming soon.'}
+            <p className="mt-1 text-[11px] text-gray-600">
+              {NORMAL_TABS.find((tab) => tab.id === activeTab)?.description || 'Content coming soon.'}
             </p>
           </div>
         );
@@ -421,121 +433,118 @@ const Normal: React.FC = () => {
 
   return (
     <AdminLayout title="Normal" noHeader>
-      <div className="flex h-[calc(100vh-2rem)]">
-        {/* Sub Left Sidebar */}
-        <NormalSecondaryNav 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-        />
-        
-        {/* Main Content Area */}
-        <div className="flex-1 ml-20 overflow-y-auto">
-          <div className="p-6">
-            {/* Page Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">
-                {NORMAL_TABS.find(tab => tab.id === activeTab)?.label || 'Normal'}
+      <div className="flex w-full">
+        <NormalSecondaryNav activeTab={activeTab} onTabChange={setActiveTab} />
+
+        <div className="min-w-0 flex-1 pl-[4.25rem]">
+          <div className="space-y-3 px-3 py-4 sm:px-5">
+            <div className={`${cardCls} p-3`}>
+              <h1 className="text-base font-semibold text-gray-900">
+                {NORMAL_TABS.find((tab) => tab.id === activeTab)?.label || 'Normal'}
               </h1>
-              <p className="text-gray-600 mt-1">
-                {NORMAL_TABS.find(tab => tab.id === activeTab)?.description || ''}
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                {NORMAL_TABS.find((tab) => tab.id === activeTab)?.description || ''}
               </p>
             </div>
-            
-            {/* Tab Content */}
+
             {renderTabContent()}
           </div>
         </div>
       </div>
 
-      {/* Create/Edit Modal */}
       {(showCreateModal || showEditModal) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {showEditModal ? 'Edit Item' : 'Create New Item'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setShowEditModal(false);
-                    setEditingItem(null);
-                    resetForm();
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3">
+          <div
+            className={`${cardCls} max-h-[90vh] w-full max-w-3xl overflow-y-auto`}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-3 py-2">
+              <h2 className="text-sm font-semibold text-gray-900">
+                {showEditModal ? 'Edit item' : 'New item'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setShowEditModal(false);
+                  setEditingItem(null);
+                  resetForm();
+                }}
+                className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              {/* Title */}
+            <div className="space-y-3 p-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className={labelCls}>Title *</label>
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="Enter item title"
+                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                  className={inputCls}
+                  placeholder="Title"
                 />
               </div>
 
-              {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className={labelCls}>Description</label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="Enter item description"
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className={textareaCls}
+                  placeholder="Description"
                 />
               </div>
 
-              {/* Price Fields */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
+                  <label className={labelCls}>Price (₹) *</label>
                   <input
                     type="number"
                     value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
+                    className={inputCls}
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Original Price (₹)</label>
+                  <label className={labelCls}>Original (₹)</label>
                   <input
                     type="number"
                     value={formData.original_price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, original_price: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, original_price: e.target.value }))}
+                    className={inputCls}
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
+                  <label className={labelCls}>Discount %</label>
                   <input
                     type="number"
                     value={formData.discount_percentage}
-                    onChange={(e) => setFormData(prev => ({ ...prev, discount_percentage: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, discount_percentage: e.target.value }))}
+                    className={inputCls}
                     placeholder="0"
                   />
                 </div>
               </div>
 
-              {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className={labelCls}>Status</label>
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'active' | 'inactive' | 'draft' }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: e.target.value as 'active' | 'inactive' | 'draft',
+                    }))
+                  }
+                  className={inputCls}
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -543,37 +552,39 @@ const Normal: React.FC = () => {
                 </select>
               </div>
 
-              {/* Images */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Images</label>
+                <label className={labelCls}>Gallery images</label>
                 <input
                   type="file"
                   multiple
                   accept="image/*"
                   onChange={handleImageUpload}
                   disabled={uploading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className={`${inputCls} py-1.5 file:mr-2 file:rounded file:border-0 file:bg-gray-100 file:px-2 file:py-0.5 file:text-[10px]`}
                 />
                 {formData.images.length > 0 && (
-                  <div className="mt-2 grid grid-cols-4 gap-2">
+                  <div className="mt-2 grid grid-cols-4 gap-1.5 sm:grid-cols-6">
                     {formData.images.map((img, idx) => (
                       <div key={idx} className="relative">
-                        <img src={img} alt={`Image ${idx + 1}`} className="w-full h-24 object-cover rounded" />
+                        <img src={img} alt="" className="h-16 w-full rounded border border-gray-100 object-cover" />
                         <button
+                          type="button"
                           onClick={() => {
                             const newImages = formData.images.filter((_, i) => i !== idx);
-                            setFormData(prev => ({ ...prev, images: newImages }));
+                            setFormData((prev) => ({ ...prev, images: newImages }));
                           }}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                          className="absolute right-0.5 top-0.5 rounded bg-gray-900/80 p-0.5 text-white hover:bg-gray-900"
+                          aria-label="Remove image"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="h-3 w-3" />
                         </button>
                         {idx === 0 && !formData.main_image && (
                           <button
-                            onClick={() => setFormData(prev => ({ ...prev, main_image: img }))}
-                            className="absolute bottom-1 left-1 bg-pink-500 text-white text-xs px-2 py-1 rounded"
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, main_image: img }))}
+                            className="absolute bottom-0.5 left-0.5 rounded bg-gray-900 px-1 py-0.5 text-[9px] text-white"
                           >
-                            Set Main
+                            Main
                           </button>
                         )}
                       </div>
@@ -582,58 +593,60 @@ const Normal: React.FC = () => {
                 )}
               </div>
 
-              {/* Main Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Main Image</label>
+                <label className={labelCls}>Main image</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleMainImageUpload}
                   disabled={uploading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className={`${inputCls} py-1.5 file:mr-2 file:rounded file:border-0 file:bg-gray-100 file:px-2 file:py-0.5 file:text-[10px]`}
                 />
                 {formData.main_image && (
                   <div className="mt-2">
-                    <img src={formData.main_image} alt="Main" className="w-32 h-32 object-cover rounded" />
+                    <img src={formData.main_image} alt="" className="h-24 w-24 rounded border border-gray-100 object-cover" />
                   </div>
                 )}
               </div>
 
-              {/* Tags */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
+                <label className={labelCls}>Tags (comma-separated)</label>
                 <input
                   type="text"
                   value={formData.tags.join(', ')}
                   onChange={(e) => {
-                    const tags = e.target.value.split(',').map(t => t.trim()).filter(Boolean);
-                    setFormData(prev => ({ ...prev, tags }));
+                    const tags = e.target.value
+                      .split(',')
+                      .map((t) => t.trim())
+                      .filter(Boolean);
+                    setFormData((prev) => ({ ...prev, tags }));
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="tag1, tag2, tag3"
+                  className={inputCls}
+                  placeholder="tag1, tag2"
                 />
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+              <div className="flex flex-wrap items-center justify-end gap-1.5 border-t border-gray-100 pt-3">
                 <button
+                  type="button"
                   onClick={() => {
                     setShowCreateModal(false);
                     setShowEditModal(false);
                     setEditingItem(null);
                     resetForm();
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className={btnOutline}
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={showEditModal ? handleUpdateItem : handleCreateItem}
                   disabled={uploading}
-                  className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className={btnPrimary}
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{showEditModal ? 'Update' : 'Create'} Item</span>
+                  <Save className="h-3.5 w-3.5" />
+                  {showEditModal ? 'Update' : 'Create'}
                 </button>
               </div>
             </div>

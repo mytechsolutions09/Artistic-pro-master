@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 import FilterSidebar from '../components/FilterSidebar';
 import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import { Product } from '../types';
+import { productBelongsToCategoryLabel } from '../utils/productFilterUtils';
 
 const BrowsePage: React.FC = () => {
   const { adminProducts, loading, error } = useProducts();
@@ -26,6 +27,31 @@ const BrowsePage: React.FC = () => {
     tags: [] as string[],
     status: 'all' as 'active' | 'inactive' | 'all'
   });
+
+  /** Art browse pool (no clothing / F&B) — used for price slider; category list uses current filtered results */
+  const browseEligibleProducts = useMemo(
+    () =>
+      adminProducts.filter((product) => {
+        if (product.gender) return false;
+        const categories = (product.categories || []).map((c: string) => c.toLowerCase());
+        const tags = ((product as any).tags || []).map((t: string) => t.toLowerCase());
+        const combined = [...categories, ...tags].join(' ');
+        const hasClothingCategory = ['men', 'women', 'clothing'].some((keyword) =>
+          combined.includes(keyword)
+        );
+        if (hasClothingCategory) return false;
+        const isFB =
+          combined.includes('food & beverage') ||
+          combined.includes('f&b') ||
+          combined.includes('f & b') ||
+          combined.includes('dry fruit') ||
+          combined.includes('dried fruit') ||
+          combined.includes('spice');
+        if (isFB) return false;
+        return true;
+      }),
+    [adminProducts]
+  );
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -93,16 +119,11 @@ const BrowsePage: React.FC = () => {
       return true;
     });
 
-    // Category filter
+    // Category filter (categories[] + legacy category; case-insensitive / slug-safe)
     if (filters.category) {
-      filtered = filtered.filter(product => {
-        // Handle both old single category and new categories array
-        if (product.categories && Array.isArray(product.categories)) {
-          return product.categories.includes(filters.category!);
-        }
-        // Fallback for old data structure
-        return (product as any).category === filters.category;
-      });
+      filtered = filtered.filter((product) =>
+        productBelongsToCategoryLabel(product, filters.category!)
+      );
     }
 
     // Product type filter
@@ -388,7 +409,8 @@ const BrowsePage: React.FC = () => {
         <FilterSidebar 
           filters={filters}
           onFilterChange={updateFilters}
-          products={adminProducts}
+          products={browseEligibleProducts}
+          productsForCategoryAndTags={browseEligibleProducts}
           onClose={() => setShowFilters(false)}
         />
       )}

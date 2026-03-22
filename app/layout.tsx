@@ -44,7 +44,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN">
+    <html lang="en-IN" className="bg-[#ffffff]">
       <head>
         {/* Meta Domain Verification */}
         <meta name="facebook-domain-verification" content="bp9lo0nxdrgb7znneqsp73r4zyf6or" />
@@ -87,7 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body>
+      <body className="min-h-screen bg-[#ffffff] text-gray-900 antialiased">
         <noscript>
           <img
             height="1"

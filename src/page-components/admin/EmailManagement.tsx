@@ -8,6 +8,20 @@ import { EmailTestUtils } from '../../utils/emailTestUtils';
 import { RealUserService, RealUser } from '../../services/realUserService';
 import EmailSecondaryNav from '../../components/admin/EmailSecondaryNav';
 
+const inputCls =
+  'h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+
+const textareaCls =
+  'min-h-[5.5rem] w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
+
+const cardCls = 'rounded-lg border border-gray-200 bg-white p-2 shadow-sm';
+
+const btnPrimary =
+  'inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-gray-900 px-2.5 text-xs font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50';
+
+const btnOutline =
+  'inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50';
+
 const EmailManagement: React.FC = () => {
   const [emailContent, setEmailContent] = useState({
     subject: '',
@@ -264,189 +278,162 @@ const EmailManagement: React.FC = () => {
   };
 
   const renderComposeTab = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Compose Email */}
-        <div className="lg:col-span-2">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50 mb-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Compose Email</h2>
-          <form onSubmit={handleSendEmail} className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+      <div className="space-y-2 lg:col-span-2">
+        <div className={cardCls}>
+          <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Compose</h2>
+          <form onSubmit={handleSendEmail} className="space-y-2">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Recipients</label>
+                <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Recipients</label>
                 <select
                   value={emailContent.recipient}
                   onChange={(e) => setEmailContent({ ...emailContent, recipient: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  className={`${inputCls} w-full`}
                 >
-                  <option value="all">All Users ({users.length})</option>
-                  <option value="selected">Selected Users ({selectedUsers.length})</option>
-                  <option value="customers">Customers Only</option>
-                  <option value="artists">Artists Only</option>
-                  <option value="test">Test Email</option>
+                  <option value="all">All users ({users.length})</option>
+                  <option value="selected">Selected ({selectedUsers.length})</option>
+                  <option value="customers">Customers only</option>
+                  <option value="artists">Artists only</option>
+                  <option value="test">Test</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Subject</label>
                 <input
                   type="text"
                   value={emailContent.subject}
                   onChange={(e) => setEmailContent({ ...emailContent, subject: e.target.value })}
-                  placeholder="Enter email subject"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  placeholder="Subject line"
+                  className={`${inputCls} w-full`}
                 />
               </div>
-              </div>
-              <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                <textarea
-                  value={emailContent.message}
-                  onChange={(e) => setEmailContent({ ...emailContent, message: e.target.value })}
-                placeholder="Enter your email message..."
+            </div>
+            <div>
+              <label className="mb-0.5 block text-[11px] font-medium text-gray-600">Message</label>
+              <textarea
+                value={emailContent.message}
+                onChange={(e) => setEmailContent({ ...emailContent, message: e.target.value })}
+                placeholder="Plain text (line breaks preserved)"
                 rows={5}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-300"
+                className={textareaCls}
               />
             </div>
 
-            {/* Send Result */}
             {sendResult && (
-              <div className={`flex items-center space-x-2 p-3 rounded-md text-sm ${
-                sendResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}>
+              <div
+                className={`flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] ${
+                  sendResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                }`}
+              >
                 {sendResult.success ? (
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 ) : (
-                  <AlertCircle className="w-4 h-4" />
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 )}
                 <span>{sendResult.message}</span>
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2">
-                <button
-                  type="submit"
-                disabled={isSending}
-                className="flex items-center space-x-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 disabled:bg-pink-300 disabled:cursor-not-allowed text-white text-sm rounded-md transition-colors"
-              >
-                <Send className="w-4 h-4" />
-                <span>{isSending ? 'Sending...' : 'Send'}</span>
+            <div className="flex flex-wrap gap-1.5 border-t border-gray-100 pt-2">
+              <button type="submit" disabled={isSending} className={btnPrimary}>
+                <Send className="h-3.5 w-3.5" />
+                {isSending ? 'Sending…' : 'Send'}
               </button>
-              <button
-                type="button"
-                onClick={handleLoadUsers}
-                disabled={isLoadingUsers}
-                className="flex items-center space-x-2 px-3 py-2 border border-green-200 text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm rounded-md transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                <span>{isLoadingUsers ? 'Loading...' : 'Load Users'}</span>
+              <button type="button" onClick={handleLoadUsers} disabled={isLoadingUsers} className={btnOutline}>
+                <Download className="h-3.5 w-3.5" />
+                {isLoadingUsers ? 'Loading…' : 'Load users'}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowUserList(!showUserList)}
-                className="flex items-center space-x-2 px-3 py-2 border border-purple-200 text-purple-600 hover:bg-purple-50 text-sm rounded-md transition-colors"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Users ({users.length})</span>
+              <button type="button" onClick={() => setShowUserList(!showUserList)} className={btnOutline}>
+                <UserPlus className="h-3.5 w-3.5" />
+                Pick ({users.length})
               </button>
-              <button
-                type="button"
-                onClick={handleTestConfiguration}
-                className="flex items-center space-x-2 px-3 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm rounded-md transition-colors"
-              >
-                <CheckCircle className="w-4 h-4" />
-                <span>Test</span>
-                </button>
-                <button
-                  type="button"
-                onClick={handleTestEmails}
-                disabled={isTesting}
-                className="flex items-center space-x-2 px-3 py-2 border border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm rounded-md transition-colors"
-              >
-                <TestTube className="w-4 h-4" />
-                <span>{isTesting ? 'Testing...' : 'Test All'}</span>
+              <button type="button" onClick={handleTestConfiguration} className={btnOutline}>
+                <CheckCircle className="h-3.5 w-3.5" />
+                Config
+              </button>
+              <button type="button" onClick={handleTestEmails} disabled={isTesting} className={btnOutline}>
+                <TestTube className="h-3.5 w-3.5" />
+                {isTesting ? 'Testing…' : 'Test all'}
               </button>
             </div>
           </form>
         </div>
 
-        {/* User List */}
         {showUserList && (
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50 mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-md font-semibold text-gray-800">User List</h3>
-              <div className="flex items-center space-x-2">
+          <div className={cardCls}>
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1 border-b border-gray-100 pb-1.5">
+              <h3 className="text-xs font-semibold text-gray-900">Recipients</h3>
+              <div className="flex items-center gap-1.5">
                 <button
+                  type="button"
                   onClick={handleSelectAll}
-                  className="text-xs px-2 py-1 bg-pink-100 text-pink-700 rounded hover:bg-pink-200 transition-colors"
+                  className="rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  {selectedUsers.length === users.length ? 'Deselect All' : 'Select All'}
+                  {selectedUsers.length === users.length ? 'Clear' : 'All'}
                 </button>
-                <span className="text-xs text-gray-500">
-                  {selectedUsers.length} of {users.length} selected
+                <span className="text-[10px] text-gray-500 tabular-nums">
+                  {selectedUsers.length}/{users.length}
                 </span>
               </div>
             </div>
-            
+
             {users.length > 0 ? (
-              <div className="max-h-60 overflow-y-auto">
-                <div className="space-y-2">
+              <div className="max-h-52 overflow-y-auto">
+                <div className="space-y-1">
                   {users.map((user) => (
-                    <div key={user.id} className="flex items-center space-x-3 p-2 border border-gray-100 rounded-md hover:bg-gray-50">
+                    <label
+                      key={user.id}
+                      className="flex cursor-pointer items-center gap-2 rounded border border-gray-100 px-1.5 py-1 hover:bg-gray-50/80"
+                    >
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes(user.id)}
                         onChange={(e) => handleUserSelection(user.id, e.target.checked)}
-                        className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 bg-pink-100 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium text-pink-700">
-                              {(user.raw_user_meta_data?.name || user.email).charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {user.raw_user_meta_data?.name || user.email.split('@')[0]}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                          </div>
-                        </div>
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-700">
+                        {(user.raw_user_meta_data?.name || user.email).charAt(0).toUpperCase()}
                       </div>
-                      <div className="text-xs text-gray-400">
-                        {user.role || 'customer'}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-medium text-gray-900">
+                          {user.raw_user_meta_data?.name || user.email.split('@')[0]}
+                        </p>
+                        <p className="truncate text-[10px] text-gray-500">{user.email}</p>
                       </div>
-                    </div>
+                      <span className="shrink-0 text-[10px] capitalize text-gray-400">{user.role || 'customer'}</span>
+                    </label>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="text-center py-4">
-                <div className="text-gray-400 mb-1">
-                  <Users className="w-8 h-8 mx-auto" />
-                </div>
-                <p className="text-gray-500 text-xs">No users loaded</p>
-                <p className="text-gray-400 text-xs mt-1">Click "Load Users" to import from database</p>
+              <div className="py-4 text-center">
+                <Users className="mx-auto mb-1 h-6 w-6 text-gray-300" />
+                <p className="text-[11px] text-gray-500">No users</p>
+                <p className="text-[10px] text-gray-400">Use Load users</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Test Results */}
         {testResults && (
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50 mb-4">
-            <h3 className="text-md font-semibold text-gray-800 mb-3">Test Results</h3>
-            <div className="space-y-2">
+          <div className={cardCls}>
+            <h3 className="mb-1.5 text-xs font-semibold text-gray-900">Test results</h3>
+            <div className="space-y-1">
               {testResults.map((test, index) => (
-                <div key={index} className={`flex items-center space-x-2 p-2 rounded-md text-sm ${
-                  test.result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-                }`}>
+                <div
+                  key={index}
+                  className={`flex flex-wrap items-center gap-1.5 rounded-md px-2 py-1 text-[11px] ${
+                    test.result.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                  }`}
+                >
                   {test.result.success ? (
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                   ) : (
-                    <AlertCircle className="w-4 h-4" />
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                   )}
                   <span className="font-medium">{test.test}</span>
-                  <span>{test.result.message}</span>
+                  <span className="text-[10px] opacity-90">{test.result.message}</span>
                 </div>
               ))}
             </div>
@@ -454,132 +441,25 @@ const EmailManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Email Statistics */}
-      <div className="space-y-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50">
-          <h3 className="text-md font-semibold text-gray-800 mb-3">Email Statistics</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-pink-500" />
-                <span className="text-sm text-gray-600">Total Users</span>
-              </div>
-              <span className="font-bold text-gray-800 text-sm">{totalSubscribers.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Send className="w-4 h-4 text-blue-500" />
-                <span className="text-sm text-gray-600">Sent Today</span>
-              </div>
-              <span className="font-bold text-gray-800 text-sm">{emailStats.sentToday}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm text-gray-600">This Hour</span>
-              </div>
-              <span className="font-bold text-gray-800 text-sm">{emailStats.sentThisHour}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-sm text-gray-600">Hourly Limit</span>
-              </div>
-              <span className="font-bold text-gray-800 text-sm">{emailStats.rateLimitRemaining.hourly}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-sm text-gray-600">Daily Limit</span>
-              </div>
-              <span className="font-bold text-gray-800 text-sm">{emailStats.rateLimitRemaining.daily}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderUsersTab = () => (
-    <div className="space-y-4">
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">User Management</h2>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={handleLoadUsers}
-              disabled={isLoadingUsers}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed text-white text-sm rounded-md transition-colors"
+      <div className={cardCls + ' h-fit lg:sticky lg:top-2'}>
+        <h3 className="mb-1.5 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Stats</h3>
+        <div className="flex flex-col gap-1">
+          {[
+            { label: 'Users', value: totalSubscribers.toLocaleString(), icon: Users, c: 'text-gray-600' },
+            { label: 'Sent today', value: emailStats.sentToday, icon: Send, c: 'text-blue-600' },
+            { label: 'This hour', value: emailStats.sentThisHour, icon: Clock, c: 'text-amber-600' },
+            { label: 'Hour left', value: emailStats.rateLimitRemaining.hourly, icon: CheckCircle, c: 'text-green-600' },
+            { label: 'Day left', value: emailStats.rateLimitRemaining.daily, icon: CheckCircle, c: 'text-green-700' }
+          ].map(({ label, value, icon: Icon, c }) => (
+            <div
+              key={label}
+              className="flex items-center justify-between gap-2 rounded-md border border-gray-100 bg-gray-50/60 px-2 py-1"
             >
-              <Download className="w-4 h-4" />
-              <span>{isLoadingUsers ? 'Loading...' : 'Load Users'}</span>
-            </button>
-            <span className="text-sm text-gray-600">
-              {users.length} users loaded, {selectedUsers.length} selected
-            </span>
-          </div>
-          <button
-            onClick={handleSelectAll}
-            className="text-sm px-3 py-1 bg-pink-100 text-pink-700 rounded hover:bg-pink-200 transition-colors"
-          >
-            {selectedUsers.length === users.length ? 'Deselect All' : 'Select All'}
-          </button>
-          </div>
-
-        {users.length > 0 ? (
-          <div className="max-h-96 overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {users.map((user) => (
-                <div key={user.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.includes(user.id)}
-                    onChange={(e) => handleUserSelection(user.id, e.target.checked)}
-                    className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                  />
-                  <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-pink-700">
-                      {(user.raw_user_meta_data?.name || user.email).charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {user.raw_user_meta_data?.name || user.email.split('@')[0]}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                    <p className="text-xs text-gray-400">{user.role || 'customer'}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500">No users loaded</p>
-            <p className="text-gray-400 text-sm">Click "Load Users" to import from database</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderTemplatesTab = () => (
-    <div className="space-y-4">
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Email Templates</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {emailTemplates.map((template) => (
-            <div 
-              key={template.id} 
-              onClick={() => handleTemplateSelect(template)}
-              className="p-4 border border-gray-200 rounded-lg hover:border-pink-300 transition-colors cursor-pointer"
-            >
-              <h4 className="font-medium text-gray-800 mb-2">{template.name}</h4>
-              <p className="text-sm text-gray-500 mb-3">{template.subject}</p>
-              <span className="inline-block px-2 py-1 bg-pink-100 text-pink-800 text-xs rounded">
-                {template.type}
+              <span className="inline-flex items-center gap-1 text-[10px] text-gray-600">
+                <Icon className={`h-3 w-3 shrink-0 ${c}`} />
+                {label}
               </span>
+              <span className="text-xs font-semibold tabular-nums text-gray-900">{value}</span>
             </div>
           ))}
         </div>
@@ -587,274 +467,316 @@ const EmailManagement: React.FC = () => {
     </div>
   );
 
-  const renderCampaignsTab = () => (
-    <div className="space-y-4">
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Campaigns</h2>
-        {recentCampaigns.length > 0 ? (
-            <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-                <thead className="bg-pink-25 border-b border-pink-100">
-                  <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Campaign</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Sent</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-pink-50">
-                  {recentCampaigns.map((campaign) => (
-                    <tr key={campaign.id} className="hover:bg-pink-25 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-800">{campaign.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{campaign.sent}</td>
-                      <td className="px-4 py-3 text-gray-500">{new Date(campaign.date).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-        ) : (
-          <div className="text-center py-8">
-            <Mail className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500">No campaigns sent yet</p>
-            <p className="text-gray-400 text-sm">Send your first email to see it here</p>
-          </div>
-        )}
+  const renderUsersTab = () => (
+    <div className="space-y-2">
+      <div className={cardCls}>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-1.5">
+          <h2 className="text-xs font-semibold text-gray-900">Users</h2>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button type="button" onClick={handleLoadUsers} disabled={isLoadingUsers} className={btnPrimary}>
+              <Download className="h-3.5 w-3.5" />
+              {isLoadingUsers ? 'Loading…' : 'Load'}
+            </button>
+            <button type="button" onClick={handleSelectAll} className={btnOutline}>
+              {selectedUsers.length === users.length ? 'Clear all' : 'Select all'}
+            </button>
+            <span className="text-[10px] text-gray-500 tabular-nums">
+              {users.length} · {selectedUsers.length} sel.
+            </span>
           </div>
         </div>
+
+        {users.length > 0 ? (
+          <div className="max-h-[min(28rem,70vh)] overflow-y-auto">
+            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
+              {users.map((user) => (
+                <label
+                  key={user.id}
+                  className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-100 p-1.5 hover:bg-gray-50/80"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.includes(user.id)}
+                    onChange={(e) => handleUserSelection(user.id, e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  />
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-700">
+                    {(user.raw_user_meta_data?.name || user.email).charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] font-medium text-gray-900">
+                      {user.raw_user_meta_data?.name || user.email.split('@')[0]}
+                    </p>
+                    <p className="truncate text-[10px] text-gray-500">{user.email}</p>
+                    <p className="text-[10px] capitalize text-gray-400">{user.role || 'customer'}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="border border-dashed border-gray-200 py-8 text-center">
+            <Users className="mx-auto mb-1 h-7 w-7 text-gray-300" />
+            <p className="text-[11px] text-gray-500">No users loaded</p>
+            <p className="text-[10px] text-gray-400">Use Load</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderTemplatesTab = () => (
+    <div className="space-y-2">
+      <div className={cardCls}>
+        <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Templates</h2>
+        <p className="mb-2 text-[10px] text-gray-500">Click a card to load into Compose.</p>
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+          {emailTemplates.map((template) => (
+            <button
+              key={template.id}
+              type="button"
+              onClick={() => {
+                handleTemplateSelect(template);
+                setActiveTab('compose');
+              }}
+              className="rounded-md border border-gray-200 bg-white p-2 text-left transition-colors hover:border-gray-400 hover:bg-gray-50/80"
+            >
+              <h4 className="text-[11px] font-medium text-gray-900">{template.name}</h4>
+              <p className="mt-0.5 line-clamp-2 text-[10px] text-gray-500">{template.subject}</p>
+              <span className="mt-1 inline-block rounded border border-gray-200 bg-gray-50 px-1 py-px text-[10px] font-medium capitalize text-gray-700">
+                {template.type}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCampaignsTab = () => (
+    <div className="space-y-2">
+      <div className={cardCls}>
+        <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Recent sends</h2>
+        {recentCampaigns.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[320px] text-left text-[11px]">
+              <thead>
+                <tr className="border-b border-gray-100 text-[10px] font-medium uppercase tracking-wide text-gray-500">
+                  <th className="px-2 py-1">Campaign</th>
+                  <th className="px-2 py-1">Sent</th>
+                  <th className="px-2 py-1">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {recentCampaigns.map((campaign) => (
+                  <tr key={campaign.id} className="hover:bg-gray-50/80">
+                    <td className="max-w-[12rem] truncate px-2 py-1.5 font-medium text-gray-900">{campaign.name}</td>
+                    <td className="px-2 py-1.5 tabular-nums text-gray-600">{campaign.sent}</td>
+                    <td className="px-2 py-1.5 text-gray-500">{new Date(campaign.date).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="border border-dashed border-gray-200 py-8 text-center">
+            <Mail className="mx-auto mb-1 h-7 w-7 text-gray-300" />
+            <p className="text-[11px] text-gray-500">No sends yet</p>
+            <p className="text-[10px] text-gray-400">Send from Compose</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 
   const renderAnalyticsTab = () => (
-    <div className="space-y-4">
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Email Analytics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 bg-pink-50 rounded-lg">
-            <div className="flex items-center space-x-2 mb-2">
-              <Users className="w-5 h-5 text-pink-500" />
-              <span className="text-sm font-medium text-gray-700">Total Users</span>
+    <div className="space-y-2">
+      <div className={cardCls}>
+        <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Analytics</h2>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { label: 'Users', value: totalSubscribers.toLocaleString(), icon: Users, c: 'text-gray-600' },
+            { label: 'Today', value: emailStats.sentToday, icon: Send, c: 'text-blue-600' },
+            { label: 'This hour', value: emailStats.sentThisHour, icon: Clock, c: 'text-amber-600' },
+            { label: 'Hour quota', value: emailStats.rateLimitRemaining.hourly, icon: CheckCircle, c: 'text-green-600' },
+            { label: 'Day quota', value: emailStats.rateLimitRemaining.daily, icon: CheckCircle, c: 'text-green-700' }
+          ].map(({ label, value, icon: Icon, c }) => (
+            <div
+              key={label}
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px]"
+            >
+              <Icon className={`h-3 w-3 shrink-0 ${c}`} />
+              <span className="text-gray-500">{label}</span>
+              <span className="font-semibold tabular-nums text-gray-900">{value}</span>
             </div>
-            <p className="text-2xl font-bold text-gray-800">{totalSubscribers.toLocaleString()}</p>
-          </div>
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center space-x-2 mb-2">
-              <Send className="w-5 h-5 text-blue-500" />
-              <span className="text-sm font-medium text-gray-700">Sent Today</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-800">{emailStats.sentToday}</p>
-          </div>
-          <div className="p-4 bg-yellow-50 rounded-lg">
-            <div className="flex items-center space-x-2 mb-2">
-              <Clock className="w-5 h-5 text-yellow-500" />
-              <span className="text-sm font-medium text-gray-700">This Hour</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-800">{emailStats.sentThisHour}</p>
-                </div>
-          <div className="p-4 bg-green-50 rounded-lg">
-            <div className="flex items-center space-x-2 mb-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              <span className="text-sm font-medium text-gray-700">Hourly Limit</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-800">{emailStats.rateLimitRemaining.hourly}</p>
-          </div>
+          ))}
         </div>
       </div>
     </div>
   );
 
   const renderTestingTab = () => (
-            <div className="space-y-4">
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Email Testing</h2>
-        <div className="flex flex-wrap gap-3 mb-4">
-          <button
-            onClick={handleTestConfiguration}
-            className="flex items-center space-x-2 px-4 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
-          >
-            <CheckCircle className="w-4 h-4" />
-            <span>Test Configuration</span>
+    <div className="space-y-2">
+      <div className={cardCls}>
+        <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Testing</h2>
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          <button type="button" onClick={handleTestConfiguration} className={btnOutline}>
+            <CheckCircle className="h-3.5 w-3.5" />
+            Config
           </button>
-          <button
-            onClick={handleTestEmails}
-            disabled={isTesting}
-            className="flex items-center space-x-2 px-4 py-2 border border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
-          >
-            <TestTube className="w-4 h-4" />
-            <span>{isTesting ? 'Testing...' : 'Test All'}</span>
+          <button type="button" onClick={handleTestEmails} disabled={isTesting} className={btnOutline}>
+            <TestTube className="h-3.5 w-3.5" />
+            {isTesting ? 'Running…' : 'All tests'}
           </button>
-          <button
-            onClick={handleTestHostinger}
-            disabled={isTesting}
-            className="flex items-center space-x-2 px-4 py-2 border border-green-200 text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
-          >
-            <CheckCircle className="w-4 h-4" />
-            <span>{isTesting ? 'Testing...' : 'Test Hostinger'}</span>
+          <button type="button" onClick={handleTestHostinger} disabled={isTesting} className={btnOutline}>
+            <CheckCircle className="h-3.5 w-3.5" />
+            {isTesting ? 'Running…' : 'Hostinger'}
           </button>
         </div>
-        
+
         {testResults && (
-          <div className="space-y-2">
+          <div className="space-y-1 border-t border-gray-100 pt-2">
             {testResults.map((test, index) => (
-              <div key={index} className={`p-3 rounded-md border text-sm ${
-                test.result.success 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-red-50 border-red-200'
-              }`}>
-                <div className="flex items-center space-x-2">
+              <div
+                key={index}
+                className={`rounded-md border px-2 py-1.5 text-[11px] ${
+                  test.result.success
+                    ? 'border-green-200 bg-green-50 text-green-900'
+                    : 'border-red-200 bg-red-50 text-red-900'
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
                   {test.result.success ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-600" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-red-500" />
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-600" />
                   )}
-                  <span className="font-medium text-gray-800">{test.test}</span>
+                  <span className="font-medium">{test.test}</span>
                 </div>
-                <p className={`text-xs mt-1 ${
-                  test.result.success ? 'text-green-700' : 'text-red-700'
-                }`}>
+                <p className={`mt-0.5 text-[10px] ${test.result.success ? 'text-green-800' : 'text-red-800'}`}>
                   {test.result.message}
                 </p>
               </div>
             ))}
           </div>
         )}
-                </div>
-              </div>
+      </div>
+    </div>
   );
 
   const renderSettingsTab = () => (
-    <div className="space-y-4">
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-pink-50">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Email Settings</h2>
-        <div className="space-y-6">
-          {/* Hostinger SMTP Configuration */}
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center space-x-2 mb-3">
-              <Send className="w-5 h-5 text-blue-600" />
-              <h3 className="font-medium text-gray-800">SMTP Configuration (Outgoing)</h3>
+    <div className="space-y-2">
+      <div className={cardCls}>
+        <h2 className="mb-2 border-b border-gray-100 pb-1.5 text-xs font-semibold text-gray-900">Settings</h2>
+        <div className="space-y-2">
+          <div className="rounded-md border border-gray-200 bg-gray-50/80 p-2">
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <Send className="h-3.5 w-3.5 text-gray-700" />
+              <h3 className="text-[11px] font-semibold text-gray-900">SMTP (outgoing)</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600 font-medium">Host:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">smtp.hostinger.com</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Port:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">465</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Security:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">SSL/TLS</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Authentication:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">Required</span>
-              </div>
+            <div className="grid grid-cols-1 gap-1 text-[10px] sm:grid-cols-2">
+              {[
+                ['Host', 'smtp.hostinger.com'],
+                ['Port', '465'],
+                ['Security', 'SSL/TLS'],
+                ['Auth', 'Required']
+              ].map(([k, v]) => (
+                <div key={k} className="flex flex-wrap items-baseline gap-1">
+                  <span className="text-gray-500">{k}</span>
+                  <code className="rounded border border-gray-200 bg-white px-1 py-px font-mono text-[10px] text-gray-800">
+                    {v}
+                  </code>
+                </div>
+              ))}
             </div>
-            <button
-              onClick={handleTestConfiguration}
-              className="mt-3 px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
-            >
-              Test SMTP Connection
+            <button type="button" onClick={handleTestConfiguration} className={`${btnPrimary} mt-2`}>
+              Test SMTP
             </button>
           </div>
 
-          {/* Hostinger IMAP Configuration */}
-          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-            <div className="flex items-center space-x-2 mb-3">
-              <Mail className="w-5 h-5 text-green-600" />
-              <h3 className="font-medium text-gray-800">IMAP Configuration (Incoming)</h3>
+          <div className="rounded-md border border-gray-200 bg-gray-50/80 p-2">
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-gray-700" />
+              <h3 className="text-[11px] font-semibold text-gray-900">IMAP (incoming)</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600 font-medium">Host:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">imap.hostinger.com</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Port:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">993</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Security:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">SSL/TLS</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Authentication:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">Required</span>
-              </div>
+            <div className="grid grid-cols-1 gap-1 text-[10px] sm:grid-cols-2">
+              {[
+                ['Host', 'imap.hostinger.com'],
+                ['Port', '993'],
+                ['Security', 'SSL/TLS'],
+                ['Auth', 'Required']
+              ].map(([k, v]) => (
+                <div key={k} className="flex flex-wrap items-baseline gap-1">
+                  <span className="text-gray-500">{k}</span>
+                  <code className="rounded border border-gray-200 bg-white px-1 py-px font-mono text-[10px] text-gray-800">
+                    {v}
+                  </code>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">IMAP allows you to read emails from your server</p>
+            <p className="mt-1 text-[10px] text-gray-500">Read mail on the server</p>
           </div>
 
-          {/* Hostinger POP Configuration */}
-          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-            <div className="flex items-center space-x-2 mb-3">
-              <Download className="w-5 h-5 text-purple-600" />
-              <h3 className="font-medium text-gray-800">POP Configuration (Incoming)</h3>
+          <div className="rounded-md border border-gray-200 bg-gray-50/80 p-2">
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <Download className="h-3.5 w-3.5 text-gray-700" />
+              <h3 className="text-[11px] font-semibold text-gray-900">POP (incoming)</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600 font-medium">Host:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">pop.hostinger.com</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Port:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">995</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Security:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">SSL/TLS</span>
-              </div>
-              <div>
-                <span className="text-gray-600 font-medium">Authentication:</span>
-                <span className="ml-2 font-mono bg-white px-2 py-1 rounded">Required</span>
-              </div>
+            <div className="grid grid-cols-1 gap-1 text-[10px] sm:grid-cols-2">
+              {[
+                ['Host', 'pop.hostinger.com'],
+                ['Port', '995'],
+                ['Security', 'SSL/TLS'],
+                ['Auth', 'Required']
+              ].map(([k, v]) => (
+                <div key={k} className="flex flex-wrap items-baseline gap-1">
+                  <span className="text-gray-500">{k}</span>
+                  <code className="rounded border border-gray-200 bg-white px-1 py-px font-mono text-[10px] text-gray-800">
+                    {v}
+                  </code>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">POP downloads emails to your local device</p>
+            <p className="mt-1 text-[10px] text-gray-500">Download to device</p>
           </div>
 
-          {/* Rate Limits */}
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium text-gray-800 mb-3">Rate Limits</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Hourly Limit:</span>
-                <span className="font-medium text-gray-800">{emailStats.rateLimitRemaining.hourly}/100</span>
+          <div className="rounded-md border border-gray-200 bg-gray-50/80 p-2">
+            <h3 className="mb-1 text-[11px] font-semibold text-gray-900">Rate limits</h3>
+            <div className="grid grid-cols-1 gap-1 text-[11px] sm:grid-cols-2">
+              <div className="flex justify-between gap-2 border-b border-gray-100 py-0.5 sm:border-0">
+                <span className="text-gray-600">Hourly</span>
+                <span className="font-medium tabular-nums text-gray-900">
+                  {emailStats.rateLimitRemaining.hourly}/100
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Daily Limit:</span>
-                <span className="font-medium text-gray-800">{emailStats.rateLimitRemaining.daily}/1000</span>
-              </div>
-            </div>
-            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
-              <p className="text-xs text-yellow-800">
-                <strong>Note:</strong> These limits help prevent spam and ensure reliable email delivery. 
-                Contact Hostinger support if you need higher limits.
-              </p>
-            </div>
-          </div>
-
-          {/* Environment Variables */}
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium text-gray-800 mb-3">Environment Variables</h3>
-            <div className="space-y-2 text-xs">
-              <div className="font-mono bg-white p-2 rounded border">
-                VITE_SMTP_HOST=smtp.hostinger.com
-              </div>
-              <div className="font-mono bg-white p-2 rounded border">
-                VITE_SMTP_PORT=465
-              </div>
-              <div className="font-mono bg-white p-2 rounded border">
-                VITE_SMTP_SECURE=true
-              </div>
-              <div className="font-mono bg-white p-2 rounded border">
-                VITE_IMAP_HOST=imap.hostinger.com
-              </div>
-              <div className="font-mono bg-white p-2 rounded border">
-                VITE_POP_HOST=pop.hostinger.com
+              <div className="flex justify-between gap-2 py-0.5">
+                <span className="text-gray-600">Daily</span>
+                <span className="font-medium tabular-nums text-gray-900">
+                  {emailStats.rateLimitRemaining.daily}/1000
+                </span>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Add these to your .env file for proper configuration
+            <p className="mt-1.5 rounded border border-amber-100 bg-amber-50/80 p-1.5 text-[10px] text-amber-900">
+              Limits reduce spam risk. Contact Hostinger for higher quotas.
             </p>
+          </div>
+
+          <div className="rounded-md border border-gray-200 bg-gray-50/80 p-2">
+            <h3 className="mb-1 text-[11px] font-semibold text-gray-900">Env vars (reference)</h3>
+            <div className="space-y-0.5 font-mono text-[10px]">
+              {[
+                'VITE_SMTP_HOST=smtp.hostinger.com',
+                'VITE_SMTP_PORT=465',
+                'VITE_SMTP_SECURE=true',
+                'VITE_IMAP_HOST=imap.hostinger.com',
+                'VITE_POP_HOST=pop.hostinger.com'
+              ].map((line) => (
+                <div key={line} className="rounded border border-gray-200 bg-white px-1.5 py-0.5 text-gray-800">
+                  {line}
+                </div>
+              ))}
+            </div>
+            <p className="mt-1 text-[10px] text-gray-500">Add to <code className="text-gray-700">.env</code> as needed</p>
           </div>
         </div>
       </div>
@@ -875,16 +797,12 @@ const EmailManagement: React.FC = () => {
         }}
       />
       
-      {/* Main Content with left margin for sidebar */}
-      <div className="flex-1 flex flex-col overflow-hidden ml-24">
-        <div className="p-6">
-          {/* Compact Header */}
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-800">Email Management</h2>
-            <p className="text-sm text-gray-600">Manage your email campaigns and communications</p>
+      <div className="ml-[9.25rem] flex flex-1 flex-col overflow-hidden">
+        <div className="p-3">
+          <div className="mb-2">
+            <h2 className="text-base font-semibold text-gray-900">Email</h2>
+            <p className="text-[11px] text-gray-500">Campaigns, recipients, and delivery checks</p>
           </div>
-          
-          {/* Tab Content */}
           {renderTabContent()}
         </div>
       </div>
