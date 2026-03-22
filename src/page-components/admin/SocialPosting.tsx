@@ -19,6 +19,12 @@ import {
   PlayCircle,
   Building2,
   Plus,
+  KeyRound,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import SocialPostingSecondaryNav, {
@@ -137,6 +143,18 @@ function platformLabel(id: string): string {
 }
 
 const DOW_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
+
+// ---------------------------------------------------------------------------
+// API Credentials — loaded from / saved to Supabase
+// ---------------------------------------------------------------------------
+
+import {
+  SocialApiSettingsService,
+  defaultSocialApiCredentials,
+  type SocialApiCredentials,
+} from '../../services/socialApiSettingsService';
+
+type ApiCredentials = SocialApiCredentials;
 
 function bucketPlatformId(raw: string): PlatformId | null {
   if (PLATFORMS.some((p) => p.id === raw)) return raw as PlatformId;
@@ -277,6 +295,11 @@ const SocialPosting: React.FC = () => {
   const [savedDrafts, setSavedDrafts] = useState<SavedDraftSnapshot[]>([]);
   const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+  const [apiCreds, setApiCreds] = useState<ApiCredentials>(defaultSocialApiCredentials);
+  const [credsLoading, setCredsLoading] = useState(false);
+  const [credsSaving, setCredsSaving] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const [postResults, setPostResults] = useState<{ platform: string; success: boolean; message: string }[]>([]);
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth(), 1);
@@ -290,6 +313,14 @@ const SocialPosting: React.FC = () => {
     setStats(loadStats());
     setSavedDrafts(loadSavedDrafts());
     setActivityLog(loadActivity());
+  }, []);
+
+  // Load credentials from Supabase on mount
+  useEffect(() => {
+    setCredsLoading(true);
+    SocialApiSettingsService.loadCredentials()
+      .then((creds) => setApiCreds(creds))
+      .finally(() => setCredsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -442,19 +473,52 @@ const SocialPosting: React.FC = () => {
     addToQueue({ scheduledForLabel: scheduleSummary, scheduledOn: scheduleDate });
   };
 
-  const handlePostNow = () => {
-    const item = buildQueueItem({ scheduledForLabel: 'Immediate (local log)' });
+  const handlePostNow = async () => {
+    const item = buildQueueItem({ scheduledForLabel: 'Immediate' });
     if (!item.body && !item.linkUrl && !item.imageUrl && !item.tags && !item.mediaFileName) {
       showToast('Add content before posting.');
       return;
     }
-    setStats((prev) => {
-      const next = { ...prev, publishedCount: prev.publishedCount + 1 };
-      saveStats(next);
-      return next;
-    });
-    appendActivity('published', 'Post logged as published (local)');
-    showToast(`Logged as published locally (${stats.publishedCount + 1} all time). APIs not connected.`);
+    if (selectedPlatformIds.length === 0) {
+      showToast('Select at least one platform.');
+      return;
+    }
+    setPosting(true);
+    setPostResults([]);
+    try {
+      const res = await fetch('/api/social/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          body: item.body,
+          tags: item.tags ?? '',
+          linkUrl: item.linkUrl,
+          imageUrl: item.imageUrl,
+          platforms: selectedPlatformIds,
+          // credentials are read server-side from Supabase — not sent over the wire
+        }),
+      });
+      const json = await res.json() as { results?: typeof postResults };
+      const results = json.results ?? [];
+      setPostResults(results);
+      const allOk = results.every((r) => r.success);
+      const okCount = results.filter((r) => r.success).length;
+      if (allOk) {
+        setStats((prev) => {
+          const next = { ...prev, publishedCount: prev.publishedCount + results.length };
+          saveStats(next);
+          return next;
+        });
+        appendActivity('published', `Posted to ${results.map((r) => r.platform).join(', ')}`);
+        showToast(`Posted to ${okCount} platform${okCount !== 1 ? 's' : ''} successfully.`);
+      } else {
+        showToast(`${okCount}/${results.length} platforms succeeded — see results below.`);
+      }
+    } catch (e: unknown) {
+      showToast(`Request failed: ${(e as Error).message}`);
+    } finally {
+      setPosting(false);
+    }
   };
 
   const handleSaveDraft = () => {
@@ -856,10 +920,11 @@ const SocialPosting: React.FC = () => {
               <button
                 type="button"
                 onClick={handlePostNow}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+                disabled={posting}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Zap className="h-4 w-4" />
-                Post Now
+                {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                {posting ? 'Posting…' : 'Post Now'}
               </button>
               <button
                 type="button"
@@ -873,6 +938,28 @@ const SocialPosting: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Post results from last "Post Now" call */}
+      {postResults.length > 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="border-b border-gray-200 px-4 py-3 bg-gray-50/80">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Post results</p>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {postResults.map((r) => (
+              <li key={r.platform} className="flex items-start gap-3 px-4 py-3">
+                {r.success
+                  ? <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500 mt-0.5" />
+                  : <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />}
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold capitalize text-gray-800">{r.platform}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{r.message}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 
@@ -1176,6 +1263,204 @@ const SocialPosting: React.FC = () => {
     </div>
   );
 
+  // Helper to update a nested cred field
+  const setCredField = <P extends keyof ApiCredentials, F extends keyof ApiCredentials[P]>(
+    platform: P,
+    field: F,
+    value: string
+  ) => {
+    setApiCreds((prev) => ({
+      ...prev,
+      [platform]: { ...prev[platform], [field]: value },
+    }));
+  };
+
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+  const toggleSecret = (key: string) => setShowSecrets((s) => ({ ...s, [key]: !s[key] }));
+
+  const SecretInput = ({
+    id, value, onChange,
+  }: { id: string; value: string; onChange: (v: string) => void }) => (
+    <div className="relative">
+      <input
+        type={showSecrets[id] ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-9 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+        autoComplete="off"
+        spellCheck={false}
+      />
+      <button
+        type="button"
+        onClick={() => toggleSecret(id)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+      >
+        {showSecrets[id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+
+  const apisPanel = (
+    <div className="max-w-3xl space-y-4">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 leading-relaxed">
+        <strong>Security note:</strong> credentials are stored in your Supabase database (authenticated-only
+        access via RLS). When you click <em>Post Now</em>, the server reads them directly from Supabase —
+        they are <strong>never sent from the browser to the API route</strong>.
+        Use long-lived page tokens / access tokens for each platform.
+      </div>
+
+      {/* Twitter / X */}
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 bg-gray-50/80">
+          <AtSign className="h-4 w-4 text-sky-500" />
+          <p className="text-sm font-semibold text-gray-800">Twitter / X</p>
+          <span className="ml-auto text-[10px] text-gray-400">OAuth 1.0a — requires Write permission</span>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-2">
+          {([
+            ['API Key', 'apiKey', false],
+            ['API Secret', 'apiSecret', true],
+            ['Access Token', 'accessToken', false],
+            ['Access Token Secret', 'accessTokenSecret', true],
+          ] as [string, keyof TwitterCreds, boolean][]).map(([label, field, secret]) => (
+            <div key={field}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">{label}</p>
+              {secret
+                ? <SecretInput id={`tw-${field}`} value={apiCreds.twitter[field]} onChange={(v) => setCredField('twitter', field, v)} />
+                : <input type="text" value={apiCreds.twitter[field]} onChange={(e) => setCredField('twitter', field, e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    autoComplete="off" spellCheck={false} />}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Facebook */}
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 bg-gray-50/80">
+          <Share2 className="h-4 w-4 text-blue-600" />
+          <p className="text-sm font-semibold text-gray-800">Facebook</p>
+          <span className="ml-auto text-[10px] text-gray-400">Page access token</span>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-2">
+          {([
+            ['Page ID', 'pageId', false],
+            ['Page Access Token', 'pageAccessToken', true],
+          ] as [string, keyof FacebookCreds, boolean][]).map(([label, field, secret]) => (
+            <div key={field}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">{label}</p>
+              {secret
+                ? <SecretInput id={`fb-${field}`} value={apiCreds.facebook[field]} onChange={(v) => setCredField('facebook', field, v)} />
+                : <input type="text" value={apiCreds.facebook[field]} onChange={(e) => setCredField('facebook', field, e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    autoComplete="off" spellCheck={false} />}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Instagram */}
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 bg-gray-50/80">
+          <Camera className="h-4 w-4 text-pink-500" />
+          <p className="text-sm font-semibold text-gray-800">Instagram</p>
+          <span className="ml-auto text-[10px] text-gray-400">Meta Graph API — image required for posts</span>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-2">
+          {([
+            ['IG User ID', 'igUserId', false],
+            ['User Access Token', 'userAccessToken', true],
+          ] as [string, keyof InstagramCreds, boolean][]).map(([label, field, secret]) => (
+            <div key={field}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">{label}</p>
+              {secret
+                ? <SecretInput id={`ig-${field}`} value={apiCreds.instagram[field]} onChange={(v) => setCredField('instagram', field, v)} />
+                : <input type="text" value={apiCreds.instagram[field]} onChange={(e) => setCredField('instagram', field, e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    autoComplete="off" spellCheck={false} />}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* LinkedIn */}
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 bg-gray-50/80">
+          <Building2 className="h-4 w-4 text-blue-800" />
+          <p className="text-sm font-semibold text-gray-800">LinkedIn</p>
+          <span className="ml-auto text-[10px] text-gray-400">UGC Posts API — OAuth 2.0 bearer token</span>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-2">
+          {([
+            ['Person URN (urn:li:person:…)', 'personUrn', false],
+            ['Access Token', 'accessToken', true],
+          ] as [string, keyof LinkedInCreds, boolean][]).map(([label, field, secret]) => (
+            <div key={field}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">{label}</p>
+              {secret
+                ? <SecretInput id={`li-${field}`} value={apiCreds.linkedin[field]} onChange={(v) => setCredField('linkedin', field, v)} />
+                : <input type="text" value={apiCreds.linkedin[field]} onChange={(e) => setCredField('linkedin', field, e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    autoComplete="off" spellCheck={false} />}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pinterest */}
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 bg-gray-50/80">
+          <Pin className="h-4 w-4 text-red-600" />
+          <p className="text-sm font-semibold text-gray-800">Pinterest</p>
+          <span className="ml-auto text-[10px] text-gray-400">API v5 — image required for pins</span>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-2">
+          {([
+            ['Board ID', 'boardId', false],
+            ['Access Token', 'accessToken', true],
+          ] as [string, keyof PinterestCreds, boolean][]).map(([label, field, secret]) => (
+            <div key={field}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 mb-1">{label}</p>
+              {secret
+                ? <SecretInput id={`pi-${field}`} value={apiCreds.pinterest[field]} onChange={(v) => setCredField('pinterest', field, v)} />
+                : <input type="text" value={apiCreds.pinterest[field]} onChange={(e) => setCredField('pinterest', field, e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    autoComplete="off" spellCheck={false} />}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Save button */}
+      <div className="flex items-center justify-end gap-3">
+        {credsLoading && (
+          <span className="flex items-center gap-1.5 text-xs text-gray-400">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Loading…
+          </span>
+        )}
+        <button
+          type="button"
+          disabled={credsSaving || credsLoading}
+          onClick={async () => {
+            setCredsSaving(true);
+            const { success, error } = await SocialApiSettingsService.saveCredentials(apiCreds);
+            setCredsSaving(false);
+            if (success) {
+              showToast('API credentials saved to Supabase.');
+            } else {
+              showToast(`Save failed: ${error ?? 'unknown error'}`);
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {credsSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {credsSaving ? 'Saving…' : 'Save credentials'}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <AdminLayout title="Multi-platform social media posting" noHeader>
       <SocialPostingSecondaryNav
@@ -1197,6 +1482,14 @@ const SocialPosting: React.FC = () => {
                 <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
                 <p className="mt-1 text-sm text-gray-500">Your posting insights</p>
               </>
+            ) : activeTab === 'apis' ? (
+              <>
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <KeyRound className="h-5 w-5 text-gray-500" />
+                  API Keys
+                </h1>
+                <p className="mt-1 text-sm text-gray-500">Connect your social media accounts to enable real posting.</p>
+              </>
             ) : (
               <>
                 <h1 className="text-2xl font-bold text-gray-800">Multi-platform social media posting</h1>
@@ -1213,6 +1506,7 @@ const SocialPosting: React.FC = () => {
           {activeTab === 'queue' && queuePanel}
           {activeTab === 'calendar' && calendarPanel}
           {activeTab === 'analytics' && analyticsPanel}
+          {activeTab === 'apis' && apisPanel}
         </div>
       </div>
     </AdminLayout>

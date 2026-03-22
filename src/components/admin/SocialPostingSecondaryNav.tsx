@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
-import { Pencil, ClipboardList, CalendarDays, BarChart3, Share2 } from 'lucide-react';
+import { Pencil, ClipboardList, CalendarDays, BarChart3, Share2, KeyRound } from 'lucide-react';
 
-export type SocialPostingTabId = 'compose' | 'queue' | 'calendar' | 'analytics';
+export type SocialPostingTabId = 'compose' | 'queue' | 'calendar' | 'analytics' | 'apis';
 
 interface SocialPostingSecondaryNavProps {
   activeTab: SocialPostingTabId;
@@ -30,6 +30,7 @@ const TABS: {
   },
   { id: 'calendar', label: 'Calendar', Icon: CalendarDays, description: 'Posts by date' },
   { id: 'analytics', label: 'Analytics', Icon: BarChart3, description: 'Activity summary' },
+  { id: 'apis', label: 'API Keys', Icon: KeyRound, description: 'Platform credentials' },
 ];
 
 const SocialPostingSecondaryNav: React.FC<SocialPostingSecondaryNavProps> = ({

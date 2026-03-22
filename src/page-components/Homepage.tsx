@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from '@/src/compat/router';
 import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3, ArrowRight } from 'lucide-react';
 import { HomepageSettingsService } from '../services/homepageSettingsService';
@@ -12,6 +12,7 @@ import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
 import HomepageSkeleton from '../components/HomepageSkeleton';
 import OptimizedImage from '../components/OptimizedImage';
 import BentoHeroSection from '../components/BentoHeroSection';
+import LazyHomeSection from '../components/LazyHomeSection';
 import { NavigationVisibilityService } from '../services/navigationVisibilityService';
 
 const Homepage: React.FC = () => {
@@ -27,33 +28,13 @@ const Homepage: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [realStats, setRealStats] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const productsLoadStarted = useRef(false);
+  const skipHeavyProductFetch = useRef(false);
 
-  // Optimized homepage data loading with memory monitoring
-  const loadHomepageData = useCallback(async () => {
+  const loadProducts = useCallback(async () => {
+    if (skipHeavyProductFetch.current || productsLoadStarted.current) return;
+    productsLoadStarted.current = true;
     try {
-      setLoading(true);
-      logMemoryUsage('Homepage - Before Loading Data');
-      
-      // Check memory usage before loading large datasets
-      if (isMemoryUsageHigh(80)) {
-        console.warn('High memory usage detected, loading minimal data');
-        const settings = await HomepageSettingsService.getHomepageSettings();
-        setHomepageSettings(settings);
-        setRealProducts([]);
-        setRealCategories([]);
-        setRealStats(null);
-        setLoading(false);
-        return;
-      }
-      
-      // Settings and categories are served from cache when warm (populated by global contexts)
-      const [settings, categories, stats] = await Promise.all([
-        HomepageSettingsService.getHomepageSettings(),
-        appCache.getOrFetch(CACHE_KEYS.CATEGORIES_ALL, () => CategoryService.getAllCategories(), CACHE_TTL.CATEGORIES),
-        appCache.getOrFetch('stats:products', () => ProductService.getProductStats(), CACHE_TTL.PRODUCTS),
-      ]);
-
-      // Lightweight homepage product fetch — cached separately from the full admin product list
       const products = await appCache.getOrFetch<any[]>(
         CACHE_KEYS.PRODUCTS_HOMEPAGE,
         async () => {
@@ -73,14 +54,39 @@ const Homepage: React.FC = () => {
         },
         CACHE_TTL.PRODUCTS
       );
-      
-      
-      setHomepageSettings(settings);
       setRealProducts(products);
+      logMemoryUsage('Homepage - After Loading Products');
+    } catch (error) {
+      console.error('Error loading homepage products:', error);
+    }
+  }, []);
+
+  // First paint: settings + categories + stats only (no 50-row product query).
+  const loadCriticalHomepageData = useCallback(async () => {
+    try {
+      setLoading(true);
+      logMemoryUsage('Homepage - Before Loading Data');
+
+      if (isMemoryUsageHigh(80)) {
+        console.warn('High memory usage detected, loading minimal data');
+        skipHeavyProductFetch.current = true;
+        const settings = await HomepageSettingsService.getHomepageSettings();
+        setHomepageSettings(settings);
+        setRealProducts([]);
+        setRealCategories([]);
+        setRealStats(null);
+        return;
+      }
+
+      const [settings, categories, stats] = await Promise.all([
+        HomepageSettingsService.getHomepageSettings(),
+        appCache.getOrFetch(CACHE_KEYS.CATEGORIES_ALL, () => CategoryService.getAllCategories(), CACHE_TTL.CATEGORIES),
+        appCache.getOrFetch('stats:products', () => ProductService.getProductStats(), CACHE_TTL.PRODUCTS),
+      ]);
+
+      setHomepageSettings(settings);
       setRealCategories(categories);
       setRealStats(stats);
-      
-      logMemoryUsage('Homepage - After Loading Data');
     } catch (error) {
       console.error('Error loading homepage data:', error);
     } finally {
@@ -89,8 +95,17 @@ const Homepage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    loadHomepageData();
-  }, []);
+    loadCriticalHomepageData();
+  }, [loadCriticalHomepageData]);
+
+  // If the user never scrolls, still load products after a short delay.
+  useEffect(() => {
+    if (loading || skipHeavyProductFetch.current) return;
+    const id = window.setTimeout(() => {
+      loadProducts();
+    }, 2200);
+    return () => window.clearTimeout(id);
+  }, [loading, loadProducts]);
 
   // These variables are used in loadHomepageData function
 
@@ -618,13 +633,12 @@ const Homepage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    if (safeImageSlider.autoPlay) {
-      const timer = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % safeImageSlider.slides.length);
-      }, safeImageSlider.interval);
-      return () => clearInterval(timer);
-    }
-  }, [safeImageSlider.autoPlay, safeImageSlider.interval, safeImageSlider.slides.length]);
+    if (loading || !safeImageSlider.autoPlay) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % safeImageSlider.slides.length);
+    }, safeImageSlider.interval);
+    return () => clearInterval(timer);
+  }, [loading, safeImageSlider.autoPlay, safeImageSlider.interval, safeImageSlider.slides.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % safeImageSlider.slides.length);
@@ -653,6 +667,11 @@ const Homepage: React.FC = () => {
         }
       />
 
+      {/* Below hero: mount + product fetch as user scrolls */}
+      <LazyHomeSection
+        minHeight="min-h-[360px] sm:min-h-[440px] lg:min-h-[500px]"
+        onVisible={loadProducts}
+      >
       {/* Image Slider Section */}
       <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
@@ -736,7 +755,9 @@ const Homepage: React.FC = () => {
           </div>
         </div>
       </section>
+      </LazyHomeSection>
 
+      <LazyHomeSection minHeight="min-h-[280px] sm:min-h-[360px]">
       {/* Featured Grid Section */}
       <section className="py-12 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
@@ -889,7 +910,9 @@ const Homepage: React.FC = () => {
           )}
         </div>
       </section>
+      </LazyHomeSection>
 
+      <LazyHomeSection minHeight="min-h-[320px] md:min-h-[400px]">
       {/* Best Sellers Section */}
       <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
@@ -977,7 +1000,9 @@ const Homepage: React.FC = () => {
           )}
         </div>
       </section>
+      </LazyHomeSection>
 
+      <LazyHomeSection minHeight="min-h-[320px] md:min-h-[400px]">
       {/* Featured Artwork Section */}
       <section className="py-12 px-4 bg-[#ffffff]">
         <div className="max-w-7xl mx-auto">
@@ -1065,7 +1090,9 @@ const Homepage: React.FC = () => {
           )}
         </div>
       </section>
+      </LazyHomeSection>
 
+      <LazyHomeSection minHeight="min-h-[260px] md:min-h-[320px]">
       {/* Categories Section - Compact */}
       <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
@@ -1117,7 +1144,9 @@ const Homepage: React.FC = () => {
           )}
         </div>
       </section>
+      </LazyHomeSection>
 
+      <LazyHomeSection minHeight="min-h-[300px] md:min-h-[380px]">
       {/* Trending Collections Section */}
       <section className="py-12 px-4 bg-[#ffffff]">
         <div className="max-w-7xl mx-auto">
@@ -1172,6 +1201,7 @@ const Homepage: React.FC = () => {
           )}
         </div>
       </section>
+      </LazyHomeSection>
 
     </div>
   );
