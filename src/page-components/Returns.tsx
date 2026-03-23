@@ -318,7 +318,7 @@ const Returns: React.FC = () => {
               href="/contact-us"
               className="inline-flex items-center px-4 py-2 bg-white text-gray-900 font-medium rounded-md hover:bg-gray-100 transition-colors text-sm"
             >
-              Contact Support
+              Need Help? Contact Support
             </a>
             <a
               href="/help-center"

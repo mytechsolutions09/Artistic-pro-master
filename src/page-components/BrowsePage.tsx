@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from '@/src/compat/router';
 import { useProducts } from '../contexts/ProductContext';
 import FilterSidebar from '../components/FilterSidebar';
 import ProductCard from '../components/ProductCard';
@@ -402,6 +403,11 @@ const BrowsePage: React.FC = () => {
             You've reached the end of the results ({displayedProducts.length} products)
           </div>
         )}
+        <div className="mt-6 text-center">
+          <Link to="/shop" className="text-sm text-gray-700 underline underline-offset-2 hover:text-gray-900">
+            View Bestselling Luxury Pieces
+          </Link>
+        </div>
       </div>
 
       {/* Filters Sidebar - Modal (Outside main content flow) */}

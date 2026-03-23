@@ -763,9 +763,9 @@ const ProductPage: React.FC = () => {
                   {/* Price on the left */}
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     {product.originalPrice && product.discountPercentage && product.discountPercentage > 0 ? (
-                      <div className="space-y-1">
+                        <div className="space-y-1">
                         <div className="flex items-baseline space-x-2">
-                          <div className="text-lg sm:text-xl font-semibold text-teal-800 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</div>
+                          <div className="text-lg sm:text-xl font-semibold text-gray-900 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</div>
                           <div className="text-xs text-gray-500 line-through font-sans font-normal">{formatUIPrice(getOriginalPrice(product), 'INR')}</div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -778,7 +778,7 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      <span className="text-lg sm:text-xl font-semibold text-gray-600 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</span>
+                      <span className="text-lg sm:text-xl font-semibold text-gray-900 font-sans font-normal">{formatUIPrice(getCurrentPrice(product), 'INR')}</span>
                     )}
                   </div>
                   

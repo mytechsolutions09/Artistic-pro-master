@@ -363,7 +363,7 @@ const Privacy: React.FC = () => {
               to="/terms-and-conditions" 
               className="px-3 py-1.5 bg-white text-gray-800 border border-gray-400 rounded hover:bg-gray-100 transition-colors text-xs font-medium"
             >
-              Terms & Conditions
+              Terms and Conditions
             </Link>
             <Link 
               to="/returns-and-refunds" 

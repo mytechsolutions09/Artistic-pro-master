@@ -222,6 +222,14 @@ const FAQ: React.FC = () => {
           >
             Contact Support
           </a>
+          <div className="mt-4">
+            <a
+              href="/shipping-info"
+              className="text-sm text-gray-300 underline underline-offset-2 hover:text-white"
+            >
+              Shipping Information
+            </a>
+          </div>
         </div>
       </div>
     </div>

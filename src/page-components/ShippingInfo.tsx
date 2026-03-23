@@ -99,6 +99,12 @@ const ShippingInfo: React.FC = () => {
             >
               Help Center
             </a>
+            <a
+              href="/returns-and-refunds"
+              className="inline-flex items-center px-4 py-2 bg-gray-700 text-white font-medium rounded-md hover:bg-gray-800 transition-colors text-sm"
+            >
+              Returns and Refunds Policy
+            </a>
           </div>
         </div>
       </div>

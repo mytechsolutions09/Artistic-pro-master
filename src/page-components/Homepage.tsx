@@ -1203,6 +1203,22 @@ const Homepage: React.FC = () => {
       </section>
       </LazyHomeSection>
 
+      <section className="px-4 pb-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+              <Link to="/categories" className="text-gray-700 underline underline-offset-2 hover:text-gray-900">
+                Explore Luxury Collections
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link to="/shop" className="text-gray-700 underline underline-offset-2 hover:text-gray-900">
+                Shop Premium Picks
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 };

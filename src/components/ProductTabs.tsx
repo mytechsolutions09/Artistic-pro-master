@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react';
-import { FileText, Truck, Info, Plus, Minus } from 'lucide-react';
+import React from 'react';
+import { ChevronDown } from 'lucide-react';
 
 interface Tab {
   id: string;
@@ -17,47 +17,36 @@ interface ProductTabsProps {
 }
 
 const ProductTabs: React.FC<ProductTabsProps> = ({ tabs, activeTab, onTabChange }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
   return (
-    <div className="w-full">
-      {/* Tab Headers */}
-      <div className="flex flex-col bg-white rounded-t-lg overflow-hidden">
-        {tabs.map((tab, index) => (
-          <div key={tab.id}>
-            <button
-              onClick={() => onTabChange(tab.id)}
-              className={`w-full flex items-center justify-between px-3 py-1.5 text-xs font-medium transition-all duration-200 border-b border-gray-200 ${
-                activeTab === tab.id
-                  ? 'bg-white text-black'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <span className="w-3 h-3">{tab.icon}</span>
-                <span className="font-sans font-normal">{tab.label}</span>
-              </div>
-              {tab.id === activeTab && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsCollapsed(!isCollapsed);
-                  }}
-                  className="text-black hover:text-gray-600"
-                >
-                  {isCollapsed ? <Plus className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
-                </button>
-              )}
-            </button>
-            
-            {/* Tab Content - Show directly under active tab */}
-            {tab.id === activeTab && !isCollapsed && (
-              <div className="bg-white border-b border-gray-200 p-2 min-h-[150px]">
-                {tab.content}
-              </div>
-            )}
-          </div>
-        ))}
+    <div className="w-full bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="divide-y divide-gray-200">
+        {tabs.map((tab) => {
+          const isOpen = tab.id === activeTab;
+          return (
+            <div key={tab.id}>
+              <button
+                type="button"
+                onClick={() => onTabChange(tab.id)}
+                className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-left transition-colors ${
+                  isOpen ? 'bg-gray-50' : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="shrink-0">{tab.icon}</span>
+                  <span className="text-sm font-medium text-gray-900 truncate">{tab.label}</span>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-500 transition-transform ${
+                    isOpen ? 'rotate-180' : 'rotate-0'
+                  }`}
+                  aria-hidden
+                />
+              </button>
+
+              {isOpen && <div className="px-3 pb-3">{tab.content}</div>}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

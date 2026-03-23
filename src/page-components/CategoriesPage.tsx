@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { Link } from '@/src/compat/router';
 import CategoryCard from '../components/CategoryCard';
 import CategoriesPageSkeleton from '../components/CategoriesPageSkeleton';
 import { useCategories } from '../contexts/CategoryContext';
@@ -52,6 +53,11 @@ const CategoriesPage: React.FC = () => {
           {categories.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}
+        </div>
+        <div className="mt-8 text-center">
+          <Link to="/browse" className="text-sm text-gray-700 underline underline-offset-2 hover:text-gray-900">
+            Browse Curated Artworks
+          </Link>
         </div>
       </div>
     </div>

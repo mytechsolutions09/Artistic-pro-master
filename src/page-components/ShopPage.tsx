@@ -68,6 +68,11 @@ const ShopPage: React.FC = () => {
             className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black"
           />
         </div>
+        <div className="mb-6">
+          <Link to="/contact-us" className="text-sm text-gray-700 underline underline-offset-2 hover:text-gray-900">
+            Contact Lurevi Concierge
+          </Link>
+        </div>
 
         {/* Loading State */}
         {loading ? (
