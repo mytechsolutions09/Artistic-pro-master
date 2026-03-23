@@ -11,8 +11,10 @@ export const metadata: Metadata = {
   description:
     'Discover curated digital art, wall prints, and premium collections at Lurevi. Explore categories, browse unique pieces, and shop online.',
   metadataBase: new URL('https://lurevi.in'),
+  // Do not set alternates.canonical here — it merges into every route and makes
+  // non-home URLs declare the homepage as canonical ("Alternate page with proper
+  // canonical tag" in Search Console). Set canonical per page or in segment layouts.
   alternates: {
-    canonical: '/',
     languages: {
       'en-IN': 'https://lurevi.in',
       'x-default': 'https://lurevi.in',

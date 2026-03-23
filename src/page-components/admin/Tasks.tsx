@@ -15,7 +15,6 @@ import {
   MessageCircle,
   Paperclip,
   X,
-  Edit3,
   ArrowRight,
   ArrowLeft,
   RefreshCw,
@@ -876,6 +875,15 @@ const Tasks: React.FC = () => {
               {getColumnTasks('todo').map((task) => (
                 <div
                   key={task.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openEditModal(task)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openEditModal(task);
+                    }
+                  }}
                   className={`cursor-pointer rounded-md border border-gray-100 border-l-2 p-2.5 transition-shadow hover:shadow-sm ${getCardColor(task.color)}`}
                 >
                   <div className="mb-1 flex items-start justify-between">
@@ -884,21 +892,22 @@ const Tasks: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
-                        onClick={() => openEditModal(task)}
-                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
-                        title="Edit task"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => changeTaskStatus(task.id, getPreviousStatus(task.status))}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeTaskStatus(task.id, getPreviousStatus(task.status));
+                        }}
                         className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move back"
                       >
                         <ArrowLeft className="w-3 h-3" />
                       </button>
                       <button
-                        onClick={() => changeTaskStatus(task.id, getNextStatus(task.status))}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeTaskStatus(task.id, getNextStatus(task.status));
+                        }}
                         className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move forward"
                       >
@@ -959,6 +968,15 @@ const Tasks: React.FC = () => {
               {getColumnTasks('inprogress').map((task) => (
                 <div
                   key={task.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openEditModal(task)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openEditModal(task);
+                    }
+                  }}
                   className={`cursor-pointer rounded-md border border-gray-100 border-l-2 p-2.5 transition-shadow hover:shadow-sm ${getCardColor(task.color)}`}
                 >
                   <div className="mb-1 flex items-start justify-between">
@@ -967,21 +985,22 @@ const Tasks: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
-                        onClick={() => openEditModal(task)}
-                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
-                        title="Edit task"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => changeTaskStatus(task.id, getPreviousStatus(task.status))}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeTaskStatus(task.id, getPreviousStatus(task.status));
+                        }}
                         className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move back"
                       >
                         <ArrowLeft className="w-3 h-3" />
                       </button>
                       <button
-                        onClick={() => changeTaskStatus(task.id, getNextStatus(task.status))}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeTaskStatus(task.id, getNextStatus(task.status));
+                        }}
                         className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move forward"
                       >
@@ -1056,6 +1075,15 @@ const Tasks: React.FC = () => {
               {getColumnTasks('review').map((task) => (
                 <div
                   key={task.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openEditModal(task)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openEditModal(task);
+                    }
+                  }}
                   className={`cursor-pointer rounded-md border border-gray-100 border-l-2 p-2.5 transition-shadow hover:shadow-sm ${getCardColor(task.color)}`}
                 >
                   <div className="mb-1 flex items-start justify-between">
@@ -1064,21 +1092,22 @@ const Tasks: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
-                        onClick={() => openEditModal(task)}
-                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
-                        title="Edit task"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => changeTaskStatus(task.id, getPreviousStatus(task.status))}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeTaskStatus(task.id, getPreviousStatus(task.status));
+                        }}
                         className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move back"
                       >
                         <ArrowLeft className="w-3 h-3" />
                       </button>
                       <button
-                        onClick={() => changeTaskStatus(task.id, getNextStatus(task.status))}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeTaskStatus(task.id, getNextStatus(task.status));
+                        }}
                         className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move forward"
                       >
@@ -1153,6 +1182,15 @@ const Tasks: React.FC = () => {
               {getColumnTasks('done').map((task) => (
                 <div
                   key={task.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openEditModal(task)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openEditModal(task);
+                    }
+                  }}
                   className={`cursor-pointer rounded-md border border-gray-100 border-l-2 p-2.5 opacity-80 transition-shadow hover:shadow-sm ${getCardColor(task.color)}`}
                 >
                   <div className="mb-1 flex items-start justify-between">
@@ -1161,21 +1199,22 @@ const Tasks: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
-                        onClick={() => openEditModal(task)}
-                        className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
-                        title="Edit task"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => changeTaskStatus(task.id, getPreviousStatus(task.status))}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeTaskStatus(task.id, getPreviousStatus(task.status));
+                        }}
                         className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move back"
                       >
                         <ArrowLeft className="w-3 h-3" />
                       </button>
                       <button
-                        onClick={() => changeTaskStatus(task.id, getNextStatus(task.status))}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          changeTaskStatus(task.id, getNextStatus(task.status));
+                        }}
                         className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
                         title="Move forward"
                       >
@@ -1242,12 +1281,23 @@ const Tasks: React.FC = () => {
                     <th className="px-3 py-2.5">Assignee</th>
                     <th className="px-3 py-2.5">Due</th>
                     <th className="px-3 py-2.5">Progress</th>
-                    <th className="w-10 px-3 py-2.5 text-right"> </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredTasks.map((task) => (
-                    <tr key={task.id} className="border-b border-gray-100 transition-colors hover:bg-gray-50/90">
+                    <tr
+                      key={task.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openEditModal(task)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openEditModal(task);
+                        }
+                      }}
+                      className="cursor-pointer border-b border-gray-100 transition-colors hover:bg-gray-50/90"
+                    >
                       <td className="max-w-[14rem] px-3 py-2">
                         <span className={`font-medium text-gray-900 ${task.status === 'done' ? 'line-through opacity-70' : ''}`}>
                           {task.title}
@@ -1263,17 +1313,6 @@ const Tasks: React.FC = () => {
                         {task.dueDate || '—'}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 tabular-nums text-gray-600">{task.progress}%</td>
-                      <td className="px-3 py-2 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(task)}
-                          className="inline-flex rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-800"
-                          title="Edit task"
-                          aria-label="Edit task"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
