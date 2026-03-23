@@ -586,7 +586,7 @@ const ProductPage: React.FC = () => {
                       <img 
                         src={image} 
                         alt={`View ${index + 1}`} 
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain transition-transform duration-300 ease-in-out hover:scale-120"
                         onContextMenu={handleContextMenu}
                         onDragStart={handleDragStart}
                         draggable={false}
@@ -606,7 +606,7 @@ const ProductPage: React.FC = () => {
                         <img
                           src={product.main_image || productImages[0]}
                           alt="Video preview"
-                          className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-120"
                           draggable={false}
                         />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -624,7 +624,7 @@ const ProductPage: React.FC = () => {
                     <img 
                       src={productImages[0]} 
                       alt={product.title} 
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain transition-transform duration-300 ease-in-out hover:scale-120"
                       onContextMenu={handleContextMenu}
                       onDragStart={handleDragStart}
                       draggable={false}
@@ -643,7 +643,7 @@ const ProductPage: React.FC = () => {
                         <img
                           src={product.main_image || productImages[0]}
                           alt="Video preview"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-120"
                           draggable={false}
                         />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -682,7 +682,7 @@ const ProductPage: React.FC = () => {
                   <img
                     src={productImages[selectedProductImage]}
                     alt={product.title}
-                    className="w-full h-full object-contain transition-transform duration-300 ease-in-out group-hover:scale-105 origin-center bg-gray-50"
+                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-125 origin-center"
                     onContextMenu={handleContextMenu}
                     onDragStart={handleDragStart}
                     draggable={false}
@@ -1498,7 +1498,7 @@ const ProductPage: React.FC = () => {
                   <img 
                     src={relatedProduct.images && relatedProduct.images.length > 0 ? relatedProduct.images[0] : 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=600'} 
                     alt={relatedProduct.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <button
@@ -1517,7 +1517,7 @@ const ProductPage: React.FC = () => {
                           console.error('Error adding to favorites:', error);
                         }
                       }}
-                      className="w-4 h-4 text-[#F48FB1] hover:text-[#E91E63] cursor-pointer transition-colors"
+                      className="w-4 h-4 text-black hover:text-black cursor-pointer transition-colors"
                     >
                       <Heart className="w-4 h-4" />
                     </button>
@@ -1525,7 +1525,7 @@ const ProductPage: React.FC = () => {
                 </div>
                 
                 <div className="p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2 group-hover:text-[#F48FB1] transition-colors duration-200 truncate font-sans font-normal" title={relatedProduct.title}>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2 group-hover:text-black transition-colors duration-200 truncate font-sans font-normal" title={relatedProduct.title}>
                     {relatedProduct.title}
                   </h3>
                   

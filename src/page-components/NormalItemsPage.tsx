@@ -28,7 +28,7 @@ import { Review } from '../types';
 import { MessageCircle, ThumbsUp } from 'lucide-react';
 
 const NormalItemsPage: React.FC = () => {
-  // Support both /normal/:itemSlug and /:itemSlug routes
+  // Support /normal/:itemSlug, /:itemSlug, and /shop/:itemSlug routes
   const { itemSlug, categorySlug } = useParams<{ itemSlug?: string; categorySlug?: string }>();
   const slug = itemSlug || categorySlug;
   const navigate = useNavigate();
@@ -291,8 +291,8 @@ const NormalItemsPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-semibold text-gray-800 mb-4 font-sans font-normal">Item Not Found</h1>
-          <Link to="/normal" className="text-pink-600 hover:text-pink-700 font-medium font-sans font-normal">
-            ← Back to Normal Items
+          <Link to="/shop" className="text-pink-600 hover:text-pink-700 font-medium font-sans font-normal">
+            ← Back to Shop
           </Link>
         </div>
       </div>
@@ -486,7 +486,7 @@ const NormalItemsPage: React.FC = () => {
                     {item.original_price && item.discount_percentage && item.discount_percentage > 0 ? (
                       <div className="space-y-1">
                         <div className="flex items-baseline space-x-2">
-                          <div className="text-lg sm:text-xl font-semibold text-green-600 font-sans font-normal">
+                          <div className="text-lg sm:text-xl font-semibold text-black font-sans font-normal">
                             {formatUIPrice(getCurrentPrice(), 'INR')}
                           </div>
                           <div className="text-xs text-gray-500 line-through font-sans font-normal">
@@ -500,7 +500,7 @@ const NormalItemsPage: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      <span className="text-lg sm:text-xl font-semibold text-green-600 font-sans font-normal">
+                      <span className="text-lg sm:text-xl font-semibold text-black font-sans font-normal">
                         {formatUIPrice(getCurrentPrice(), 'INR')}
                       </span>
                     )}
@@ -527,16 +527,17 @@ const NormalItemsPage: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-teal-800 text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-teal-900 transition-all duration-200 shadow-md hover:shadow-lg font-sans font-normal"
+                  className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-md hover:shadow-lg font-sans font-normal"
                 >
                   Add to cart
                 </button>
                 <button
                   onClick={handleBuyNow}
-                  className="w-full bg-[#F48FB1] text-white py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-[#E91E63] transition-all duration-200 shadow-md hover:shadow-lg font-sans font-normal"
+                  disabled={!item || !item.id}
+                  className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                 >
                   Buy Now
                 </button>

@@ -57,7 +57,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const isNormalItem = product.categories && product.categories.includes('Normal');
   
   // For normal items, always generate URL from title (not stored slug)
-  // Normal items use direct URL: /title-slug (not /normal/slug)
+  // Normal items now use shop URL: /shop/title-slug
   const normalTitleSlug = generateSlug(product.title);
   const productSlug = product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   
@@ -66,7 +66,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     : isFB
       ? `/${productSlug}`  // F&B products use direct URL: /product-slug
       : isNormalItem
-        ? `/${normalTitleSlug}`
+        ? `/shop/${normalTitleSlug}`
         : generateProductUrl(
             product.categories && product.categories.length > 0 
               ? product.categories[0] 
