@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://lurevi.in/faq' },
 };
 
+// Statically generated (ISR) for fast SEO and minimal server work.
+export const revalidate = 86400;
+
 export default function Page() {
   return <FAQ />;
 }

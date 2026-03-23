@@ -146,7 +146,10 @@ const BentoHeroSection: React.FC<BentoHeroSectionProps> = ({ cards }) => {
           src={card.image}
           alt={card.title}
           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          width={800}
+          // Keep images close to their real rendered dimensions to reduce download size.
+          // Desktop grid: 3 columns, so col-span-2 tiles are ~2x the width of col-span-1.
+          width={clampSpan(card.desktopColSpan, 3) >= 2 ? 850 : 450}
+          quality={70}
         />
       )}
       {!card.image && (

@@ -6,6 +6,8 @@ import { Download, Star, Heart } from 'lucide-react';
 import { ArtWork } from '../types';
 import { generateProductUrl } from '../utils/slugUtils';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { optimizeImageUrl } from '../utils/imageOptimization';
+import { getOptimalImageQuality } from '../utils/performanceUtils';
 
 interface ArtCardProps {
   artwork: ArtWork;
@@ -14,6 +16,7 @@ interface ArtCardProps {
 
 const ArtCard: React.FC<ArtCardProps> = ({ artwork, size = 'medium' }) => {
   const { formatUIPrice, currencySettings } = useCurrency();
+  const quality = getOptimalImageQuality();
   
   const cardClasses = {
     small: 'w-full',
@@ -25,6 +28,15 @@ const ArtCard: React.FC<ArtCardProps> = ({ artwork, size = 'medium' }) => {
     small: 'h-48',
     medium: 'h-56',
     large: 'h-64'
+  };
+
+  const optimizedSrc = (url?: string) => {
+    const src = url || '';
+    if (!src) return '';
+
+    // Tune width per tile size to give the CDN a sensible resize target.
+    const width = size === 'small' ? 400 : size === 'medium' ? 600 : 800;
+    return optimizeImageUrl(src, width, quality);
   };
 
   const handleCardClick = () => {
@@ -41,8 +53,10 @@ const ArtCard: React.FC<ArtCardProps> = ({ artwork, size = 'medium' }) => {
         { (artwork as any).video_url ? (
           <div className={`relative w-full ${imageClasses[size]}`}>
             <img
-              src={artwork.images && artwork.images.length > 0 ? artwork.images[0] : ''}
+              src={optimizedSrc(artwork.images && artwork.images.length > 0 ? artwork.images[0] : undefined)}
               alt={artwork.title}
+              loading="lazy"
+              decoding="async"
               className={`w-full ${imageClasses[size]} object-cover`}
             />
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -53,8 +67,10 @@ const ArtCard: React.FC<ArtCardProps> = ({ artwork, size = 'medium' }) => {
           </div>
         ) : (
           <img
-            src={artwork.images[0]}
+            src={optimizedSrc(artwork.images[0])}
             alt={artwork.title}
+            loading="lazy"
+            decoding="async"
             className={`w-full ${imageClasses[size]} object-cover group-hover:scale-105 transition-transform duration-300`}
           />
         )}

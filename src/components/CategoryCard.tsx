@@ -3,6 +3,8 @@
 import React from 'react';
 import { Link } from '@/src/compat/router';
 import { Category } from '../types';
+import { optimizeImageUrl } from '../utils/imageOptimization';
+import { getOptimalImageQuality } from '../utils/performanceUtils';
 
 interface CategoryCardProps {
   category: Category;
@@ -24,6 +26,10 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
   };
 
   const imageUrl = getImageUrl();
+  const quality = getOptimalImageQuality();
+  const optimizedImageUrl = optimizeImageUrl(imageUrl, 800, quality);
+  const placeholderUrl = 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=400';
+  const optimizedPlaceholderUrl = optimizeImageUrl(placeholderUrl, 800, quality);
 
   return (
     <Link
@@ -32,13 +38,15 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
     >
       <div className="relative h-40 overflow-hidden">
         <img
-          src={imageUrl}
+          src={optimizedImageUrl}
           alt={category.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          loading="lazy"
+          decoding="async"
           onError={(e) => {
             // Fallback to placeholder if image fails to load
             const target = e.target as HTMLImageElement;
-            target.src = 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=400';
+            target.src = optimizedPlaceholderUrl;
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />

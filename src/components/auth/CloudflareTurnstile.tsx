@@ -45,8 +45,32 @@ const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
       return;
     }
 
-    // Load Turnstile script if not already loaded
-    if (!document.querySelector('script[src*="challenges.cloudflare.com"]')) {
+    let cancelled = false;
+
+    const ensureTurnstileLoaded = () => {
+      const existingScript = document.querySelector(
+        'script[src*="challenges.cloudflare.com"]'
+      ) as HTMLScriptElement | null;
+
+      // Script already loaded (turnstile global present)
+      if (existingScript && window.turnstile) {
+        renderTurnstile();
+        return;
+      }
+
+      // Script exists but turnstile global isn't ready yet
+      if (existingScript) {
+        existingScript.addEventListener(
+          'load',
+          () => {
+            if (!cancelled) renderTurnstile();
+          },
+          { once: true }
+        );
+        return;
+      }
+
+      // Inject Turnstile script only after window.onload
       const script = document.createElement('script');
       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
       script.async = true;
@@ -54,13 +78,18 @@ const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
       document.head.appendChild(script);
 
       script.onload = () => {
-        renderTurnstile();
+        if (!cancelled) renderTurnstile();
       };
-    } else if (window.turnstile) {
-      renderTurnstile();
+    };
+
+    if (document.readyState === 'complete') {
+      ensureTurnstileLoaded();
+    } else {
+      window.addEventListener('load', ensureTurnstileLoaded, { once: true });
     }
 
     return () => {
+      cancelled = true;
       // Cleanup: Remove widget when component unmounts
       if (widgetIdRef.current && window.turnstile) {
         try {

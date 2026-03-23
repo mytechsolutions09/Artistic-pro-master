@@ -25,7 +25,9 @@ export const optimizeImageUrl = (
     // Optimize Pexels images
     if (url.includes('pexels.com')) {
       const urlObj = new URL(url);
+      // Request WebP output where supported by the CDN.
       urlObj.searchParams.set('auto', 'compress');
+      urlObj.searchParams.set('format', 'webp');
       urlObj.searchParams.set('cs', 'tinysrgb');
       urlObj.searchParams.set('fit', 'crop');
       
@@ -42,6 +44,8 @@ export const optimizeImageUrl = (
         urlObj.searchParams.set('width', width.toString());
       }
       urlObj.searchParams.set('quality', quality.toString());
+      // Request WebP output where supported by Supabase image transforms.
+      urlObj.searchParams.set('format', 'webp');
       urlObj.searchParams.set('resize', 'contain');
       optimizedUrl = urlObj.toString();
     }

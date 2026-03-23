@@ -83,46 +83,54 @@ class RazorpayServiceProduction {
    * Load Razorpay script dynamically
    */
   async loadRazorpayScript(): Promise<boolean> {
+    if (window.Razorpay) {
+      return true;
+    }
+
+    const existingScript = document.querySelector('script[src*="razorpay"]') as
+      | HTMLScriptElement
+      | null;
+
+    if (existingScript) {
+      console.log('Razorpay script already exists, waiting for load...');
+      return new Promise((resolve) => {
+        existingScript.addEventListener(
+          'load',
+          () => resolve(!!window.Razorpay),
+          { once: true }
+        );
+        existingScript.addEventListener(
+          'error',
+          () => resolve(false),
+          { once: true }
+        );
+      });
+    }
+
+    // Inject external script only after window.onload
+    if (document.readyState !== 'complete') {
+      await new Promise<void>((resolve) => {
+        window.addEventListener('load', resolve, { once: true });
+      });
+    }
+
+    console.log('Loading Razorpay script...');
     return new Promise((resolve) => {
-      // Check if script is already loaded
-      if (window.Razorpay) {
-        // Razorpay already loaded
-        resolve(true);
-        return;
-      }
-
-      // Check if script is already being loaded
-      const existingScript = document.querySelector('script[src*="razorpay"]');
-      if (existingScript) {
-        console.log('Razorpay script already exists, waiting for load...');
-        existingScript.addEventListener('load', () => resolve(true));
-        existingScript.addEventListener('error', () => resolve(false));
-        return;
-      }
-
-      console.log('Loading Razorpay script...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
       script.defer = true;
-      
+
       script.onload = () => {
         console.log('Razorpay script loaded successfully');
-        setTimeout(() => {
-          if (window.Razorpay) {
-            resolve(true);
-          } else {
-            console.error('Razorpay object not available after script load');
-            resolve(false);
-          }
-        }, 100);
+        setTimeout(() => resolve(!!window.Razorpay), 100);
       };
-      
+
       script.onerror = (error) => {
         console.error('Failed to load Razorpay script:', error);
         resolve(false);
       };
-      
+
       document.head.appendChild(script);
     });
   }

@@ -9,6 +9,7 @@ interface OptimizedImageProps {
   alt: string;
   className?: string;
   width?: number;
+  quality?: number;
   priority?: boolean;
   onError?: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
   onClick?: () => void;
@@ -19,6 +20,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   alt,
   className = '',
   width,
+  quality,
   priority = false,
   onError,
   onClick
@@ -75,11 +77,11 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     // Reset loaded state when src changes
     setIsLoaded(false);
 
-    const quality = getOptimalImageQuality();
-    const optimizedSrc = optimizeImageUrl(src, width, quality);
+    const resolvedQuality = quality ?? getOptimalImageQuality();
+    const optimizedSrc = optimizeImageUrl(src, width, resolvedQuality);
     
     setImageSrc(optimizedSrc);
-  }, [src, width, priority, isInView]);
+  }, [src, width, priority, isInView, quality]);
 
   const handleLoad = () => {
     setIsLoaded(true);
