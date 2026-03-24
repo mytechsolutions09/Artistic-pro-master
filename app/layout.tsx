@@ -90,15 +90,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-[#ffffff] text-gray-900 antialiased">
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: 'none' }}
-            src="https://www.facebook.com/tr?id=1905415970060955&ev=PageView&noscript=1"
-            alt=""
-          />
-        </noscript>
         <ClientShell>{children}</ClientShell>
         {/* Defer Meta Pixel until after window.onload */}
         <Script id="fb-pixel" strategy="lazyOnload">

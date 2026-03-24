@@ -13,6 +13,15 @@ interface EmailRequest {
   html: string
   text?: string
   replyTo?: string
+  smtpConfig?: {
+    host?: string
+    port?: number
+    secure?: boolean
+    user?: string
+    pass?: string
+    fromName?: string
+    fromEmail?: string
+  }
 }
 
 serve(async (req) => {
@@ -21,18 +30,18 @@ serve(async (req) => {
   }
 
   try {
-    const SMTP_HOST = Deno.env.get('SMTP_HOST') || 'smtp.hostinger.com'
-    const SMTP_PORT = parseInt(Deno.env.get('SMTP_PORT') || '465')
-    const SMTP_USER = Deno.env.get('SMTP_USER')
-    const SMTP_PASS = Deno.env.get('SMTP_PASS')
-    const FROM_NAME = Deno.env.get('EMAIL_FROM_NAME') || 'Lurevi'
-    const FROM_EMAIL = Deno.env.get('EMAIL_FROM_EMAIL') || SMTP_USER
+    const DEFAULT_SMTP_HOST = Deno.env.get('SMTP_HOST') || 'smtp.hostinger.com'
+    const DEFAULT_SMTP_PORT = parseInt(Deno.env.get('SMTP_PORT') || '465')
+    const DEFAULT_SMTP_USER = Deno.env.get('SMTP_USER')
+    const DEFAULT_SMTP_PASS = Deno.env.get('SMTP_PASS')
+    const DEFAULT_FROM_NAME = Deno.env.get('EMAIL_FROM_NAME') || 'Lurevi'
+    const DEFAULT_FROM_EMAIL = Deno.env.get('EMAIL_FROM_EMAIL') || DEFAULT_SMTP_USER
 
-    if (!SMTP_USER || !SMTP_PASS) {
+    if (!DEFAULT_SMTP_USER || !DEFAULT_SMTP_PASS) {
       throw new Error('SMTP credentials not configured')
     }
 
-    const { to, toName, subject, html, text, replyTo }: EmailRequest = await req.json()
+    const { to, toName, subject, html, text, replyTo, smtpConfig }: EmailRequest = await req.json()
 
     if (!to || !subject || (!html && !text)) {
       return new Response(
@@ -43,12 +52,26 @@ serve(async (req) => {
 
     const client = new SmtpClient()
 
-    await client.connectTLS({
+    const SMTP_HOST = smtpConfig?.host || DEFAULT_SMTP_HOST
+    const SMTP_PORT = smtpConfig?.port || DEFAULT_SMTP_PORT
+    const SMTP_SECURE = typeof smtpConfig?.secure === 'boolean' ? smtpConfig.secure : true
+    const SMTP_USER = smtpConfig?.user || DEFAULT_SMTP_USER
+    const SMTP_PASS = smtpConfig?.pass || DEFAULT_SMTP_PASS
+    const FROM_NAME = smtpConfig?.fromName || DEFAULT_FROM_NAME
+    const FROM_EMAIL = smtpConfig?.fromEmail || DEFAULT_FROM_EMAIL
+
+    const connectOptions = {
       hostname: SMTP_HOST,
       port: SMTP_PORT,
-      username: SMTP_USER,
-      password: SMTP_PASS,
-    })
+      username: SMTP_USER!,
+      password: SMTP_PASS!,
+    }
+
+    if (SMTP_SECURE) {
+      await client.connectTLS(connectOptions)
+    } else {
+      await client.connect(connectOptions)
+    }
 
     await client.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
@@ -56,6 +79,7 @@ serve(async (req) => {
       subject,
       content: text || '',
       html: html || undefined,
+      replyTo: replyTo || undefined,
     })
 
     await client.close()

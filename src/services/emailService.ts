@@ -28,6 +28,15 @@ export interface EmailOptions {
   cc?: EmailRecipient[];
   bcc?: EmailRecipient[];
   headers?: Record<string, string>;
+  smtpConfig?: {
+    host?: string;
+    port?: number;
+    secure?: boolean;
+    user?: string;
+    pass?: string;
+    fromName?: string;
+    fromEmail?: string;
+  };
 }
 
 export interface EmailResult {
@@ -617,6 +626,7 @@ export class EmailService {
           html: options.html || '',
           text: options.text || '',
           replyTo: options.replyTo || emailConfig.replyTo.email || '',
+          smtpConfig: options.smtpConfig || undefined,
         },
       });
 

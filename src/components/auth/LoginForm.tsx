@@ -112,7 +112,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   // Show loading state without white container
   if (appearanceLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-teal-800">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <ArtLoader />
       </div>
     );
@@ -120,7 +120,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
 
   return (
     <div 
-      className="min-h-screen p-4 sm:p-6 lg:flex lg:items-center lg:justify-center bg-teal-800"
+      className="min-h-screen p-4 sm:p-6 lg:flex lg:items-center lg:justify-center bg-white"
     >
       <div className="w-full max-w-3xl lg:max-w-4xl bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="flex flex-col lg:flex-row min-h-[500px] lg:min-h-[400px]">

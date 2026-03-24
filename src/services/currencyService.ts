@@ -44,6 +44,7 @@ export class CurrencyService {
   private static readonly STORAGE_KEY = 'currency_settings';
   private static readonly RATES_KEY = 'exchange_rates';
   private static readonly CACHE_DURATION = 3600000; // 1 hour in ms
+  private static readonly API_TIMEOUT_MS = 8000;
 
   // Supported currencies with symbols and flags (rates relative to INR as base currency)
   static readonly SUPPORTED_CURRENCIES: Currency[] = [
@@ -274,7 +275,10 @@ export class CurrencyService {
           rates = await provider();
           if (Object.keys(rates).length > 0) break;
         } catch (error) {
-          console.warn('Currency API provider failed, trying next...', error);
+          console.warn(
+            'Currency API provider failed, trying next...',
+            error instanceof Error ? error.message : error
+          );
         }
       }
       
@@ -297,11 +301,47 @@ export class CurrencyService {
 
   // Fetch from exchangerate-api.com (free tier)
   private static async fetchFromExchangeRate(): Promise<Record<string, number>> {
-    const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-    if (!response.ok) throw new Error('API request failed');
-    
-    const data: ExchangeRateResponse = await response.json();
-    return data.rates;
+    // Prefer currently active no-key public endpoints. The original
+    // api.exchangerate-api.com host is frequently unavailable.
+    const endpoints = [
+      'https://open.er-api.com/v6/latest/USD',
+      'https://api.exchangerate.host/latest?base=USD'
+    ];
+
+    for (const url of endpoints) {
+      try {
+        const data = await this.fetchJsonWithTimeout(url);
+
+        // open.er-api.com
+        if (data && typeof data === 'object' && data.rates && typeof data.rates === 'object') {
+          return data.rates as Record<string, number>;
+        }
+
+        // exchangerate.host
+        if (data && typeof data === 'object' && data.success !== false && data.rates && typeof data.rates === 'object') {
+          return data.rates as Record<string, number>;
+        }
+      } catch {
+        // Try next endpoint
+      }
+    }
+
+    throw new Error('All exchange rate endpoints failed');
+  }
+
+  private static async fetchJsonWithTimeout(url: string): Promise<unknown> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.API_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`API request failed (${response.status})`);
+      }
+      return await response.json();
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   // Mock API for development/fallback

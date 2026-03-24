@@ -6,6 +6,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav';
 import { supabase } from '../../services/supabaseService';
 import MetaPixelService from '../../services/metaPixelService';
+import EmailService from '../../services/emailService';
 
 const inputCls =
   'h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
@@ -51,6 +52,8 @@ const getTaskStatusKey = () => `seo_daily_task_status_${getTodayKey()}`;
 const getKeywordKey = () => `seo_daily_keywords_${getTodayKey()}`;
 const getSeoStudioKey = () => `seo_studio_settings_${FIXED_ID}`;
 const getKeywordTrackerKey = () => `seo_keyword_tracker_${FIXED_ID}`;
+const getColdEmailConfigKey = () => `cold_email_config_${FIXED_ID}`;
+const getColdEmailSmtpConfigKey = () => `cold_email_smtp_config_${FIXED_ID}`;
 const MAX_KEYWORDS = 10;
 const PRIORITY_KEYWORD_SEEDS = [
   'luxury wall art India',
@@ -77,8 +80,18 @@ type KeywordRow = {
   movementNote: string;
 };
 
+type ColdEmailSender = {
+  email: string;
+  name: string;
+};
+
+type ColdEmailRecipient = {
+  email: string;
+  name: string;
+};
+
 const Marketing: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily'>('tracking');
+  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email'>('tracking');
   const [settings, setSettings] = useState<MarketingSettings>({
     meta_pixel_id: '',
     meta_pixel_enabled: true,
@@ -127,13 +140,298 @@ const Marketing: React.FC = () => {
     robots: 'index, follow',
     internal_linking_suggestions: '',
   });
+  const [coldEmailSenderInput, setColdEmailSenderInput] = useState('');
+  const [coldEmailRecipientInput, setColdEmailRecipientInput] = useState('');
+  const [coldEmailSubject, setColdEmailSubject] = useState('Quick idea for your brand');
+  const [coldEmailBody, setColdEmailBody] = useState(
+    'Hi {{name}},\n\nI had a quick idea that could help your brand with better creative conversion.\n\nIf useful, I can share a 3-point plan.\n\nBest,\n{{sender_name}}'
+  );
+  const [emailsPerSender, setEmailsPerSender] = useState(25);
+  const [delayBetweenEmailsMs, setDelayBetweenEmailsMs] = useState(300);
+  const [isSendingColdEmails, setIsSendingColdEmails] = useState(false);
+  const [isTestingSmtp, setIsTestingSmtp] = useState(false);
+  const [coldEmailRunResult, setColdEmailRunResult] = useState<{
+    sent: number;
+    failed: number;
+    skipped: number;
+    details: string[];
+  } | null>(null);
+  const [emailSubTab, setEmailSubTab] = useState<'campaign' | 'smtp_mail'>('campaign');
+  const [smtpSettings, setSmtpSettings] = useState({
+    smtpHost: 'smtp.hostinger.com',
+    smtpPort: '465',
+    smtpSecure: true,
+    smtpUser: '',
+    smtpPass: '',
+    smtpFromName: 'Lurevi Team',
+    smtpFromEmail: '',
+    smtpReplyTo: '',
+    imapHost: 'imap.hostinger.com',
+    imapPort: '993',
+    popHost: 'pop.hostinger.com',
+    popPort: '995',
+  });
 
   useEffect(() => {
     loadSettings();
     checkPixelStatus();
     loadDailyChecklist();
     loadKeywordTracking();
+    loadColdEmailConfig();
+    loadColdEmailSmtpConfig();
   }, []);
+
+  const loadColdEmailConfig = () => {
+    try {
+      const raw = localStorage.getItem(getColdEmailConfigKey());
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        senderInput?: string;
+        recipientInput?: string;
+        subject?: string;
+        body?: string;
+        emailsPerSender?: number;
+        delayBetweenEmailsMs?: number;
+      };
+      if (typeof parsed.senderInput === 'string') setColdEmailSenderInput(parsed.senderInput);
+      if (typeof parsed.recipientInput === 'string') setColdEmailRecipientInput(parsed.recipientInput);
+      if (typeof parsed.subject === 'string') setColdEmailSubject(parsed.subject);
+      if (typeof parsed.body === 'string') setColdEmailBody(parsed.body);
+      if (typeof parsed.emailsPerSender === 'number') setEmailsPerSender(parsed.emailsPerSender);
+      if (typeof parsed.delayBetweenEmailsMs === 'number') setDelayBetweenEmailsMs(parsed.delayBetweenEmailsMs);
+    } catch (error) {
+      console.error('Failed to load cold email config:', error);
+    }
+  };
+
+  const loadColdEmailSmtpConfig = () => {
+    try {
+      const raw = localStorage.getItem(getColdEmailSmtpConfigKey());
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<typeof smtpSettings>;
+      setSmtpSettings((prev) => ({ ...prev, ...parsed }));
+    } catch (error) {
+      console.error('Failed to load SMTP/mail settings:', error);
+    }
+  };
+
+  const parseLineToPerson = (line: string): { email: string; name: string } | null => {
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+
+    const angleMatch = trimmed.match(/^(.*)<\s*([^>]+)\s*>$/);
+    if (angleMatch) {
+      const name = angleMatch[1].trim() || 'Unknown';
+      const email = angleMatch[2].trim().toLowerCase();
+      return { email, name };
+    }
+
+    const commaParts = trimmed.split(',').map((v) => v.trim()).filter(Boolean);
+    if (commaParts.length >= 2) {
+      const [name, email] = commaParts;
+      return { email: email.toLowerCase(), name };
+    }
+
+    return { email: trimmed.toLowerCase(), name: trimmed.split('@')[0] || 'Unknown' };
+  };
+
+  const buildSendPlan = (): {
+    senders: ColdEmailSender[];
+    recipients: ColdEmailRecipient[];
+    uniqueRecipients: ColdEmailRecipient[];
+    plans: Array<{ sender: ColdEmailSender; recipients: ColdEmailRecipient[] }>;
+  } => {
+    const senders = coldEmailSenderInput
+      .split('\n')
+      .map((line) => parseLineToPerson(line))
+      .filter((entry): entry is { email: string; name: string } => Boolean(entry))
+      .map((entry) => ({ email: entry.email, name: entry.name }));
+
+    const recipients = coldEmailRecipientInput
+      .split('\n')
+      .map((line) => parseLineToPerson(line))
+      .filter((entry): entry is { email: string; name: string } => Boolean(entry))
+      .map((entry) => ({ email: entry.email, name: entry.name }));
+
+    const uniqueRecipientMap = new Map<string, ColdEmailRecipient>();
+    recipients.forEach((recipient) => {
+      if (!uniqueRecipientMap.has(recipient.email)) {
+        uniqueRecipientMap.set(recipient.email, recipient);
+      }
+    });
+    const uniqueRecipients = Array.from(uniqueRecipientMap.values());
+
+    const plans: Array<{ sender: ColdEmailSender; recipients: ColdEmailRecipient[] }> = [];
+    if (senders.length === 0 || uniqueRecipients.length === 0) {
+      return { senders, recipients, uniqueRecipients, plans };
+    }
+
+    let cursor = 0;
+    for (const sender of senders) {
+      const assigned = uniqueRecipients.slice(cursor, cursor + emailsPerSender);
+      plans.push({ sender, recipients: assigned });
+      cursor += assigned.length;
+      if (cursor >= uniqueRecipients.length) break;
+    }
+
+    return { senders, recipients, uniqueRecipients, plans };
+  };
+
+  const saveColdEmailConfig = () => {
+    localStorage.setItem(
+      getColdEmailConfigKey(),
+      JSON.stringify({
+        senderInput: coldEmailSenderInput,
+        recipientInput: coldEmailRecipientInput,
+        subject: coldEmailSubject,
+        body: coldEmailBody,
+        emailsPerSender,
+        delayBetweenEmailsMs,
+      })
+    );
+  };
+
+  const saveColdEmailSmtpConfig = () => {
+    localStorage.setItem(getColdEmailSmtpConfigKey(), JSON.stringify(smtpSettings));
+    showMessage('success', 'SMTP/mail settings saved locally.');
+  };
+
+  const testSmtpConnection = async () => {
+    const testRecipient =
+      smtpSettings.smtpReplyTo ||
+      smtpSettings.smtpFromEmail ||
+      smtpSettings.smtpUser;
+
+    if (!testRecipient) {
+      showMessage('error', 'Add Reply-to, From email, or SMTP user to receive test email.');
+      return;
+    }
+
+    setIsTestingSmtp(true);
+    try {
+      const result = await EmailService.sendEmail({
+        to: { email: testRecipient, name: 'SMTP Test' },
+        subject: `SMTP test - ${new Date().toLocaleString()}`,
+        text: 'SMTP test email from Marketing > Email > SMTP & Mail settings.',
+        html: '<p>SMTP test email from <strong>Marketing &gt; Email &gt; SMTP &amp; Mail</strong> settings.</p>',
+        replyTo: smtpSettings.smtpReplyTo || undefined,
+        smtpConfig: {
+          host: smtpSettings.smtpHost || undefined,
+          port: smtpSettings.smtpPort ? Number(smtpSettings.smtpPort) : undefined,
+          secure: smtpSettings.smtpSecure,
+          user: smtpSettings.smtpUser || undefined,
+          pass: smtpSettings.smtpPass || undefined,
+          fromName: smtpSettings.smtpFromName || undefined,
+          fromEmail: smtpSettings.smtpFromEmail || undefined,
+        },
+      });
+
+      if (result.success) {
+        showMessage('success', `SMTP test email sent to ${testRecipient}.`);
+      } else {
+        showMessage('error', `SMTP test failed: ${result.error || 'unknown error'}`);
+      }
+    } catch (error) {
+      showMessage('error', `SMTP test failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+    } finally {
+      setIsTestingSmtp(false);
+    }
+  };
+
+  const renderColdEmailTemplate = (
+    template: string,
+    recipient: ColdEmailRecipient,
+    sender: ColdEmailSender
+  ) => {
+    return template
+      .replace(/\{\{\s*name\s*\}\}/gi, recipient.name || recipient.email)
+      .replace(/\{\{\s*email\s*\}\}/gi, recipient.email)
+      .replace(/\{\{\s*sender_name\s*\}\}/gi, sender.name || sender.email)
+      .replace(/\{\{\s*sender_email\s*\}\}/gi, sender.email);
+  };
+
+  const runColdEmailCampaign = async () => {
+    const { senders, uniqueRecipients, plans } = buildSendPlan();
+
+    if (!coldEmailSubject.trim() || !coldEmailBody.trim()) {
+      showMessage('error', 'Subject and body are required.');
+      return;
+    }
+    if (senders.length === 0) {
+      showMessage('error', 'Add at least one sender email.');
+      return;
+    }
+    if (uniqueRecipients.length === 0) {
+      showMessage('error', 'Add at least one recipient email.');
+      return;
+    }
+    if (emailsPerSender <= 0) {
+      showMessage('error', 'Emails per sender must be greater than 0.');
+      return;
+    }
+
+    saveColdEmailConfig();
+    setIsSendingColdEmails(true);
+    setColdEmailRunResult(null);
+
+    let sent = 0;
+    let failed = 0;
+    const details: string[] = [];
+
+    try {
+      for (const plan of plans) {
+        for (const recipient of plan.recipients) {
+          const personalizedSubject = renderColdEmailTemplate(coldEmailSubject, recipient, plan.sender);
+          const personalizedBody = renderColdEmailTemplate(coldEmailBody, recipient, plan.sender);
+
+          const result = await EmailService.sendEmail({
+            to: { email: recipient.email, name: recipient.name },
+            subject: personalizedSubject,
+            text: personalizedBody,
+            html: personalizedBody.replace(/\n/g, '<br/>'),
+            replyTo: smtpSettings.smtpReplyTo || plan.sender.email,
+            smtpConfig: {
+              host: smtpSettings.smtpHost || undefined,
+              port: smtpSettings.smtpPort ? Number(smtpSettings.smtpPort) : undefined,
+              secure: smtpSettings.smtpSecure,
+              user: smtpSettings.smtpUser || undefined,
+              pass: smtpSettings.smtpPass || undefined,
+              fromName: smtpSettings.smtpFromName || undefined,
+              fromEmail: smtpSettings.smtpFromEmail || plan.sender.email,
+            },
+          });
+
+          if (result.success) {
+            sent += 1;
+          } else {
+            failed += 1;
+            details.push(`${recipient.email}: ${result.error || 'unknown error'}`);
+          }
+
+          if (delayBetweenEmailsMs > 0) {
+            await new Promise((resolve) => setTimeout(resolve, delayBetweenEmailsMs));
+          }
+        }
+      }
+
+      const assignedCount = plans.reduce((sum, plan) => sum + plan.recipients.length, 0);
+      const skipped = Math.max(0, uniqueRecipients.length - assignedCount);
+      if (skipped > 0) {
+        details.push(`Skipped ${skipped} recipients due to sender capacity (increase senders or per-sender limit).`);
+      }
+
+      setColdEmailRunResult({ sent, failed, skipped, details });
+      showMessage(
+        failed === 0 ? 'success' : 'error',
+        `Cold email run complete: sent ${sent}, failed ${failed}, skipped ${skipped}.`
+      );
+    } catch (error) {
+      console.error('Cold email run failed:', error);
+      showMessage('error', `Cold email run failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+    } finally {
+      setIsSendingColdEmails(false);
+    }
+  };
 
   const loadDailyChecklist = () => {
     const defaultChecklist = DAILY_SEO_TASKS.reduce((acc, task) => {
@@ -1434,6 +1732,329 @@ const Marketing: React.FC = () => {
               className={textareaCls}
               placeholder="Generated action plan…"
             />
+          </div>
+        </div>
+
+        {/* SEO Daily Sub-tab Content */}
+        <div className={activeSubTab === 'email' ? 'space-y-3' : 'hidden'}>
+          <div className="rounded-lg border border-gray-200 bg-white p-1">
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => setEmailSubTab('campaign')}
+                className={`inline-flex h-8 items-center rounded-md px-3 text-xs font-medium ${
+                  emailSubTab === 'campaign'
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Campaign
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmailSubTab('smtp_mail')}
+                className={`inline-flex h-8 items-center rounded-md px-3 text-xs font-medium ${
+                  emailSubTab === 'smtp_mail'
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                SMTP & Mail
+              </button>
+            </div>
+          </div>
+
+          <div className={emailSubTab === 'campaign' ? 'space-y-3' : 'hidden'}>
+          <div className={cardCls}>
+            <div className="mb-2 flex items-start justify-between gap-2 border-b border-gray-100 pb-2">
+              <div>
+                <h2 className="text-xs font-semibold text-gray-900">Cold email campaign</h2>
+                <p className="text-[11px] text-gray-500">
+                  Multiple senders, multiple recipients, and per-sender send cap.
+                </p>
+              </div>
+              <button type="button" onClick={saveColdEmailConfig} className={btnOutline}>
+                <Save className="h-3.5 w-3.5" />
+                Save draft
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <div className="space-y-2">
+                <div>
+                  <label className={labelCls}>Sender accounts (one per line)</label>
+                  <textarea
+                    value={coldEmailSenderInput}
+                    onChange={(e) => setColdEmailSenderInput(e.target.value)}
+                    rows={7}
+                    className={textareaCls}
+                    placeholder={`Alex <alex@yourdomain.com>\nPriya,priya@yourdomain.com\nfounder@yourdomain.com`}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={labelCls}>Emails per sender</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={emailsPerSender}
+                      onChange={(e) => setEmailsPerSender(Number(e.target.value || 0))}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Delay per email (ms)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={delayBetweenEmailsMs}
+                      onChange={(e) => setDelayBetweenEmailsMs(Number(e.target.value || 0))}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className={labelCls}>Recipient list (one per line)</label>
+                <textarea
+                  value={coldEmailRecipientInput}
+                  onChange={(e) => setColdEmailRecipientInput(e.target.value)}
+                  rows={12}
+                  className={textareaCls}
+                  placeholder={`Rohit <rohit@company.com>\nAnanya,ananya@brand.in\nlead@startup.io`}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className={cardCls}>
+            <div className="grid grid-cols-1 gap-2">
+              <div>
+                <label className={labelCls}>Subject template</label>
+                <input
+                  type="text"
+                  value={coldEmailSubject}
+                  onChange={(e) => setColdEmailSubject(e.target.value)}
+                  className={inputCls}
+                  placeholder="Quick idea for {{name}}"
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Body template</label>
+                <textarea
+                  value={coldEmailBody}
+                  onChange={(e) => setColdEmailBody(e.target.value)}
+                  rows={8}
+                  className={textareaCls}
+                  placeholder="Use {{name}}, {{email}}, {{sender_name}}, {{sender_email}}"
+                />
+              </div>
+              <p className="text-[10px] text-gray-500">
+                Tokens: <code className="rounded bg-gray-100 px-1">{'{{name}}'}</code>,{' '}
+                <code className="rounded bg-gray-100 px-1">{'{{email}}'}</code>,{' '}
+                <code className="rounded bg-gray-100 px-1">{'{{sender_name}}'}</code>,{' '}
+                <code className="rounded bg-gray-100 px-1">{'{{sender_email}}'}</code>
+              </p>
+            </div>
+          </div>
+
+          <div className={stickyBarCls}>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void runColdEmailCampaign()}
+                disabled={isSendingColdEmails}
+                className={btnPrimary}
+              >
+                {isSendingColdEmails ? 'Sending…' : 'Start cold email run'}
+              </button>
+              <span className="text-[11px] text-gray-500">
+                Uses sender rotation with per-sender cap.
+              </span>
+            </div>
+          </div>
+
+          {coldEmailRunResult && (
+            <div className={cardCls}>
+              <h3 className="mb-1.5 text-xs font-semibold text-gray-900">Run result</h3>
+              <div className="grid grid-cols-3 gap-2 text-[11px]">
+                <div className="rounded-md border border-green-200 bg-green-50 px-2 py-1.5 text-green-800">
+                  Sent: {coldEmailRunResult.sent}
+                </div>
+                <div className="rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-red-800">
+                  Failed: {coldEmailRunResult.failed}
+                </div>
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-amber-800">
+                  Skipped: {coldEmailRunResult.skipped}
+                </div>
+              </div>
+              {coldEmailRunResult.details.length > 0 && (
+                <div className="mt-2 max-h-44 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-2">
+                  <ul className="space-y-1 text-[11px] text-gray-700">
+                    {coldEmailRunResult.details.map((detail, idx) => (
+                      <li key={`${detail}-${idx}`}>- {detail}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          </div>
+
+          <div className={emailSubTab === 'smtp_mail' ? 'space-y-3' : 'hidden'}>
+            <div className={cardCls}>
+              <div className="mb-2 flex items-start justify-between gap-2 border-b border-gray-100 pb-2">
+                <div>
+                  <h2 className="text-xs font-semibold text-gray-900">SMTP settings</h2>
+                  <p className="text-[11px] text-gray-500">Outgoing server used for cold emails.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div>
+                  <label className={labelCls}>SMTP host</label>
+                  <input
+                    type="text"
+                    value={smtpSettings.smtpHost}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, smtpHost: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>SMTP port</label>
+                  <input
+                    type="text"
+                    value={smtpSettings.smtpPort}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, smtpPort: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>SMTP user</label>
+                  <input
+                    type="text"
+                    value={smtpSettings.smtpUser}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, smtpUser: e.target.value }))}
+                    className={inputCls}
+                    placeholder="noreply@yourdomain.com"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>SMTP password</label>
+                  <input
+                    type="password"
+                    value={smtpSettings.smtpPass}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, smtpPass: e.target.value }))}
+                    className={inputCls}
+                    placeholder="smtp password / app password"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Secure (SSL/TLS)</label>
+                  <label className="inline-flex h-8 items-center gap-2 rounded-md border border-gray-200 px-2">
+                    <input
+                      type="checkbox"
+                      checked={smtpSettings.smtpSecure}
+                      onChange={(e) => setSmtpSettings((prev) => ({ ...prev, smtpSecure: e.target.checked }))}
+                      className="h-3.5 w-3.5"
+                    />
+                    <span className="text-xs text-gray-700">Enable secure transport</span>
+                  </label>
+                </div>
+                <div>
+                  <label className={labelCls}>From name</label>
+                  <input
+                    type="text"
+                    value={smtpSettings.smtpFromName}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, smtpFromName: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>From email</label>
+                  <input
+                    type="email"
+                    value={smtpSettings.smtpFromEmail}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, smtpFromEmail: e.target.value }))}
+                    className={inputCls}
+                    placeholder="noreply@yourdomain.com"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className={labelCls}>Reply-to email</label>
+                  <input
+                    type="email"
+                    value={smtpSettings.smtpReplyTo}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, smtpReplyTo: e.target.value }))}
+                    className={inputCls}
+                    placeholder="support@yourdomain.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className={cardCls}>
+              <div className="mb-2 border-b border-gray-100 pb-2">
+                <h2 className="text-xs font-semibold text-gray-900">Mail (incoming) settings</h2>
+                <p className="text-[11px] text-gray-500">Reference for IMAP/POP mailbox access.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div>
+                  <label className={labelCls}>IMAP host</label>
+                  <input
+                    type="text"
+                    value={smtpSettings.imapHost}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, imapHost: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>IMAP port</label>
+                  <input
+                    type="text"
+                    value={smtpSettings.imapPort}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, imapPort: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>POP host</label>
+                  <input
+                    type="text"
+                    value={smtpSettings.popHost}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, popHost: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>POP port</label>
+                  <input
+                    type="text"
+                    value={smtpSettings.popPort}
+                    onChange={(e) => setSmtpSettings((prev) => ({ ...prev, popPort: e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className={stickyBarCls}>
+              <div className="flex flex-wrap gap-1.5">
+                <button type="button" onClick={saveColdEmailSmtpConfig} className={btnPrimary}>
+                  <Save className="h-3.5 w-3.5" />
+                  Save SMTP & mail settings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void testSmtpConnection()}
+                  disabled={isTestingSmtp}
+                  className={btnOutline}
+                >
+                  {isTestingSmtp ? 'Testing…' : 'Test SMTP connection'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
