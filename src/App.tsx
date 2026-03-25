@@ -65,6 +65,7 @@ import Shipping from './pages/admin/Shipping';
 import AdminReturns from './pages/admin/Returns';
 import CommissionedArt from './pages/admin/CommissionedArt';
 import Normal from './pages/admin/Normal';
+import Gifts from './page-components/admin/Gifts';
 import FB from './pages/admin/FB';
 import NormalItemsPage from './pages/NormalItemsPage';
 import NormalItemRouteHandler from './pages/NormalItemRouteHandler';
@@ -158,6 +159,7 @@ function AppContent() {
                   <Route path="/admin/homepage" element={<AdminProtectedRoute><HomepageManagement /></AdminProtectedRoute>} />
                   <Route path="/admin/reviews" element={<AdminProtectedRoute><Reviews /></AdminProtectedRoute>} />
                   <Route path="/admin/database" element={<AdminProtectedRoute><DatabaseManagement /></AdminProtectedRoute>} />
+                  <Route path="/admin/gifts" element={<AdminProtectedRoute><Gifts /></AdminProtectedRoute>} />
                   <Route path="/admin/settings" element={<AdminProtectedRoute><Settings /></AdminProtectedRoute>} />
                   <Route path="/admin/normal" element={<AdminProtectedRoute><Normal /></AdminProtectedRoute>} />
                   <Route path="/admin/fb" element={<AdminProtectedRoute><FB /></AdminProtectedRoute>} />

@@ -27,7 +27,8 @@ import {
   UtensilsCrossed,
   Shirt,
   FileText,
-  Share2
+  Share2,
+  Gift
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -49,6 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'blog', label: 'Blog', icon: FileText, path: '/admin/blog' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'normal', label: 'Normal', icon: Layers, path: '/admin/normal' },
+    { id: 'gifts', label: 'Gifts', icon: Gift, path: '/admin/gifts' },
     { id: 'shipping', label: 'Shipping', icon: Truck, path: '/admin/shipping' },
     { id: 'returns', label: 'Returns', icon: RotateCcw, path: '/admin/returns' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
