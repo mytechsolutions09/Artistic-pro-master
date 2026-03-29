@@ -731,7 +731,11 @@ const Dashboard: React.FC = () => {
                     <div key={artwork.id} className="flex items-center gap-2">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-100 bg-gray-50">
                         {artwork.image && artwork.image !== '/api/placeholder/60/60' ? (
-                          <img src={artwork.image} alt="" className="h-full w-full object-cover" />
+                          <img
+                            src={artwork.image}
+                            alt={artwork.title || 'Artwork image'}
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
                           <Image className="h-4 w-4 text-gray-400" />
                         )}

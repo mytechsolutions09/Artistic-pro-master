@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from '@/src/compat/router';
-import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3, ArrowRight, Rss } from 'lucide-react';
 import { HomepageSettingsService } from '../services/homepageSettingsService';
 import { ProductService, CategoryService } from '../services/supabaseService';
 import { appCache, CACHE_KEYS, CACHE_TTL } from '../services/cacheService';
@@ -1214,6 +1214,17 @@ const Homepage: React.FC = () => {
               <Link to="/shop" className="text-gray-700 underline underline-offset-2 hover:text-gray-900">
                 Shop Premium Picks
               </Link>
+              <span className="text-gray-300">|</span>
+              <a
+                href="/feed.xml"
+                rel="alternate"
+                type="application/rss+xml"
+                title="Lurevi blog RSS feed"
+                className="inline-flex items-center gap-1.5 text-gray-700 underline underline-offset-2 hover:text-gray-900"
+              >
+                <Rss className="h-4 w-4 shrink-0" aria-hidden />
+                RSS feed
+              </a>
             </div>
           </div>
         </div>

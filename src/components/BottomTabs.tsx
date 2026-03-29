@@ -54,13 +54,11 @@ const BottomTabs: React.FC = () => {
           to="/"
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/') 
-              ? 'text-pink-600' 
+              ? 'text-gray-900' 
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            isActiveTab('/') ? 'bg-pink-100' : 'bg-gray-100'
-          }`}>
+          <div className="flex h-8 w-8 items-center justify-center">
             <Home className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium">Home</span>
@@ -71,13 +69,11 @@ const BottomTabs: React.FC = () => {
           to="/categories"
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/categories') 
-              ? 'text-pink-600' 
+              ? 'text-gray-900' 
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            isActiveTab('/categories') ? 'bg-pink-100' : 'bg-gray-100'
-          }`}>
+          <div className="flex h-8 w-8 items-center justify-center">
             <Grid3X3 className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium">Categories</span>
@@ -88,13 +84,11 @@ const BottomTabs: React.FC = () => {
           to="/browse"
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/browse') 
-              ? 'text-pink-600' 
+              ? 'text-gray-900' 
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            isActiveTab('/browse') ? 'bg-pink-100' : 'bg-gray-100'
-          }`}>
+          <div className="flex h-8 w-8 items-center justify-center">
             <Palette className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium">Art</span>
@@ -110,9 +104,7 @@ const BottomTabs: React.FC = () => {
                 : 'text-gray-500 hover:text-[#ff6e00]'
             }`}
           >
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              isActiveTab('/clothes') ? 'bg-orange-100' : 'bg-gray-100'
-            }`}>
+            <div className="flex h-8 w-8 items-center justify-center">
               <Shirt className="w-4 h-4" />
             </div>
             <span className="text-xs font-medium">Clothes</span>
@@ -124,13 +116,11 @@ const BottomTabs: React.FC = () => {
           to="/favorites"
           className={`hidden md:flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/favorites') 
-              ? 'text-pink-600' 
+              ? 'text-gray-900' 
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            isActiveTab('/favorites') ? 'bg-pink-100' : 'bg-gray-100'
-          }`}>
+          <div className="flex h-8 w-8 items-center justify-center">
             <Heart className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium">Favorites</span>
@@ -141,13 +131,11 @@ const BottomTabs: React.FC = () => {
           to="/cart"
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 relative ${
             isActiveTab('/cart') 
-              ? 'text-pink-600' 
+              ? 'text-gray-900' 
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            isActiveTab('/cart') ? 'bg-pink-100' : 'bg-gray-100'
-          }`}>
+          <div className="flex h-8 w-8 items-center justify-center">
             <ShoppingCart className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium">Cart</span>
@@ -164,13 +152,11 @@ const BottomTabs: React.FC = () => {
             to="/dashboard"
             className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
               isActiveTab('/dashboard') 
-                ? 'text-pink-600' 
+                ? 'text-gray-900' 
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              isActiveTab('/dashboard') ? 'bg-pink-100' : 'bg-gray-100'
-            }`}>
+            <div className="flex h-8 w-8 items-center justify-center">
               <User className="w-4 h-4" />
             </div>
             <span className="text-xs font-medium">Profile</span>
@@ -180,13 +166,11 @@ const BottomTabs: React.FC = () => {
             to="/sign-in"
             className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
               isActiveTab('/sign-in') 
-                ? 'text-pink-600' 
+                ? 'text-gray-900' 
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              isActiveTab('/sign-in') ? 'bg-pink-100' : 'bg-gray-100'
-            }`}>
+            <div className="flex h-8 w-8 items-center justify-center">
               <LogIn className="w-4 h-4" />
             </div>
             <span className="text-xs font-medium">Sign In</span>

@@ -1,9 +1,18 @@
 'use client'
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from '@/src/compat/router';
 import { supabase } from '../services/supabaseService';
 
 const FIXED_MARKETING_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+interface GlobalSeoSettings {
+  page_title: string | null;
+  meta_description: string | null;
+  meta_keywords: string | null;
+  og_image: string | null;
+  robots: string | null;
+}
 
 const setMetaTag = (selector: string, content: string) => {
   let element = document.querySelector(selector);
@@ -21,9 +30,19 @@ const setMetaTag = (selector: string, content: string) => {
   element.setAttribute('content', content);
 };
 
+const getCanonicalUrl = (pathname: string) => {
+  const normalizedPath = pathname.length > 1
+    ? pathname.replace(/\/+$/, '')
+    : pathname;
+  return `${window.location.origin}${normalizedPath}`;
+};
+
 const GlobalSeoManager: React.FC = () => {
+  const location = useLocation();
+  const [seoSettings, setSeoSettings] = useState<GlobalSeoSettings | null>(null);
+
   useEffect(() => {
-    const applySeo = async () => {
+    const loadSeoSettings = async () => {
       try {
         const { data, error } = await supabase
           .from('marketing_settings')
@@ -36,56 +55,62 @@ const GlobalSeoManager: React.FC = () => {
           return;
         }
 
-        if (!data) return;
-
-        const pageTitle = data.page_title?.trim();
-        const description = data.meta_description?.trim();
-        const keywords = data.meta_keywords?.trim();
-        const ogImage = data.og_image?.trim();
-        const robots = data.robots?.trim();
-        const currentUrl = window.location.href;
-        const defaultImage = `${window.location.origin}/logo.png`;
-
-        if (pageTitle) {
-          document.title = pageTitle;
-          setMetaTag('meta[property="og:title"]', pageTitle);
-          setMetaTag('meta[name="twitter:title"]', pageTitle);
+        if (data) {
+          setSeoSettings(data as GlobalSeoSettings);
         }
-
-        if (description) {
-          setMetaTag('meta[name="description"]', description);
-          setMetaTag('meta[property="og:description"]', description);
-          setMetaTag('meta[name="twitter:description"]', description);
-        }
-
-        if (keywords) {
-          setMetaTag('meta[name="keywords"]', keywords);
-        }
-
-        if (robots) {
-          setMetaTag('meta[name="robots"]', robots);
-        }
-
-        const imageUrl = ogImage || defaultImage;
-        setMetaTag('meta[property="og:image"]', imageUrl);
-        setMetaTag('meta[name="twitter:image"]', imageUrl);
-        setMetaTag('meta[property="og:url"]', currentUrl);
-        setMetaTag('meta[name="twitter:card"]', 'summary_large_image');
-
-        let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-        if (!canonical) {
-          canonical = document.createElement('link');
-          canonical.rel = 'canonical';
-          document.head.appendChild(canonical);
-        }
-        canonical.href = currentUrl;
       } catch (err) {
-        console.error('Error applying global SEO settings:', err);
+        console.error('Error loading global SEO settings:', err);
       }
     };
 
-    applySeo();
+    loadSeoSettings();
   }, []);
+
+  useEffect(() => {
+    if (!seoSettings) return;
+
+    const pageTitle = seoSettings.page_title?.trim();
+    const description = seoSettings.meta_description?.trim();
+    const keywords = seoSettings.meta_keywords?.trim();
+    const ogImage = seoSettings.og_image?.trim();
+    const robots = seoSettings.robots?.trim();
+    const canonicalUrl = getCanonicalUrl(location.pathname);
+    const defaultImage = `${window.location.origin}/logo.png`;
+
+    if (pageTitle) {
+      document.title = pageTitle;
+      setMetaTag('meta[property="og:title"]', pageTitle);
+      setMetaTag('meta[name="twitter:title"]', pageTitle);
+    }
+
+    if (description) {
+      setMetaTag('meta[name="description"]', description);
+      setMetaTag('meta[property="og:description"]', description);
+      setMetaTag('meta[name="twitter:description"]', description);
+    }
+
+    if (keywords) {
+      setMetaTag('meta[name="keywords"]', keywords);
+    }
+
+    if (robots) {
+      setMetaTag('meta[name="robots"]', robots);
+    }
+
+    const imageUrl = ogImage || defaultImage;
+    setMetaTag('meta[property="og:image"]', imageUrl);
+    setMetaTag('meta[name="twitter:image"]', imageUrl);
+    setMetaTag('meta[property="og:url"]', canonicalUrl);
+    setMetaTag('meta[name="twitter:card"]', 'summary_large_image');
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = canonicalUrl;
+  }, [location.pathname, seoSettings]);
 
   return null;
 };

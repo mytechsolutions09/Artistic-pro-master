@@ -773,7 +773,7 @@ const SocialPosting: React.FC = () => {
                   {mediaPreviewUrl && mediaFile?.type.startsWith('image/') ? (
                     <img
                       src={mediaPreviewUrl}
-                      alt=""
+                      alt={mediaFile?.name ? `Media preview: ${mediaFile.name}` : 'Media preview'}
                       className="max-h-32 max-w-full rounded-lg object-contain mb-2"
                     />
                   ) : (
@@ -886,7 +886,11 @@ const SocialPosting: React.FC = () => {
                   <p className="text-[10px] font-semibold uppercase text-gray-500">Media</p>
                   <p className="mt-1">{mediaFile.name}</p>
                   {mediaPreviewUrl && mediaFile.type.startsWith('image/') && (
-                    <img src={mediaPreviewUrl} alt="" className="mt-2 max-h-40 rounded-lg border border-gray-200" />
+                    <img
+                      src={mediaPreviewUrl}
+                      alt={mediaFile?.name ? `Media preview: ${mediaFile.name}` : 'Media preview'}
+                      className="mt-2 max-h-40 rounded-lg border border-gray-200"
+                    />
                   )}
                 </div>
               )}

@@ -100,7 +100,8 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
       {showBlur && (
         <img
           src={placeholderSrc}
-          alt=""
+          alt={alt}
+          aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover filter blur-sm scale-110"
           style={{ 
             transition: 'opacity 0.3s ease-out',

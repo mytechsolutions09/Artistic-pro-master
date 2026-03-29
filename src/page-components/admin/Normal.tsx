@@ -357,7 +357,7 @@ const Normal: React.FC = () => {
                           <td className="whitespace-nowrap px-3 py-2">
                             <img
                               src={item.main_image || item.images[0] || '/placeholder.png'}
-                              alt=""
+                              alt={item.title || 'Item image'}
                               className="h-10 w-10 rounded border border-gray-100 object-cover"
                             />
                           </td>
@@ -566,7 +566,11 @@ const Normal: React.FC = () => {
                   <div className="mt-2 grid grid-cols-4 gap-1.5 sm:grid-cols-6">
                     {formData.images.map((img, idx) => (
                       <div key={idx} className="relative">
-                        <img src={img} alt="" className="h-16 w-full rounded border border-gray-100 object-cover" />
+                        <img
+                          src={img}
+                          alt={`Gallery image ${idx + 1}${formData.title ? ` for ${formData.title}` : ''}`}
+                          className="h-16 w-full rounded border border-gray-100 object-cover"
+                        />
                         <button
                           type="button"
                           onClick={() => {
@@ -604,7 +608,11 @@ const Normal: React.FC = () => {
                 />
                 {formData.main_image && (
                   <div className="mt-2">
-                    <img src={formData.main_image} alt="" className="h-24 w-24 rounded border border-gray-100 object-cover" />
+                    <img
+                      src={formData.main_image}
+                      alt={`Main image${formData.title ? ` for ${formData.title}` : ''}`}
+                      className="h-24 w-24 rounded border border-gray-100 object-cover"
+                    />
                   </div>
                 )}
               </div>
