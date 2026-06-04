@@ -32,17 +32,22 @@ const PromoBar: React.FC = () => {
     setDismissed(true);
   };
 
-  // Hide on admin pages or if not configured / not enabled / dismissed
+  const isHomePage = location.pathname === '/';
+
+  // Hide on any page that is not the homepage, or if not configured / not enabled / dismissed
   if (
-    location.pathname.startsWith('/admin') ||
+    !isHomePage ||
     !config?.enabled ||
     dismissed
   ) return null;
 
+  const bgColor = isHomePage ? '#000000' : (config.bgColor || '#111827');
+  const textColor = isHomePage ? '#ffffff' : (config.textColor || '#ffffff');
+
   return (
     <div
       className="relative w-full flex items-center justify-center px-10 py-2.5 text-xs sm:text-sm font-medium font-sans z-50"
-      style={{ backgroundColor: config.bgColor || '#111827', color: config.textColor || '#ffffff' }}
+      style={{ backgroundColor: bgColor, color: textColor }}
     >
       <span>{config.text}</span>
 
@@ -50,7 +55,7 @@ const PromoBar: React.FC = () => {
         <Link
           to={config.link}
           className="ml-2 underline underline-offset-2 font-semibold opacity-90 hover:opacity-100 transition-opacity"
-          style={{ color: config.textColor || '#ffffff' }}
+          style={{ color: textColor }}
         >
           {config.linkText} →
         </Link>
@@ -61,7 +66,7 @@ const PromoBar: React.FC = () => {
           onClick={handleDismiss}
           className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity p-1 rounded"
           aria-label="Dismiss"
-          style={{ color: config.textColor || '#ffffff' }}
+          style={{ color: textColor }}
         >
           <X size={13} />
         </button>

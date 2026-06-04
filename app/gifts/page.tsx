@@ -80,7 +80,7 @@ export default function GiftsPage() {
             Elegant wall decor and art prints that suit modern Indian homes — ideal when you want a memorable{' '}
             <span className="whitespace-nowrap">home decor gift online</span>.
           </p>
-          <Link href="/shop" className="mt-3 inline-block text-sm font-medium text-pink-600 hover:text-pink-700">
+          <Link href="/shop" className="mt-3 inline-block text-sm font-normal text-gray-700 hover:text-gray-900">
             Shop gift picks
           </Link>
         </article>
@@ -90,7 +90,7 @@ export default function GiftsPage() {
             Browse categories to match styles, rooms, and occasions — from minimal prints to statement wall art for
             gifting.
           </p>
-          <Link href="/categories" className="mt-3 inline-block text-sm font-medium text-pink-600 hover:text-pink-700">
+          <Link href="/categories" className="mt-3 inline-block text-sm font-normal text-gray-700 hover:text-gray-900">
             View categories
           </Link>
         </article>

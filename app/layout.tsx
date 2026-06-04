@@ -88,6 +88,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }),
           }}
         />
+        {/* Google Analytics */}
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-96M0P2Z867" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-96M0P2Z867');
+          `}
+        </Script>
       </head>
       <body className="min-h-screen bg-[#ffffff] text-gray-900 antialiased">
         <ClientShell>{children}</ClientShell>

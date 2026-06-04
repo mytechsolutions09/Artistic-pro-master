@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { unstable_noStore as noStore } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
-import { blogCoverUrl, blogCoverSrcWithBust } from '@/lib/blogCover';
+import { blogCoverUrl } from '@/lib/blogCover';
+import BlogList, { BlogListItem } from './BlogList';
 
 const SITE_URL = 'https://lurevi.in';
 
@@ -33,18 +33,6 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-type BlogListItem = {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string | null;
-  cover_image: string | null;
-  published_at: string | null;
-  created_at: string;
-  updated_at: string;
-  status: 'draft' | 'published';
-};
-
 function getPublicSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -58,7 +46,7 @@ async function getPublishedPosts(): Promise<BlogListItem[]> {
     if (!supabase) return [];
     const { data, error } = await supabase
       .from('blog_posts')
-      .select('id, title, slug, excerpt, cover_image, published_at, created_at, updated_at, status')
+      .select('id, title, slug, excerpt, cover_image, published_at, created_at, updated_at, status, tags')
       .eq('status', 'published')
       .order('published_at', { ascending: false });
     if (error) return [];
@@ -96,44 +84,7 @@ export default async function BlogPage() {
         </p>
       </header>
 
-      {posts.length === 0 ? (
-        <section className="mt-8 rounded-lg border border-dashed border-gray-300 p-5 bg-white">
-          <p className="text-sm text-gray-600">
-            No published blog posts yet. Create and publish posts from Admin - Blog.
-          </p>
-        </section>
-      ) : (
-        <section className="mt-8 grid gap-4 sm:grid-cols-2" aria-label="Published blog posts">
-          {posts.map((post) => (
-            <article key={post.id} className="rounded-lg border border-gray-200 bg-white p-4">
-              <img
-                key={`${post.id}-${post.updated_at}`}
-                src={blogCoverSrcWithBust(post.cover_image, post.updated_at)}
-                alt={post.title}
-                className="w-full h-44 object-cover rounded-md border border-gray-100"
-                loading="lazy"
-                decoding="async"
-              />
-              <h2 className="mt-3 text-lg font-medium text-gray-900">
-                <Link href={`/blog/${post.slug}`} className="hover:text-pink-700">
-                  {post.title}
-                </Link>
-              </h2>
-              <p className="mt-2 text-sm text-gray-600">
-                {post.excerpt || 'Read the latest article from Lurevi blog.'}
-              </p>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-gray-500">
-                  {new Date(post.published_at || post.created_at).toLocaleDateString('en-IN')}
-                </span>
-                <Link href={`/blog/${post.slug}`} className="text-sm font-medium text-pink-600 hover:text-pink-700">
-                  Read article
-                </Link>
-              </div>
-            </article>
-          ))}
-        </section>
-      )}
+      <BlogList posts={posts} />
     </main>
   );
 }

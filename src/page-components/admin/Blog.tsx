@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileText, ExternalLink, Pencil, Trash2, Loader2, Save, Upload } from 'lucide-react';
+import { FileText, ExternalLink, Pencil, Trash2, Loader2, Save, Upload, AlertTriangle, CheckCircle, Info, Sparkles } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Link } from '@/src/compat/router';
 import { BlogPost, BlogService, BlogStatus } from '../../services/blogService';
 import BlogSecondaryNav, { BlogTabId } from '../../components/admin/BlogSecondaryNav';
+import { runSeoAnalysis, SeoCheckResult } from '../../utils/seoAnalysis';
 
 type BlogFormState = {
   title: string;
@@ -17,6 +18,7 @@ type BlogFormState = {
   tags: string;
   seo_title: string;
   seo_description: string;
+  focus_keyphrase: string;
 };
 
 const EMPTY_FORM: BlogFormState = {
@@ -29,6 +31,7 @@ const EMPTY_FORM: BlogFormState = {
   tags: '',
   seo_title: '',
   seo_description: '',
+  focus_keyphrase: '',
 };
 
 const BlogAdmin: React.FC = () => {
@@ -41,6 +44,8 @@ const BlogAdmin: React.FC = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [seedingSeoPack, setSeedingSeoPack] = useState(false);
+  const [aiKeyword, setAiKeyword] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const loadPosts = async () => {
     try {
@@ -100,6 +105,7 @@ const BlogAdmin: React.FC = () => {
       tags: (post.tags || []).join(', '),
       seo_title: post.seo_title || '',
       seo_description: post.seo_description || '',
+      focus_keyphrase: post.tags?.[0] || '',
     });
   };
 
@@ -188,10 +194,100 @@ const BlogAdmin: React.FC = () => {
     }
   };
 
+  const generateWithAI = async () => {
+    if (!aiKeyword.trim()) {
+      showMessage('error', 'Please enter a keyword or topic first.');
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      showMessage('success', 'AI is generating the blog post... This may take a few seconds.');
+      
+      const response = await fetch('/api/admin/generate-blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword: aiKeyword.trim() })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate blog post.');
+      }
+
+      // Auto-fill the form with the AI's response
+      setForm((prev) => ({
+        ...prev,
+        title: data.title || '',
+        slug: toSlug(data.title || ''),
+        excerpt: data.excerpt || '',
+        content: data.content || '',
+        seo_title: data.seo_title || '',
+        seo_description: data.seo_description || '',
+        tags: data.tags || '',
+        focus_keyphrase: aiKeyword.trim()
+      }));
+
+      showMessage('success', 'Blog generated successfully! Review the content before saving.');
+    } catch (error: any) {
+      console.error('Failed to generate with AI:', error);
+      showMessage('error', error?.message || 'Failed to generate blog with AI.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const publishedCount = useMemo(
     () => posts.filter((post) => post.status === 'published').length,
     [posts]
   );
+
+  const seoResults = useMemo(() => {
+    return runSeoAnalysis({
+      content: form.content,
+      title: form.title,
+      slug: form.slug,
+      seoTitle: form.seo_title,
+      seoDescription: form.seo_description,
+      keyphrase: form.focus_keyphrase,
+      existingPosts: posts,
+      currentPostId: editingId,
+    });
+  }, [form.content, form.title, form.slug, form.seo_title, form.seo_description, form.focus_keyphrase, posts, editingId]);
+
+  const { scoreText, scoreColor, scoreBg, errorCount, warningCount, goodCount } = useMemo(() => {
+    const errors = seoResults.filter(r => r.status === 'error').length;
+    const warnings = seoResults.filter(r => r.status === 'warning').length;
+    const goods = seoResults.filter(r => r.status === 'good').length;
+    
+    let text = 'Needs Improvement';
+    let color = 'text-amber-600';
+    let bg = 'bg-amber-50 border-amber-200';
+    
+    if (errors === 0 && warnings === 0 && goods > 0) {
+      text = 'Good SEO';
+      color = 'text-green-600';
+      bg = 'bg-green-50 border-green-200';
+    } else if (errors > 3) {
+      text = 'Poor SEO';
+      color = 'text-red-600';
+      bg = 'bg-red-50 border-red-200';
+    } else if (goods > warnings + errors) {
+      text = 'O.K. SEO';
+      color = 'text-green-600';
+      bg = 'bg-green-50 border-green-200';
+    }
+    
+    return {
+      scoreText: text,
+      scoreColor: color,
+      scoreBg: bg,
+      errorCount: errors,
+      warningCount: warnings,
+      goodCount: goods
+    };
+  }, [seoResults]);
 
   return (
     <AdminLayout title="Blog Management" noHeader={true}>
@@ -241,141 +337,237 @@ const BlogAdmin: React.FC = () => {
           </div>
         </div>
 
-        <div className={activeSubTab === 'posts' ? 'bg-white p-4 rounded-lg border border-gray-200 shadow-sm' : 'hidden'}>
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">
-            {editingId ? 'Edit Blog Post' : 'Create Blog Post'}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <input
-              value={form.title}
-              onChange={(e) => onTitleChange(e.target.value)}
-              placeholder="Title"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <input
-              value={form.slug}
-              onChange={(e) => setForm((prev) => ({ ...prev, slug: toSlug(e.target.value) }))}
-              placeholder="Slug (auto-generated)"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <input
-              value={form.cover_image}
-              onChange={(e) => setForm((prev) => ({ ...prev, cover_image: e.target.value }))}
-              placeholder="Cover image URL"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2"
-            />
-            <div className="md:col-span-2 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setForm((prev) => ({ ...prev, cover_image: '' }))}
-                className="text-xs text-gray-600 underline hover:text-gray-900"
-              >
-                Clear cover URL
-              </button>
+        <div className={activeSubTab === 'posts' ? 'flex flex-col xl:flex-row gap-6' : 'hidden'}>
+          {/* Main Blog Editor Form */}
+          <div className="flex-1 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+              <h3 className="text-sm font-semibold text-gray-800">
+                {editingId ? 'Edit Blog Post' : 'Create Blog Post'}
+              </h3>
+              
+              {!editingId && (
+                <div className="flex items-center gap-2 bg-pink-50 p-2 rounded-lg border border-pink-100">
+                  <input
+                    type="text"
+                    value={aiKeyword}
+                    onChange={(e) => setAiKeyword(e.target.value)}
+                    placeholder="Enter keyword or topic..."
+                    className="px-3 py-1.5 border border-pink-200 rounded text-sm w-48 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                    disabled={isGenerating}
+                  />
+                  <button
+                    type="button"
+                    onClick={generateWithAI}
+                    disabled={isGenerating || !aiKeyword.trim()}
+                    className="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 disabled:opacity-60 text-white rounded text-sm font-medium inline-flex items-center gap-1"
+                  >
+                    {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '✨ AI Generate'}
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="md:col-span-2">
-              <label className="text-xs text-gray-600 block mb-1">Upload image from local</label>
-              <label
-                className={`w-full flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg text-sm ${
-                  uploadingImage
-                    ? 'border-gray-300 text-gray-400 cursor-not-allowed'
-                    : 'border-gray-300 text-gray-700 hover:border-pink-400 cursor-pointer'
-                }`}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input
+                value={form.title}
+                onChange={(e) => onTitleChange(e.target.value)}
+                placeholder="Title"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+              />
+              <input
+                value={form.slug}
+                onChange={(e) => setForm((prev) => ({ ...prev, slug: toSlug(e.target.value) }))}
+                placeholder="Slug (auto-generated)"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+              />
+              <input
+                value={form.cover_image}
+                onChange={(e) => setForm((prev) => ({ ...prev, cover_image: e.target.value }))}
+                placeholder="Cover image URL"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-pink-300"
+              />
+              <div className="md:col-span-2 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, cover_image: '' }))}
+                  className="text-xs text-gray-600 underline hover:text-gray-900"
+                >
+                  Clear cover URL
+                </button>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs text-gray-600 block mb-1">Upload image from local</label>
+                <label
+                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg text-sm ${
+                    uploadingImage
+                      ? 'border-gray-300 text-gray-400 cursor-not-allowed'
+                      : 'border-gray-300 text-gray-700 hover:border-pink-400 cursor-pointer'
+                  }`}
+                >
+                  {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploadingImage ? 'Uploading image...' : 'Choose image from computer'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                    onChange={(e) => void onLocalImageSelect(e)}
+                    disabled={uploadingImage}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Allowed: JPG, PNG, WEBP, GIF up to 10MB. Bucket: {BlogService.BLOG_IMAGES_BUCKET}
+                </p>
+              </div>
+              <textarea
+                value={form.excerpt}
+                onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
+                placeholder="Short excerpt"
+                rows={2}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-pink-300"
+              />
+              <textarea
+                value={form.content}
+                onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
+                placeholder="Full blog content"
+                rows={12}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-pink-300 font-mono"
+              />
+              <input
+                value={form.tags}
+                onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))}
+                placeholder="Tags (comma separated)"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+              />
+              <select
+                value={form.status}
+                onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as BlogStatus }))}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
               >
-                {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                {uploadingImage ? 'Uploading image...' : 'Choose image from computer'}
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-                  onChange={(e) => void onLocalImageSelect(e)}
-                  disabled={uploadingImage}
-                  className="hidden"
-                />
-              </label>
-              <p className="text-[11px] text-gray-500 mt-1">
-                Allowed: JPG, PNG, WEBP, GIF up to 10MB. Bucket: {BlogService.BLOG_IMAGES_BUCKET}
-              </p>
-            </div>
-            <textarea
-              value={form.excerpt}
-              onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
-              placeholder="Short excerpt"
-              rows={2}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2"
-            />
-            <textarea
-              value={form.content}
-              onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
-              placeholder="Full blog content"
-              rows={8}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2"
-            />
-            <input
-              value={form.tags}
-              onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))}
-              placeholder="Tags (comma separated)"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <select
-              value={form.status}
-              onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as BlogStatus }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-            </select>
-            <input
-              value={form.seo_title}
-              onChange={(e) => setForm((prev) => ({ ...prev, seo_title: e.target.value }))}
-              placeholder="SEO title (optional)"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-            <input
-              value={form.seo_description}
-              onChange={(e) => setForm((prev) => ({ ...prev, seo_description: e.target.value }))}
-              placeholder="SEO description (optional)"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-
-          {form.cover_image && (
-            <div className="mt-3">
-              <p className="text-xs text-gray-600 mb-2">Cover preview</p>
-              <img
-                key={form.cover_image}
-                src={form.cover_image}
-                alt="Blog cover preview"
-                className="w-full max-w-md h-44 object-cover rounded-lg border border-gray-200"
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+              <input
+                value={form.seo_title}
+                onChange={(e) => setForm((prev) => ({ ...prev, seo_title: e.target.value }))}
+                placeholder="SEO title (optional)"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+              />
+              <input
+                value={form.seo_description}
+                onChange={(e) => setForm((prev) => ({ ...prev, seo_description: e.target.value }))}
+                placeholder="SEO description (optional)"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
               />
             </div>
-          )}
 
-          <div className="flex flex-wrap gap-2 mt-3">
-            <button
-              onClick={() => void submit()}
-              className="px-3 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 disabled:opacity-60"
-              type="button"
-              disabled={saving}
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {editingId ? 'Update Post' : 'Create Post'}
-            </button>
-            {editingId && (
-              <button
-                onClick={resetForm}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm"
-                type="button"
-              >
-                Cancel Edit
-              </button>
+            {form.cover_image && (
+              <div className="mt-3">
+                <p className="text-xs text-gray-600 mb-2">Cover preview</p>
+                <img
+                  key={form.cover_image}
+                  src={form.cover_image}
+                  alt="Blog cover preview"
+                  className="w-full max-w-md h-44 object-cover rounded-lg border border-gray-200"
+                />
+              </div>
             )}
-            <Link
-              to="/blog"
-              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm inline-flex items-center gap-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              View Public Blog
-            </Link>
+
+            <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
+              <button
+                onClick={() => void submit()}
+                className="px-3 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 disabled:opacity-60"
+                type="button"
+                disabled={saving}
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {editingId ? 'Update Post' : 'Create Post'}
+              </button>
+              {editingId && (
+                <button
+                  onClick={resetForm}
+                  className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm"
+                  type="button"
+                >
+                  Cancel Edit
+                </button>
+              )}
+              <Link
+                to="/blog"
+                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm inline-flex items-center gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Public Blog
+              </Link>
+            </div>
+          </div>
+
+          {/* Yoast SEO Analysis Sidebar */}
+          <div className="w-full xl:w-96 flex flex-col gap-4">
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm sticky top-5">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-pink-600" />
+                  SEO Analysis
+                </h3>
+                {form.focus_keyphrase ? (
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${scoreBg} ${scoreColor}`}>
+                    {scoreText}
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 border border-gray-200">
+                    No Keyphrase
+                  </span>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label className="text-xs font-medium text-gray-600 block mb-1">Focus Keyphrase</label>
+                <input
+                  value={form.focus_keyphrase}
+                  onChange={(e) => setForm((prev) => ({ ...prev, focus_keyphrase: e.target.value }))}
+                  placeholder="e.g. luxury wall art"
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                />
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Enter the primary search term you want this post to rank for.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Score indicators */}
+                <div className="flex items-center justify-between text-xs font-medium border-b border-gray-100 pb-2">
+                  <span className="flex items-center gap-1.5 text-red-600">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
+                    {errorCount} Problems
+                  </span>
+                  <span className="flex items-center gap-1.5 text-amber-600">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+                    {warningCount} Warnings
+                  </span>
+                  <span className="flex items-center gap-1.5 text-green-600">
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span>
+                    {goodCount} Good
+                  </span>
+                </div>
+
+                {/* Scrollable list of analysis points */}
+                <div className="max-h-[480px] overflow-y-auto space-y-3.5 pr-1 scrollbar-thin">
+                  {seoResults.map((result, idx) => (
+                    <div key={`seo-check-${idx}`} className="flex items-start gap-2.5 text-xs">
+                      <span className="mt-0.5 flex-shrink-0">
+                        {result.status === 'good' && <CheckCircle className="w-4 h-4 text-green-500 fill-green-50" />}
+                        {result.status === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500 fill-amber-50" />}
+                        {result.status === 'error' && <Info className="w-4 h-4 text-red-500 fill-red-50" />}
+                      </span>
+                      <div>
+                        <span className="font-semibold text-gray-800 block">{result.name}</span>
+                        <span className="text-gray-600 leading-normal">{result.message}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

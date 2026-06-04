@@ -82,10 +82,12 @@ export default function ClientShell({ children }: { children: React.ReactNode })
   const shouldHideHeader = HIDE_HEADER_PATHS.includes(pathname);
   const shouldHideFooter = isAdmin || HIDE_FOOTER_PATHS.includes(pathname);
 
+  const shouldHidePromoBar = isAdmin || HIDE_HEADER_PATHS.includes(pathname);
+
   return (
     <Providers>
       <div className={`min-h-screen pb-20 lg:pb-0 ${shellBackgroundClass(pathname)}`}>
-        <PromoBar />
+        {!shouldHidePromoBar && <PromoBar />}
         {!shouldHideHeader && <Header />}
         <BottomTabs />
         {children}

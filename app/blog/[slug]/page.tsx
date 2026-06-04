@@ -151,7 +151,10 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
       {post.excerpt && <p className="mt-5 text-base text-gray-700">{post.excerpt}</p>}
 
-      <article className="mt-6 whitespace-pre-wrap leading-7 text-gray-800">{post.content}</article>
+      <article 
+        className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold"
+        dangerouslySetInnerHTML={{ __html: post.content }}
+      />
 
       {Array.isArray(post.tags) && post.tags.length > 0 && (
         <div className="mt-6 flex flex-wrap gap-2">
