@@ -77,12 +77,6 @@ export default async function BlogPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }} />
-      <header className="mx-auto max-w-2xl rounded-2xl border border-gray-200 bg-gray-50 px-6 py-8 text-center shadow-sm">
-        <h1 className="text-3xl font-semibold text-gray-900">Lurevi Blog</h1>
-        <p className="mt-3 text-gray-700">
-          Explore luxury decor insights, style tips, and curated inspiration from the Lurevi team.
-        </p>
-      </header>
 
       <BlogList posts={posts} />
     </main>

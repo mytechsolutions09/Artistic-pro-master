@@ -107,6 +107,8 @@ const BlogAdmin: React.FC = () => {
       seo_description: post.seo_description || '',
       focus_keyphrase: post.tags?.[0] || '',
     });
+    setActiveSubTab('posts');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const submit = async () => {
