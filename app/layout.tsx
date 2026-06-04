@@ -1,0 +1,111 @@
+import type { Metadata } from 'next';
+import Script from 'next/script';
+import ClientShell from './client-shell';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: {
+    default: 'Lurevi | Luxury That Stays With You',
+    template: '%s | Lurevi',
+  },
+  description:
+    'Discover curated digital art, wall prints, and premium collections at Lurevi. Explore categories, browse unique pieces, and shop online.',
+  metadataBase: new URL('https://lurevi.in'),
+  // Do not set alternates.canonical here — it merges into every route and makes
+  // non-home URLs declare the homepage as canonical ("Alternate page with proper
+  // canonical tag" in Search Console). Set canonical per page or in segment layouts.
+  alternates: {
+    languages: {
+      'en-IN': 'https://lurevi.in',
+      'x-default': 'https://lurevi.in',
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    siteName: 'Lurevi',
+    title: 'Lurevi | Luxury That Stays With You',
+    description:
+      'Discover curated digital art, wall prints, and premium collections at Lurevi.',
+    url: 'https://lurevi.in',
+    images: [{ url: '/logo.png', width: 600, height: 200, alt: 'Lurevi' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Lurevi | Luxury That Stays With You',
+    description:
+      'Discover curated digital art, wall prints, and premium collections at Lurevi.',
+    images: ['/logo.png'],
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en-IN" className="bg-[#ffffff]">
+      <head>
+        {/* Meta Domain Verification */}
+        <meta name="facebook-domain-verification" content="bp9lo0nxdrgb7znneqsp73r4zyf6or" />
+        {/* Fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Dancing+Script:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'Organization',
+                  '@id': 'https://lurevi.in/#organization',
+                  name: 'Lurevi',
+                  url: 'https://lurevi.in',
+                  logo: 'https://lurevi.in/logo.png',
+                },
+                {
+                  '@type': 'WebSite',
+                  '@id': 'https://lurevi.in/#website',
+                  url: 'https://lurevi.in',
+                  name: 'Lurevi',
+                  publisher: { '@id': 'https://lurevi.in/#organization' },
+                  inLanguage: 'en-IN',
+                  potentialAction: {
+                    '@type': 'SearchAction',
+                    target: 'https://lurevi.in/search?q={search_term_string}',
+                    'query-input': 'required name=search_term_string',
+                  },
+                },
+              ],
+            }),
+          }}
+        />
+        {/* Google Analytics */}
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-96M0P2Z867" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-96M0P2Z867');
+          `}
+        </Script>
+      </head>
+      <body className="min-h-screen bg-[#ffffff] text-gray-900 antialiased">
+        <ClientShell>{children}</ClientShell>
+        {/* Defer Meta Pixel until after window.onload */}
+        <Script id="fb-pixel" strategy="lazyOnload">
+          {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.defer=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1905415970060955');fbq('track','PageView');`}
+        </Script>
+      </body>
+    </html>
+  );
+}

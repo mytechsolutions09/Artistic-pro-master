@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Delhivery Pickup API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #e91e63;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #c2185b;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Delhivery Pickup API</h1>
+    
+    <div class="section">
+        <h2>Pickup Request Configuration</h2>
+        
+        <label>Warehouse Name:</label>
+        <input type="text" id="warehouse" value="Lurevi - Janak puri" placeholder="Enter warehouse name">
+        
+        <label>Pickup Date:</label>
+        <input type="date" id="pickupDate" value="">
+        
+        <label>Pickup Time:</label>
+        <input type="time" id="pickupTime" value="10:00">
+        
+        <label>Expected Package Count:</label>
+        <input type="number" id="packageCount" value="1" min="1">
+        
+        <br><br>
+        <button onclick="testPickup()">🚀 Test Pickup Request</button>
+    </div>
+    
+    <div class="section" id="results" style="display: none;">
+        <h2>Results</h2>
+        <div id="resultContent"></div>
+    </div>
+
+    <script>
+        // Set default date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('pickupDate').value = tomorrow.toISOString().split('T')[0];
+
+        async function testPickup() {
+            const resultsDiv = document.getElementById('results');
+            const resultContent = document.getElementById('resultContent');
+            
+            resultsDiv.style.display = 'block';
+            resultContent.innerHTML = '<p>⏳ Testing...</p>';
+            
+            // Get values from form
+            const warehouse = document.getElementById('warehouse').value;
+            const pickupDate = document.getElementById('pickupDate').value;
+            let pickupTime = document.getElementById('pickupTime').value;
+            const packageCount = parseInt(document.getElementById('packageCount').value);
+            
+            // Convert time to HH:MM:SS if needed
+            if (pickupTime.length === 5) {
+                pickupTime = pickupTime + ':00';
+            }
+            
+            const payload = {
+                action: '/fm/request/new/',
+                method: 'POST',
+                endpoint: 'main',
+                data: {
+                    warehouse_name: warehouse,
+                    pickup_date: pickupDate,
+                    pickup_time: pickupTime,
+                    quantity: packageCount
+                }
+            };
+            
+            console.log('📤 Sending request:', payload);
+            
+            try {
+                const response = await fetch('https://varduayfdqivaofymfov.supabase.co/functions/v1/delhivery-api', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmR1YXlmZHFpdmFvZnltZm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg0NjE1ODMsImV4cCI6MjA0NDAzNzU4M30.sqQ1EGshZgGI4lD6CIkWRGZeglQP8_2YvxgUc_ruwlw'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                console.log('📥 Response:', result);
+                console.log('📊 Status:', response.status);
+                
+                let html = '<h3>Request Sent:</h3>';
+                html += '<pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+                
+                html += '<h3>Response Status: ' + response.status + '</h3>';
+                html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                
+                if (result.success) {
+                    html += '<p class="success">✅ SUCCESS! Pickup created!</p>';
+                    if (result.data && result.data.pickup_id) {
+                        html += '<p>Pickup ID: <strong>' + result.data.pickup_id + '</strong></p>';
+                    }
+                } else {
+                    html += '<p class="error">❌ FAILED</p>';
+                    html += '<h3>Error Analysis:</h3>';
+                    html += '<p><strong>Status Code:</strong> ' + result.status + '</p>';
+                    html += '<p><strong>Status Text:</strong> ' + result.statusText + '</p>';
+                    
+                    if (result.data) {
+                        html += '<h3>Delhivery Response:</h3>';
+                        html += '<pre>' + JSON.stringify(result.data, null, 2) + '</pre>';
+                        
+                        // Parse common errors
+                        if (result.status === 400) {
+                            html += '<p class="error">❌ Bad Request - Invalid data format or missing required fields</p>';
+                        } else if (result.status === 401) {
+                            html += '<p class="error">❌ Unauthorized - Invalid API token</p>';
+                        } else if (result.status === 403) {
+                            html += '<p class="error">❌ Forbidden - Token does not have permission for this action</p>';
+                        } else if (result.status === 404) {
+                            html += '<p class="error">❌ Not Found - Warehouse does not exist in Delhivery</p>';
+                        }
+                    }
+                    
+                    html += '<h3>💡 Troubleshooting:</h3>';
+                    html += '<ul>';
+                    html += '<li>Check if warehouse "' + warehouse + '" is registered in Delhivery</li>';
+                    html += '<li>Verify API token has pickup creation permission</li>';
+                    html += '<li>Ensure you\'re using the correct API environment (dev vs prod)</li>';
+                    html += '<li>Contact Delhivery support if warehouse exists but API fails</li>';
+                    html += '</ul>';
+                }
+                
+                resultContent.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                resultContent.innerHTML = '<p class="error">❌ Network Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
+

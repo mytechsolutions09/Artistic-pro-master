@@ -1,0 +1,470 @@
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { RotateCcw, Clock, CheckCircle, XCircle, AlertCircle, Package, Truck, MapPin, Calendar, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { ReturnService, ReturnRequestData } from '../services/returnService';
+import { delhiveryService, ReturnTrackingInfo } from '../services/DelhiveryService';
+import { buildSequenceMap, formatSequenceNumber } from '../utils/sequenceNumberUtils';
+
+interface ReturnRequestsListProps {
+  customerEmail: string;
+}
+
+const ReturnRequestsList: React.FC<ReturnRequestsListProps> = ({ customerEmail }) => {
+  const [returns, setReturns] = useState<ReturnRequestData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [trackingInfo, setTrackingInfo] = useState<Record<string, ReturnTrackingInfo>>({});
+  const [loadingTracking, setLoadingTracking] = useState<Record<string, boolean>>({});
+  const [expandedReturns, setExpandedReturns] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    loadReturns();
+  }, [customerEmail]);
+
+  const loadReturns = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading returns for customer:', customerEmail);
+      const returnRequests = await ReturnService.getCustomerReturns(customerEmail);
+      console.log('Found return requests:', returnRequests);
+      console.log('Return statuses:', returnRequests.map(r => ({ id: r.id, status: r.status, product: r.product_title })));
+      setReturns(returnRequests);
+      
+      // Auto-load tracking info for approved/processing returns
+      returnRequests.forEach(returnRequest => {
+        if (returnRequest.status === 'approved' || returnRequest.status === 'processing') {
+          loadTrackingInfo(returnRequest.id);
+        }
+      });
+    } catch (error) {
+      console.error('Error loading returns:', error);
+      setError('Failed to load return requests');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadTrackingInfo = async (returnId: string) => {
+    try {
+      setLoadingTracking(prev => ({ ...prev, [returnId]: true }));
+      
+      // Extract tracking number from admin notes
+      const returnRequest = returns.find(r => r.id === returnId);
+      if (!returnRequest?.admin_notes) return;
+      
+      const trackingMatch = returnRequest.admin_notes.match(/tracking: ([A-Z0-9]+)/i);
+      if (!trackingMatch) return;
+      
+      const trackingNumber = trackingMatch[1];
+      const tracking = await delhiveryService.trackReturnPickup(trackingNumber);
+      
+      setTrackingInfo(prev => ({ ...prev, [returnId]: tracking }));
+    } catch (error) {
+      console.error('Error loading tracking info:', error);
+    } finally {
+      setLoadingTracking(prev => ({ ...prev, [returnId]: false }));
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'Pending Review';
+      case 'approved':
+        return 'Approved - Pickup Scheduled';
+      case 'rejected':
+        return 'Rejected';
+      case 'processing':
+        return 'Processing Return';
+      case 'completed':
+        return 'Return Completed';
+      default:
+        return status;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR'
+    }).format(amount);
+  };
+
+  const toggleAccordion = (returnId: string) => {
+    setExpandedReturns(prev => ({
+      ...prev,
+      [returnId]: !prev[returnId]
+    }));
+  };
+
+  // Keep hooks before any conditional return to avoid hook order mismatch
+  const returnSequenceMap = React.useMemo(
+    () =>
+      buildSequenceMap(
+        returns.map((item) => ({
+          id: item.id,
+          createdAt: item.requested_at,
+        }))
+      ),
+    [returns]
+  );
+
+  const orderSequenceMap = React.useMemo(() => {
+    const orderFirstSeen: Record<string, string> = {};
+
+    returns.forEach((item) => {
+      const existing = orderFirstSeen[item.order_id];
+      if (!existing || new Date(item.requested_at).getTime() < new Date(existing).getTime()) {
+        orderFirstSeen[item.order_id] = item.requested_at;
+      }
+    });
+
+    return buildSequenceMap(
+      Object.entries(orderFirstSeen).map(([id, createdAt]) => ({
+        id,
+        createdAt,
+      }))
+    );
+  }, [returns]);
+
+  // Count returns by status
+  const statusCounts = returns.reduce((acc, returnRequest) => {
+    acc[returnRequest.status] = (acc[returnRequest.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+        <span className="ml-2 text-gray-600 font-sans font-normal">Loading return requests...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="flex items-center">
+          <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+          <span className="text-red-700 font-sans font-normal">{error}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (returns.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <RotateCcw className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2 font-sans font-normal">No Return Requests</h3>
+        <p className="text-gray-600 font-sans font-normal">You haven't requested any returns yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 font-['Inter']">
+      {/* Return Status Summary */}
+      {returns.length > 0 && (
+        <div className="bg-white rounded-lg p-3 mb-4 border border-gray-200">
+          <h4 className="text-sm font-medium text-gray-900 mb-2 font-sans font-normal">Return Summary</h4>
+          <div className="flex flex-wrap gap-3 text-xs">
+            {statusCounts.pending && (
+              <span className="flex items-center space-x-1">
+                <Clock className="w-3 h-3 text-yellow-500" />
+                <span className="text-black font-sans font-normal">{statusCounts.pending} Pending</span>
+              </span>
+            )}
+            {statusCounts.approved && (
+              <span className="flex items-center space-x-1">
+                <CheckCircle className="w-3 h-3 text-green-500" />
+                <span className="text-black font-sans font-normal">{statusCounts.approved} Approved</span>
+              </span>
+            )}
+            {statusCounts.processing && (
+              <span className="flex items-center space-x-1">
+                <Package className="w-3 h-3 text-blue-500" />
+                <span className="text-black font-sans font-normal">{statusCounts.processing} Processing</span>
+              </span>
+            )}
+            {statusCounts.completed && (
+              <span className="flex items-center space-x-1">
+                <CheckCircle className="w-3 h-3 text-green-600" />
+                <span className="text-green-600 font-sans font-normal">{statusCounts.completed} Completed</span>
+              </span>
+            )}
+            {statusCounts.rejected && (
+              <span className="flex items-center space-x-1">
+                <XCircle className="w-3 h-3 text-red-500" />
+                <span className="text-black font-sans font-normal">{statusCounts.rejected} Rejected</span>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {returns.map((returnRequest) => {
+        const isExpanded = expandedReturns[returnRequest.id];
+        return (
+          <div key={returnRequest.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm transition-shadow duration-200">
+            {/* Accordion Header */}
+            <button
+              onClick={() => toggleAccordion(returnRequest.id)}
+              className="w-full p-4 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-inset"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 font-sans font-normal">
+                    Return #{formatSequenceNumber('RET', returnSequenceMap[returnRequest.id])}
+                  </h3>
+                  <p className="text-sm text-gray-600 font-sans font-normal">
+                    Order #{formatSequenceNumber('ORD', orderSequenceMap[returnRequest.order_id])} • {returnRequest.product_title} • {formatDate(returnRequest.requested_at)}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium font-sans font-normal ${getStatusColor(returnRequest.status)}`}>
+                    <span className="font-sans font-normal">{getStatusText(returnRequest.status)}</span>
+                  </span>
+                  {isExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+              </div>
+            </button>
+
+            {/* Accordion Content */}
+            {isExpanded && (
+              <div className="px-4 pb-4 border-t border-gray-100">
+                <div className="pt-4 space-y-4">
+
+                  {/* Product Details */}
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 className="font-medium text-gray-900 mb-2 font-sans font-normal">Product Details</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600 font-sans font-normal">Quantity:</span>
+                        <span className="ml-1 font-medium font-sans font-normal">{returnRequest.quantity}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 font-sans font-normal">Unit Price:</span>
+                        <span className="ml-1 font-medium font-sans font-normal">{formatCurrency(returnRequest.unit_price)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 font-sans font-normal">Total:</span>
+                        <span className="ml-1 font-medium font-sans font-normal">{formatCurrency(returnRequest.total_price)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 font-sans font-normal">Reason:</span>
+                        <span className="ml-1 font-medium font-sans font-normal">{returnRequest.reason}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Notes */}
+                  {returnRequest.customer_notes && (
+                    <div>
+                      <h5 className="text-sm font-medium text-black mb-1 font-sans font-normal">Your Notes:</h5>
+                      <p className="text-sm text-black bg-white rounded p-3 border border-gray-200 font-sans font-normal">{returnRequest.customer_notes}</p>
+                    </div>
+                  )}
+
+                  {/* Admin Notes */}
+                  {returnRequest.admin_notes && (
+                    <div>
+                      <h5 className="text-sm font-medium text-gray-700 mb-1 font-sans font-normal">Admin Response:</h5>
+                      <p className="text-sm text-gray-600 bg-white rounded p-3 border border-gray-200 font-sans font-normal">{returnRequest.admin_notes}</p>
+                    </div>
+                  )}
+
+                  {/* Pickup Tracking */}
+                  {(returnRequest.status === 'approved' || returnRequest.status === 'processing') && (
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="text-sm font-medium text-black flex items-center font-sans font-normal">
+                          <Truck className="w-4 h-4 mr-1" />
+                          Pickup Tracking
+                        </h5>
+                        <button
+                          onClick={() => loadTrackingInfo(returnRequest.id)}
+                          disabled={loadingTracking[returnRequest.id]}
+                          className="text-black hover:text-gray-700 text-sm flex items-center font-sans font-normal"
+                        >
+                          <RefreshCw className={`w-3 h-3 mr-1 ${loadingTracking[returnRequest.id] ? 'animate-spin' : ''}`} />
+                          Refresh
+                        </button>
+                      </div>
+              
+                      {loadingTracking[returnRequest.id] ? (
+                        <div className="flex items-center text-sm text-black font-sans font-normal">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                          Loading tracking information...
+                        </div>
+                      ) : trackingInfo[returnRequest.id] ? (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                            <div className="flex items-center">
+                              <MapPin className="w-4 h-4 text-purple-600 mr-2" />
+                              <span className="text-black font-sans font-normal">
+                                <strong className="font-sans font-normal">Status:</strong> {trackingInfo[returnRequest.id].status.replace('_', ' ').toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex items-center">
+                              <Truck className="w-4 h-4 text-gray-600 mr-2" />
+                              <span className="text-black font-sans font-normal">
+                                <strong className="font-sans font-normal">Location:</strong> {trackingInfo[returnRequest.id].current_location}
+                              </span>
+                            </div>
+                            {trackingInfo[returnRequest.id].estimated_delivery_date && (
+                              <div className="flex items-center">
+                                <Calendar className="w-4 h-4 text-gray-600 mr-2" />
+                                <span className="text-black font-sans font-normal">
+                                  <strong className="font-sans font-normal">ETA:</strong> {new Date(trackingInfo[returnRequest.id].estimated_delivery_date!).toLocaleDateString('en-IN')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Tracking History */}
+                          {trackingInfo[returnRequest.id].tracking_history && trackingInfo[returnRequest.id].tracking_history.length > 0 && (
+                            <div className="mt-3">
+                              <h6 className="text-xs font-medium text-black mb-2 font-sans font-normal">Tracking History:</h6>
+                              <div className="space-y-2">
+                                {trackingInfo[returnRequest.id].tracking_history.map((history, index) => (
+                                  <div key={index} className="bg-white rounded p-2 text-xs border border-gray-200">
+                                    <div className="flex justify-between items-start">
+                                      <div>
+                                        <span className="font-medium text-black font-sans font-normal">{history.status}</span>
+                                        <p className="text-black font-sans font-normal">{history.description}</p>
+                                      </div>
+                                      <span className="text-gray-600 text-right font-sans font-normal">
+                                        {new Date(history.timestamp).toLocaleDateString('en-IN', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </span>
+                                    </div>
+                                    <div className="text-gray-600 mt-1 font-sans font-normal">
+                                      📍 {history.location}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-purple-600 font-sans font-normal">
+                          <p className="font-sans font-normal">Pickup tracking information will be available once the pickup is scheduled.</p>
+                          <p className="text-xs text-purple-500 mt-1 font-sans font-normal">Contact support if you need immediate assistance.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Refund Information */}
+                  {returnRequest.refund_amount && (
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <h5 className="text-sm font-medium text-black mb-2 font-sans font-normal">Refund Information</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-black font-sans font-normal">Refund Amount:</span>
+                          <span className="ml-1 font-medium text-black font-sans font-normal">{formatCurrency(returnRequest.refund_amount)}</span>
+                        </div>
+                        {returnRequest.refund_method && (
+                          <div>
+                            <span className="text-black font-sans font-normal">Refund Method:</span>
+                            <span className="ml-1 font-medium text-black font-sans font-normal">{returnRequest.refund_method}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Processing Date */}
+                  {returnRequest.processed_at && (
+                    <div className="text-sm text-black font-sans font-normal">
+                      <span className="font-medium font-sans font-normal">Processed on:</span> {formatDate(returnRequest.processed_at)}
+                    </div>
+                  )}
+
+                  {/* Pending Review Status */}
+                  {returnRequest.status === 'pending' && (
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <h5 className="text-sm font-medium text-black mb-2 flex items-center font-sans font-normal">
+                        <Clock className="w-4 h-4 mr-1" />
+                        Under Review
+                      </h5>
+                      <div className="space-y-2 text-sm text-black font-sans font-normal">
+                        <p className="font-sans font-normal">Your return request is being reviewed by our team.</p>
+                        <p className="font-sans font-normal">We'll notify you via email once your request is approved or if we need additional information.</p>
+                        <p className="text-xs text-gray-600 mt-2 font-sans font-normal">
+                          Expected review time: 1-2 business days
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Next Steps */}
+                  {returnRequest.status === 'approved' && (
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <h5 className="text-sm font-medium text-black mb-2 font-sans font-normal">Next Steps:</h5>
+                      <div className="flex items-center space-x-4 text-sm text-black font-sans font-normal">
+                        <div className="flex items-center">
+                          <Package className="w-4 h-4 mr-1" />
+                          <span className="font-sans font-normal">Package your item securely</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Truck className="w-4 h-4 mr-1" />
+                          <span className="font-sans font-normal">We'll arrange pickup</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default ReturnRequestsList;
+
+
+
+

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# LLM guidance files
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+Sitemap: https://lurevi.in/sitemap.xml

@@ -1,0 +1,32 @@
+Subject: API Token Missing Pickup Permissions - Urgent
+
+Hello Delhivery Support Team,
+
+I need help enabling pickup permissions for my API token.
+
+CURRENT SITUATION:
+- My API token works perfectly for:
+  ✅ Creating shipments (/api/cmu/create.json)
+  ✅ Generating waybills (/waybill/api/bulk/json/)
+  ✅ Tracking shipments (/api/packages/json/)
+
+- But returns 401 Unauthorized for:
+  ❌ Pickup requests (/fm/request/new/)
+
+WAREHOUSE DETAILS:
+- Warehouse Name: "Lurevi - Janak puri"
+- Warehouse is registered and active in Delhivery dashboard
+- Warehouse name matches exactly (case-sensitive) with my system
+
+REQUEST:
+Please enable pickup/CMU permissions for my API token so I can schedule pickup requests.
+
+My account details:
+- Account Email: [YOUR EMAIL]
+- Account Name: [YOUR NAME]
+- Account ID: [YOUR ACCOUNT ID IF AVAILABLE]
+
+Thank you for your assistance!
+
+Best regards,
+[YOUR NAME]

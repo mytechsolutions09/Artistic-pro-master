@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Delhivery API</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Test Delhivery Edge Function</h1>
+    
+    <div>
+        <h2>Test 1: Generate Waybills</h2>
+        <button onclick="testGenerateWaybills()">Generate 1 Waybill</button>
+        <pre id="waybill-result"></pre>
+    </div>
+    
+    <div>
+        <h2>Test 2: Check Pin Code</h2>
+        <input type="text" id="pincode" placeholder="Enter pincode (e.g., 110018)" value="110018">
+        <button onclick="testPinCode()">Check Pin Code</button>
+        <pre id="pincode-result"></pre>
+    </div>
+
+    <script type="module">
+        // Import Supabase client
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        
+        // Replace with your Supabase URL and anon key
+        const supabaseUrl = 'https://varduayfdqivaofymfov.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhcmR1YXlmZHFpdmFvZnltdm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ4MDYzMjEsImV4cCI6MjA0MDM4MjMyMX0.00d1947cf691a3cc1a8c38758c87729d010eb99bf537b90724cc4f23dbfc6ad2';
+        
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        window.testGenerateWaybills = async function() {
+            const resultEl = document.getElementById('waybill-result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                console.log('🔄 Testing waybill generation...');
+                const { data, error } = await supabase.functions.invoke('delhivery-api', {
+                    body: {
+                        action: '/waybill/api/bulk/json/?count=1',
+                        method: 'GET',
+                        endpoint: 'track'  // Changed to 'track' endpoint
+                    }
+                });
+                
+                console.log('📥 Response:', { data, error });
+                
+                if (error) {
+                    resultEl.innerHTML = `<span class="error">Error: ${JSON.stringify(error, null, 2)}</span>`;
+                } else if (data && !data.success) {
+                    resultEl.innerHTML = `<span class="error">API Error (${data.status}): ${JSON.stringify(data, null, 2)}</span>`;
+                } else {
+                    resultEl.innerHTML = `<span class="success">Success!</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (err) {
+                resultEl.innerHTML = `<span class="error">Exception: ${err.message}</span>\n${err.stack}`;
+            }
+        };
+        
+        window.testPinCode = async function() {
+            const pincode = document.getElementById('pincode').value;
+            const resultEl = document.getElementById('pincode-result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                const { data, error } = await supabase.functions.invoke('delhivery-api', {
+                    body: {
+                        action: `/c/api/pin-codes/json/?filter_codes=${pincode}`,
+                        method: 'GET',
+                        endpoint: 'main'
+                    }
+                });
+                
+                if (error) {
+                    resultEl.innerHTML = `<span class="error">Error: ${JSON.stringify(error, null, 2)}</span>`;
+                } else {
+                    resultEl.innerHTML = `<span class="success">Success!</span>\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (err) {
+                resultEl.innerHTML = `<span class="error">Exception: ${err.message}</span>\n${err.stack}`;
+            }
+        };
+    </script>
+</body>
+</html>
