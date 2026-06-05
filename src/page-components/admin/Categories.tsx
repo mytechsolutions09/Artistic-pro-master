@@ -14,6 +14,7 @@ const Categories: React.FC = () => {
   // const { formatCurrency, currencySettings } = useCurrency();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -32,6 +33,9 @@ const Categories: React.FC = () => {
       setLoading(true);
       const data = await categoryService.getAllCategories();
       setCategories(data || []);
+      
+      const count = await categoryService.getUniqueProductCount();
+      setTotalProducts(count);
     } catch (error) {
       console.error('Error loading categories:', error);
     } finally {
@@ -137,7 +141,7 @@ const Categories: React.FC = () => {
     total: categories.length,
     featured: categories.filter(c => c.featured).length,
     withImages: categories.filter(c => c.image).length,
-    totalProducts: categories.reduce((sum, c) => sum + (c.count || 0), 0)
+    totalProducts: totalProducts
   };
 
   return (

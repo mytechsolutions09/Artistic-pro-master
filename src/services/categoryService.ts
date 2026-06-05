@@ -343,6 +343,22 @@ class CategoryService {
     }
   }
 
+  // Get total unique active products
+  async getUniqueProductCount(): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+        
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error fetching unique product count:', error);
+      return 0;
+    }
+  }
+
   // Get category by ID
   async getCategoryById(id: string): Promise<Category | null> {
     try {

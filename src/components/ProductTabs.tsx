@@ -43,7 +43,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({ tabs, activeTab, onTabChange 
                 />
               </button>
 
-              {isOpen && <div className="px-3 pb-3">{tab.content}</div>}
+              {isOpen && <div className="px-3 pb-3 [&_span]:!text-xs [&_p]:!text-xs">{tab.content}</div>}
             </div>
           );
         })}

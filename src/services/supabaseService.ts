@@ -820,13 +820,25 @@ export class ProductService {
       const totalDownloads = products.reduce((sum, p) => sum + p.downloads, 0);
       const avgRating = products.length > 0 ? products.reduce((sum, p) => sum + p.rating, 0) / products.length : 0;
 
+      // Fetch user stats for artists count
+      let totalArtists = 0;
+      try {
+        const userStats = await UserService.getUserStats();
+        totalArtists = userStats?.artists || 0;
+      } catch (err) {
+        console.warn('Could not fetch user stats for artists count:', err);
+      }
+
       return {
         total: products.length,
+        totalProducts: products.length,
+        totalArtists,
         active: products.filter(p => p.status === 'active').length,
         featured: products.filter(p => p.featured).length,
         totalRevenue,
         totalDownloads,
-        avgRating
+        avgRating,
+        averageRating: avgRating
       };
     } catch (error) {
       console.error('Error fetching product stats:', error);
