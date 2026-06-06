@@ -276,8 +276,8 @@ const MarketingSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Google Analytics (Coming Soon) */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm opacity-60">
+      {/* Google Analytics */}
+      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-orange-100 rounded-lg">
@@ -288,9 +288,18 @@ const MarketingSettings: React.FC = () => {
               <p className="text-xs text-gray-500">Website traffic and user insights</p>
             </div>
           </div>
-          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-            Coming Soon
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
+              settings.google_analytics_enabled 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-gray-100 text-gray-700'
+            }`}>
+              <Eye className="w-3 h-3" />
+              <span>
+                {settings.google_analytics_enabled ? 'Active' : 'Inactive'}
+              </span>
+            </span>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -304,17 +313,32 @@ const MarketingSettings: React.FC = () => {
               onChange={(e) => setSettings({ ...settings, google_analytics_id: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
               placeholder="G-XXXXXXXXXX"
-              disabled
             />
             <p className="text-xs text-gray-500 mt-1">
               Google Analytics 4 (GA4) tracking ID
             </p>
           </div>
+
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div>
+              <p className="text-sm font-medium text-gray-700">Enable Google Analytics</p>
+              <p className="text-xs text-gray-500">Track page views and behavior</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.google_analytics_enabled}
+                onChange={(e) => setSettings({ ...settings, google_analytics_enabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+            </label>
+          </div>
         </div>
       </div>
 
-      {/* Google Tag Manager (Coming Soon) */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm opacity-60">
+      {/* Google Tag Manager */}
+      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -325,9 +349,18 @@ const MarketingSettings: React.FC = () => {
               <p className="text-xs text-gray-500">Manage marketing tags without code changes</p>
             </div>
           </div>
-          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-            Coming Soon
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
+              settings.google_tag_manager_enabled 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-gray-100 text-gray-700'
+            }`}>
+              <Eye className="w-3 h-3" />
+              <span>
+                {settings.google_tag_manager_enabled ? 'Active' : 'Inactive'}
+              </span>
+            </span>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -341,11 +374,26 @@ const MarketingSettings: React.FC = () => {
               onChange={(e) => setSettings({ ...settings, google_tag_manager_id: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               placeholder="GTM-XXXXXXX"
-              disabled
             />
             <p className="text-xs text-gray-500 mt-1">
               Your GTM container ID
             </p>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div>
+              <p className="text-sm font-medium text-gray-700">Enable Google Tag Manager</p>
+              <p className="text-xs text-gray-500">Deploy tags automatically</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.google_tag_manager_enabled}
+                onChange={(e) => setSettings({ ...settings, google_tag_manager_enabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+            </label>
           </div>
         </div>
       </div>

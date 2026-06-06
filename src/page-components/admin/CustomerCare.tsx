@@ -15,10 +15,12 @@ import {
   Mail,
   Calendar,
   RefreshCw,
-  X
+  X,
+  Send
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { ContactMessageService, ContactMessage, ContactMessageFilters } from '../../services/contactMessageService';
+import EmailService from '../../services/emailService';
 
 const inputCls =
   'h-8 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
@@ -28,6 +30,9 @@ const CustomerCare: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const [replySuccess, setReplySuccess] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<ContactMessageFilters>({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -130,6 +135,58 @@ const CustomerCare: React.FC = () => {
       } catch (error) {
         console.error('Error deleting message:', error);
       }
+    }
+  };
+
+  const handleSendReply = async () => {
+    if (!selectedMessage || !replyText.trim()) return;
+    
+    setSendingReply(true);
+    try {
+      const emailResult = await EmailService.sendEmail({
+        to: { email: selectedMessage.email, name: selectedMessage.name },
+        subject: `Re: ${selectedMessage.subject}`,
+        text: replyText,
+        html: `
+          <p>Dear ${selectedMessage.name},</p>
+          <p>${replyText.replace(/\\n/g, '<br>')}</p>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
+          <p style="color: #666; font-size: 12px;">
+            <strong>Your original message:</strong><br>
+            ${selectedMessage.message.replace(/\\n/g, '<br>')}
+          </p>
+        `
+      });
+
+      if (emailResult.success) {
+        // Update database with response
+        await ContactMessageService.updateMessage(selectedMessage.id!, {
+          response: replyText,
+          response_sent_at: new Date().toISOString(),
+          status: 'resolved'
+        });
+
+        setReplySuccess(true);
+        setTimeout(() => setReplySuccess(false), 3000);
+        
+        await loadMessages({ skipLoading: true });
+        await loadStats();
+        
+        setSelectedMessage(prev => prev ? {
+          ...prev,
+          response: replyText,
+          response_sent_at: new Date().toISOString(),
+          status: 'resolved'
+        } : null);
+        setReplyText('');
+      } else {
+        alert('Failed to send email. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      alert('An error occurred while sending the reply.');
+    } finally {
+      setSendingReply(false);
     }
   };
 
@@ -458,6 +515,54 @@ const CustomerCare: React.FC = () => {
                   <div className="max-h-48 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-2">
                     <p className="whitespace-pre-wrap text-xs text-gray-900">{selectedMessage.message}</p>
                   </div>
+                </div>
+
+                {/* Reply Section */}
+                <div className="border-t border-gray-100 pt-3">
+                  <p className="mb-1 text-[11px] font-medium text-gray-600">Reply to Customer</p>
+                  
+                  {selectedMessage.response ? (
+                    <div className="rounded-md border border-green-200 bg-green-50 p-2">
+                      <p className="mb-1 text-[10px] font-medium text-green-800">
+                        Replied on {new Date(selectedMessage.response_sent_at!).toLocaleDateString()}
+                      </p>
+                      <p className="whitespace-pre-wrap text-xs text-green-900">{selectedMessage.response}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Type your reply here..."
+                        className="w-full rounded-md border border-gray-200 p-2 text-xs focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 min-h-[100px]"
+                      />
+                      <div className="flex items-center justify-between">
+                        {replySuccess ? (
+                          <span className="text-xs text-green-600 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            Reply sent successfully!
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500">
+                            This will send an email directly to the customer.
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleSendReply}
+                          disabled={sendingReply || !replyText.trim()}
+                          className="inline-flex items-center gap-1 rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                        >
+                          {sendingReply ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="h-3.5 w-3.5" />
+                          )}
+                          Send Reply
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">

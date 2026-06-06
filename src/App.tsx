@@ -14,6 +14,7 @@ import Footer from './components/Footer';
 import BottomTabs from './components/BottomTabs';
 import PromoBar from './components/PromoBar';
 import GlobalSeoManager from './components/GlobalSeoManager';
+import MarketingScripts from './components/MarketingScripts';
 import StructuredData from './components/StructuredData';
 import Homepage from './pages/Homepage';
 import CategoriesPage from './pages/CategoriesPage';
@@ -94,6 +95,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
       <GlobalSeoManager />
+      <MarketingScripts />
       <StructuredData />
       <PromoBar />
       {!shouldHideHeader && <Header />}

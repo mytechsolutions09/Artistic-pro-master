@@ -1728,7 +1728,7 @@ const Marketing: React.FC = () => {
           </div>
         </div>
 
-        <div className={`${cardCls} opacity-60`}>
+        <div className={cardCls}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-2">
             <div className="flex items-start gap-2">
               <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
@@ -1739,7 +1739,16 @@ const Marketing: React.FC = () => {
                 <p className="text-[11px] text-gray-500">Traffic &amp; behavior (GA4)</p>
               </div>
             </div>
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Soon</span>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                settings.google_analytics_enabled
+                  ? 'bg-green-50 text-green-800'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              <Eye className="h-3 w-3" />
+              {settings.google_analytics_enabled ? 'Active' : 'Inactive'}
+            </span>
           </div>
           <div>
             <label className={labelCls}>Measurement ID</label>
@@ -1747,15 +1756,30 @@ const Marketing: React.FC = () => {
               type="text"
               value={settings.google_analytics_id}
               onChange={(e) => setSettings({ ...settings, google_analytics_id: e.target.value })}
-              className={`${inputCls} opacity-80`}
+              className={inputCls}
               placeholder="G-XXXXXXXXXX"
-              disabled
             />
             <p className="mt-0.5 text-[10px] text-gray-500">GA4 measurement ID</p>
           </div>
+
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-gray-100 bg-gray-50/80 px-2.5 py-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-800">Enable Google Analytics</p>
+              <p className="text-[10px] text-gray-500">Track page views and behavior</p>
+            </div>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={settings.google_analytics_enabled}
+                onChange={(e) => setSettings({ ...settings, google_analytics_enabled: e.target.checked })}
+                className="peer sr-only"
+              />
+              <div className="relative h-5 w-9 shrink-0 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all peer-checked:bg-gray-900 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-300" />
+            </label>
+          </div>
         </div>
 
-        <div className={`${cardCls} opacity-60`}>
+        <div className={cardCls}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-2">
             <div className="flex items-start gap-2">
               <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
@@ -1766,7 +1790,16 @@ const Marketing: React.FC = () => {
                 <p className="text-[11px] text-gray-500">Tags without deploys</p>
               </div>
             </div>
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">Soon</span>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                settings.google_tag_manager_enabled
+                  ? 'bg-green-50 text-green-800'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              <Eye className="h-3 w-3" />
+              {settings.google_tag_manager_enabled ? 'Active' : 'Inactive'}
+            </span>
           </div>
           <div>
             <label className={labelCls}>Container ID</label>
@@ -1774,11 +1807,26 @@ const Marketing: React.FC = () => {
               type="text"
               value={settings.google_tag_manager_id}
               onChange={(e) => setSettings({ ...settings, google_tag_manager_id: e.target.value })}
-              className={`${inputCls} opacity-80`}
+              className={inputCls}
               placeholder="GTM-XXXXXXX"
-              disabled
             />
             <p className="mt-0.5 text-[10px] text-gray-500">GTM container ID</p>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-gray-100 bg-gray-50/80 px-2.5 py-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-800">Enable Google Tag Manager</p>
+              <p className="text-[10px] text-gray-500">Deploy tags automatically</p>
+            </div>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={settings.google_tag_manager_enabled}
+                onChange={(e) => setSettings({ ...settings, google_tag_manager_enabled: e.target.checked })}
+                className="peer sr-only"
+              />
+              <div className="relative h-5 w-9 shrink-0 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all peer-checked:bg-gray-900 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-300" />
+            </label>
           </div>
         </div>
 
