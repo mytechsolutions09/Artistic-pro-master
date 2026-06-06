@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import ShopPage from '@/src/page-components/ShopPage';
+import dynamic from 'next/dynamic';
+
+const ShopPage = dynamic(() => import('@/src/page-components/ShopPage'));
 
 export const metadata: Metadata = {
   title: 'Shop | Lurevi',

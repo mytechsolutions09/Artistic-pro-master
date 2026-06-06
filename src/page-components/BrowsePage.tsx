@@ -326,11 +326,11 @@ const BrowsePage: React.FC = () => {
         {filters.category && (
           <div className="mb-4 flex items-center gap-2">
             <span className="text-sm text-gray-600">Active filter:</span>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-pink-50 border border-pink-200 rounded-full text-sm text-pink-700">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-700">
               <span>{filters.category.charAt(0).toUpperCase() + filters.category.slice(1)}</span>
               <button
                 onClick={() => updateFilters({ category: undefined })}
-                className="hover:text-pink-900"
+                className="hover:text-gray-900"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -370,7 +370,7 @@ const BrowsePage: React.FC = () => {
                   tags: [],
                   status: 'all'
                 })}
-                className="text-pink-500 hover:text-pink-600 font-medium text-sm"
+                className="text-gray-500 hover:text-gray-600 font-medium text-sm"
               >
                 Clear all filters
               </button>

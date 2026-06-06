@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from '@/src/compat/router';
 import CategoryCard from '../components/CategoryCard';
 import CategoriesPageSkeleton from '../components/CategoriesPageSkeleton';
@@ -8,6 +8,34 @@ import { useCategories } from '../contexts/CategoryContext';
 
 const CategoriesPage: React.FC = () => {
   const { categories, loading, error } = useCategories();
+  const [displayCount, setDisplayCount] = useState(12);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  const loadMore = useCallback(() => {
+    setDisplayCount(prev => Math.min(prev + 12, categories.length));
+  }, [categories.length]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && displayCount < categories.length) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [loadMore, displayCount, categories.length]);
 
   if (loading) {
     return <CategoriesPageSkeleton />;
@@ -45,15 +73,24 @@ const CategoriesPage: React.FC = () => {
     );
   }
 
+  const displayedCategories = categories.slice(0, displayCount);
+
   return (
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-7xl mx-auto px-4">
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {categories.map((category) => (
+          {displayedCategories.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}
         </div>
+        
+        {displayCount < categories.length && (
+          <div ref={observerTarget} className="flex justify-center py-12">
+            <div className="w-8 h-8 border-4 border-gray-200 border-t-pink-600 rounded-full animate-spin"></div>
+          </div>
+        )}
+        
         <div className="mt-8 text-center">
           <Link to="/browse" className="text-sm text-gray-700 underline underline-offset-2 hover:text-gray-900">
             Browse Curated Artworks

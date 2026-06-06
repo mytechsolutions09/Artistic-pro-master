@@ -1,19 +1,19 @@
 'use client'
 
 import React from 'react';
-import { TrendingUp, Search, CheckCircle, LineChart, Mail } from 'lucide-react';
+import { TrendingUp, Search, CheckCircle, LineChart, Mail, Calendar } from 'lucide-react';
 import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 
 export interface MarketingTab {
-  id: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email';
+  id: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan';
   label: string;
   icon: React.ReactNode;
   description: string;
 }
 
 interface MarketingSecondaryNavProps {
-  activeTab: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email';
-  onTabChange: (tabId: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email') => void;
+  activeTab: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan';
+  onTabChange: (tabId: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan') => void;
   className?: string;
 }
 
@@ -41,6 +41,12 @@ const MARKETING_TABS: MarketingTab[] = [
     label: 'SEO Daily',
     icon: <CheckCircle className="w-4 h-4" />,
     description: 'Daily SEO checklist and routine',
+  },
+  {
+    id: 'seo_plan',
+    label: 'SEO Plan',
+    icon: <Calendar className="w-4 h-4" />,
+    description: '16-week SEO content calendar and evergreen assets',
   },
   {
     id: 'email',

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import Terms from '@/src/page-components/Terms';
+import dynamic from 'next/dynamic';
+
+const Terms = dynamic(() => import('@/src/page-components/Terms'));
 
 export const metadata: Metadata = {
   title: 'Terms and Conditions | Lurevi',

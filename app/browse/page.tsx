@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import BrowsePage from '@/src/page-components/BrowsePage';
+import dynamic from 'next/dynamic';
+
+const BrowsePage = dynamic(() => import('@/src/page-components/BrowsePage'));
 
 export const metadata: Metadata = {
   title: 'Browse Art | Lurevi',

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import DownloadPage from '@/src/page-components/DownloadPage';
+import dynamic from 'next/dynamic';
+
+const DownloadPage = dynamic(() => import('@/src/page-components/DownloadPage'));
 
 export const metadata: Metadata = {
   title: 'Download | Lurevi',

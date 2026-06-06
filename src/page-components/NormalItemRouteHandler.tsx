@@ -8,12 +8,17 @@ import CategoryDetailPage from './CategoryDetailPage';
 import ProductPage from './ProductPage';
 import { useProducts } from '../contexts/ProductContext';
 import { generateSlug } from '../utils/slugUtils';
+import CategoryPageSkeleton from '../components/CategoryPageSkeleton';
+
+interface NormalItemRouteHandlerProps {
+  isCategoryPage?: boolean;
+}
 
 /**
  * Route handler that checks if a slug belongs to a normal item, F&B product, or category.
  * Priority: Normal Item > F&B Product > Category
  */
-const NormalItemRouteHandler: React.FC = () => {
+const NormalItemRouteHandler: React.FC<NormalItemRouteHandlerProps> = ({ isCategoryPage = false }) => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const { adminProducts, loading: productsLoading } = useProducts();
   const [itemType, setItemType] = useState<'normal' | 'fb' | 'category' | null>(null);
@@ -74,11 +79,7 @@ const NormalItemRouteHandler: React.FC = () => {
 
   // Show loading state
   if (loading || productsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-600"></div>
-      </div>
-    );
+    return <CategoryPageSkeleton showFilters={false} productCount={8} />;
   }
 
   // If it's a normal item, show NormalItemsPage

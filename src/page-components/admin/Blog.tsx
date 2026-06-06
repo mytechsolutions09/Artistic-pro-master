@@ -46,6 +46,11 @@ const BlogAdmin: React.FC = () => {
   const [seedingSeoPack, setSeedingSeoPack] = useState(false);
   const [aiKeyword, setAiKeyword] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [fixingSeoName, setFixingSeoName] = useState<string | null>(null);
+  const [fixingLinks, setFixingLinks] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [checkingLinks, setCheckingLinks] = useState(false);
+  const [brokenLinks, setBrokenLinks] = useState<{url: string, status: string | number}[] | null>(null);
 
   const loadPosts = async () => {
     try {
@@ -107,13 +112,24 @@ const BlogAdmin: React.FC = () => {
       seo_description: post.seo_description || '',
       focus_keyphrase: post.tags?.[0] || '',
     });
+    setBrokenLinks(null);
     setActiveSubTab('posts');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const submit = async () => {
     if (!form.title.trim() || !form.slug.trim() || !form.content.trim()) {
       showMessage('error', 'Title, slug, and content are required.');
+      return;
+    }
+
+    const isDuplicateTitle = posts.some(
+      (post) =>
+        post.title.toLowerCase().trim() === form.title.toLowerCase().trim() &&
+        post.id !== editingId
+    );
+
+    if (isDuplicateTitle) {
+      showMessage('error', 'A blog post with this title already exists. Please use a unique title.');
       return;
     }
 
@@ -206,10 +222,12 @@ const BlogAdmin: React.FC = () => {
       setIsGenerating(true);
       showMessage('success', 'AI is generating the blog post... This may take a few seconds.');
       
+      const existingTitles = posts.map(p => p.title);
+      
       const response = await fetch('/api/admin/generate-blog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: aiKeyword.trim() })
+        body: JSON.stringify({ keyword: aiKeyword.trim(), existingTitles })
       });
 
       const data = await response.json();
@@ -237,6 +255,190 @@ const BlogAdmin: React.FC = () => {
       showMessage('error', error?.message || 'Failed to generate blog with AI.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const rewriteWithAI = async () => {
+    if (!form.content.trim()) {
+      showMessage('error', 'Please add some content to rewrite first.');
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      showMessage('success', 'AI is rewriting the blog post... This may take a few seconds.');
+      
+      const existingTitles = posts.filter(p => p.id !== editingId).map(p => p.title);
+      
+      const response = await fetch('/api/admin/rewrite-blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: form.title, content: form.content, existingTitles })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to rewrite blog post.');
+      }
+
+      // Auto-fill the form with the AI's response
+      setForm((prev) => ({
+        ...prev,
+        title: data.title || prev.title,
+        slug: data.title ? toSlug(data.title) : prev.slug,
+        excerpt: data.excerpt || prev.excerpt,
+        content: data.content || prev.content,
+        seo_title: data.seo_title || prev.seo_title,
+        seo_description: data.seo_description || prev.seo_description,
+        tags: data.tags || prev.tags,
+      }));
+
+      showMessage('success', 'Blog rewritten successfully! Review the changes before saving.');
+    } catch (error: any) {
+      console.error('Failed to rewrite with AI:', error);
+      showMessage('error', error?.message || 'Failed to rewrite blog with AI.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const fixSeoIssue = async (issueName: string, issueMessage: string) => {
+    if (!form.content.trim() && !form.title.trim()) return;
+
+    try {
+      setFixingSeoName(issueName);
+      showMessage('success', `AI is fixing: ${issueName}...`);
+      
+      const response = await fetch('/api/admin/fix-seo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          blogData: form,
+          issueName,
+          issueMessage
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fix SEO issue.');
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        title: data.title || prev.title,
+        slug: data.slug ? toSlug(data.slug) : prev.slug,
+        content: data.content || prev.content,
+        seo_title: data.seo_title || prev.seo_title,
+        seo_description: data.seo_description || prev.seo_description,
+      }));
+
+      showMessage('success', `Fixed: ${issueName}`);
+    } catch (error: any) {
+      console.error('Failed to fix SEO issue:', error);
+      showMessage('error', error?.message || 'Failed to fix SEO issue with AI.');
+    } finally {
+      setFixingSeoName(null);
+    }
+  };
+
+  const verifyLinks = async () => {
+    try {
+      setCheckingLinks(true);
+      setBrokenLinks(null);
+      showMessage('success', 'Scanning content for links...');
+      
+      const linksToVerify: string[] = [];
+      if (form.cover_image && form.cover_image.startsWith('http')) {
+        linksToVerify.push(form.cover_image);
+      }
+      
+      const mdImgRegex = /!\[.*?\]\((.*?)\)/g;
+      const mdLinkRegex = /(?<!\!)\[.*?\]\((.*?)\)/g;
+      const htmlImgRegex = /<img.*?src=["'](.*?)["']/gi;
+      const htmlLinkRegex = /<a.*?href=["'](.*?)["']/gi;
+      
+      const text = form.content;
+      let match;
+      while ((match = mdImgRegex.exec(text)) !== null) linksToVerify.push(match[1]);
+      while ((match = mdLinkRegex.exec(text)) !== null) linksToVerify.push(match[1]);
+      while ((match = htmlImgRegex.exec(text)) !== null) linksToVerify.push(match[1]);
+      while ((match = htmlLinkRegex.exec(text)) !== null) linksToVerify.push(match[1]);
+      
+      const uniqueLinks = [...new Set(linksToVerify)].filter(l => l.startsWith('http'));
+      
+      if (uniqueLinks.length === 0) {
+        showMessage('success', 'No external links found to check.');
+        setCheckingLinks(false);
+        return;
+      }
+
+      showMessage('success', `Verifying ${uniqueLinks.length} link(s)...`);
+      
+      const response = await fetch('/api/admin/check-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: uniqueLinks })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to verify links.');
+      
+      const broken = data.results.filter((res: any) => !res.ok);
+      setBrokenLinks(broken);
+      
+      if (broken.length > 0) {
+        showMessage('error', `Found ${broken.length} broken link(s)!`);
+      } else {
+        showMessage('success', `All ${uniqueLinks.length} link(s) are working correctly!`);
+      }
+      
+    } catch (error: any) {
+      console.error('Link check error:', error);
+      showMessage('error', error?.message || 'Failed to check links.');
+    } finally {
+      setCheckingLinks(false);
+    }
+  };
+
+  const fixBrokenLinks = async () => {
+    if (!brokenLinks || brokenLinks.length === 0) return;
+
+    try {
+      setFixingLinks(true);
+      showMessage('success', 'AI is replacing broken links... This may take a few seconds.');
+      
+      const response = await fetch('/api/admin/fix-broken-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          content: form.content,
+          cover_image: form.cover_image,
+          brokenLinks
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fix broken links.');
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        content: data.content || prev.content,
+        cover_image: data.cover_image || prev.cover_image,
+      }));
+
+      setBrokenLinks(null);
+      showMessage('success', 'Broken links replaced successfully!');
+    } catch (error: any) {
+      console.error('Failed to fix broken links:', error);
+      showMessage('error', error?.message || 'Failed to fix broken links with AI.');
+    } finally {
+      setFixingLinks(false);
     }
   };
 
@@ -291,82 +493,49 @@ const BlogAdmin: React.FC = () => {
     };
   }, [seoResults]);
 
-  return (
-    <AdminLayout title="Blog Management" noHeader={true}>
-      <BlogSecondaryNav activeTab={activeSubTab} onTabChange={setActiveSubTab} />
-      <div className="flex-1 flex flex-col overflow-hidden ml-24">
-        <div className="p-5 space-y-4">
-        {message && (
-          <div
-            className={`p-3 rounded-lg border text-sm ${
-              message.type === 'success'
-                ? 'bg-green-50 border-green-200 text-green-700'
-                : 'bg-red-50 border-red-200 text-red-700'
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
 
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-pink-100 rounded-lg">
-              <FileText className="w-5 h-5 text-pink-600" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-gray-800">Blog Admin</h2>
-              <p className="text-sm text-gray-500">
-                Manage blog strategy and publishing workflow from this tab.
-              </p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-700">Create, edit, publish, and delete blog posts from one place.</p>
-          <p className="text-xs text-gray-500 mt-2">
-            Total posts: {posts.length} | Published: {publishedCount} | Drafts: {posts.length - publishedCount}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              onClick={() => void seedSeoBlogPack()}
-              disabled={seedingSeoPack}
-              type="button"
-              className="px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium disabled:opacity-60"
-            >
-              {seedingSeoPack ? 'Applying SEO Blog Pack...' : 'Apply SEO Blog Pack (10 Posts)'}
-            </button>
-            <span className="text-xs text-gray-500 self-center">
-              One click creates/updates keyword-targeted published blogs.
-            </span>
-          </div>
-        </div>
 
-        <div className={activeSubTab === 'posts' ? 'flex flex-col xl:flex-row gap-6' : 'hidden'}>
-          {/* Main Blog Editor Form */}
-          <div className="flex-1 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+  const renderEditor = () => {
+    return (
+      <div className="flex flex-col xl:flex-row gap-6">
+      {/* Main Blog Editor Form */}
+      <div className="flex-1 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
               <h3 className="text-sm font-semibold text-gray-800">
                 {editingId ? 'Edit Blog Post' : 'Create Blog Post'}
               </h3>
               
-              {!editingId && (
-                <div className="flex items-center gap-2 bg-pink-50 p-2 rounded-lg border border-pink-100">
-                  <input
-                    type="text"
-                    value={aiKeyword}
-                    onChange={(e) => setAiKeyword(e.target.value)}
-                    placeholder="Enter keyword or topic..."
-                    className="px-3 py-1.5 border border-pink-200 rounded text-sm w-48 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                    disabled={isGenerating}
-                  />
+              <div className="flex items-center gap-2 bg-pink-50 p-2 rounded-lg border border-pink-100">
+                {!editingId ? (
+                  <>
+                    <input
+                      type="text"
+                      value={aiKeyword}
+                      onChange={(e) => setAiKeyword(e.target.value)}
+                      placeholder="Enter keyword or topic..."
+                      className="px-3 py-1.5 border border-pink-200 rounded text-sm w-48 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      disabled={isGenerating}
+                    />
+                    <button
+                      type="button"
+                      onClick={generateWithAI}
+                      disabled={isGenerating || !aiKeyword.trim()}
+                      className="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 disabled:opacity-60 text-white rounded text-sm font-medium inline-flex items-center gap-1"
+                    >
+                      {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '✨ AI Generate'}
+                    </button>
+                  </>
+                ) : (
                   <button
                     type="button"
-                    onClick={generateWithAI}
-                    disabled={isGenerating || !aiKeyword.trim()}
+                    onClick={rewriteWithAI}
+                    disabled={isGenerating || !form.content.trim()}
                     className="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 disabled:opacity-60 text-white rounded text-sm font-medium inline-flex items-center gap-1"
                   >
-                    {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '✨ AI Generate'}
+                    {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '✨ AI Rewrite'}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -427,13 +596,32 @@ const BlogAdmin: React.FC = () => {
                 rows={2}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-pink-300"
               />
-              <textarea
-                value={form.content}
-                onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
-                placeholder="Full blog content"
-                rows={12}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-pink-300 font-mono"
-              />
+              <div className="md:col-span-2">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-gray-600 font-medium">Main Content</label>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode(!previewMode)}
+                    className="text-xs text-pink-600 hover:text-pink-700 font-medium bg-pink-50 px-2.5 py-1 rounded transition-colors"
+                  >
+                    {previewMode ? 'Edit Content' : 'Preview Content'}
+                  </button>
+                </div>
+                {previewMode ? (
+                  <div
+                    className="px-3 py-3 border border-gray-300 rounded-lg text-sm bg-gray-50 min-h-[250px] max-h-[500px] overflow-y-auto leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold"
+                    dangerouslySetInnerHTML={{ __html: form.content || '<p class="text-gray-400 italic">No content yet.</p>' }}
+                  />
+                ) : (
+                  <textarea
+                    value={form.content}
+                    onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
+                    placeholder="Full blog content (HTML)"
+                    rows={12}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 font-mono"
+                  />
+                )}
+              </div>
               <input
                 value={form.tags}
                 onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))}
@@ -484,6 +672,15 @@ const BlogAdmin: React.FC = () => {
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {editingId ? 'Update Post' : 'Create Post'}
               </button>
+              <button
+                onClick={verifyLinks}
+                className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm font-medium inline-flex items-center gap-2 disabled:opacity-60"
+                type="button"
+                disabled={checkingLinks}
+              >
+                {checkingLinks ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
+                Verify Links
+              </button>
               {editingId && (
                 <button
                   onClick={resetForm}
@@ -501,6 +698,42 @@ const BlogAdmin: React.FC = () => {
                 View Public Blog
               </Link>
             </div>
+            
+            {brokenLinks && brokenLinks.length > 0 && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold text-red-800 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" /> 
+                    Broken Links Detected ({brokenLinks.length})
+                  </h4>
+                  <button
+                    onClick={fixBrokenLinks}
+                    disabled={fixingLinks}
+                    className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-800 rounded text-xs font-medium inline-flex items-center gap-1 disabled:opacity-60"
+                    type="button"
+                  >
+                    {fixingLinks ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    Auto-Fix with AI
+                  </button>
+                </div>
+                <ul className="text-xs text-red-700 space-y-1">
+                  {brokenLinks.map((bl, i) => (
+                    <li key={i} className="break-all">
+                      <span className="font-semibold">{bl.status}</span>: <a href={bl.url} target="_blank" rel="noreferrer" className="underline">{bl.url}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {brokenLinks && brokenLinks.length === 0 && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm font-medium text-green-700 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" /> 
+                  All links in your content appear to be working!
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Yoast SEO Analysis Sidebar */}
@@ -554,27 +787,122 @@ const BlogAdmin: React.FC = () => {
 
                 {/* Scrollable list of analysis points */}
                 <div className="max-h-[480px] overflow-y-auto space-y-3.5 pr-1 scrollbar-thin">
-                  {seoResults.map((result, idx) => (
-                    <div key={`seo-check-${idx}`} className="flex items-start gap-2.5 text-xs">
-                      <span className="mt-0.5 flex-shrink-0">
-                        {result.status === 'good' && <CheckCircle className="w-4 h-4 text-green-500 fill-green-50" />}
-                        {result.status === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500 fill-amber-50" />}
-                        {result.status === 'error' && <Info className="w-4 h-4 text-red-500 fill-red-50" />}
-                      </span>
-                      <div>
-                        <span className="font-semibold text-gray-800 block">{result.name}</span>
-                        <span className="text-gray-600 leading-normal">{result.message}</span>
+                  {seoResults.map((result, idx) => {
+                    const isWarningOrError = result.status === 'warning' || result.status === 'error';
+                    const isFixing = fixingSeoName === result.name;
+
+                    return (
+                      <div 
+                        key={`seo-check-${idx}`} 
+                        className={`flex items-start gap-2.5 text-xs p-2 rounded-lg transition-colors ${
+                          isWarningOrError ? 'cursor-pointer hover:bg-pink-50 border border-transparent hover:border-pink-100 group' : ''
+                        }`}
+                        onClick={() => {
+                          if (isWarningOrError && !isFixing) {
+                            fixSeoIssue(result.name, result.message);
+                          }
+                        }}
+                        title={isWarningOrError ? "Click to fix with AI" : ""}
+                      >
+                        <span className="mt-0.5 flex-shrink-0">
+                          {isFixing ? (
+                            <Loader2 className="w-4 h-4 text-pink-500 animate-spin" />
+                          ) : (
+                            <>
+                              {result.status === 'good' && <CheckCircle className="w-4 h-4 text-green-500 fill-green-50" />}
+                              {result.status === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500 fill-amber-50" />}
+                              {result.status === 'error' && <Info className="w-4 h-4 text-red-500 fill-red-50" />}
+                            </>
+                          )}
+                        </span>
+                        <div className="flex-1">
+                          <span className="font-semibold text-gray-800 flex items-center justify-between">
+                            {result.name}
+                            {isWarningOrError && !isFixing && (
+                              <span className="opacity-0 group-hover:opacity-100 text-[10px] text-pink-600 flex items-center gap-1 font-medium transition-opacity">
+                                <Sparkles className="w-3 h-3" />
+                                Fix with AI
+                              </span>
+                            )}
+                            {isFixing && (
+                              <span className="text-[10px] text-pink-600 flex items-center gap-1 font-medium">
+                                Fixing...
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-gray-600 leading-normal block mt-0.5">{result.message}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </div>
         </div>
+    );
+  };
 
-        <div className={activeSubTab === 'posts' ? 'bg-white p-4 rounded-lg border border-gray-200 shadow-sm' : 'hidden'}>
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">Edit Existing Blog Post</h3>
+  return (
+    <AdminLayout title="Blog Management" noHeader={true}>
+      <BlogSecondaryNav activeTab={activeSubTab} onTabChange={setActiveSubTab} />
+      <div className="flex-1 flex flex-col overflow-hidden ml-24">
+        <div className="p-5 space-y-4">
+        {message && (
+          <div
+            className={`p-3 rounded-lg border text-sm ${
+              message.type === 'success'
+                ? 'bg-green-50 border-green-200 text-green-700'
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-pink-100 rounded-lg">
+              <FileText className="w-5 h-5 text-pink-600" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-800">Blog Admin</h2>
+              <p className="text-sm text-gray-500">
+                Manage blog strategy and publishing workflow from this tab.
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-700">Create, edit, publish, and delete blog posts from one place.</p>
+          <p className="text-xs text-gray-500 mt-2">
+            Total posts: {posts.length} | Published: {publishedCount} | Drafts: {posts.length - publishedCount}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={() => void seedSeoBlogPack()}
+              disabled={seedingSeoPack}
+              type="button"
+              className="px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium disabled:opacity-60"
+            >
+              {seedingSeoPack ? 'Applying SEO Blog Pack...' : 'Apply SEO Blog Pack (10 Posts)'}
+            </button>
+            <span className="text-xs text-gray-500 self-center">
+              One click creates/updates keyword-targeted published blogs.
+            </span>
+          </div>
+        </div>
+
+        <div className={activeSubTab === 'posts' ? 'flex flex-col gap-6' : 'hidden'}>
+          {!editingId && (
+            <div className="mb-2">
+              <h3 className="text-sm font-semibold text-gray-800 mb-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                Create New Blog Post
+              </h3>
+              {renderEditor()}
+            </div>
+          )}
+
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Edit Existing Blog Post</h3>
           {loading ? (
             <div className="text-sm text-gray-500">Loading posts...</div>
           ) : posts.length === 0 ? (
@@ -582,26 +910,37 @@ const BlogAdmin: React.FC = () => {
           ) : (
             <div className="space-y-2">
               {posts.map((post) => (
-                <div
-                  key={`edit-row-${post.id}`}
-                  className="flex items-center justify-between gap-2 border border-gray-200 rounded-lg p-2.5"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{post.title}</p>
-                    <p className="text-xs text-gray-500 truncate">/{post.slug}</p>
+                <div key={`edit-row-${post.id}`} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2 border border-gray-200 rounded-lg p-2.5">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{post.title}</p>
+                      <p className="text-xs text-gray-500 truncate">/{post.slug}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (editingId === post.id) resetForm();
+                        else startEdit(post);
+                      }}
+                      type="button"
+                      className={`px-2.5 py-1.5 rounded text-xs inline-flex items-center gap-1 ${
+                        editingId === post.id 
+                          ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' 
+                          : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+                      }`}
+                    >
+                      {editingId === post.id ? 'Cancel' : <><Pencil className="w-3.5 h-3.5" /> Edit</>}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => startEdit(post)}
-                    type="button"
-                    className="px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs inline-flex items-center gap-1"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    Edit
-                  </button>
+                  {editingId === post.id && (
+                    <div className="mt-2 mb-4 bg-gray-50 p-4 rounded-xl border border-pink-100 shadow-inner">
+                      {renderEditor()}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
+        </div>
         </div>
 
         <div className={activeSubTab === 'list' ? 'bg-white p-4 rounded-lg border border-gray-200 shadow-sm' : 'hidden'}>

@@ -169,7 +169,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <select 
                 value={filters.category || 'all'}
                 onChange={(e) => onFilterChange({ category: e.target.value === 'all' ? undefined : e.target.value })}
-                className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent appearance-none bg-white shadow-sm"
+                className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-500 focus:border-transparent appearance-none bg-white shadow-sm"
                 style={{ backgroundImage: 'none' }}
               >
                 <option value="all">All Categories</option>
@@ -198,7 +198,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value="all"
                   checked={filters.productType === 'all'}
                   onChange={(e) => onFilterChange({ productType: e.target.value as 'digital' | 'poster' | 'all' })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">All Types</span>
               </label>
@@ -209,7 +209,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value="digital"
                   checked={filters.productType === 'digital'}
                   onChange={(e) => onFilterChange({ productType: e.target.value as 'digital' | 'poster' | 'all' })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Digital Downloads</span>
               </label>
@@ -220,7 +220,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value="poster"
                   checked={filters.productType === 'poster'}
                   onChange={(e) => onFilterChange({ productType: e.target.value as 'digital' | 'poster' | 'all' })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Physical Posters</span>
               </label>
@@ -238,7 +238,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                       type="checkbox"
                       checked={selectedTags.includes(tag)}
                       onChange={() => handleTagToggle(tag)}
-                      className="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"
+                      className="w-4 h-4 text-gray-500 border-gray-300 rounded focus:ring-gray-500 transition-colors"
                     />
                     <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
                       {tag.charAt(0).toUpperCase() + tag.slice(1)}
@@ -302,7 +302,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value={0}
                   checked={filters.rating === 0}
                   onChange={(e) => onFilterChange({ rating: parseFloat(e.target.value) })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Any Rating</span>
               </label>
@@ -313,7 +313,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value={4.5}
                   checked={filters.rating === 4.5}
                   onChange={(e) => onFilterChange({ rating: parseFloat(e.target.value) })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">4.5+ Stars</span>
               </label>
@@ -324,7 +324,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value={4.0}
                   checked={filters.rating === 4.0}
                   onChange={(e) => onFilterChange({ rating: parseFloat(e.target.value) })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">4.0+ Stars</span>
               </label>
@@ -335,7 +335,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value={3.5}
                   checked={filters.rating === 3.5}
                   onChange={(e) => onFilterChange({ rating: parseFloat(e.target.value) })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">3.5+ Stars</span>
               </label>
@@ -351,21 +351,21 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   type="checkbox"
                   checked={filters.featured}
                   onChange={(e) => onFilterChange({ featured: e.target.checked })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 rounded focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Featured Artworks</span>
               </label>
               <label className="flex items-center space-x-3 cursor-pointer group">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 rounded focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Best Sellers</span>
               </label>
               <label className="flex items-center space-x-3 cursor-pointer group">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 rounded focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">New Arrivals</span>
               </label>
@@ -383,7 +383,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value="relevance"
                   checked={filters.sortBy === 'relevance'}
                   onChange={(e) => onFilterChange({ sortBy: e.target.value })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Relevance</span>
               </label>
@@ -394,7 +394,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value="price-low"
                   checked={filters.sortBy === 'price-low'}
                   onChange={(e) => onFilterChange({ sortBy: e.target.value })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Price: Low to High</span>
               </label>
@@ -405,7 +405,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value="price-high"
                   checked={filters.sortBy === 'price-high'}
                   onChange={(e) => onFilterChange({ sortBy: e.target.value })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Price: High to Low</span>
               </label>
@@ -416,7 +416,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value="rating"
                   checked={filters.sortBy === 'rating'}
                   onChange={(e) => onFilterChange({ sortBy: e.target.value })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Highest Rated</span>
               </label>
@@ -427,7 +427,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   value="newest"
                   checked={filters.sortBy === 'newest'}
                   onChange={(e) => onFilterChange({ sortBy: e.target.value })}
-                  className="w-4 h-4 text-pink-500 border-gray-300 focus:ring-pink-500 transition-colors"
+                  className="w-4 h-4 text-gray-500 border-gray-300 focus:ring-gray-500 transition-colors"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">Newest First</span>
               </label>

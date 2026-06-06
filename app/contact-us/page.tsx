@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import ContactUs from '@/src/page-components/ContactUs';
+import dynamic from 'next/dynamic';
+
+const ContactUs = dynamic(() => import('@/src/page-components/ContactUs'));
 
 export const metadata: Metadata = {
   title: 'Contact Us | Lurevi',

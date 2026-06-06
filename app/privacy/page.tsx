@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import Privacy from '@/src/page-components/Privacy';
+import dynamic from 'next/dynamic';
+
+const Privacy = dynamic(() => import('@/src/page-components/Privacy'));
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Lurevi',

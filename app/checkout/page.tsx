@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import Checkout from '@/src/page-components/Checkout';
+import dynamic from 'next/dynamic';
+
+const Checkout = dynamic(() => import('@/src/page-components/Checkout'));
 
 export const metadata: Metadata = {
   title: 'Checkout | Lurevi',

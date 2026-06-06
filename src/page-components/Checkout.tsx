@@ -61,6 +61,7 @@ const Checkout: React.FC = () => {
   const productType = searchParams.get('type') || 'digital';
   const productPrice = searchParams.get('price');
   const posterSize = searchParams.get('size');
+  const productQuantity = searchParams.get('quantity');
   const [directPurchaseProduct, setDirectPurchaseProduct] = useState<Product | null>(null);
   
   // Check if cart has physical products (for COD eligibility)
@@ -122,17 +123,18 @@ const Checkout: React.FC = () => {
         
         // Use the price from URL parameters if available, otherwise use product price
         const finalPrice = productPrice ? parseFloat(productPrice) : realProduct.price;
+        const finalQuantity = productQuantity ? parseInt(productQuantity, 10) : 1;
         
         setCart({ 
           items: [{ 
             id: '1', 
             product: realProduct, 
-            quantity: 1,
+            quantity: finalQuantity,
             selectedProductType: productType as 'digital' | 'poster',
             selectedPosterSize: posterSize || undefined,
             selectedPrice: finalPrice
           }], 
-          total: finalPrice 
+          total: finalPrice * finalQuantity 
         });
       } else {
         // If product not found after products loaded, redirect back
@@ -148,7 +150,7 @@ const Checkout: React.FC = () => {
       const unsubscribe = CartManager.subscribe(setCart);
       return unsubscribe;
     }
-  }, [productId, productType, productPrice, posterSize, getProductById, navigate, allProducts]);
+  }, [productId, productType, productPrice, posterSize, productQuantity, getProductById, navigate, allProducts]);
 
   // Autofill user information when logged in
   useEffect(() => {
@@ -461,7 +463,7 @@ const Checkout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-['Inter']">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Form */}
           <div className="lg:col-span-2">
             <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
@@ -846,7 +848,6 @@ const Checkout: React.FC = () => {
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <span className="font-semibold text-gray-800">Cash on Delivery (COD)</span>
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">Physical Items</span>
                         </div>
                         <p className="text-sm text-gray-600 mt-1">
                           Pay with cash when your order is delivered
@@ -901,12 +902,43 @@ const Checkout: React.FC = () => {
               </div>
               )}
               
-              
+              {/* Submit Button */}
+              <button
+                type="submit"
+                form="checkout-form"
+                disabled={loading}
+                className={`w-full py-3 px-4 rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-md ${
+                  paymentMethod === 'store_credit'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+                    : paymentMethod === 'razorpay'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+                    : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>
+                      {paymentMethod === 'store_credit' 
+                        ? 'Processing Order...' 
+                        : paymentMethod === 'razorpay' 
+                        ? 'Opening Payment Gateway...' 
+                        : 'Placing Order...'}
+                    </span>
+                  </>
+                ) : paymentMethod === 'store_credit' ? (
+                  <span className="font-['Inter'] uppercase tracking-wide">PAY NOW</span>
+                ) : paymentMethod === 'razorpay' ? (
+                  <span>Pay {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')} - Proceed to Payment</span>
+                ) : (
+                  <span>Place Order - {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')}</span>
+                )}
+              </button>
             </form>
           </div>
           
           {/* Order Summary */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-24 h-fit">
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
               <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
                 <div className="flex items-center">
@@ -1053,39 +1085,11 @@ const Checkout: React.FC = () => {
                 </div>
               </div>
             ) : paymentMethod === 'razorpay' ? (
-              <>
-                <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-4 border border-teal-200">
-                  <div className="flex items-start space-x-3">
-                    <Lock className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-1">Secure Payment with Razorpay</h3>
-                      <p className="text-xs text-gray-600 mb-2">
-                        You'll be redirected to Razorpay's secure payment gateway to complete your purchase.
-                      </p>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
-                          Cards
-                        </span>
-                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
-                          UPI
-                        </span>
-                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
-                          Net Banking
-                        </span>
-                        <span className="px-2 py-1 bg-white rounded text-xs font-medium text-gray-700 border border-gray-200">
-                          Wallets
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
-                  <p className="text-xs text-yellow-800">
-                    <strong>Note:</strong> Payment details will be entered securely on Razorpay's payment page. Your card information is never stored on our servers.
-                  </p>
-                </div>
-              </>
+              <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                <p className="text-xs text-yellow-800">
+                  <strong>Note:</strong> Payment details will be entered securely on Razorpay's payment page. Your card information is never stored on our servers.
+                </p>
+              </div>
             ) : (
               <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-4 border border-orange-200">
                 <div className="flex items-start space-x-3">
@@ -1104,39 +1108,6 @@ const Checkout: React.FC = () => {
                 </div>
               </div>
             )}
-            
-            {/* Submit Button */}
-            <button
-              type="submit"
-              form="checkout-form"
-              disabled={loading}
-              className={`w-full py-2 px-4 rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
-                paymentMethod === 'store_credit'
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-                  : paymentMethod === 'razorpay'
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-                  : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
-              }`}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>
-                    {paymentMethod === 'store_credit' 
-                      ? 'Processing Order...' 
-                      : paymentMethod === 'razorpay' 
-                      ? 'Opening Payment Gateway...' 
-                      : 'Placing Order...'}
-                  </span>
-                </>
-              ) : paymentMethod === 'store_credit' ? (
-                <span className="font-['Inter'] uppercase tracking-wide">PAY NOW</span>
-              ) : paymentMethod === 'razorpay' ? (
-                <span>Pay {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')} - Proceed to Payment</span>
-              ) : (
-                <span>Place Order - {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')}</span>
-              )}
-            </button>
           </div>
         </div>
       </div>

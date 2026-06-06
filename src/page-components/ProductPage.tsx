@@ -69,11 +69,23 @@ const ProductPage: React.FC = () => {
   const [selectedReviewImage, setSelectedReviewImage] = useState<string | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
-  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [transitionLoading, setTransitionLoading] = useState(false);
 
-  // Scroll to top on product change (must be before any early returns)
+  // Scroll to top and reset states on product change (must be before any early returns)
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    setTransitionLoading(true);
+    setSelectedProductImage(0);
+    setShowVideo(false);
+    setQuantity(1);
+    setIsFavorited(false);
+    setReviews([]);
+    
+    const timer = setTimeout(() => {
+      setTransitionLoading(false);
+    }, 400); // 400ms skeleton transition
+    
+    return () => clearTimeout(timer);
   }, [categorySlug, productSlug]);
 
   // Pagination logic
@@ -101,14 +113,6 @@ const ProductPage: React.FC = () => {
       ...prev,
       [reviewId]: (prev[reviewId] || 0) + 1
     }));
-  };
-
-  const handleWriteReview = () => {
-    setShowReviewModal(true);
-  };
-
-  const closeReviewModal = () => {
-    setShowReviewModal(false);
   };
 
   // Get current price based on selected options
@@ -291,13 +295,13 @@ const ProductPage: React.FC = () => {
     checkIfFavorited();
   }, [product, user]);
 
-  // Show loading state while products are being fetched
-  if (loading) {
+  // Show loading state while products are being fetched or transitioning
+  if (loading || transitionLoading) {
     return <ProductPageSkeleton />;
   }
 
   // Show product not found only after loading is complete
-  if (!product && !loading) {
+  if (!product && !loading && !transitionLoading) {
     return (
       <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="text-center px-4">
@@ -432,7 +436,8 @@ const ProductPage: React.FC = () => {
       const params = new URLSearchParams({
         product: product.id,
         type: selectedProductType,
-        price: currentPrice.toString()
+        price: currentPrice.toString(),
+        quantity: quantity.toString()
       });
       
       if (selectedProductType === 'poster' && selectedPosterSize) {
@@ -740,7 +745,7 @@ const ProductPage: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={handleShare}
-                    className="flex items-center space-x-1 text-gray-600 hover:text-[#F48FB1] transition-colors"
+                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-600 transition-colors"
                   >
                     <Share2 className="w-3 h-3" />
                     <span className="text-xs font-sans font-normal">Share</span>
@@ -809,7 +814,7 @@ const ProductPage: React.FC = () => {
               {product.category && (
                 <div className="pb-3 mb-4 border-b border-gray-100">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="px-2 py-1 bg-[#FAC6CF] text-[#E91E63] text-xs font-medium rounded-full font-sans font-normal">
+                    <span className="px-2 py-1 bg-gray-200 text-gray-900 text-xs font-medium rounded-full font-sans font-normal">
                       {product.category}
                     </span>
                   </div>
@@ -1204,16 +1209,16 @@ const ProductPage: React.FC = () => {
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               <div className="p-2">
             {/* Header with Rating and Write Review Button */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 space-y-1 sm:space-y-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 mb-3 border-b border-gray-200 space-y-1 sm:space-y-0">
               <div>
                     <h3 className="text-sm font-semibold text-[#333333] font-sans font-normal">
                   Customer Reviews
                 </h3>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 {/* Rating moved slightly to the right */}
-                <div className="flex items-center space-x-1.5 bg-[#F5F5F5] rounded-lg px-1.5 py-0.5 border border-[#F5F5F5] shadow-sm">
+                <div className="flex items-center space-x-1.5">
                   <div className="text-sm font-semibold text-black font-sans font-normal">
                     {averageRating.toFixed(1)}
                   </div>
@@ -1232,27 +1237,17 @@ const ProductPage: React.FC = () => {
                     ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
                   </div>
                 </div>
-                
-                <button 
-                  onClick={handleWriteReview}
-                  className="px-1.5 py-0.5 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 rounded-md transition-all duration-300 shadow-sm hover:shadow-md text-xs"
-                >
-                  ✨ Write a Review
-                </button>
-              </div>
-            </div>
 
-
-            {/* Sort Options */}
-                <div className="flex items-center justify-end mb-2">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
-                    <select className="text-xs border border-[#F5F5F5] rounded-lg px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-black focus:border-black bg-gray-50 shadow-sm font-sans font-normal" style={{ backgroundImage: 'none', paddingRight: '0.375rem' }}>
-                  <option>Most Recent</option>
-                  <option>Suggested</option>
-                  <option>Highest Rated</option>
-                  <option>Lowest Rated</option>
-                </select>
+                {/* Sort Options */}
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
+                  <select className="appearance-none text-xs border border-[#F5F5F5] rounded-lg px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-black focus:border-black bg-gray-50 shadow-sm font-sans font-normal" style={{ backgroundImage: 'none', paddingRight: '0.375rem' }}>
+                    <option>Most Recent</option>
+                    <option>Suggested</option>
+                    <option>Highest Rated</option>
+                    <option>Lowest Rated</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1593,47 +1588,6 @@ const ProductPage: React.FC = () => {
               alt="Review image"
               className="w-full h-full object-contain max-h-[80vh]"
             />
-          </div>
-        </div>
-      )}
-
-      {/* Write Review Modal */}
-      {showReviewModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="relative max-w-md w-full bg-white rounded-xl overflow-hidden shadow-2xl">
-            <button
-              onClick={closeReviewModal}
-              className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white rounded-full p-2 transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-600" />
-            </button>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-[#333333] mb-4 font-sans font-normal">Write a Review</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#333333] mb-2 font-sans font-normal">Rating</label>
-                  <div className="flex items-center space-x-1">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <Star
-                        key={i}
-                        className="w-5 h-5 text-[#F5F5F5] hover:text-teal-800 cursor-pointer transition-colors"
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#333333] mb-2 font-sans font-normal">Your Review</label>
-                    <textarea
-                      className="w-full p-3 border border-[#F5F5F5] rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-800 focus:border-teal-800 resize-none font-sans font-normal"
-                      rows={4}
-                      placeholder="Share your experience with this product..."
-                    />
-                  </div>
-                  <button className="w-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors font-sans font-normal">
-                    Submit Review
-                  </button>
-              </div>
-            </div>
           </div>
         </div>
       )}

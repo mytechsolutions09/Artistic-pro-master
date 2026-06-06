@@ -580,5 +580,25 @@ export function runSeoAnalysis(params: {
     });
   }
 
+  // 18. Duplicate title check
+  const duplicateTitle = existingPosts.some(post => {
+    if (currentPostId && post.id === currentPostId) return false;
+    return post.title.toLowerCase().trim() === title.toLowerCase().trim();
+  });
+
+  if (duplicateTitle && title.trim()) {
+    results.push({
+      name: 'Duplicate blog title',
+      status: 'error',
+      message: 'This blog title is already in use by another blog post. Please use a unique title.'
+    });
+  } else if (title.trim()) {
+    results.push({
+      name: 'Duplicate blog title',
+      status: 'good',
+      message: 'This blog title is unique.'
+    });
+  }
+
   return results;
 }

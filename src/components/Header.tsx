@@ -27,6 +27,18 @@ const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminPage = location.pathname.startsWith('/admin');
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOptimisticPath(null);
+  }, [location.pathname]);
+
+  const isActive = (path: string) => {
+    const activePath = optimisticPath || location.pathname;
+    if (path === '/' && activePath === '/') return true;
+    if (path !== '/' && activePath.startsWith(path)) return true;
+    return false;
+  };
   const { user } = useAuth();
   const { categories } = useCategories();
   
@@ -256,7 +268,11 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3 lg:gap-7 min-w-0">
             {/* Logo */}
-            <Link to="/" className="flex flex-col items-center leading-none text-center font-['Inter'] shrink-0">
+            <Link 
+              to="/" 
+              onClick={() => setOptimisticPath('/')}
+              className={`flex flex-col items-center leading-none text-center font-['Inter'] shrink-0 transition-opacity ${isActive('/') ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
+            >
               <span className="text-black font-bold uppercase text-2xl">Lurevi</span>
               <span className="text-[9px] sm:text-[10px] text-gray-600 tracking-[0.14em] uppercase mt-0.5">
                 Luxury That Stays With You
@@ -295,13 +311,16 @@ const Header: React.FC = () => {
                         .map((category) => (
                           <Link
                             key={category.id}
-                            to={`/${category.slug}`}
+                            to={`/categories/${category.slug}`}
+                            onClick={() => {
+                              setOptimisticPath(`/categories/${category.slug}`);
+                              setShowCategoriesDropdown(false);
+                            }}
                             role="menuitem"
                             className="px-2.5 py-1.5 text-xs text-gray-700 hover:text-black rounded-md hover:bg-gray-100 font-normal text-center whitespace-nowrap overflow-hidden text-ellipsis font-sans uppercase"
                             style={{ boxShadow: 'none' }}
                             onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 0, 0, 0.15)'}
                             onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
-                            onClick={() => setShowCategoriesDropdown(false)}
                           >
                             {category.name}
                           </Link>
@@ -311,7 +330,10 @@ const Header: React.FC = () => {
                       <Link
                         to="/categories"
                         className="text-xs font-sans font-normal uppercase text-gray-600 hover:text-black"
-                        onClick={() => setShowCategoriesDropdown(false)}
+                        onClick={() => {
+                          setOptimisticPath('/categories');
+                          setShowCategoriesDropdown(false);
+                        }}
                       >
                         View all categories
                       </Link>
@@ -323,7 +345,7 @@ const Header: React.FC = () => {
           </div>
 
           {/* Navigation - Desktop Only (lg+) */}
-          <nav className="hidden lg:flex items-center space-x-4">
+          <nav className="hidden lg:flex items-center space-x-1">
             {/* Search Icon/Bar - Desktop */}
             <div className={`relative transition-all duration-200 ${isSearchOpen ? 'w-[360px]' : 'w-auto'}`} ref={searchRef}>
               {!isSearchOpen ? (
@@ -409,32 +431,61 @@ const Header: React.FC = () => {
                 </div>
               )}
             </div>
-            <Link to="/favorites" className="p-2 text-black hover:text-gray-600">
+            <Link 
+              to="/favorites" 
+              onClick={() => setOptimisticPath('/favorites')}
+              className={`p-2 rounded-full transition-colors ${isActive('/favorites') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+            >
               <Heart className="w-4 h-4" />
             </Link>
-            <Link to="/browse" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
+            <Link 
+              to="/browse" 
+              onClick={() => setOptimisticPath('/browse')}
+              className={`text-sm font-normal font-sans uppercase transition-colors px-2 py-1 rounded-md ${isActive('/browse') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+            >
               Art
             </Link>
-            <Link to="/shop" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
+            <Link 
+              to="/shop" 
+              onClick={() => setOptimisticPath('/shop')}
+              className={`text-sm font-normal font-sans uppercase transition-colors px-2 py-1 rounded-md ${isActive('/shop') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+            >
               Shop
             </Link>
 
             {navigationVisibility.clothesActive && (
-              <Link to="/clothes" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
+              <Link 
+                to="/clothes" 
+                onClick={() => setOptimisticPath('/clothes')}
+                className={`text-sm font-normal font-sans uppercase transition-colors px-2 py-1 rounded-md ${isActive('/clothes') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+              >
                 Clothes
               </Link>
             )}
             {navigationVisibility.fbActive && (
-              <Link to="/fb" className="text-black hover:text-gray-600 text-sm font-normal font-sans uppercase">
+              <Link 
+                to="/fb" 
+                onClick={() => setOptimisticPath('/fb')}
+                className={`text-sm font-normal font-sans uppercase transition-colors px-2 py-1 rounded-md ${isActive('/fb') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+              >
                 F&B
               </Link>
             )}
             {isAdmin(user?.email) && (
-              <Link to="/admin" className="p-2 text-black hover:text-gray-600" title="Admin">
+              <Link 
+                to="/admin" 
+                onClick={() => setOptimisticPath('/admin')}
+                className={`p-2 rounded-full transition-colors ${isActive('/admin') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+                title="Admin"
+              >
                 <Settings className="w-4 h-4" />
               </Link>
             )}
-            <Link to="/cart" className="relative p-2 text-black hover:text-gray-600">
+            <Link 
+              to="/cart" 
+              onClick={() => setOptimisticPath('/cart')}
+              className={`relative p-2 rounded-full transition-colors ${isActive('/cart') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+            >
               <ShoppingCart className="w-4 h-4" />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans font-normal">
@@ -442,13 +493,17 @@ const Header: React.FC = () => {
                 </span>
               )}
             </Link>
-            <Link to={user ? "/dashboard" : "/sign-in"} className="p-2 text-black hover:text-gray-600">
+            <Link 
+              to={user ? "/dashboard" : "/sign-in"} 
+              onClick={() => setOptimisticPath(user ? "/dashboard" : "/sign-in")}
+              className={`p-2 rounded-full transition-colors ${isActive(user ? "/dashboard" : "/sign-in") ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+            >
               <User className="w-4 h-4" />
             </Link>
           </nav>
 
           {/* Tablet Navigation - Search Tab */}
-          <div className="hidden md:flex lg:hidden items-center space-x-3">
+          <div className="hidden md:flex lg:hidden items-center space-x-1">
             <div className="relative" ref={searchRef}>
               <button
                 onClick={(e) => {
@@ -532,7 +587,11 @@ const Header: React.FC = () => {
                 </div>
               )}
             </div>
-            <Link to="/cart" className="relative p-2 text-black hover:text-gray-600">
+            <Link 
+              to="/cart" 
+              onClick={() => setOptimisticPath('/cart')}
+              className={`relative p-2 rounded-full transition-colors ${isActive('/cart') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+            >
               <ShoppingCart className="w-4 h-4" />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-sans font-normal">
@@ -540,7 +599,11 @@ const Header: React.FC = () => {
                 </span>
               )}
             </Link>
-            <Link to={user ? "/dashboard" : "/sign-in"} className="p-2 text-black hover:text-gray-600">
+            <Link 
+              to={user ? "/dashboard" : "/sign-in"} 
+              onClick={() => setOptimisticPath(user ? "/dashboard" : "/sign-in")}
+              className={`p-2 rounded-full transition-colors ${isActive(user ? "/dashboard" : "/sign-in") ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+            >
               <User className="w-4 h-4" />
             </Link>
           </div>
@@ -631,30 +694,42 @@ const Header: React.FC = () => {
             <nav className="flex flex-col space-y-3">
               <Link
                 to="/favorites"
-                className="flex items-center text-black hover:text-gray-600 py-2 font-sans font-normal"
-                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center py-2 font-sans font-normal transition-colors ${isActive('/favorites') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                onClick={() => {
+                  setOptimisticPath('/favorites');
+                  setIsMenuOpen(false);
+                }}
               >
                 <Heart className="w-4 h-4 mr-2" />
                 <span className="font-sans font-normal uppercase text-sm">Favorites</span>
               </Link>
               <Link
                 to="/categories"
-                className="text-black hover:text-gray-600 py-2 font-sans font-normal"
-                onClick={() => setIsMenuOpen(false)}
+                className={`py-2 font-sans font-normal transition-colors ${isActive('/categories') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                onClick={() => {
+                  setOptimisticPath('/categories');
+                  setIsMenuOpen(false);
+                }}
               >
                 <span className="font-sans font-normal uppercase text-sm">Categories</span>
               </Link>
               <Link
                 to="/browse"
-                className="text-black hover:text-gray-600 py-2 font-sans font-normal"
-                onClick={() => setIsMenuOpen(false)}
+                className={`py-2 font-sans font-normal transition-colors ${isActive('/browse') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                onClick={() => {
+                  setOptimisticPath('/browse');
+                  setIsMenuOpen(false);
+                }}
               >
                 <span className="font-sans font-normal uppercase text-sm">Art</span>
               </Link>
               <Link
                 to="/shop"
-                className="text-black hover:text-gray-600 py-2 font-sans font-normal"
-                onClick={() => setIsMenuOpen(false)}
+                className={`py-2 font-sans font-normal transition-colors ${isActive('/shop') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                onClick={() => {
+                  setOptimisticPath('/shop');
+                  setIsMenuOpen(false);
+                }}
               >
                 <span className="font-sans font-normal uppercase text-sm">Shop</span>
               </Link>
@@ -662,8 +737,11 @@ const Header: React.FC = () => {
               {navigationVisibility.clothesActive && (
                 <Link
                   to="/clothes"
-                  className="text-black hover:text-gray-600 py-2 font-sans font-normal"
-                  onClick={() => setIsMenuOpen(false)}
+                  className={`py-2 font-sans font-normal transition-colors ${isActive('/clothes') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                  onClick={() => {
+                    setOptimisticPath('/clothes');
+                    setIsMenuOpen(false);
+                  }}
                 >
                   <span className="font-sans font-normal uppercase text-sm">Clothes</span>
                 </Link>
@@ -671,8 +749,11 @@ const Header: React.FC = () => {
               {navigationVisibility.fbActive && (
                 <Link
                   to="/fb"
-                  className="text-black hover:text-gray-600 py-2 font-sans font-normal"
-                  onClick={() => setIsMenuOpen(false)}
+                  className={`py-2 font-sans font-normal transition-colors ${isActive('/fb') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                  onClick={() => {
+                    setOptimisticPath('/fb');
+                    setIsMenuOpen(false);
+                  }}
                 >
                   <span className="font-sans font-normal uppercase text-sm">F&B</span>
                 </Link>
@@ -680,8 +761,11 @@ const Header: React.FC = () => {
               {isAdmin(user?.email) && (
                 <Link
                   to="/admin"
-                  className="flex items-center text-black hover:text-gray-600 py-2 font-sans font-normal"
-                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center py-2 font-sans font-normal transition-colors ${isActive('/admin') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                  onClick={() => {
+                    setOptimisticPath('/admin');
+                    setIsMenuOpen(false);
+                  }}
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   <span className="font-sans font-normal uppercase text-sm">Admin</span>
@@ -690,16 +774,22 @@ const Header: React.FC = () => {
               <div className="flex items-center space-x-3 pt-2">
                 <Link 
                   to="/cart"
-                  className="flex items-center text-black hover:text-gray-600 font-sans font-normal"
-                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center font-sans font-normal transition-colors py-2 ${isActive('/cart') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                  onClick={() => {
+                    setOptimisticPath('/cart');
+                    setIsMenuOpen(false);
+                  }}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   <span className="font-sans font-normal uppercase text-sm">Cart ({cartItemCount})</span>
                 </Link>
                 <Link
                   to={user ? "/dashboard" : "/sign-in"}
-                  className="flex items-center text-black hover:text-gray-600 font-sans font-normal"
-                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center font-sans font-normal transition-colors py-2 ${isActive(user ? "/dashboard" : "/sign-in") ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}
+                  onClick={() => {
+                    setOptimisticPath(user ? "/dashboard" : "/sign-in");
+                    setIsMenuOpen(false);
+                  }}
                 >
                   <User className="w-4 h-4 mr-2" />
                   <span className="font-sans font-normal uppercase text-sm">{user ? "Dashboard" : "Sign In"}</span>

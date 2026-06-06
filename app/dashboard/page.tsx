@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import UserDashboard from '@/src/page-components/UserDashboard';
+import dynamic from 'next/dynamic';
+
+const UserDashboard = dynamic(() => import('@/src/page-components/UserDashboard'));
 
 export const metadata: Metadata = {
   title: 'Dashboard | Lurevi',

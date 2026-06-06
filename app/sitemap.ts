@@ -59,7 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (!category?.slug) continue;
       const safeCategorySlug = encodeURIComponent(String(category.slug));
       entries.push({
-        url: `${SITE_URL}/${safeCategorySlug}`,
+        url: `${SITE_URL}/categories/${safeCategorySlug}`,
         lastModified: category.updated_at ? new Date(category.updated_at) : now,
         changeFrequency: 'weekly',
         priority: 0.9,
@@ -77,7 +77,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const safeProductSlug = encodeURIComponent(String(product.slug));
 
       entries.push({
-        url: `${SITE_URL}/${safeCategorySlug}/${safeProductSlug}`,
+        url: `${SITE_URL}/categories/${safeCategorySlug}/${safeProductSlug}`,
         lastModified: product.updated_at ? new Date(product.updated_at) : now,
         changeFrequency: 'weekly',
         priority: 0.7,

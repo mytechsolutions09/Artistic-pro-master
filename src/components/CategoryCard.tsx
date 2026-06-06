@@ -33,7 +33,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
 
   return (
     <Link
-      to={`/${category.slug}`}
+      to={`/categories/${category.slug}`}
       className="group block bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-pink-50"
     >
       <div className="relative h-40 overflow-hidden">

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import Cart from '@/src/page-components/Cart';
+import dynamic from 'next/dynamic';
+
+const Cart = dynamic(() => import('@/src/page-components/Cart'));
 
 export const metadata: Metadata = {
   title: 'Cart | Lurevi',

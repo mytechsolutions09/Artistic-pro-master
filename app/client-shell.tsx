@@ -74,6 +74,7 @@ const HIDE_FOOTER_PATHS = [
   '/sign-up',
   '/forgot-password',
   '/reset-password',
+  '/checkout',
 ];
 
 export default function ClientShell({ children }: { children: React.ReactNode }) {

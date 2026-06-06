@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { keyword } = await request.json();
+    const { keyword, existingTitles = [] } = await request.json();
 
     if (!keyword) {
       return NextResponse.json(
@@ -30,6 +30,9 @@ export async function POST(request: Request) {
 You are an expert SEO blog writer for an online luxury home decor and art store called "Lurevi". 
 Write an engaging, SEO-optimized blog post based on the following keyword/topic: "${keyword}".
 
+We already have the following blog posts. You MUST generate a completely unique title that is distinct from all of these:
+${existingTitles.length > 0 ? existingTitles.map((t: string) => `- ${t}`).join('\n') : "None"}
+
 Please return a valid JSON object with the following structure:
 {
   "title": "A catchy, SEO-friendly title",
@@ -40,7 +43,7 @@ Please return a valid JSON object with the following structure:
   "tags": "comma, separated, tags"
 }
 
-Ensure the content is well-written, professional, and tailored to an audience interested in luxury home decor, wall art, and premium gifts in India. Do NOT include Markdown code block formatting (like \`\`\`json) in the response, just the raw JSON object.
+Ensure the content is well-written, professional, and tailored to an audience interested in luxury home decor, wall art, and premium gifts in India. IMPORTANT: Do NOT include any external hyperlinks, URLs, <a> tags, <img> tags, or Markdown images (![alt](url)) in the content. The content should be text-only without any inline images or links. Do NOT include Markdown code block formatting (like \`\`\`json) in the response, just the raw JSON object.
     `;
 
     const result = await model.generateContent(prompt);
@@ -53,6 +56,14 @@ Ensure the content is well-written, professional, and tailored to an audience in
       const cleanedText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
       const blogData = JSON.parse(cleanedText);
       
+      // Strip any images or links the AI might have still generated
+      if (blogData.content) {
+        blogData.content = blogData.content.replace(/<img[^>]*>/gi, '');
+        blogData.content = blogData.content.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
+        blogData.content = blogData.content.replace(/!\[.*?\]\(.*?\)/g, '');
+        blogData.content = blogData.content.replace(/(?<!\!)\[(.*?)\]\(.*?\)/g, '$1');
+      }
+
       return NextResponse.json(blogData);
     } catch (parseError) {
       console.error('Error parsing Gemini JSON response:', parseError);

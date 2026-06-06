@@ -36,7 +36,6 @@ const ClothingProductPage: React.FC = () => {
   const [selectedReviewImage, setSelectedReviewImage] = useState<string | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
-  const [showReviewModal, setShowReviewModal] = useState(false);
   const [visibilitySettings, setVisibilitySettings] = useState<NavigationVisibilitySettings>(
     NavigationVisibilityService.getSettings()
   );
@@ -72,9 +71,23 @@ const ClothingProductPage: React.FC = () => {
     return hasGender || hasClothingCategory;
   }) as any;
 
-  // Scroll to top on mount
+  const [transitionLoading, setTransitionLoading] = useState(false);
+
+  // Scroll to top and reset states on product change
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    setTransitionLoading(true);
+    setSelectedSize('');
+    setSelectedColor('');
+    setSelectedImage(0);
+    setQuantity(1);
+    setReviews([]);
+    
+    const timer = setTimeout(() => {
+      setTransitionLoading(false);
+    }, 400); // 400ms skeleton transition
+    
+    return () => clearTimeout(timer);
   }, [productSlug]);
 
   useEffect(() => {
@@ -143,14 +156,6 @@ const ClothingProductPage: React.FC = () => {
       ...prev,
       [reviewId]: (prev[reviewId] || 0) + 1
     }));
-  };
-
-  const handleWriteReview = () => {
-    setShowReviewModal(true);
-  };
-
-  const closeReviewModal = () => {
-    setShowReviewModal(false);
   };
 
   // Calculate average rating and total reviews
@@ -264,7 +269,7 @@ const ClothingProductPage: React.FC = () => {
     navigate('/cart');
   };
 
-  if (loading) {
+  if (loading || transitionLoading) {
     return <ClothingProductPageSkeleton />;
   }
 
@@ -282,7 +287,7 @@ const ClothingProductPage: React.FC = () => {
     );
   }
 
-  if (!product) {
+  if (!product && !loading && !transitionLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -722,16 +727,16 @@ const ClothingProductPage: React.FC = () => {
                   
                   <div className="p-1 sm:p-2 lg:p-3">
                     {/* Header with Rating and Write Review Button */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 sm:mb-2 space-y-1 sm:space-y-0">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 mb-3 border-b border-gray-200 space-y-1 sm:space-y-0">
                       <div>
                         <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-[#333333] font-sans font-normal">
                           Customer Reviews
                         </h3>
                       </div>
                       
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
                         {/* Rating */}
-                        <div className="flex items-center space-x-2 bg-[#F5F5F5] rounded-lg px-2 py-1 border border-[#F5F5F5] shadow-sm">
+                        <div className="flex items-center space-x-2">
                           <div className="text-lg sm:text-xl font-semibold text-teal-800 font-sans font-normal">
                             {averageRating.toFixed(1)}
                           </div>
@@ -750,33 +755,24 @@ const ClothingProductPage: React.FC = () => {
                             ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
                           </div>
                         </div>
-                        
-                        <button 
-                          onClick={handleWriteReview}
-                          className="px-2 py-1 bg-teal-800 hover:bg-teal-700 text-white rounded-md transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md text-xs font-sans font-normal"
-                        >
-                          ✨ Write a Review
-                        </button>
-                      </div>
-                    </div>
 
-                    {/* Sort Options */}
-                    <div className="flex items-center justify-end mb-1 sm:mb-2">
-                      <div className="flex items-center space-x-1 sm:space-x-2">
-                        <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
-                        <select className="text-sm border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-black focus:border-black bg-white shadow-sm font-sans font-normal text-black [&>option]:bg-white [&>option]:text-black [&>option:hover]:bg-gray-100 [&>option:hover]:text-black [&>option:checked]:bg-gray-100 [&>option:checked]:text-black">
-                          <option>Most Recent</option>
-                          <option>Suggested</option>
-                          <option>Highest Rated</option>
-                          <option>Lowest Rated</option>
-                        </select>
+                        {/* Sort Options */}
+                        <div className="flex items-center space-x-1 sm:space-x-2">
+                          <span className="text-xs font-medium text-[#333333] font-sans font-normal">Sort by:</span>
+                          <select className="appearance-none text-sm border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-black focus:border-black bg-white shadow-sm font-sans font-normal text-black [&>option]:bg-white [&>option]:text-black [&>option:hover]:bg-gray-100 [&>option:hover]:text-black [&>option:checked]:bg-gray-100 [&>option:checked]:text-black">
+                            <option>Most Recent</option>
+                            <option>Suggested</option>
+                            <option>Highest Rated</option>
+                            <option>Lowest Rated</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
 
                     {/* Individual Reviews */}
                     {reviewsLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F48FB1]"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
                         <span className="ml-3 text-gray-600 font-sans font-normal">Loading reviews...</span>
                       </div>
                     ) : reviews.length === 0 ? (
@@ -853,7 +849,7 @@ const ClothingProductPage: React.FC = () => {
                                         <img
                                           src={image}
                                           alt={`Review image ${imgIndex + 1}`}
-                                          className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:border-[#F48FB1] transition-all duration-200"
+                                          className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:border-gray-600 transition-all duration-200"
                                         />
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
                                           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -878,13 +874,13 @@ const ClothingProductPage: React.FC = () => {
                               <div className="flex items-center justify-between">
                                 <button 
                                   onClick={() => handleHelpfulVote(review.id)}
-                                  className="flex items-center space-x-1 text-[#333333] hover:text-[#F48FB1] transition-colors font-medium text-xs font-sans font-normal"
+                                  className="flex items-center space-x-1 text-[#333333] hover:text-gray-600 transition-colors font-medium text-xs font-sans font-normal"
                                 >
                                   <ThumbsUp className="w-3 h-3" />
                                   <span>Helpful ({helpfulVotes[review.id] || review.helpful || 0})</span>
                                 </button>
                                 {review.verified && (
-                                  <span className="px-2 py-1 bg-[#F48FB1] text-white text-xs rounded-full font-semibold shadow-sm font-sans font-normal">
+                                  <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded-full font-semibold shadow-sm font-sans font-normal">
                                     ✓ Verified Purchase
                                   </span>
                                 )}
@@ -900,7 +896,7 @@ const ClothingProductPage: React.FC = () => {
                               <button 
                                 onClick={() => handlePageChange(currentPage - 1)}
                                 disabled={currentPage === 1}
-                                className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                                className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-gray-600 hover:border-gray-600 transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                               >
                                 ←
                               </button>
@@ -911,8 +907,8 @@ const ClothingProductPage: React.FC = () => {
                                   onClick={() => handlePageChange(page)}
                                   className={`w-8 h-8 rounded-lg transition-all duration-300 font-medium text-sm font-sans font-normal ${
                                     page === currentPage 
-                                      ? 'bg-[#F48FB1] text-white shadow-lg' 
-                                      : 'border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] hover:shadow-md'
+                                      ? 'bg-gray-600 text-white shadow-lg' 
+                                      : 'border border-[#F5F5F5] text-[#333333] hover:text-gray-600 hover:border-gray-600 hover:shadow-md'
                                   }`}
                                 >
                                   {page}
@@ -922,7 +918,7 @@ const ClothingProductPage: React.FC = () => {
                               <button 
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={currentPage === totalPages}
-                                className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-[#F48FB1] hover:border-[#F48FB1] transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
+                                className="w-8 h-8 rounded-lg border border-[#F5F5F5] text-[#333333] hover:text-gray-600 hover:border-gray-600 transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed font-sans font-normal"
                               >
                                 →
                               </button>
@@ -956,7 +952,7 @@ const ClothingProductPage: React.FC = () => {
                             <img
                               src={image}
                               alt={`Review image ${index + 1}`}
-                              className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:border-[#F48FB1] transition-all duration-200"
+                              className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:border-gray-600 transition-all duration-200"
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -976,7 +972,7 @@ const ClothingProductPage: React.FC = () => {
                     })()}
                   </div>
                   {reviews.filter((review: Review) => review && review.images && review.images.length > 0).length > 0 && (
-                    <button className="w-full mt-3 sm:mt-4 py-2 text-[#F48FB1] hover:text-[#E91E63] text-xs sm:text-sm font-medium transition-colors font-sans font-normal">
+                    <button className="w-full mt-3 sm:mt-4 py-2 text-gray-600 hover:text-gray-900 text-xs sm:text-sm font-medium transition-colors font-sans font-normal">
                       View all review images →
                     </button>
                   )}

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText } from 'lucide-react';
+import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav';
 import { supabase } from '../../services/supabaseService';
@@ -90,8 +90,426 @@ type ColdEmailRecipient = {
   name: string;
 };
 
+interface SeoPlanItem {
+  w: string | number;
+  phase: string | null;
+  title: string;
+  type: string;
+  intent: string;
+  format: string;
+  kws: string[];
+  cta: string | null;
+  outline: string;
+  h1: string;
+  meta: string;
+  slug: string;
+}
+
+const SEO_PLAN_ITEMS: SeoPlanItem[] = [
+  {
+    w: 1,
+    phase: "Phase 1 — Foundation (wk 1–4)",
+    title: "What is digital art? A complete guide",
+    type: "Pillar page",
+    intent: "Informational",
+    format: "Long-form guide (1200w)",
+    kws: ["digital art", "digital artwork"],
+    cta: "Shop Lurevi digital prints",
+    outline: "Definition → history → styles (illustration, painting, sculpture) → how it's made → FAQ",
+    h1: "What is digital art?",
+    meta: "Explore the world of digital art — from digital illustration to digital painting. Browse Lurevi's curated collection.",
+    slug: "/blog/what-is-digital-art"
+  },
+  {
+    w: 2,
+    phase: null,
+    title: "Digital illustration: styles, tools and how to buy prints",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Guide + product embeds",
+    kws: ["digital illustration"],
+    cta: "Browse illustration prints",
+    outline: "What is digital illustration → styles (flat, line art, painterly) → tools artists use → how to buy quality prints in India",
+    h1: "Digital illustration explained",
+    meta: "Learn what digital illustration is and how to choose the best digital illustration prints for your home.",
+    slug: "/blog/digital-illustration-guide"
+  },
+  {
+    w: 3,
+    phase: null,
+    title: "Digital artwork for your home: how to choose the right piece",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Guide + buying tips",
+    kws: ["digital artwork"],
+    cta: "Shop all artwork",
+    outline: "What makes digital artwork different → print vs screen → sizing for walls → style matching → where to buy in India",
+    h1: "How to choose digital artwork for your home",
+    meta: "A practical guide to buying digital artwork in India — sizing, framing, styles, and where to find curated prints.",
+    slug: "/blog/digital-artwork-for-home"
+  },
+  {
+    w: 4,
+    phase: null,
+    title: "Digital painting vs digital illustration: what's the difference?",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Comparison + examples",
+    kws: ["digital painting", "digital illustration"],
+    cta: "Explore both collections",
+    outline: "Definition of each → visual comparison → techniques → which to choose for home decor → Lurevi examples",
+    h1: "Digital painting vs digital illustration",
+    meta: "Understand the difference between digital painting and digital illustration, with curated examples from Lurevi.",
+    slug: "/blog/digital-painting-vs-illustration"
+  },
+  {
+    w: 5,
+    phase: "Phase 2 — Collection pages (wk 5–8)",
+    title: "Digital art prints — curated wall art for Indian homes",
+    type: "Collection page",
+    intent: "Commercial",
+    format: "Category page (600w + products)",
+    kws: ["digital art prints"],
+    cta: "Add to cart",
+    outline: "Hero intro → why digital art prints → print quality at Lurevi → filter by style/size → FAQ schema",
+    h1: "Digital art prints",
+    meta: "Buy digital art prints in India. Curated digital wall art, premium archival prints. Free shipping above ₹999.",
+    slug: "/collections/digital-art-prints"
+  },
+  {
+    w: 6,
+    phase: null,
+    title: "Digital wall painting collection: modern art for every room",
+    type: "Collection page",
+    intent: "Commercial",
+    format: "Category page (600w + products)",
+    kws: ["digital wall painting"],
+    cta: "Shop wall paintings",
+    outline: "What is a digital wall painting → room-wise curation → size guide → material options → FAQ",
+    h1: "Digital wall paintings",
+    meta: "Shop digital wall painting prints for your living room, bedroom and office. Modern, curated, made in India.",
+    slug: "/collections/digital-wall-paintings"
+  },
+  {
+    w: 7,
+    phase: null,
+    title: "Digital drawing prints: from sketch to wall",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Edu-editorial + product links",
+    kws: ["digital drawing"],
+    cta: "Shop drawing-style prints",
+    outline: "What is a digital drawing → how artists create them → why they look stunning as prints → how to frame → shop section",
+    h1: "Digital drawing prints: from sketch to wall",
+    meta: "Discover the art behind digital drawing and how to bring it into your space as a framed print.",
+    slug: "/blog/digital-drawing-prints"
+  },
+  {
+    w: 8,
+    phase: null,
+    title: "Online paintings shop: how Lurevi curates its collection",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Brand story + collection link",
+    kws: ["paintings shop"],
+    cta: "Browse the shop",
+    outline: "How Lurevi selects artists → curation process → print standards → materials → behind-the-scenes",
+    h1: "Behind Lurevi's paintings shop",
+    meta: "An inside look at how Lurevi curates its online paintings shop — artist selection, print quality and more.",
+    slug: "/blog/lurevi-paintings-shop"
+  },
+  {
+    w: 9,
+    phase: "Phase 3 — Authority content (wk 9–12)",
+    title: "10 digital art styles to know before buying prints",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Listicle + examples",
+    kws: ["digital art", "digital artwork"],
+    cta: "Shop by style",
+    outline: "Flat illustration → line art → glitch → generative → portrait → abstract → painterly → pixel → dark fantasy → minimalist — each with Lurevi example",
+    h1: "10 digital art styles explained",
+    meta: "From flat illustration to generative art — explore 10 digital art styles and find the right print for your wall.",
+    slug: "/blog/digital-art-styles"
+  },
+  {
+    w: 10,
+    phase: null,
+    title: "Digital art galleries in India: your complete online guide",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Roundup + brand positioning",
+    kws: ["digital art galleries"],
+    cta: "Visit Lurevi gallery",
+    outline: "Rise of online art galleries in India → what to look for in a digital art gallery → Lurevi as a curated gallery → how to buy safely",
+    h1: "Digital art galleries online in India",
+    meta: "A guide to finding quality digital art galleries in India — curation, print standards, and where to shop.",
+    slug: "/blog/digital-art-galleries-india"
+  },
+  {
+    w: 11,
+    phase: null,
+    title: "How digital art painting is made: from screen to your wall",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Process explainer",
+    kws: ["digital art painting", "digital painting"],
+    cta: "Shop paintings",
+    outline: "Artist's process → software used → how a digital painting is colour-graded → print process → paper vs canvas → Lurevi workflow",
+    h1: "How a digital art painting is made",
+    meta: "Follow the journey of a digital art painting — from artist's screen to your printed wall art.",
+    slug: "/blog/how-digital-art-painting-is-made"
+  },
+  {
+    w: 12,
+    phase: null,
+    title: "Digital illustration for home decor: a room-by-room guide",
+    type: "Blog post",
+    intent: "Commercial",
+    format: "Room guide + product pins",
+    kws: ["digital illustration", "digital wall painting"],
+    cta: "Shop room collections",
+    outline: "Living room → bedroom → home office → kids room → hallway — with Lurevi print recommendations per room",
+    h1: "Digital illustration for every room",
+    meta: "Style your home with digital illustration prints — room-by-room ideas from Lurevi's curated collection.",
+    slug: "/blog/digital-illustration-home-decor"
+  },
+  {
+    w: 13,
+    phase: "Phase 4 — Long-tail India (wk 13–16)",
+    title: "Best digital art prints for living rooms in India",
+    type: "Blog post",
+    intent: "Commercial",
+    format: "Curated list + buy links",
+    kws: ["digital art prints"],
+    cta: "Shop living room prints",
+    outline: "Why wall art matters → size guide for Indian living rooms → 8 curated picks with prices → styling tips → FAQ",
+    h1: "Best digital art prints for living rooms",
+    meta: "Find the best digital art prints for your Indian living room. Curated picks, size guide and styling tips from Lurevi.",
+    slug: "/blog/best-digital-art-prints-living-room-india"
+  },
+  {
+    w: 14,
+    phase: null,
+    title: "Gifting digital art: why a print beats anything this festive season",
+    type: "Blog post",
+    intent: "Commercial",
+    format: "Gift guide",
+    kws: ["digital artwork", "digital art prints"],
+    cta: "Shop gift-ready prints",
+    outline: "Why art is a meaningful gift → digital vs physical art gifts → price ranges → Lurevi gift packaging → top 6 picks",
+    h1: "Gifting digital art in India",
+    meta: "Looking for a unique gift? A digital art print from Lurevi is personal, lasting and beautifully packaged.",
+    slug: "/blog/gifting-digital-art-india"
+  },
+  {
+    w: 15,
+    phase: null,
+    title: "How to frame digital art prints at home in India",
+    type: "Blog post",
+    intent: "Informational",
+    format: "How-to guide",
+    kws: ["digital art prints", "digital drawing"],
+    cta: "Browse frameable prints",
+    outline: "Print sizes and standard frame sizes in India → where to get frames → DIY framing tips → hanging tips for Indian walls",
+    h1: "How to frame digital art prints",
+    meta: "A practical guide to framing digital art prints in India — sizes, frame sourcing and hanging tips.",
+    slug: "/blog/how-to-frame-digital-art-prints-india"
+  },
+  {
+    w: 16,
+    phase: null,
+    title: "Digital art vs traditional art: which makes better wall prints?",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Comparison + FAQ",
+    kws: ["digital art", "digital painting"],
+    cta: "Explore Lurevi's collection",
+    outline: "What is digital vs traditional art → colour accuracy in print → longevity → cost → collectability → FAQ schema",
+    h1: "Digital art vs traditional art for wall prints",
+    meta: "Comparing digital and traditional art for home printing — colour, cost, and longevity. Plus the best digital art prints in India.",
+    slug: "/blog/digital-art-vs-traditional-art"
+  },
+  {
+    w: 16,
+    phase: null,
+    title: "Digital sculptures as wall art: the emerging trend",
+    type: "Blog post",
+    intent: "Informational",
+    format: "Trend piece",
+    kws: ["digital art", "digital artwork"],
+    cta: "Explore 3D art prints",
+    outline: "What are digital sculptures → why they work as prints → artists to follow → how Lurevi curates 3D-style art",
+    h1: "Digital sculptures as wall art",
+    meta: "Explore the emerging trend of digital sculptures as wall art — and find curated 3D-style prints at Lurevi.",
+    slug: "/blog/digital-sculptures-wall-art"
+  },
+  {
+    w: "—",
+    phase: "Evergreen SEO assets",
+    title: "FAQ schema content block (site-wide)",
+    type: "On-page SEO",
+    intent: "Technical",
+    format: "Schema markup",
+    kws: ["digital art prints", "digital artwork"],
+    cta: null,
+    outline: "10-question FAQ covering: what is digital art, how are prints made, print sizes, framing, India delivery, returns",
+    h1: "FAQ schema",
+    meta: "Deploy FAQPage schema on all collection pages and top 5 blog posts",
+    slug: "/collections/* + /blog/*"
+  },
+  {
+    w: "—",
+    phase: null,
+    title: "Google Image SEO audit",
+    type: "On-page SEO",
+    intent: "Technical",
+    format: "Image optimization",
+    kws: ["digital art", "digital illustration", "digital painting"],
+    cta: null,
+    outline: "Rename all product images to keyword-descriptive filenames. Write alt text for every image. Convert to WebP. Submit image sitemap.",
+    h1: "Image SEO",
+    meta: "Apply to all existing and new product images",
+    slug: "All product images"
+  },
+  {
+    w: "—",
+    phase: null,
+    title: "Pinterest board: digital art prints India",
+    type: "Off-page SEO",
+    intent: "Authority",
+    format: "Social / backlink",
+    kws: ["digital art prints", "digital illustration"],
+    cta: null,
+    outline: "Create 5 boards (by room, by style, by colour). Pin every product with keyword-rich descriptions linking back to Lurevi. 2–3 pins per week.",
+    h1: "Pinterest strategy",
+    meta: "Target: 50 pins in first month",
+    slug: "pinterest.com/lurevi"
+  },
+  {
+    w: "—",
+    phase: null,
+    title: "Quora answers: buying digital art in India",
+    type: "Off-page SEO",
+    intent: "Authority",
+    format: "Community",
+    kws: ["digital art galleries", "paintings shop"],
+    cta: null,
+    outline: "Answer 8–10 Quora questions about buying art online in India. Link naturally to relevant Lurevi blog posts. Target: 4 answers per month.",
+    h1: "Quora strategy",
+    meta: "Topics: art buying India, wall art India, digital prints",
+    slug: "quora.com"
+  },
+  {
+    w: "—",
+    phase: null,
+    title: "LBB / Homegrown / The Label Life listing",
+    type: "Off-page SEO",
+    intent: "Authority",
+    format: "Brand listing / PR",
+    kws: ["digital art", "paintings shop"],
+    cta: null,
+    outline: "Submit Lurevi to LBB, Homegrown, The Label Life as an Indian digital art brand. Each listing = high-DA backlink + referral traffic.",
+    h1: "India press listings",
+    meta: "Target: 3 brand mentions in month 2",
+    slug: "lbb.in / homegrown.co.in"
+  },
+  {
+    w: "—",
+    phase: null,
+    title: "Google Search Console — weekly review",
+    type: "Tracking",
+    intent: "Technical",
+    format: "Ongoing",
+    kws: ["all"],
+    cta: null,
+    outline: "Every Friday: check impressions for target keywords, identify new queries appearing in GSC, fix any crawl errors, monitor Core Web Vitals.",
+    h1: "GSC review",
+    meta: "Takes 15 min per week",
+    slug: "search.google.com/search-console"
+  },
+  {
+    w: "—",
+    phase: null,
+    title: "Internal linking audit (monthly)",
+    type: "On-page SEO",
+    intent: "Technical",
+    format: "Ongoing",
+    kws: ["all"],
+    cta: null,
+    outline: "Every 4 weeks: ensure every blog post links to at least one collection page with exact-match anchor text. Add new posts to the pillar page internal link cluster.",
+    h1: "Internal linking",
+    meta: "Review after every 4 new posts",
+    slug: "/blog/* → /collections/*"
+  }
+];
+
 const Marketing: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email'>('tracking');
+  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan'>('tracking');
+  const [seoSearch, setSeoSearch] = useState('');
+  const [seoFilter, setSeoFilter] = useState('all');
+  const [expandedCardIndex, setExpandedCardIndex] = useState<number | null>(null);
+
+  const handleWriteBrief = (title: string) => {
+    const promptText = `Write a full content brief for: "${title}". Include target keywords, heading structure, search intent alignment, and key sections.`;
+    if (typeof (window as any).sendPrompt === 'function') {
+      (window as any).sendPrompt(promptText);
+    } else {
+      navigator.clipboard.writeText(promptText)
+        .then(() => {
+          showMessage('success', 'Brief generation prompt copied to clipboard!');
+        })
+        .catch((err) => {
+          console.error('Failed to copy prompt: ', err);
+          showMessage('error', 'Failed to copy prompt to clipboard.');
+        });
+    }
+  };
+
+  const getIntentBadgeClass = (intent: string) => {
+    switch (intent) {
+      case 'Informational':
+        return 'bg-teal-50 text-teal-700 border border-teal-100';
+      case 'Commercial':
+        return 'bg-sky-50 text-sky-700 border border-sky-100';
+      case 'Technical':
+        return 'bg-gray-100 text-gray-700 border border-gray-200';
+      case 'Authority':
+        return 'bg-purple-50 text-purple-700 border border-purple-100';
+      default:
+        return 'bg-gray-100 text-gray-600 border border-gray-200';
+    }
+  };
+
+  const getTypeBadgeClass = (type: string) => {
+    switch (type) {
+      case 'Pillar page':
+        return 'bg-purple-50 text-purple-700 border border-purple-100';
+      case 'Blog post':
+        return 'bg-gray-50 text-gray-600 border border-gray-200';
+      case 'Collection page':
+        return 'bg-sky-50 text-sky-700 border border-sky-100';
+      case 'On-page SEO':
+        return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'Off-page SEO':
+        return 'bg-rose-50 text-rose-700 border border-rose-100';
+      case 'Tracking':
+        return 'bg-gray-50 text-gray-600 border border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-600 border border-gray-200';
+    }
+  };
+
+  const getWeekBadgeClass = (w: string | number) => {
+    if (w === '—') return 'bg-gray-100 text-gray-700 border border-gray-200';
+    const num = typeof w === 'number' ? w : parseInt(w as string, 10);
+    if (isNaN(num)) return 'bg-gray-100 text-gray-700 border border-gray-200';
+    if (num <= 4) return 'bg-teal-50 text-teal-700 border border-teal-100';
+    if (num <= 8) return 'bg-sky-50 text-sky-700 border border-sky-100';
+    if (num <= 12) return 'bg-amber-50 text-amber-700 border border-amber-100';
+    return 'bg-rose-50 text-rose-700 border border-rose-100';
+  };
+
   const [settings, setSettings] = useState<MarketingSettings>({
     meta_pixel_id: '',
     meta_pixel_enabled: true,
@@ -2116,6 +2534,253 @@ const Marketing: React.FC = () => {
             <button type="button" onClick={resetDailyChecklist} className={btnOutline}>
               Reset today
             </button>
+          </div>
+        </div>
+
+        {/* SEO Plan Sub-tab Content */}
+        <div className={activeSubTab === 'seo_plan' ? 'space-y-3' : 'hidden'}>
+          {/* Stats Section */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className={cardCls}>
+              <div className="text-[10px] uppercase tracking-wider text-gray-500">Total Pieces</div>
+              <div className="text-lg font-bold text-gray-900">24</div>
+            </div>
+            <div className={cardCls}>
+              <div className="text-[10px] uppercase tracking-wider text-gray-500">Weeks Covered</div>
+              <div className="text-lg font-bold text-gray-900">16</div>
+            </div>
+            <div className={cardCls}>
+              <div className="text-[10px] uppercase tracking-wider text-gray-500">Keywords Mapped</div>
+              <div className="text-lg font-bold text-gray-900">10</div>
+            </div>
+            <div className={cardCls}>
+              <div className="text-[10px] uppercase tracking-wider text-gray-500">Est. Monthly Vol</div>
+              <div className="text-lg font-bold text-gray-900">57K+</div>
+            </div>
+          </div>
+
+          {/* Filters and Search */}
+          <div className={cardCls}>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search titles or keywords…"
+                  value={seoSearch}
+                  onChange={(e) => setSeoSearch(e.target.value)}
+                  className={`${inputCls} pl-8`}
+                />
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'Pillar page', label: 'Pillar' },
+                  { id: 'Blog post', label: 'Blog' },
+                  { id: 'Collection page', label: 'Collection' },
+                  { id: 'Informational', label: 'Informational' },
+                  { id: 'Commercial', label: 'Commercial' },
+                ].map((btn) => (
+                  <button
+                    key={btn.id}
+                    type="button"
+                    onClick={() => setSeoFilter(btn.id)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors border ${
+                      seoFilter === btn.id
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Calendar Content */}
+          <div className="space-y-4">
+            {(() => {
+              const filteredItems = SEO_PLAN_ITEMS.filter((item) => {
+                const query = seoSearch.toLowerCase().trim();
+                const matchesSearch =
+                  !query ||
+                  item.title.toLowerCase().includes(query) ||
+                  item.kws.some((kw) => kw.toLowerCase().includes(query)) ||
+                  item.type.toLowerCase().includes(query) ||
+                  item.intent.toLowerCase().includes(query);
+
+                if (!matchesSearch) return false;
+
+                if (seoFilter === 'all') return true;
+                return item.type === seoFilter || item.intent === seoFilter;
+              });
+
+              if (filteredItems.length === 0) {
+                return (
+                  <div className={`${cardCls} py-8 text-center text-xs text-gray-500`}>
+                    No content calendar items match your criteria.
+                  </div>
+                );
+              }
+
+              interface SeoPlanGroup {
+                phase: string;
+                items: Array<{ originalIndex: number; item: SeoPlanItem }>;
+              }
+
+              const groups: SeoPlanGroup[] = [];
+              let currentGroup: SeoPlanGroup | null = null;
+
+              filteredItems.forEach((item) => {
+                const originalIndex = SEO_PLAN_ITEMS.indexOf(item);
+                if (item.phase) {
+                  if (currentGroup) {
+                    groups.push(currentGroup);
+                  }
+                  currentGroup = {
+                    phase: item.phase,
+                    items: [{ originalIndex, item }],
+                  };
+                } else {
+                  if (!currentGroup) {
+                    currentGroup = {
+                      phase: 'Other Assets',
+                      items: [],
+                    };
+                  }
+                  currentGroup.items.push({ originalIndex, item });
+                }
+              });
+              if (currentGroup) {
+                groups.push(currentGroup);
+              }
+
+              return groups.map((group) => (
+                <div key={group.phase} className="space-y-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 px-1 pt-2">
+                    {group.phase}
+                  </h3>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {group.items.map(({ originalIndex, item }) => {
+                      const isExpanded = expandedCardIndex === originalIndex;
+                      const wLabel = item.w === '—' ? 'ongoing' : `wk ${item.w}`;
+                      const weekClass = getWeekBadgeClass(item.w);
+
+                      return (
+                        <div
+                          key={originalIndex}
+                          onClick={() => setExpandedCardIndex(isExpanded ? null : originalIndex)}
+                          className={`cursor-pointer rounded-lg border transition-all duration-150 p-3 shadow-sm bg-white hover:border-gray-300 ${
+                            isExpanded
+                              ? 'border-gray-400 ring-1 ring-gray-400'
+                              : 'border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className={`inline-flex shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase ${weekClass}`}>
+                              {wLabel}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-[12px] font-medium text-gray-900 leading-snug line-clamp-2">
+                                {item.title}
+                              </h4>
+                            </div>
+                            <span className="text-gray-400 shrink-0">
+                              {isExpanded ? (
+                                <ChevronUp className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium ${getTypeBadgeClass(item.type)}`}>
+                              {item.type}
+                            </span>
+                            <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium ${getIntentBadgeClass(item.intent)}`}>
+                              {item.intent}
+                            </span>
+                          </div>
+
+                          {isExpanded && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="mt-3 space-y-2 border-t border-gray-100 pt-3 text-[11px] text-gray-700 cursor-default"
+                            >
+                              <div>
+                                <span className="font-semibold text-gray-500 block mb-0.5">Keywords:</span>
+                                <div className="flex flex-wrap gap-1">
+                                  {item.kws.map((kw) => (
+                                    <span
+                                      key={kw}
+                                      className="rounded bg-gray-50 border border-gray-200 px-1.5 py-0.5 text-[10px] text-gray-600"
+                                    >
+                                      {kw}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div>
+                                <span className="font-semibold text-gray-500 block mb-0.5">Format:</span>
+                                <span>{item.format}</span>
+                              </div>
+
+                              <div>
+                                <span className="font-semibold text-gray-500 block mb-0.5">H1:</span>
+                                <span className="font-mono bg-gray-50 border border-gray-100 px-1 py-0.5 rounded text-[10px] block truncate">
+                                  {item.h1}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="font-semibold text-gray-500 block mb-0.5">Meta Description:</span>
+                                <span className="italic text-gray-600 leading-snug">{item.meta}</span>
+                              </div>
+
+                              <div>
+                                <span className="font-semibold text-gray-500 block mb-0.5">Outline:</span>
+                                <span className="leading-relaxed">{item.outline}</span>
+                              </div>
+
+                              <div>
+                                <span className="font-semibold text-gray-500 block mb-0.5">URL Slug:</span>
+                                <span className="font-mono bg-gray-50 border border-gray-100 px-1 py-0.5 rounded text-[10px] text-gray-600 block truncate">
+                                  {item.slug}
+                                </span>
+                              </div>
+
+                              {item.cta && (
+                                <div>
+                                  <span className="font-semibold text-gray-500 block mb-0.5">CTA:</span>
+                                  <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 rounded px-1.5 py-0.5 text-[10px]">
+                                    {item.cta}
+                                  </span>
+                                </div>
+                              )}
+
+                              {(item.type === 'Blog post' || item.type === 'Pillar page') && (
+                                <div className="pt-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleWriteBrief(item.title)}
+                                    className="w-full inline-flex items-center justify-center gap-1 rounded border border-gray-300 bg-white py-1 px-2.5 text-[11px] font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors"
+                                  >
+                                    Write content brief ↗
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </div>

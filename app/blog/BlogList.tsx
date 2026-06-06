@@ -78,7 +78,7 @@ export default function BlogList({ posts }: BlogListProps) {
   return (
     <div className="space-y-6">
       {/* Search and Filters Controls */}
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-gray-400" />
@@ -113,12 +113,12 @@ export default function BlogList({ posts }: BlogListProps) {
           </button>
 
           {/* Sort dropdown */}
-          <div className="flex items-center gap-1">
-            <ArrowUpDown className="h-4 w-4 text-gray-500 ml-1" />
+          <div className="relative flex items-center">
+            <ArrowUpDown className="absolute left-3 h-4 w-4 text-gray-500 pointer-events-none" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-300"
+              className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-pink-300 cursor-pointer"
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>

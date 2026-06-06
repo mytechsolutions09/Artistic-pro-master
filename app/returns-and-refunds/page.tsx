@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import Returns from '@/src/page-components/Returns';
+import dynamic from 'next/dynamic';
+
+const Returns = dynamic(() => import('@/src/page-components/Returns'));
 
 export const metadata: Metadata = {
   title: 'Returns and Refunds | Lurevi',

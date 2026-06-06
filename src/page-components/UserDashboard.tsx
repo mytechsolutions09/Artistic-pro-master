@@ -1369,7 +1369,7 @@ const UserDashboard: React.FC = () => {
                               const product = allProducts.find((p: any) => generateSlug(p.title) === slug);
                               const category = product?.categories?.[0] || (product as any)?.category || categoriesArr[0] || item.category;
                               const categorySlug = category ? generateSlug(category) : '';
-                              if (categorySlug) navigate(`/${categorySlug}/${slug}`);
+                              if (categorySlug) navigate(`/categories/${categorySlug}/${slug}`);
                             }
                           }
                         }}

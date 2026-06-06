@@ -14,6 +14,7 @@ const BottomTabs: React.FC = () => {
   const [navigationVisibility, setNavigationVisibility] = useState<NavigationVisibilitySettings>(
     NavigationVisibilityService.getSettings()
   );
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
 
   // Initialize cart count and subscribe to changes
   useEffect(() => {
@@ -39,10 +40,15 @@ const BottomTabs: React.FC = () => {
     return null;
   }
 
+  useEffect(() => {
+    setOptimisticPath(null);
+  }, [location.pathname]);
+
   // Check if current path matches a tab
   const isActiveTab = (path: string) => {
-    if (path === '/' && location.pathname === '/') return true;
-    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    const activePath = optimisticPath || location.pathname;
+    if (path === '/' && activePath === '/') return true;
+    if (path !== '/' && activePath.startsWith(path)) return true;
     return false;
   };
 
@@ -52,6 +58,7 @@ const BottomTabs: React.FC = () => {
         {/* Home Tab */}
         <Link
           to="/"
+          onClick={() => setOptimisticPath('/')}
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/') 
               ? 'text-gray-900' 
@@ -67,6 +74,7 @@ const BottomTabs: React.FC = () => {
         {/* Categories Tab */}
         <Link
           to="/categories"
+          onClick={() => setOptimisticPath('/categories')}
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/categories') 
               ? 'text-gray-900' 
@@ -82,6 +90,7 @@ const BottomTabs: React.FC = () => {
         {/* Art Tab */}
         <Link
           to="/browse"
+          onClick={() => setOptimisticPath('/browse')}
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/browse') 
               ? 'text-gray-900' 
@@ -98,6 +107,7 @@ const BottomTabs: React.FC = () => {
         {navigationVisibility.clothesActive && (
           <Link
             to="/clothes"
+            onClick={() => setOptimisticPath('/clothes')}
             className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-lg transition-all duration-200 ${
               isActiveTab('/clothes') 
                 ? 'text-[#ff6e00]' 
@@ -114,6 +124,7 @@ const BottomTabs: React.FC = () => {
         {/* Favorites Tab - Hidden on mobile, visible on md+ screens */}
         <Link
           to="/favorites"
+          onClick={() => setOptimisticPath('/favorites')}
           className={`hidden md:flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
             isActiveTab('/favorites') 
               ? 'text-gray-900' 
@@ -129,6 +140,7 @@ const BottomTabs: React.FC = () => {
         {/* Cart Tab */}
         <Link
           to="/cart"
+          onClick={() => setOptimisticPath('/cart')}
           className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 relative ${
             isActiveTab('/cart') 
               ? 'text-gray-900' 
@@ -150,6 +162,7 @@ const BottomTabs: React.FC = () => {
         {user ? (
           <Link
             to="/dashboard"
+            onClick={() => setOptimisticPath('/dashboard')}
             className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
               isActiveTab('/dashboard') 
                 ? 'text-gray-900' 
@@ -164,6 +177,7 @@ const BottomTabs: React.FC = () => {
         ) : (
           <Link
             to="/sign-in"
+            onClick={() => setOptimisticPath('/sign-in')}
             className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
               isActiveTab('/sign-in') 
                 ? 'text-gray-900' 

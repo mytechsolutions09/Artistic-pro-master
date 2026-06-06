@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import ClothingProductPage from '@/src/page-components/ClothingProductPage';
+import dynamic from 'next/dynamic';
+
+const ClothingProductPage = dynamic(() => import('@/src/page-components/ClothingProductPage'));
 
 interface Props {
   params: Promise<{ productSlug: string }>;

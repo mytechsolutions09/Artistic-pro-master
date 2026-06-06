@@ -1099,7 +1099,7 @@ const Homepage: React.FC = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {resolvedHomepageCategories.map((category: any) => (
-              <Link key={category.id} to={`/${category.slug}`} className="group">
+              <Link key={category.id} to={`/categories/${category.slug}`} className="group">
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
                   <div className="relative h-32">
                     <OptimizedImage

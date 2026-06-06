@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import HelpCenter from '@/src/page-components/HelpCenter';
+import dynamic from 'next/dynamic';
+
+const HelpCenter = dynamic(() => import('@/src/page-components/HelpCenter'));
 
 export const metadata: Metadata = {
   title: 'Help Center | Lurevi',

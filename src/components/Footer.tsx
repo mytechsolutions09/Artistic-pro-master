@@ -21,10 +21,10 @@ const Footer: React.FC = () => {
             </p>
             <nav aria-label="Homepage discovery links" className="mt-4">
               <ul className="flex flex-wrap gap-3 text-sm">
-                <li><Link to="/categories" className="text-pink-700 hover:underline">Explore Luxury Collections</Link></li>
-                <li><Link to="/shop" className="text-pink-700 hover:underline">Shop Premium Picks</Link></li>
-                <li><Link to="/browse" className="text-pink-700 hover:underline">Browse Curated Artworks</Link></li>
-                <li><Link to="/contact-us" className="text-pink-700 hover:underline">Contact Lurevi Concierge</Link></li>
+                <li><Link to="/categories" className="text-gray-600 hover:text-gray-900 hover:underline transition-colors">Explore Luxury Collections</Link></li>
+                <li><Link to="/shop" className="text-gray-600 hover:text-gray-900 hover:underline transition-colors">Shop Premium Picks</Link></li>
+                <li><Link to="/browse" className="text-gray-600 hover:text-gray-900 hover:underline transition-colors">Browse Curated Artworks</Link></li>
+                <li><Link to="/contact-us" className="text-gray-600 hover:text-gray-900 hover:underline transition-colors">Contact Lurevi Concierge</Link></li>
               </ul>
             </nav>
           </div>

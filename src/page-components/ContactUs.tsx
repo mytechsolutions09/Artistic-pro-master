@@ -93,7 +93,7 @@ const ContactUs: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Information */}
           <div className="lg:col-span-1">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Get in Touch</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Get in Touch</h2>
             <div className="space-y-4">
               {contactInfo.map((info, index) => (
                 <div key={index} className="flex items-start space-x-3">
@@ -103,7 +103,7 @@ const ContactUs: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900">{info.title}</h3>
+                    <h3 className="text-base font-medium text-gray-900">{info.title}</h3>
                     <p className="text-gray-900 font-medium text-sm">{info.details}</p>
                     <p className="text-gray-600 text-xs">{info.description}</p>
                   </div>
@@ -113,7 +113,7 @@ const ContactUs: React.FC = () => {
 
             {/* Additional Help */}
             <div className="mt-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-base font-semibold text-gray-900 mb-2">Need Quick Help?</h3>
+              <h3 className="text-base font-medium text-gray-900 mb-2">Need Quick Help?</h3>
               <p className="text-gray-600 mb-3 text-sm">
                 Check our FAQ section for instant answers to common questions.
               </p>
@@ -127,11 +127,11 @@ const ContactUs: React.FC = () => {
           {/* Contact Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Send us a Message</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Send us a Message</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="block text-sm font-normal text-gray-700 mb-1">
                       Full Name *
                     </label>
                     <input
@@ -146,7 +146,7 @@ const ContactUs: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email" className="block text-sm font-normal text-gray-700 mb-1">
                       Email Address *
                     </label>
                     <input
@@ -163,7 +163,7 @@ const ContactUs: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="category" className="block text-sm font-normal text-gray-700 mb-1">
                     Category
                   </label>
                   <select
@@ -183,7 +183,7 @@ const ContactUs: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="subject" className="block text-sm font-normal text-gray-700 mb-1">
                     Subject *
                   </label>
                   <input
@@ -199,7 +199,7 @@ const ContactUs: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="message" className="block text-sm font-normal text-gray-700 mb-1">
                     Message *
                   </label>
                   <textarea

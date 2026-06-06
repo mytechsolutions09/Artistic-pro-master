@@ -85,7 +85,8 @@ function AppContent() {
                           location.pathname === '/sign-in' || 
                           location.pathname === '/sign-up' || 
                           location.pathname === '/forgot-password' || 
-                          location.pathname === '/reset-password';
+                          location.pathname === '/reset-password' ||
+                          location.pathname === '/checkout';
   
   // Default browser scroll behavior (no custom scroll handling)
   useScrollRestoration();

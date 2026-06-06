@@ -131,7 +131,7 @@ const CategoryDetailPage: React.FC = () => {
           const firstCategory = possibleProduct.categories && possibleProduct.categories.length > 0 
             ? possibleProduct.categories[0] 
             : (possibleProduct as any).category || 'unknown';
-          window.location.href = `/${generateCategorySlug(firstCategory)}/${categorySlug}`;
+          window.location.href = `/categories/${generateCategorySlug(firstCategory)}/${categorySlug}`;
           return;
         }
         
@@ -144,6 +144,9 @@ const CategoryDetailPage: React.FC = () => {
         slug: categorySlug
       };
       setCategory(foundCategory);
+      
+      console.log('Category found:', foundCategory);
+      console.log('Category products length:', categoryProducts.length);
       
       setFilteredProducts(categoryProducts);
       
@@ -289,6 +292,8 @@ const CategoryDetailPage: React.FC = () => {
         break;
     }
 
+    console.log('applyFilters resulting filtered products length:', filtered.length, 'from filters:', filters);
+
     setFilteredProducts(filtered);
   };
 
@@ -360,7 +365,7 @@ const CategoryDetailPage: React.FC = () => {
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Category not found</h3>
           <p className="text-gray-500 mb-4">The requested category could not be found.</p>
-          <Link to="/browse" className="text-pink-500 hover:text-pink-600 font-medium">
+          <Link to="/browse" className="text-gray-500 hover:text-gray-600 font-medium">
             Back to Browse
           </Link>
         </div>

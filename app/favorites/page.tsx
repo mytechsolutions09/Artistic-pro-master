@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import FavoritesPage from '@/src/page-components/FavoritesPage';
+import dynamic from 'next/dynamic';
+
+const FavoritesPage = dynamic(() => import('@/src/page-components/FavoritesPage'));
 
 export const metadata: Metadata = {
   title: 'Favorites | Lurevi',

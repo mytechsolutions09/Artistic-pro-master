@@ -27,7 +27,7 @@ export function generateSlug(text: string | undefined | null): string {
 export function generateProductUrl(category: string | undefined | null, productTitle: string | undefined | null): string {
   const categorySlug = generateSlug(category);
   const productSlug = generateSlug(productTitle);
-  return `/${categorySlug}/${productSlug}`;
+  return `/categories/${categorySlug}/${productSlug}`;
 }
 
 /**
@@ -37,7 +37,7 @@ export function generateProductUrl(category: string | undefined | null, productT
  */
 export function generateCategoryUrl(category: string): string {
   const categorySlug = generateSlug(category);
-  return `/${categorySlug}`;
+  return `/categories/${categorySlug}`;
 }
 
 /**
@@ -49,7 +49,15 @@ export function parseProductUrl(pathname: string): { categorySlug: string; produ
   // Remove leading slash and split by slashes
   const pathParts = pathname.replace(/^\//, '').split('/');
   
-  // Check if we have exactly 2 parts (category/product)
+  // Check if we have categories prefix (3 parts: categories/category/product)
+  if (pathParts[0] === 'categories' && pathParts.length === 3) {
+    return {
+      categorySlug: pathParts[1],
+      productSlug: pathParts[2]
+    };
+  }
+  
+  // Check if we have exactly 2 parts (category/product) - fallback for legacy URLs
   if (pathParts.length === 2) {
     return {
       categorySlug: pathParts[0],

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import SearchResults from '@/src/page-components/SearchResults';
+import dynamic from 'next/dynamic';
+
+const SearchResults = dynamic(() => import('@/src/page-components/SearchResults'));
 
 export const metadata: Metadata = {
   title: 'Search | Lurevi',

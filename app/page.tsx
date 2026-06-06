@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import HomepageClient from '@/src/page-components/Homepage';
+import dynamic from 'next/dynamic';
+
+const HomepageClient = dynamic(() => import('@/src/page-components/Homepage'));
 
 export const metadata: Metadata = {
   title: 'Lurevi | Luxury That Stays With You',
