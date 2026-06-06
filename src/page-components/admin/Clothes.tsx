@@ -448,7 +448,7 @@ const Clothes: React.FC = () => {
         const tempProductId = `temp_${Date.now()}_${Math.random().toString(36).substring(2)}`;
         
         // Upload to Supabase storage (clothes-images bucket)
-        const imageUrl = await ProductService.uploadClothingImage(file, tempProductId);
+        const imageUrl = await ProductService.uploadClothingImage(file, tempProductId, formData.title);
         return imageUrl;
       });
 

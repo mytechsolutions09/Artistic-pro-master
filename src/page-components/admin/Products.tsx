@@ -1487,7 +1487,7 @@ const Products: React.FC = () => {
       if (productData.imageFiles && productData.imageFiles.length > 0) {
         const imageOnlyFiles = productData.imageFiles.filter((f: File) => f && f.type && f.type.startsWith('image/'));
         if (imageOnlyFiles.length > 0) {
-          uploadedImages = await ProductService.uploadProductImages(imageOnlyFiles, newProduct.id);
+          uploadedImages = await ProductService.uploadProductImages(imageOnlyFiles, newProduct.id, productData.title);
         }
       }
 
@@ -1581,7 +1581,7 @@ const Products: React.FC = () => {
       if (productData.imageFiles && productData.imageFiles.length > 0) {
         const imageOnlyFiles = productData.imageFiles.filter((f: File) => f && f.type && f.type.startsWith('image/'));
         if (imageOnlyFiles.length > 0) {
-          uploadedImages = await ProductService.uploadProductImages(imageOnlyFiles, productData.id);
+          uploadedImages = await ProductService.uploadProductImages(imageOnlyFiles, productData.id, productData.title);
         } else {
           uploadedImages = [];
         }

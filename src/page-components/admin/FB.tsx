@@ -191,7 +191,7 @@ const FB: React.FC = () => {
     try {
       const tempId = `fb_${Date.now()}_${Math.random().toString(36).substring(2)}`;
       const uploadPromises = Array.from(files).map(async (file) => {
-        return await ProductService.uploadProductImage(file, tempId);
+        return await ProductService.uploadProductImage(file, tempId, formData.title);
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
@@ -215,7 +215,7 @@ const FB: React.FC = () => {
     setUploading(true);
     try {
       const tempId = `fb_main_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      const url = await ProductService.uploadProductImage(file, tempId);
+      const url = await ProductService.uploadProductImage(file, tempId, formData.title);
       setFormData(prev => ({
         ...prev,
         main_image: url,

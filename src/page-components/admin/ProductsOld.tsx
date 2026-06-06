@@ -1283,7 +1283,7 @@ const Products: React.FC = () => {
       
       // Upload images if there are any new files using the real product ID
       if (productData.imageFiles && productData.imageFiles.length > 0) {
-        uploadedImages = await ProductService.uploadProductImages(productData.imageFiles, createdProduct.id);
+        uploadedImages = await ProductService.uploadProductImages(productData.imageFiles, createdProduct.id, productData.title);
         
         // Update the product with the uploaded image URLs
         await ProductService.updateProduct(createdProduct.id, { images: uploadedImages });
@@ -1352,7 +1352,7 @@ const Products: React.FC = () => {
       
       // Upload new images if there are any new files
       if (productData.imageFiles && productData.imageFiles.length > 0) {
-        uploadedImages = await ProductService.uploadProductImages(productData.imageFiles, productData.id);
+        uploadedImages = await ProductService.uploadProductImages(productData.imageFiles, productData.id, productData.title);
       } else {
         // Use existing image URLs if no new files
         uploadedImages = productData.images || [];
@@ -1507,7 +1507,7 @@ const Products: React.FC = () => {
         
         // Upload images if there are any new files using the real product ID
         if (product.imageFiles && product.imageFiles.length > 0) {
-          const uploadedImageUrls = await ProductService.uploadProductImages(product.imageFiles, createdProduct.id);
+          const uploadedImageUrls = await ProductService.uploadProductImages(product.imageFiles, createdProduct.id, product.title);
           
           // Update the product with the uploaded image URLs
           await ProductService.updateProduct(createdProduct.id, { images: uploadedImageUrls });

@@ -169,7 +169,7 @@ const Gifts: React.FC = () => {
       // 2) Upload gallery images
       let uploadedImages: string[] = [];
       if (imageOnlyFiles.length > 0) {
-        uploadedImages = await ProductService.uploadProductImages(imageOnlyFiles, newProduct.id);
+        uploadedImages = await ProductService.uploadProductImages(imageOnlyFiles, newProduct.id, title);
       }
 
       // 3) Upload main image (optional); otherwise fall back to first gallery image

@@ -1302,7 +1302,7 @@ export class ProductService {
   }
 
   // Image Management Methods
-  static async uploadProductImage(file: File, productId: string): Promise<string> {
+  static async uploadProductImage(file: File, productId: string, productName?: string): Promise<string> {
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -1324,9 +1324,10 @@ export class ProductService {
 
       // Bucket should already exist - no need to create it
 
-      // Create unique filename
+      // Create unique filename with optional product name for SEO
       const fileExt = file.name.split('.').pop();
-      const fileName = `${productId}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const namePart = productName ? productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : 'product';
+      const fileName = `${productId}/${namePart}_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       // Upload file to storage
       const { data, error } = await supabase.storage
@@ -1360,9 +1361,9 @@ export class ProductService {
     }
   }
 
-  static async uploadProductImages(files: File[], productId: string): Promise<string[]> {
+  static async uploadProductImages(files: File[], productId: string, productName?: string): Promise<string[]> {
     try {
-      const uploadPromises = files.map(file => this.uploadProductImage(file, productId));
+      const uploadPromises = files.map(file => this.uploadProductImage(file, productId, productName));
       const urls = await Promise.all(uploadPromises);
       return urls;
     } catch (error) {
@@ -1372,7 +1373,7 @@ export class ProductService {
   }
 
   // Upload clothing image to clothes-images bucket
-  static async uploadClothingImage(file: File, productId: string): Promise<string> {
+  static async uploadClothingImage(file: File, productId: string, productName?: string): Promise<string> {
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -1392,9 +1393,10 @@ export class ProductService {
         throw new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed');
       }
 
-      // Create unique filename
+      // Create unique filename with optional product name for SEO
       const fileExt = file.name.split('.').pop();
-      const fileName = `${productId}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const namePart = productName ? productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : 'clothing';
+      const fileName = `${productId}/${namePart}_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       // Upload file to clothes-images bucket
       const { data, error } = await supabase.storage
@@ -1428,9 +1430,9 @@ export class ProductService {
   }
 
   // Upload multiple clothing images
-  static async uploadClothingImages(files: File[], productId: string): Promise<string[]> {
+  static async uploadClothingImages(files: File[], productId: string, productName?: string): Promise<string[]> {
     try {
-      const uploadPromises = files.map(file => this.uploadClothingImage(file, productId));
+      const uploadPromises = files.map(file => this.uploadClothingImage(file, productId, productName));
       const urls = await Promise.all(uploadPromises);
       return urls;
     } catch (error) {
@@ -1531,7 +1533,7 @@ export class ProductService {
 
       // If images were provided, upload them
       if (images && images.length > 0) {
-        const imageUrls = await this.uploadProductImages(images, product.id);
+        const imageUrls = await this.uploadProductImages(images, product.id, product.title);
         
         // Update product with image URLs
         const { data: updatedProduct, error: updateError } = await supabase
@@ -1557,7 +1559,7 @@ export class ProductService {
     try {
       if (!files || files.length === 0) return [];
       
-      const imageUrls = await this.uploadProductImages(files, productId);
+      const imageUrls = await this.uploadProductImages(files, productId, productData.title);
       
       // Update product with new image URLs
       await this.updateProductImages(productId, imageUrls, []);
@@ -1583,7 +1585,7 @@ export class ProductService {
       }
 
       // Upload new images
-      const newImageUrls = await this.uploadProductImages(newFiles, productId);
+      const newImageUrls = await this.uploadProductImages(newFiles, productId, productData.title);
 
       // Update product with new image URLs
       const { data: updatedProduct, error } = await supabase
