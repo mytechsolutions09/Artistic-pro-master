@@ -4,6 +4,7 @@
 // This uses a service role key to bypass RLS policies entirely
 
 import { createClient } from '@supabase/supabase-js';
+import { getGSTRate, calculateInclusiveGST } from '../utils/gstUtils';
 
 // Create a service role client that bypasses RLS
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
@@ -80,6 +81,13 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
       orderStatus = 'processing'; // Physical products start as processing
     }
 
+    // Calculate total GST before order creation
+    const totalGstAmount = orderData.items.reduce((sum, item) => {
+      const rate = getGSTRate(item.selectedProductType);
+      const itemGst = calculateInclusiveGST(item.totalPrice, rate);
+      return sum + itemGst;
+    }, 0);
+
     // Create main order record using service role
     const { data: order, error: orderError } = await supabaseService
       .from('orders')
@@ -93,7 +101,8 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
         payment_method: orderData.paymentMethod,
         payment_id: orderData.paymentId,
         notes: orderData.notes,
-        shipping_address: orderData.shippingAddress
+        shipping_address: orderData.shippingAddress,
+        gst_amount: totalGstAmount
       })
       .select()
       .single();
@@ -103,19 +112,25 @@ export async function createOrderBypassRLS(orderData: CompleteOrderData): Promis
       return { success: false, error: `Failed to create order: ${orderError.message}` };
     }
 
-    // Create order items using service role
-    const orderItems = orderData.items.map(item => ({
-      order_id: order.id,
-      product_id: item.productId,
-      product_title: item.productTitle,
-      product_image: item.productImage,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      total_price: item.totalPrice,
-      selected_product_type: item.selectedProductType || 'digital',
-      selected_poster_size: item.selectedPosterSize || null,
-      options: item.options || null
-    }));
+    // Create order items with GST details using service role
+    const orderItems = orderData.items.map(item => {
+      const rate = getGSTRate(item.selectedProductType);
+      const itemGst = calculateInclusiveGST(item.totalPrice, rate);
+      return {
+        order_id: order.id,
+        product_id: item.productId,
+        product_title: item.productTitle,
+        product_image: item.productImage,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        total_price: item.totalPrice,
+        selected_product_type: item.selectedProductType || 'digital',
+        selected_poster_size: item.selectedPosterSize || null,
+        options: item.options || null,
+        gst_rate: rate,
+        gst_amount: itemGst
+      };
+    });
 
     const { error: itemsError } = await supabaseService
       .from('order_items')

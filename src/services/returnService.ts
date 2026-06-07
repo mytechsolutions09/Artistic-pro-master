@@ -158,7 +158,7 @@ export class ReturnService {
           return { success: false, error: 'Failed to create return request. Please ensure the return system is properly set up.' };
         }
 
-        // Send email notification to returns@lurevi.in
+        // Send email notification to returns@lurevi.in and customer
         try {
           // Get order details for customer name
           const { data: orderData } = await supabase
@@ -186,6 +186,23 @@ export class ReturnService {
             })
           });
           console.log('✅ Return request notification email sent to returns@lurevi.in');
+
+          // Send confirmation to the customer
+          try {
+            await EmailService.sendReturnConfirmationToCustomer(
+              orderData?.customer_email || request.requestedBy,
+              orderData?.customer_name || 'Customer',
+              {
+                orderId: request.orderId,
+                productTitle: orderItem.product_title,
+                reason: request.reason,
+                quantity: orderItem.quantity
+              }
+            );
+            console.log('✅ Return request confirmation email sent to customer');
+          } catch (customerEmailErr) {
+            console.error('⚠️ Failed to send return confirmation email to customer:', customerEmailErr);
+          }
         } catch (emailError) {
           console.error('⚠️ Failed to send return notification email:', emailError);
           // Don't fail the return creation if email fails
@@ -294,6 +311,50 @@ export class ReturnService {
             .update({ status: 'returned' })
             .eq('id', returnRequest.order_item_id);
         }
+      }
+
+      // Get return request details to send status update email to customer
+      try {
+        const returnRequest = await this.getReturnById(returnId);
+        if (returnRequest) {
+          const { data: orderData } = await supabase
+            .from('orders')
+            .select('customer_name, customer_email')
+            .eq('id', returnRequest.order_id)
+            .single();
+
+          const cName = orderData?.customer_name || 'Customer';
+          const cEmail = orderData?.customer_email || returnRequest.requested_by;
+
+          if (status === 'approved') {
+            await EmailService.sendReturnApproved(cEmail, cName, {
+              orderId: returnRequest.order_id,
+              productTitle: returnRequest.product_title,
+              quantity: returnRequest.quantity,
+              totalPrice: returnRequest.total_price,
+              adminNotes: adminNotes || ''
+            });
+            console.log('✅ Return approved email sent to customer');
+          } else if (status === 'rejected') {
+            await EmailService.sendReturnRejected(cEmail, cName, {
+              orderId: returnRequest.order_id,
+              productTitle: returnRequest.product_title,
+              adminNotes: adminNotes || ''
+            });
+            console.log('✅ Return rejected email sent to customer');
+          } else if (status === 'completed') {
+            await EmailService.sendRefundConfirmation(cEmail, cName, {
+              orderId: returnRequest.order_id,
+              productTitle: returnRequest.product_title,
+              refundAmount: refundAmount || returnRequest.refund_amount || returnRequest.total_price,
+              refundMethod: refundMethod || returnRequest.refund_method || 'Original Payment Method',
+              adminNotes: adminNotes || ''
+            });
+            console.log('✅ Refund confirmation email sent to customer');
+          }
+        }
+      } catch (emailErr) {
+        console.error('⚠️ Failed to send return update email:', emailErr);
       }
 
       return { success: true };

@@ -24,6 +24,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useProducts } from '../contexts/ProductContext';
 import SavedAddressDropdown from '../components/SavedAddressDropdown';
 import { AddressFormData } from '../services/addressService';
+import { calculateCartGSTSummary } from '../utils/gstUtils';
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ const Checkout: React.FC = () => {
   const [storeCreditBalance, setStoreCreditBalance] = useState<number>(0);
   const [useStoreCredit, setUseStoreCredit] = useState<boolean>(false);
   const [storeCreditToUse, setStoreCreditToUse] = useState<number>(0);
+  const [validationModal, setValidationModal] = useState<{ open: boolean; missingFields: string[] }>({ open: false, missingFields: [] });
   
   // Check if it's a direct purchase
   const productId = searchParams.get('product');
@@ -69,8 +71,21 @@ const Checkout: React.FC = () => {
     item.selectedProductType === 'poster' || item.selectedProductType === 'clothing'
   );
 
+  // COD is disabled if any digital product is in cart
+  const hasDigitalProducts = cart.items.some(item => item.selectedProductType === 'digital');
+  const codAvailable = hasPhysicalProducts && !hasDigitalProducts;
+
   // Calculate remaining amount after store credit
   const remainingAmount = Math.max(0, cart.total - storeCreditToUse);
+
+  // Calculate inclusive GST summary
+  const gstSummary = calculateCartGSTSummary(
+    cart.items.map(item => ({
+      selectedProductType: item.selectedProductType,
+      selectedPrice: item.selectedPrice,
+      quantity: item.quantity
+    }))
+  );
   
   // Fetch store credit balance
   useEffect(() => {
@@ -101,12 +116,12 @@ const Checkout: React.FC = () => {
     }
   }, [useStoreCredit, storeCreditBalance, cart.total]);
 
-  // Reset payment method to Razorpay if COD is selected but no physical products
+  // Reset payment method to Razorpay if COD is not available
   useEffect(() => {
-    if (!hasPhysicalProducts && paymentMethod === 'cod') {
+    if (!codAvailable && paymentMethod === 'cod') {
       setPaymentMethod('razorpay');
     }
-  }, [hasPhysicalProducts, paymentMethod]);
+  }, [codAvailable, paymentMethod]);
   
   useEffect(() => {
     if (productId) {
@@ -168,21 +183,21 @@ const Checkout: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.email) newErrors.email = 'Email is required';
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
-    if (!formData.phone) newErrors.phone = 'Phone number is required';
-    if (!formData.address) newErrors.address = 'Shipping address is required';
-    if (!formData.city) newErrors.city = 'City is required';
-    if (!formData.state) newErrors.state = 'State is required';
-    if (!formData.zipCode) newErrors.zipCode = 'PIN code is required';
+    if (!formData.email) newErrors.email = 'Email address';
+    if (!formData.firstName) newErrors.firstName = 'First name';
+    if (!formData.lastName) newErrors.lastName = 'Last name';
+    if (!formData.phone) newErrors.phone = 'Phone number';
+    if (!formData.address) newErrors.address = 'Shipping address';
+    if (!formData.city) newErrors.city = 'City';
+    if (!formData.state) newErrors.state = 'State';
+    if (!formData.zipCode) newErrors.zipCode = 'PIN code';
     
     // Validate billing address if different from shipping
     if (!formData.sameAsShipping) {
-      if (!formData.billingAddress) newErrors.billingAddress = 'Billing address is required';
-      if (!formData.billingCity) newErrors.billingCity = 'Billing city is required';
-      if (!formData.billingState) newErrors.billingState = 'Billing state is required';
-      if (!formData.billingZipCode) newErrors.billingZipCode = 'Billing PIN code is required';
+      if (!formData.billingAddress) newErrors.billingAddress = 'Billing address';
+      if (!formData.billingCity) newErrors.billingCity = 'Billing city';
+      if (!formData.billingState) newErrors.billingState = 'Billing state';
+      if (!formData.billingZipCode) newErrors.billingZipCode = 'Billing PIN code';
     }
     
     setErrors(newErrors);
@@ -232,7 +247,26 @@ const Checkout: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      // Collect friendly names of missing fields and show modal
+      const missing: string[] = [];
+      if (!formData.email) missing.push('Email address');
+      if (!formData.firstName) missing.push('First name');
+      if (!formData.lastName) missing.push('Last name');
+      if (!formData.phone) missing.push('Phone number');
+      if (!formData.address) missing.push('Shipping address');
+      if (!formData.city) missing.push('City');
+      if (!formData.state) missing.push('State');
+      if (!formData.zipCode) missing.push('PIN code');
+      if (!formData.sameAsShipping) {
+        if (!formData.billingAddress) missing.push('Billing address');
+        if (!formData.billingCity) missing.push('Billing city');
+        if (!formData.billingState) missing.push('Billing state');
+        if (!formData.billingZipCode) missing.push('Billing PIN code');
+      }
+      setValidationModal({ open: true, missingFields: missing });
+      return;
+    }
     if (cart.items.length === 0) return;
     
     setLoading(true);
@@ -828,8 +862,8 @@ const Checkout: React.FC = () => {
                     </div>
                   </label>
 
-                  {/* COD Option - Only show for physical products and when not fully paid with store credit */}
-                  {hasPhysicalProducts && !(useStoreCredit && remainingAmount === 0) ? (
+                  {/* COD Option */}
+                  {codAvailable && !(useStoreCredit && remainingAmount === 0) ? (
                     <label 
                       className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
                         paymentMethod === 'cod' 
@@ -859,7 +893,7 @@ const Checkout: React.FC = () => {
                         </div>
                       </div>
                     </label>
-                  ) : hasPhysicalProducts && useStoreCredit && remainingAmount === 0 ? (
+                  ) : codAvailable && useStoreCredit && remainingAmount === 0 ? (
                     <div className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 opacity-60">
                       <div className="flex items-start space-x-3">
                         <input
@@ -892,7 +926,9 @@ const Checkout: React.FC = () => {
                             <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded-full">Not Available</span>
                           </div>
                           <p className="text-sm text-gray-500 mt-1">
-                            COD is only available for physical products (posters). Digital downloads require online payment.
+                            {hasDigitalProducts
+                              ? 'COD is not available for orders containing digital downloads. Please use online payment.'
+                              : 'COD is only available for physical products (posters). Digital downloads require online payment.'}
                           </p>
                         </div>
                       </div>
@@ -907,7 +943,7 @@ const Checkout: React.FC = () => {
                 type="submit"
                 form="checkout-form"
                 disabled={loading}
-                className={`w-full py-3 px-4 rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-md ${
+                className={`lg:hidden w-full py-3 px-4 rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-md ${
                   paymentMethod === 'store_credit'
                     ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
                     : paymentMethod === 'razorpay'
@@ -976,17 +1012,23 @@ const Checkout: React.FC = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      {item.product.originalPrice && item.product.originalPrice > item.selectedPrice ? (
-                        <div>
-                          <p className="text-xs text-gray-400 line-through">{formatUIPrice(item.product.originalPrice, 'INR')}</p>
+                      {(() => {
+                        const itemOriginalPrice = item.selectedProductType === 'poster' && item.selectedPosterSize && item.product.posterPricing
+                          ? item.product.posterPricing[item.selectedPosterSize]
+                          : item.product.originalPrice;
+                        
+                        return itemOriginalPrice && itemOriginalPrice > item.selectedPrice ? (
+                          <div>
+                            <p className="text-xs text-gray-400 line-through">{formatUIPrice(itemOriginalPrice, 'INR')}</p>
+                            <p className="font-semibold text-gray-800 text-xs">{formatUIPrice(item.selectedPrice, 'INR')}</p>
+                            {item.product.discountPercentage && (
+                              <p className="text-xs text-green-600 font-medium">{item.product.discountPercentage}% OFF</p>
+                            )}
+                          </div>
+                        ) : (
                           <p className="font-semibold text-gray-800 text-xs">{formatUIPrice(item.selectedPrice, 'INR')}</p>
-                          {item.product.discountPercentage && (
-                            <p className="text-xs text-green-600 font-medium">{item.product.discountPercentage}% OFF</p>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="font-semibold text-gray-800 text-xs">{formatUIPrice(item.selectedPrice, 'INR')}</p>
-                      )}
+                        );
+                      })()}
                       {!productId && (
                         <button
                           onClick={() => removeItem(item.product.id)}
@@ -1005,8 +1047,11 @@ const Checkout: React.FC = () => {
                   {/* Calculate original total and discount */}
                   {(() => {
                     const originalTotal = cart.items.reduce((sum, item) => {
-                      const originalPrice = item.product.originalPrice && item.product.originalPrice > item.selectedPrice 
-                        ? item.product.originalPrice 
+                      const itemOriginalPrice = item.selectedProductType === 'poster' && item.selectedPosterSize && item.product.posterPricing
+                        ? item.product.posterPricing[item.selectedPosterSize]
+                        : item.product.originalPrice;
+                      const originalPrice = itemOriginalPrice && itemOriginalPrice > item.selectedPrice
+                        ? itemOriginalPrice
                         : item.selectedPrice;
                       return sum + (originalPrice * item.quantity);
                     }, 0);
@@ -1022,7 +1067,7 @@ const Checkout: React.FC = () => {
                         )}
                         <div className="flex justify-between text-sm text-gray-600">
                           <span>Subtotal</span>
-                          <span>{formatUIPrice(cart.total, 'INR')}</span>
+                          <span>{formatUIPrice(Math.round((cart.total - gstSummary.totalGST) * 100) / 100, 'INR')}</span>
                         </div>
                         {totalDiscount > 0 && (
                           <div className="flex justify-between text-sm text-green-600 font-medium">
@@ -1030,10 +1075,29 @@ const Checkout: React.FC = () => {
                             <span>-{formatUIPrice(totalDiscount, 'INR')}</span>
                           </div>
                         )}
-                        <div className="flex justify-between text-sm text-gray-600">
-                          <span>Processing Fee</span>
-                          <span>{formatUIPrice(0, 'INR')}</span>
-                        </div>
+                        {hasPhysicalProducts && (
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Shipping charges</span>
+                            <span className="text-green-600 font-medium">Free</span>
+                          </div>
+                        )}
+                        {(() => {
+                          const activeRates = Object.values(gstSummary.breakdown).filter(group => group.rate > 0 && group.gstAmount > 0);
+                          if (activeRates.length >= 2) {
+                            return (
+                              <div className="flex justify-between text-sm text-gray-600">
+                                <span>GST</span>
+                                <span>{formatUIPrice(gstSummary.totalGST, 'INR')}</span>
+                              </div>
+                            );
+                          }
+                          return activeRates.map(group => (
+                            <div key={group.rate} className="flex justify-between text-sm text-gray-600">
+                              <span>GST @ {group.rate}%</span>
+                              <span>{formatUIPrice(group.gstAmount, 'INR')}</span>
+                            </div>
+                          ));
+                        })()}
                         {useStoreCredit && storeCreditToUse > 0 && (
                           <div className="space-y-1">
                             <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-200">
@@ -1066,51 +1130,79 @@ const Checkout: React.FC = () => {
               </div>
             </div>
             
-            {/* Payment Info */}
-            {paymentMethod === 'store_credit' ? (
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <div className="flex items-start space-x-3">
-                  <Wallet className="w-5 h-5 text-black mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">Store Credit Payment</h3>
-                    <p className="text-xs text-gray-600 mb-2">
-                      Your order will be processed immediately using your available store credit.
-                    </p>
-                    <ul className="text-xs text-gray-600 space-y-1 mt-2">
-                      <li>✓ No additional payment required</li>
-                      <li>✓ Instant order confirmation</li>
-                      <li>✓ Secure and hassle-free</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            ) : paymentMethod === 'razorpay' ? (
-              <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
-                <p className="text-xs text-yellow-800">
-                  <strong>Note:</strong> Payment details will be entered securely on Razorpay's payment page. Your card information is never stored on our servers.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-4 border border-orange-200">
-                <div className="flex items-start space-x-3">
-                  <span className="text-2xl mt-0.5">💵</span>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">Cash on Delivery</h3>
-                    <p className="text-xs text-gray-600 mb-2">
-                      You'll pay in cash when your order is delivered to your doorstep.
-                    </p>
-                    <ul className="text-xs text-gray-600 space-y-1 mt-2">
-                      <li>✓ No advance payment required</li>
-                      <li>✓ Pay only when you receive the product</li>
-                      <li>✓ Inspect before payment</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Submit Button (Desktop Sidebar) */}
+            <div className="hidden lg:block">
+              <button
+                type="submit"
+                form="checkout-form"
+                disabled={loading}
+                className={`w-full py-3 px-4 rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-md ${
+                  paymentMethod === 'store_credit'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+                    : paymentMethod === 'razorpay'
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+                    : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>
+                      {paymentMethod === 'store_credit' 
+                        ? 'Processing Order...' 
+                        : paymentMethod === 'razorpay' 
+                        ? 'Opening Payment Gateway...' 
+                        : 'Placing Order...'}
+                    </span>
+                  </>
+                ) : paymentMethod === 'store_credit' ? (
+                  <span className="font-['Inter'] uppercase tracking-wide">PAY NOW</span>
+                ) : paymentMethod === 'razorpay' ? (
+                  <span>Pay {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')} - Proceed to Payment</span>
+                ) : (
+                  <span>Place Order - {formatUIPrice(useStoreCredit && storeCreditToUse > 0 ? remainingAmount : cart.total, 'INR')}</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Validation Modal */}
+      {validationModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setValidationModal({ open: false, missingFields: [] })}
+          />
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-[fadeInUp_0.2s_ease]">
+            {/* Icon */}
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+            </div>
+            <h3 className="text-center text-lg font-bold text-gray-900 mb-1">Missing Information</h3>
+            <p className="text-center text-sm text-gray-500 mb-5">Please fill in the following required fields before placing your order:</p>
+            <ul className="space-y-2 mb-6">
+              {validationModal.missingFields.map((field) => (
+                <li key={field} className="flex items-center gap-2.5 text-sm text-gray-700 bg-red-50 px-3 py-2 rounded-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                  {field}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => setValidationModal({ open: false, missingFields: [] })}
+              className="w-full py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+            >
+              Got it, let me fill those in
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

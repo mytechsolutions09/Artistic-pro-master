@@ -573,6 +573,11 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) =
                                 <p className="text-[10px] text-gray-500">
                                   {formatCurrency(item.unit_price, order.currency_code || 'INR')} ea
                                 </p>
+                                {item.gst_amount !== undefined && item.gst_amount !== null && item.gst_amount > 0 && (
+                                  <p className="text-[9px] text-gray-400">
+                                    incl. {item.gst_rate}% GST ({formatCurrency(item.gst_amount, order.currency_code || 'INR')})
+                                  </p>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -592,6 +597,14 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) =
                                 {order.payment_method}
                               </dd>
                             </div>
+                            {order.gst_amount !== undefined && order.gst_amount !== null && order.gst_amount > 0 && (
+                              <div className="flex justify-between gap-2">
+                                <dt className="text-gray-500">GST (Inclusive)</dt>
+                                <dd className="font-medium text-gray-900">
+                                  {formatCurrency(order.gst_amount, order.currency_code || 'INR')}
+                                </dd>
+                              </div>
+                            )}
                             {order.payment_id && (
                               <div className="flex justify-between gap-2">
                                 <dt className="text-gray-500">Payment ID</dt>

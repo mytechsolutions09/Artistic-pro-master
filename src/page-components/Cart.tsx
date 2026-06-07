@@ -18,6 +18,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import { CouponService } from '../services/couponService';
 import { FavoritesService } from '../services/favoritesService';
+import { calculateCartGSTSummary } from '../utils/gstUtils';
 
 const CartPage: React.FC = () => {
   const navigate = useNavigate();
@@ -127,9 +128,34 @@ const CartPage: React.FC = () => {
 
   // Calculate totals
   const subtotal = cart.total;
-  const deliveryFee = 0; // No delivery charges
   const discount = appliedCoupon?.discountAmount || 0;
-  const total = subtotal + deliveryFee - discount;
+  const total = subtotal - discount;
+
+  // Calculate original total (before item-level discounts) for poster and digital items
+  const originalTotal = cart.items.reduce((sum, item) => {
+    const itemOriginalPrice = item.selectedProductType === 'poster' && item.selectedPosterSize && item.product.posterPricing
+      ? item.product.posterPricing[item.selectedPosterSize]
+      : item.product.originalPrice;
+    const originalPrice = itemOriginalPrice && itemOriginalPrice > item.selectedPrice
+      ? itemOriginalPrice
+      : item.selectedPrice;
+    return sum + (originalPrice * item.quantity);
+  }, 0);
+  const productDiscount = originalTotal - cart.total;
+
+  // Check if cart contains physical products (posters or clothing)
+  const hasPhysicalProducts = cart.items.some(item => 
+    item.selectedProductType === 'poster' || item.selectedProductType === 'clothing'
+  );
+
+  // Calculate inclusive GST summary
+  const gstSummary = calculateCartGSTSummary(
+    cart.items.map(item => ({
+      selectedProductType: item.selectedProductType,
+      selectedPrice: item.selectedPrice,
+      quantity: item.quantity
+    }))
+  );
 
   if (cart.items.length === 0) {
     return (
@@ -206,7 +232,7 @@ const CartPage: React.FC = () => {
                             </>
                           )}
                           {item.selectedProductType === 'poster' && item.selectedPosterSize && (
-                            <p className="text-sm text-gray-500">Size: {item.selectedPosterSize}</p>
+                            <p className="text-sm text-gray-500">Poster Size: {item.selectedPosterSize}</p>
                           )}
                           {item.selectedProductType === 'digital' && (
                             <p className="text-sm text-gray-500">Digital Download</p>
@@ -243,25 +269,31 @@ const CartPage: React.FC = () => {
                       <div className="min-w-[92px] flex flex-col items-end gap-1.5">
                         {/* Price */}
                         <div className="text-right">
-                          {item.product.originalPrice && item.product.originalPrice > item.selectedPrice ? (
-                            <>
-                              <p className="text-sm text-gray-500 line-through">
-                                {formatUIPrice(item.product.originalPrice, 'INR')}
-                              </p>
+                          {(() => {
+                            const itemOriginalPrice = item.selectedProductType === 'poster' && item.selectedPosterSize && item.product.posterPricing
+                              ? item.product.posterPricing[item.selectedPosterSize]
+                              : item.product.originalPrice;
+                            
+                            return itemOriginalPrice && itemOriginalPrice > item.selectedPrice ? (
+                              <>
+                                <p className="text-sm text-gray-500 line-through">
+                                  {formatUIPrice(itemOriginalPrice, 'INR')}
+                                </p>
+                                <p className="font-bold text-gray-900 text-lg md:text-xl leading-none">
+                                  {formatUIPrice(item.selectedPrice, 'INR')}
+                                </p>
+                                {item.product.discountPercentage && (
+                                  <p className="text-xs text-green-600 font-medium">
+                                    {item.product.discountPercentage}% OFF
+                                  </p>
+                                )}
+                              </>
+                            ) : (
                               <p className="font-bold text-gray-900 text-lg md:text-xl leading-none">
                                 {formatUIPrice(item.selectedPrice, 'INR')}
                               </p>
-                              {item.product.discountPercentage && (
-                                <p className="text-xs text-green-600 font-medium">
-                                  {item.product.discountPercentage}% OFF
-                                </p>
-                              )}
-                            </>
-                          ) : (
-                            <p className="font-bold text-gray-900 text-lg md:text-xl leading-none">
-                              {formatUIPrice(item.selectedPrice, 'INR')}
-                            </p>
-                          )}
+                            );
+                          })()}
                         </div>
                         
                         {/* Quantity is hidden for digital downloads */}
@@ -299,27 +331,62 @@ const CartPage: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-900 leading-none mb-4">Order Summary</h2>
 
               <div className="space-y-2.5 mb-4">
+                {/* Original Price */}
+                {productDiscount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Original Price</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {formatUIPrice(originalTotal, 'INR')}
+                    </span>
+                  </div>
+                )}
+
                 {/* Subtotal */}
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Subtotal</span>
                   <span className="text-sm font-semibold text-gray-900">
-                    {formatUIPrice(subtotal, 'INR')}
+                    {formatUIPrice(Math.round((subtotal - gstSummary.totalGST) * 100) / 100, 'INR')}
                   </span>
                 </div>
 
                 {/* Shipping */}
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Shipping charges</span>
-                  <span className="text-sm font-semibold text-gray-900">Free</span>
-                </div>
-
-                {/* Discount */}
-                {discount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>Discount</span>
-                    <span className="font-medium">-{formatUIPrice(discount, 'INR')}</span>
+                {hasPhysicalProducts && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Shipping charges</span>
+                    <span className="text-sm font-semibold text-gray-900">Free</span>
                   </div>
                 )}
+
+                {/* Discount */}
+                {(productDiscount > 0 || discount > 0) && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Discount</span>
+                    <span className="font-medium">-{formatUIPrice(productDiscount + discount, 'INR')}</span>
+                  </div>
+                )}
+
+                {/* GST Row(s) */}
+                {(() => {
+                  const activeRates = Object.values(gstSummary.breakdown).filter(group => group.rate > 0 && group.gstAmount > 0);
+                  if (activeRates.length >= 2) {
+                    return (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">GST</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {formatUIPrice(gstSummary.totalGST, 'INR')}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return activeRates.map(group => (
+                    <div key={group.rate} className="flex justify-between">
+                      <span className="text-sm text-gray-600">GST @ {group.rate}%</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatUIPrice(group.gstAmount, 'INR')}
+                      </span>
+                    </div>
+                  ));
+                })()}
 
                 {/* Total */}
                 <div className="border-t border-gray-200 pt-2.5">

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Link } from '@/src/compat/router';
 import { useLocation } from '@/src/compat/router';
-import { Heart, Mail, Phone, MapPin, Facebook, Instagram } from 'lucide-react';
+import { Heart, Mail, Phone, MapPin, Facebook, Instagram, Rss } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -163,6 +163,16 @@ const Footer: React.FC = () => {
               <Link to="/terms-and-conditions" className="text-gray-600 hover:text-gray-900 text-xs transition-colors">
                 Terms of Service
               </Link>
+              <a
+                href="/feed.xml"
+                rel="alternate"
+                type="application/rss+xml"
+                title="Lurevi blog RSS feed"
+                className="text-gray-600 hover:text-gray-900 text-xs transition-colors flex items-center gap-1"
+              >
+                <Rss className="w-3 h-3" />
+                RSS feed
+              </a>
               <div className="flex items-center text-gray-600 text-xs">
                 Made with <Heart className="w-3 h-3 text-gray-700 mx-1" /> by Lurevi Team
               </div>

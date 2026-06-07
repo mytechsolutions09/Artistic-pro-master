@@ -129,21 +129,21 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
 
   if (isSubmitted) {
     return (
-      <div className={`bg-green-50 border border-green-200 rounded-xl p-6 text-center ${className}`}>
+      <div className={`font-['Inter'] bg-green-50 border border-green-200 rounded-xl p-6 text-center ${className}`} style={{ fontFamily: 'Inter, sans-serif' }}>
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Star className="w-8 h-8 text-green-500 fill-current" />
         </div>
-        <h3 className="text-lg font-semibold text-green-800 mb-2">Thank you for your review!</h3>
+        <h3 className="text-lg font-medium text-green-800 mb-2">Thank you for your review!</h3>
         <p className="text-green-600">Your review has been submitted and will help other customers.</p>
       </div>
     );
   }
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-xl p-6 ${className}`}>
+    <div className={`font-['Inter'] bg-white border border-gray-200 rounded-xl p-6 ${className}`} style={{ fontFamily: 'Inter, sans-serif' }}>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800">Rate Your Purchase</h3>
+          <h3 className="text-lg font-medium text-gray-800">Rate Your Purchase</h3>
           <p className="text-sm text-gray-600">How was your experience with "{productTitle}"?</p>
         </div>
         {onClose && (
@@ -159,7 +159,7 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Star Rating */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-normal text-gray-700 mb-2">
             Rating *
           </label>
           <div className="flex items-center space-x-1">
@@ -197,7 +197,7 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
 
         {/* Comment */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-normal text-gray-700 mb-2">
             Your Review *
           </label>
           <textarea
@@ -205,7 +205,7 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
             onChange={(e) => setComment(e.target.value)}
             placeholder="Share your experience with this artwork. What did you like about it? How was the quality? Would you recommend it to others?"
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"
             required
             minLength={10}
             maxLength={500}
@@ -222,7 +222,7 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
 
         {/* Image Upload */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-normal text-gray-700 mb-2">
             Add Photos (Optional)
           </label>
           <div className="space-y-3">
@@ -232,10 +232,10 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingImages || images.length >= 5}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {uploadingImages ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-500"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
                 ) : (
                   <Camera className="w-4 h-4 text-gray-600" />
                 )}
@@ -296,7 +296,7 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
           <button
             type="submit"
             disabled={isSubmitting || rating === 0 || comment.trim().length < 10}
-            className="flex items-center space-x-2 px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center space-x-2 px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? (
               <>

@@ -3,6 +3,7 @@
 import { supabase } from './supabaseService';
 import CurrencyService from './currencyService';
 import delhiveryService from './DelhiveryService';
+import { getGSTRate, calculateInclusiveGST } from '../utils/gstUtils';
 
 export interface CompleteOrderData {
   customerId: string | null;
@@ -52,6 +53,7 @@ export interface EmailData {
     quantity: number;
     mainImage?: string;
     pdfUrl?: string;
+    productType?: string;
   }>;
   downloadLinks: string[];
 }
@@ -158,6 +160,13 @@ export class CompleteOrderService {
         orderStatus = 'processing'; // Physical products start as processing
       }
       
+      // Calculate total GST before order creation
+      const totalGstAmount = orderData.items.reduce((sum, item) => {
+        const rate = getGSTRate(item.selectedProductType);
+        const itemGst = calculateInclusiveGST(item.totalPrice, rate);
+        return sum + itemGst;
+      }, 0);
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -172,7 +181,8 @@ export class CompleteOrderService {
           notes: orderData.notes,
           shipping_address: orderData.shippingAddress,
           currency_code: currentCurrency,
-          currency_rate: currencyRate
+          currency_rate: currencyRate,
+          gst_amount: totalGstAmount
         })
         .select()
         .single();
@@ -182,21 +192,27 @@ export class CompleteOrderService {
         return { success: false, error: `Failed to create order: ${orderError.message}` };
       }
 
-      // Create order items with currency information
-      const orderItems = orderData.items.map(item => ({
-        order_id: order.id,
-        product_id: item.productId,
-        product_title: item.productTitle,
-        product_image: item.productImage,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        total_price: item.totalPrice,
-        selected_product_type: item.selectedProductType || 'digital',
-        selected_poster_size: item.selectedPosterSize || null,
-        options: item.options || null,
-        currency_code: currentCurrency,
-        currency_rate: currencyRate
-      }));
+      // Create order items with currency information and GST details
+      const orderItems = orderData.items.map(item => {
+        const rate = getGSTRate(item.selectedProductType);
+        const itemGst = calculateInclusiveGST(item.totalPrice, rate);
+        return {
+          order_id: order.id,
+          product_id: item.productId,
+          product_title: item.productTitle,
+          product_image: item.productImage,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total_price: item.totalPrice,
+          selected_product_type: item.selectedProductType || 'digital',
+          selected_poster_size: item.selectedPosterSize || null,
+          options: item.options || null,
+          currency_code: currentCurrency,
+          currency_rate: currencyRate,
+          gst_rate: rate,
+          gst_amount: itemGst
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -252,7 +268,8 @@ export class CompleteOrderService {
           quantity: item.quantity,
           // Only include files for digital products
           mainImage: isDigital ? product?.main_image : undefined,
-          pdfUrl: isDigital ? product?.pdf_url : undefined
+          pdfUrl: isDigital ? product?.pdf_url : undefined,
+          productType: item.selectedProductType
         };
       });
 
@@ -525,6 +542,24 @@ export class CompleteOrderService {
         success: false, 
         error: error instanceof Error ? error.message : 'Error fetching order' 
       };
+    }
+  }
+
+  /**
+   * Get the global sequence number for an order (1-based, sorted by created_at).
+   * Used to generate the display order number in YYYYMM+seq format.
+   */
+  static async getOrderSequenceNumber(orderId: string, createdAt: string): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .lte('created_at', createdAt);
+
+      if (error || count === null) return 1;
+      return count; // count of orders created up to and including this one
+    } catch {
+      return 1;
     }
   }
 

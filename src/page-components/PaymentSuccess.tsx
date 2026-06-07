@@ -16,24 +16,33 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewInput from '../components/ReviewInput';
 import { MetaPixelService } from '../services/metaPixelService';
+import { formatOrderNumber } from '../utils/sequenceNumberUtils';
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
+  const [orderDisplayNumber, setOrderDisplayNumber] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showReviewInput, setShowReviewInput] = useState(false);
   const [selectedProductForReview, setSelectedProductForReview] = useState<any>(null);
   const { formatUIPrice, currencySettings } = useCurrency();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   const orderId = searchParams.get('orderId');
   
   useEffect(() => {
     const fetchOrder = async () => {
+      if (authLoading) return;
       if (orderId) {
         try {
-          // First try to get from database using CompleteOrderService
-          const result = await CompleteOrderService.getOrderById(orderId);
+          // Try to get from database with retries to handle any database replication or RLS initialization lag
+          let result = await CompleteOrderService.getOrderById(orderId);
+          let retries = 0;
+          while ((!result.success || !result.order) && retries < 4) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            result = await CompleteOrderService.getOrderById(orderId);
+            retries++;
+          }
           if (result.success && result.order) {
             // Transform database order to match the expected Order interface
             const transformedOrder: Order = {
@@ -63,6 +72,7 @@ const PaymentSuccess: React.FC = () => {
                     // Use 'clothing' as productType if it's a clothing item
                     productType: isClothingItem ? 'clothing' : (item.selected_product_type || 'digital'),
                     posterSize: item.selected_poster_size,
+                    quantity: item.quantity,
                     itemDetails: null
                   };
                 }) || [];
@@ -73,9 +83,17 @@ const PaymentSuccess: React.FC = () => {
               paymentId: result.order.payment_id,
               paymentMethod: result.order.payment_method,
               downloadLinks: result.order.download_links || [],
-              customerEmail: result.order.customer_email
+              customerEmail: result.order.customer_email,
+              gst_amount: result.order.gst_amount
             };
             setOrder(transformedOrder);
+            
+            // Compute display order number: YYYYMM + global sequence
+            const seq = await CompleteOrderService.getOrderSequenceNumber(
+              result.order.id,
+              result.order.created_at
+            );
+            setOrderDisplayNumber(formatOrderNumber(result.order.created_at, seq));
             
             // Track Purchase event for Meta Pixel
             MetaPixelService.trackPurchase({
@@ -127,7 +145,7 @@ const PaymentSuccess: React.FC = () => {
     };
     
     fetchOrder();
-  }, [orderId]);
+  }, [orderId, authLoading]);
   
   if (loading) {
     return (
@@ -182,7 +200,9 @@ const PaymentSuccess: React.FC = () => {
                 <CheckCircle className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
               </div>
               <div className="text-center sm:text-left">
-                <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">Payment Successful!</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">
+                  {order.paymentMethod?.toLowerCase() === 'cod' ? 'Order Confirmed!' : 'Payment Successful!'}
+                </h1>
               </div>
             </div>
           </div>
@@ -226,7 +246,10 @@ const PaymentSuccess: React.FC = () => {
                                 {(item.color || item.size) && <span>•</span>}
                               </>
                             )}
-                            <span className="capitalize">{item.productType}</span>
+                            <span className="capitalize">
+                              {item.productType}
+                              {item.quantity > 1 && ` x ${item.quantity}`}
+                            </span>
                           </div>
                         )}
                         <div className="flex items-center gap-2 mt-2 sm:mt-3">
@@ -252,6 +275,11 @@ const PaymentSuccess: React.FC = () => {
                   <span className="text-sm sm:text-base font-semibold text-gray-900">Total</span>
                   <span className="text-xl sm:text-2xl font-bold text-green-600">{formatUIPrice(order.total, 'INR')}</span>
                 </div>
+                {order.gst_amount !== undefined && order.gst_amount !== null && order.gst_amount > 0 && (
+                  <p className="text-right text-xs text-gray-500 mt-1">
+                    Inclusive of GST ({formatUIPrice(order.gst_amount, 'INR')})
+                  </p>
+                )}
               </div>
             </div>
 
@@ -290,14 +318,16 @@ const PaymentSuccess: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Order Number</span>
-                  <span className="text-sm font-semibold text-gray-900">#{order.id.slice(-8).toUpperCase()}</span>
+                  <span className="text-sm font-semibold text-gray-900">#{orderDisplayNumber || order.id.slice(-8).toUpperCase()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Payment Mode</span>
                   <span className="text-gray-900">
-                    {(order.paymentMethod || 'N/A')
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, (char) => char.toUpperCase())}
+                    {order.paymentMethod?.toLowerCase() === 'cod'
+                      ? 'Cash on Delivery'
+                      : (order.paymentMethod || 'N/A')
+                          .replace(/_/g, ' ')
+                          .replace(/\b\w/g, (char) => char.toUpperCase())}
                   </span>
                 </div>
               </div>

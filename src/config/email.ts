@@ -35,13 +35,13 @@ export const emailConfig = {
   
   // Email settings
   from: {
-    name: process.env.NEXT_PUBLIC_EMAIL_FROM_NAME || 'Artistic Pro',
+    name: process.env.NEXT_PUBLIC_EMAIL_FROM_NAME || 'Lurevi',
     email: process.env.NEXT_PUBLIC_EMAIL_FROM_EMAIL || ''
   },
   
   // Reply-to settings
   replyTo: {
-    name: process.env.NEXT_PUBLIC_EMAIL_REPLY_NAME || 'Artistic Pro Support',
+    name: process.env.NEXT_PUBLIC_EMAIL_REPLY_NAME || 'Lurevi Support',
     email: process.env.NEXT_PUBLIC_EMAIL_REPLY_EMAIL || ''
   },
   
@@ -77,7 +77,11 @@ export enum EmailType {
   NEWSLETTER = 'newsletter',
   MARKETING = 'marketing',
   ADMIN_NOTIFICATION = 'admin_notification',
-  RETURN_REQUEST = 'return_request'
+  RETURN_REQUEST = 'return_request',
+  RETURN_APPROVED = 'return_approved',
+  RETURN_REJECTED = 'return_rejected',
+  REFUND_CONFIRMATION = 'refund_confirmation',
+  RETURN_CONFIRMATION_CUSTOMER = 'return_confirmation_customer'
 }
 
 // Email priority levels

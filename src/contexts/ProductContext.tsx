@@ -249,9 +249,9 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   };
 
   // Get product by ID
-  const getProductById = (id: string): (Product | ArtWork) | undefined => {
+  const getProductById = useCallback((id: string): (Product | ArtWork) | undefined => {
     return allProducts.find(product => product.id === id);
-  };
+  }, [allProducts]);
 
   // Memoized product filtering functions to avoid recreating on every call
   const getProductsByCategory = useCallback((category: string): (Product | ArtWork)[] => {

@@ -20,6 +20,7 @@ export interface Order {
   currency_code?: string;
   currency_rate?: number;
   order_items: OrderItem[];
+  gst_amount?: number;
 }
 
 export interface OrderItem {
@@ -40,6 +41,8 @@ export interface OrderItem {
   };
   currency_code?: string;
   currency_rate?: number;
+  gst_amount?: number;
+  gst_rate?: number;
   products?: {
     id: string;
     title: string;

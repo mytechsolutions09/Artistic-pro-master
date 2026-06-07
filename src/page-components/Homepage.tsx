@@ -785,55 +785,31 @@ const Homepage: React.FC = () => {
             </div>
           )}
 
-          {/* Asymmetric magazine layout for exactly 3 items */}
+          {/* Uniform three-column layout for exactly 3 items */}
           {safeFeaturedGrid.gridLayout === 'three-column' && safeFeaturedGrid.items.length === 3 ? (
-            <div
-              className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 h-[360px] sm:h-[440px] lg:h-[500px]"
-              style={{ gridTemplateRows: '1fr 1fr' }}
-            >
-              {/* Card 1 — tall hero card, spans 2 rows */}
-              <Link
-                to={safeFeaturedGrid.items[0].link}
-                className="group col-span-1 row-span-2 relative rounded-2xl overflow-hidden"
-              >
-                <OptimizedImage
-                  src={safeFeaturedGrid.items[0].images[0]}
-                  alt={safeFeaturedGrid.items[0].title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  width={700}
-                  priority={false}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-                  <span className="text-[10px] uppercase tracking-widest text-white/60 font-sans font-medium">Collection</span>
-                  <h3 className="text-white font-bold text-sm sm:text-base leading-snug mt-0.5 mb-1 font-sans">{safeFeaturedGrid.items[0].title}</h3>
-                  <p className="text-white/70 text-xs font-sans hidden sm:block">{safeFeaturedGrid.items[0].subtitle}</p>
-                  <span className="mt-2 sm:mt-3 inline-flex items-center gap-1 text-xs text-white/80 group-hover:text-white group-hover:gap-2 transition-all font-sans">
-                    Explore <ArrowRight size={11} />
-                  </span>
-                </div>
-              </Link>
-
-              {/* Cards 2 & 3 — fill each row of the right column */}
-              {[safeFeaturedGrid.items[1], safeFeaturedGrid.items[2]].map((item: any) => (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 h-auto sm:h-[280px] lg:h-[340px]">
+              {safeFeaturedGrid.items.map((item: any) => (
                 <Link
                   key={item.id}
                   to={item.link}
-                  className="group relative rounded-2xl overflow-hidden"
+                  className="group relative rounded-2xl overflow-hidden h-[240px] sm:h-full"
                 >
                   <OptimizedImage
                     src={item.images[0]}
                     alt={item.title}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    width={500}
+                    width={600}
                     priority={false}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-                    <span className="text-[9px] uppercase tracking-widest text-white/60 font-sans font-medium hidden sm:block">Collection</span>
-                    <h3 className="text-white font-bold text-xs sm:text-sm leading-snug font-sans">{item.title}</h3>
-                    <span className="mt-1 inline-flex items-center gap-1 text-[10px] text-white/70 group-hover:text-white group-hover:gap-1.5 transition-all font-sans">
-                      Explore <ArrowRight size={10} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                    <span className="text-[10px] uppercase tracking-widest text-white/60 font-sans font-medium">Collection</span>
+                    <h3 className="text-white font-bold text-sm sm:text-base leading-snug mt-0.5 mb-1 font-sans">{item.title}</h3>
+                    {item.subtitle && (
+                      <p className="text-white/70 text-xs font-sans hidden sm:block">{item.subtitle}</p>
+                    )}
+                    <span className="mt-2 sm:mt-3 inline-flex items-center gap-1 text-xs text-white/80 group-hover:text-white group-hover:gap-2 transition-all font-sans">
+                      Explore <ArrowRight size={11} />
                     </span>
                   </div>
                 </Link>
@@ -1214,17 +1190,6 @@ const Homepage: React.FC = () => {
               <Link to="/shop" className="text-gray-700 underline underline-offset-2 hover:text-gray-900">
                 Shop Premium Picks
               </Link>
-              <span className="text-gray-300">|</span>
-              <a
-                href="/feed.xml"
-                rel="alternate"
-                type="application/rss+xml"
-                title="Lurevi blog RSS feed"
-                className="inline-flex items-center gap-1.5 text-gray-700 underline underline-offset-2 hover:text-gray-900"
-              >
-                <Rss className="h-4 w-4 shrink-0" aria-hidden />
-                RSS feed
-              </a>
             </div>
           </div>
         </div>

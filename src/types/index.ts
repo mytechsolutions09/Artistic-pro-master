@@ -73,6 +73,7 @@ export interface Order {
   customerEmail?: string;
   shipping_address?: string;
   billing_address?: string;
+  gst_amount?: number;
 }
 
 export interface PaymentResult {

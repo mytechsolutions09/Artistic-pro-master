@@ -1,0 +1,13 @@
+-- Order number display is handled entirely in the frontend.
+-- The orders table UUID `id` column is kept as-is.
+-- No schema changes are needed.
+--
+-- The display order number format is: YYYYMM + 4-digit global sequence
+-- e.g. the 1st order placed in June 2026 → 2026060001
+--
+-- This is computed in the frontend by:
+--   1. Counting how many orders exist up to and including this order's created_at
+--   2. Formatting as YYYYMM + padded sequence number
+--
+-- See: src/utils/sequenceNumberUtils.ts → formatOrderNumber()
+--      src/services/completeOrderService.ts → getOrderSequenceNumber()

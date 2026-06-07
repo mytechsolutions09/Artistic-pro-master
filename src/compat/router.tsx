@@ -37,7 +37,7 @@ export const Link: React.FC<LinkProps> = ({ to, href, children, ...rest }) => (
 // Returns a function matching react-router's navigate(to, options?) signature.
 export function useNavigate() {
   const router = useRouter();
-  return (
+  return useCallback((
     to: string | number,
     options?: { replace?: boolean; state?: unknown }
   ) => {
@@ -50,7 +50,7 @@ export function useNavigate() {
     } else {
       router.push(to);
     }
-  };
+  }, [router]);
 }
 
 // ─── useLocation ─────────────────────────────────────────────────────────────

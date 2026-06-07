@@ -80,6 +80,11 @@ const Returns: React.FC = () => {
     returnId: string,
     newStatus: 'approved' | 'rejected' | 'processing' | 'completed'
   ) => {
+    if ((newStatus === 'approved' || newStatus === 'completed') && selectedReturn && refundAmount > selectedReturn.total_price) {
+      alert(`Refund amount (${formatCurrency(refundAmount)}) cannot be more than the item price (${formatCurrency(selectedReturn.total_price)})`);
+      return;
+    }
+
     try {
       const result = await ReturnService.updateReturnStatus(
         returnId,
@@ -579,7 +584,15 @@ const Returns: React.FC = () => {
                   <input
                     type="number"
                     value={refundAmount || ''}
-                    onChange={(e) => setRefundAmount(parseInt(e.target.value, 10) || 0)}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      if (selectedReturn && val > selectedReturn.total_price) {
+                        setRefundAmount(selectedReturn.total_price);
+                      } else {
+                        setRefundAmount(val);
+                      }
+                    }}
+                    max={selectedReturn?.total_price}
                     className={inputCls + ' w-full'}
                     placeholder="0"
                   />
