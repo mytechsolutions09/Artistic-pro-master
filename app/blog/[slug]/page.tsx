@@ -152,8 +152,11 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
       {post.excerpt && <p className="mt-5 text-base text-gray-700">{post.excerpt}</p>}
 
       <article 
-        className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold"
-        dangerouslySetInnerHTML={{ __html: post.content }}
+        className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-pink-600 [&_a]:hover:underline"
+        dangerouslySetInnerHTML={{ __html: post.content
+          .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
+          .replace(/(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>') 
+        }}
       />
 
       {Array.isArray(post.tags) && post.tags.length > 0 && (

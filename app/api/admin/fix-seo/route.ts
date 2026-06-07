@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { supabase } from '../../../../src/services/supabaseService';
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -22,6 +23,24 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch a few active products to provide context for internal linking
+    let productListText = '';
+    if (issueName.toLowerCase().includes('link')) {
+      try {
+        const { data: products } = await supabase
+          .from('products')
+          .select('title')
+          .eq('status', 'active')
+          .limit(10);
+          
+        if (products && products.length > 0) {
+          productListText = `Here are some active products from our store to link to:\n${products.map(p => `- ${p.title} (URL: /shop/${p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')})`).join('\n')}`;
+        }
+      } catch (err) {
+        console.error('Failed to fetch products for SEO prompt:', err);
+      }
+    }
+
     // Prepare the model
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
@@ -38,6 +57,8 @@ Focus Keyphrase: ${blogData.focus_keyphrase}
 SEO Title: ${blogData.seo_title}
 SEO Description: ${blogData.seo_description}
 Content: ${blogData.content}
+
+${productListText ? `Since the issue is related to internal links, please strategically add 1-2 natural contextual internal links to these products in the content body:\n${productListText}\nMake sure to format them as HTML <a href="..."> tags.` : ''}
 
 Please fix this specific SEO issue by updating the relevant fields. Keep the changes minimal and focused primarily on resolving the issue, but ensure it remains natural and engaging. Do not drastically rewrite the entire post unless necessary to fix the issue.
 

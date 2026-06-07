@@ -457,8 +457,9 @@ const BlogAdmin: React.FC = () => {
       keyphrase: form.focus_keyphrase,
       existingPosts: posts,
       currentPostId: editingId,
+      coverImage: form.cover_image,
     });
-  }, [form.content, form.title, form.slug, form.seo_title, form.seo_description, form.focus_keyphrase, posts, editingId]);
+  }, [form.content, form.title, form.slug, form.seo_title, form.seo_description, form.focus_keyphrase, posts, editingId, form.cover_image]);
 
   const { scoreText, scoreColor, scoreBg, errorCount, warningCount, goodCount } = useMemo(() => {
     const errors = seoResults.filter(r => r.status === 'error').length;
@@ -609,8 +610,11 @@ const BlogAdmin: React.FC = () => {
                 </div>
                 {previewMode ? (
                   <div
-                    className="px-3 py-3 border border-gray-300 rounded-lg text-sm bg-gray-50 min-h-[250px] max-h-[500px] overflow-y-auto leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold"
-                    dangerouslySetInnerHTML={{ __html: form.content || '<p class="text-gray-400 italic">No content yet.</p>' }}
+                    className="px-3 py-3 border border-gray-300 rounded-lg text-sm bg-gray-50 min-h-[250px] max-h-[500px] overflow-y-auto leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-pink-600 [&_a]:hover:underline"
+                    dangerouslySetInnerHTML={{ __html: (form.content || '<p class="text-gray-400 italic">No content yet.</p>')
+                      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
+                      .replace(/(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                    }}
                   />
                 ) : (
                   <textarea

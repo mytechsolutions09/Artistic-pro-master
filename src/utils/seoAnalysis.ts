@@ -31,9 +31,10 @@ export function runSeoAnalysis(params: {
   keyphrase: string;
   existingPosts: BlogPost[];
   currentPostId: string | null;
+  coverImage?: string;
 }): SeoCheckResult[] {
   const results: SeoCheckResult[] = [];
-  const { content, title, slug, seoTitle, seoDescription, keyphrase, existingPosts, currentPostId } = params;
+  const { content, title, slug, seoTitle, seoDescription, keyphrase, existingPosts, currentPostId, coverImage } = params;
 
   const normalizedKeyphrase = keyphrase.trim().toLowerCase();
   const keyphraseWords = normalizedKeyphrase.split(/\s+/).filter(Boolean);
@@ -228,11 +229,22 @@ export function runSeoAnalysis(params: {
     }
   }
 
-  // Extract headings
-  const headings = content
+  // Extract headings (support both Markdown and HTML)
+  const mdHeadings = content
     .split('\n')
     .map(line => line.trim())
     .filter(line => line.startsWith('#'));
+
+  const htmlHeadingRegex = /<h([1-6])[^>]*>(.*?)<\/h\1>/gi;
+  const htmlHeadings: string[] = [];
+  let headingMatch;
+  while ((headingMatch = htmlHeadingRegex.exec(content)) !== null) {
+    const level = parseInt(headingMatch[1]);
+    const text = headingMatch[2].replace(/<[^>]+>/g, '').trim();
+    htmlHeadings.push('#'.repeat(level) + ' ' + text);
+  }
+
+  const headings = [...mdHeadings, ...htmlHeadings];
 
   // 8. Keyphrase in subheadings
   if (hasKeyphrase) {
@@ -263,9 +275,17 @@ export function runSeoAnalysis(params: {
 
   // Extract images, check alt attributes, and inspect file names
   const mdImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-  const htmlImgRegex = /<img([^>]+)>/gi;
+  const htmlImgRegex = /<(?:img|Image)([^>]+)>/gi;
 
-  const totalImagesList: { type: 'md' | 'html'; alt: string | null; src: string }[] = [];
+  const totalImagesList: { type: 'md' | 'html' | 'cover'; alt: string | null; src: string }[] = [];
+
+  if (coverImage && coverImage.trim() !== '') {
+    totalImagesList.push({
+      type: 'cover',
+      alt: title,
+      src: coverImage.trim()
+    });
+  }
 
   let mdMatch;
   while ((mdMatch = mdImageRegex.exec(content)) !== null) {
