@@ -148,7 +148,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
     return (
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
         <div className="flex items-center space-x-2 mb-4">
-          <MapPin className="w-5 h-5 text-teal-600" />
+          <MapPin className="w-5 h-5 text-gray-500" />
           <h3 className="text-lg font-bold text-gray-800">Address Management</h3>
         </div>
         <div className="text-center py-8">
@@ -163,7 +163,7 @@ const AddressManagement: React.FC<AddressManagementProps> = ({ userId }) => {
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
-          <MapPin className="w-5 h-5 text-teal-600" />
+          <MapPin className="w-5 h-5 text-gray-500" />
           <h3 className="text-lg font-bold text-gray-800">Address Management</h3>
         </div>
         <button

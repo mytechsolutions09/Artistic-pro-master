@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { orderService, Order, OrderStats } from '../../services/orderService';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { buildSequenceMap, formatOrderNumber } from '../../utils/sequenceNumberUtils';
 
 interface OrderManagementProps {
   isFBOnly?: boolean;
@@ -66,11 +67,15 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) =
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [sequenceMap, setSequenceMap] = useState<Record<string, number>>({});
 
   const loadOrders = async () => {
     try {
       setLoading(true);
       const ordersData = await orderService.getAllOrders();
+
+      const seqMap = buildSequenceMap(ordersData.map(o => ({ id: o.id, createdAt: o.created_at })));
+      setSequenceMap(seqMap);
 
       const filtered = isFBOnly
         ? ordersData.filter((order) =>
@@ -172,12 +177,24 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) =
     loadOrders();
   }, []);
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  };
+
   const filteredOrders = orders
     .filter((order) => {
+      const seq = sequenceMap[order.id] || 1;
+      const realOrderNumber = formatOrderNumber(order.created_at, seq);
       const matchesSearch =
         order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.id.toLowerCase().includes(searchTerm.toLowerCase());
+        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        realOrderNumber.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
 
@@ -206,12 +223,25 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) =
       return matchesSearch && matchesStatus && matchesDate;
     })
     .sort((a, b) => {
-      let aValue: string | number = a[sortBy as keyof Order] as string | number;
-      let bValue: string | number = b[sortBy as keyof Order] as string | number;
+      let aValue: string | number;
+      let bValue: string | number;
 
-      if (sortBy === 'created_at' || sortBy === 'updated_at') {
-        aValue = new Date(aValue as string).getTime();
-        bValue = new Date(bValue as string).getTime();
+      if (sortBy === 'order_id') {
+        const aSeq = sequenceMap[a.id] || 0;
+        const bSeq = sequenceMap[b.id] || 0;
+        aValue = aSeq;
+        bValue = bSeq;
+      } else if (sortBy === 'status') {
+        aValue = a.status || '';
+        bValue = b.status || '';
+      } else {
+        aValue = a[sortBy as keyof Order] as string | number;
+        bValue = b[sortBy as keyof Order] as string | number;
+
+        if (sortBy === 'created_at' || sortBy === 'updated_at') {
+          aValue = new Date(aValue as string).getTime();
+          bValue = new Date(bValue as string).getTime();
+        }
       }
 
       if (sortOrder === 'asc') {
@@ -381,277 +411,344 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) =
           <p className="text-xs text-gray-500">Adjust search or filters</p>
         </div>
       ) : (
-        <div className="space-y-1.5">
-          {filteredOrders.map((order) => {
-            const shortId = order.id.slice(-8);
-            const initials = order.customer_name
-              .split(' ')
-              .map((n: string) => n[0])
-              .join('')
-              .toUpperCase()
-              .slice(0, 2);
-            return (
-              <div
-                key={order.id}
-                className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
-              >
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="flex w-full cursor-pointer items-center gap-2 p-2 text-left hover:bg-gray-50 sm:gap-3 sm:p-2.5"
-                  onClick={() => toggleOrderExpansion(order.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      toggleOrderExpansion(order.id);
-                    }
-                  }}
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-gray-200 text-left text-xs">
+            <thead className="bg-gray-50 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <tr>
+                <th
+                  onClick={() => handleSort('order_id')}
+                  className="cursor-pointer select-none px-4 py-3 hover:bg-gray-100 hover:text-gray-900 transition-colors"
                 >
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-200 text-[10px] font-bold text-gray-700">
-                      {initials}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-mono text-xs font-semibold text-gray-900">
-                          #{shortId}
-                        </span>
+                  <div className="flex items-center gap-1">
+                    <span>Order ID</span>
+                    {sortBy === 'order_id' && (
+                      <span>{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort('customer_name')}
+                  className="cursor-pointer select-none px-4 py-3 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Customer</span>
+                    {sortBy === 'customer_name' && (
+                      <span>{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort('created_at')}
+                  className="cursor-pointer select-none px-4 py-3 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Date</span>
+                    {sortBy === 'created_at' && (
+                      <span>{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort('status')}
+                  className="cursor-pointer select-none px-4 py-3 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Status</span>
+                    {sortBy === 'status' && (
+                      <span>{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort('total_amount')}
+                  className="cursor-pointer select-none px-4 py-3 text-right hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                >
+                  <div className="flex items-center justify-end gap-1">
+                    <span>Total</span>
+                    {sortBy === 'total_amount' && (
+                      <span>{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </div>
+                </th>
+                <th className="px-4 py-3">Update Status</th>
+                <th className="w-10 px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {filteredOrders.map((order) => {
+                const seq = sequenceMap[order.id] || 1;
+                const realOrderNumber = formatOrderNumber(order.created_at, seq);
+                const displayId = realOrderNumber;
+                const initials = order.customer_name
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
+                const isExpanded = expandedOrders.has(order.id);
+
+                return (
+                  <React.Fragment key={order.id}>
+                    <tr
+                      role="button"
+                      tabIndex={0}
+                      className="cursor-pointer hover:bg-gray-50 align-middle"
+                      onClick={() => toggleOrderExpansion(order.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleOrderExpansion(order.id);
+                        }
+                      }}
+                    >
+                      <td className="whitespace-nowrap px-4 py-3 font-mono font-semibold text-gray-900" title={`UUID: ${order.id}`}>
+                        #{displayId}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-200 text-[10px] font-bold text-gray-700">
+                            {initials}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-gray-900">{order.customer_name}</p>
+                            <p className="truncate font-mono text-[10px] text-gray-400">
+                              {order.customer_email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-gray-500">
+                        {new Date(order.created_at).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: '2-digit',
+                        })}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">
                         <span
                           className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium capitalize ${getStatusColor(order.status)}`}
                         >
                           {getStatusIcon(order.status)}
                           {order.status}
                         </span>
-                      </div>
-                      <p className="truncate text-xs text-gray-700">{order.customer_name}</p>
-                      <p className="truncate font-mono text-[10px] text-gray-400">
-                        {order.customer_email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <div className="text-right">
-                      <p className="text-sm font-semibold tabular-nums text-gray-900">
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums text-gray-900">
                         {formatCurrency(order.total_amount, order.currency_code || 'INR')}
-                      </p>
-                      <p className="text-[10px] text-gray-500">
-                        {new Date(order.created_at).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          year: '2-digit',
-                        })}
-                      </p>
-                    </div>
-                    <select
-                      value={order.status}
-                      onChange={(e) =>
-                        handleUpdateStatus(order.id, e.target.value as Order['status'])
-                      }
-                      className={`${inputCls} max-w-[7rem]`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="processing">Processing</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="refunded">Refunded</option>
-                    </select>
-                    <span className="text-gray-400">
-                      {expandedOrders.has(order.id) ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </span>
-                  </div>
-                </div>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <select
+                          value={order.status}
+                          onChange={(e) =>
+                            handleUpdateStatus(order.id, e.target.value as Order['status'])
+                          }
+                          className={`${inputCls} max-w-[7rem]`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="processing">Processing</option>
+                          <option value="completed">Completed</option>
+                          <option value="cancelled">Cancelled</option>
+                          <option value="refunded">Refunded</option>
+                        </select>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right text-gray-400">
+                        {isExpanded ? (
+                          <ChevronUp className="h-4 w-4 inline-block" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 inline-block" />
+                        )}
+                      </td>
+                    </tr>
 
-                {expandedOrders.has(order.id) && (
-                  <div className="border-t border-gray-100 bg-gray-50/90 px-2 pb-2 pt-1.5 sm:px-2.5">
-                    <div className="grid gap-2 lg:grid-cols-2 lg:gap-3">
-                      <div className="rounded-md border border-gray-200 bg-white p-2">
-                        <h4 className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-gray-900">
-                          <Package className="h-3.5 w-3.5 text-gray-600" />
-                          Items
-                        </h4>
-                        <div className="space-y-1">
-                          {order.order_items.map((item) => (
-                            <div
-                              key={item.id}
-                              className="flex gap-2 rounded border border-gray-100 bg-gray-50/50 p-1.5 text-xs"
-                            >
-                              <OrderItemThumb
-                                src={item.products?.main_image || item.product_image}
-                                alt={item.product_title}
-                              />
-                              <div className="min-w-0 flex-1">
-                                <p className="font-medium leading-tight text-gray-900">
-                                  {item.product_title}
-                                </p>
-                                <div className="mt-0.5 text-[11px] text-gray-600">
-                                  {(() => {
-                                    const isClothing =
-                                      item.selected_product_type === 'clothing' ||
-                                      (item.options && (item.options.color || item.options.size)) ||
-                                      (item.product_title &&
-                                        [
-                                          'sweatshirt',
-                                          'hoodie',
-                                          't-shirt',
-                                          'shirt',
-                                          'jacket',
-                                          'sweater',
-                                          'crewneck',
-                                          'oversized',
-                                        ].some((k) =>
-                                          item.product_title!.toLowerCase().includes(k)
-                                        ));
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={7} className="border-t border-gray-100 bg-gray-50/90 px-4 py-3">
+                          <div className="grid gap-2 lg:grid-cols-2 lg:gap-3">
+                            <div className="rounded-md border border-gray-200 bg-white p-2">
+                              <h4 className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-gray-900">
+                                <Package className="h-3.5 w-3.5 text-gray-600" />
+                                Items
+                              </h4>
+                              <div className="space-y-1">
+                                {order.order_items.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="flex gap-2 rounded border border-gray-100 bg-gray-50/50 p-1.5 text-xs"
+                                  >
+                                    <OrderItemThumb
+                                      src={item.products?.main_image || item.product_image}
+                                      alt={item.product_title}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium leading-tight text-gray-900">
+                                        {item.product_title}
+                                      </p>
+                                      <div className="mt-0.5 text-[11px] text-gray-600">
+                                        {(() => {
+                                          const isClothing =
+                                            item.selected_product_type === 'clothing' ||
+                                            (item.options && (item.options.color || item.options.size)) ||
+                                            (item.product_title &&
+                                              [
+                                                'sweatshirt',
+                                                'hoodie',
+                                                't-shirt',
+                                                'shirt',
+                                                'jacket',
+                                                'sweater',
+                                                'crewneck',
+                                                'oversized',
+                                              ].some((k) =>
+                                                item.product_title!.toLowerCase().includes(k)
+                                              ));
 
-                                    if (isClothing && item.options && (item.options.color || item.options.size)) {
-                                      return (
-                                        <div className="flex flex-wrap gap-0.5">
-                                          {item.options.color && (
-                                            <span className="rounded bg-purple-100 px-1 py-0 text-[10px] text-purple-800">
-                                              {item.options.color}
-                                            </span>
-                                          )}
-                                          {item.options.size && (
-                                            <span className="rounded bg-blue-100 px-1 py-0 text-[10px] text-blue-800">
-                                              {item.options.size}
-                                            </span>
-                                          )}
-                                          <span className="rounded bg-gray-200 px-1 py-0 text-[10px] text-gray-800">
-                                            ×{item.quantity}
-                                          </span>
-                                        </div>
-                                      );
-                                    }
-                                    if (isClothing) {
-                                      const hasSizeInPosterSize =
-                                        item.selected_poster_size &&
-                                        item.selected_product_type === 'poster';
-                                      return (
-                                        <div className="flex flex-wrap gap-0.5">
-                                          <span className="rounded bg-orange-100 px-1 py-0 text-[10px]">
-                                            Clothing
-                                          </span>
-                                          {hasSizeInPosterSize && (
-                                            <span className="rounded bg-blue-100 px-1 py-0 text-[10px]">
-                                              {item.selected_poster_size}
-                                            </span>
-                                          )}
-                                          <span className="text-gray-600">Qty {item.quantity}</span>
-                                          {hasSizeInPosterSize && (
-                                            <span className="rounded bg-red-100 px-1 py-0 text-[10px]">
-                                              Data issue
-                                            </span>
-                                          )}
-                                        </div>
-                                      );
-                                    }
-                                    return (
-                                      <>
-                                        <span className="capitalize">
-                                          {item.selected_product_type === 'poster' ? 'Poster' : 'Digital'}
-                                        </span>
-                                        {item.selected_product_type === 'poster' &&
-                                          item.selected_poster_size && (
-                                            <span className="ml-1 rounded bg-green-100 px-1 text-[10px]">
-                                              {item.selected_poster_size}
-                                            </span>
-                                          )}
-                                        <span className="text-gray-500"> · Qty {item.quantity}</span>
-                                      </>
-                                    );
-                                  })()}
-                                </div>
+                                          if (isClothing && item.options && (item.options.color || item.options.size)) {
+                                            return (
+                                              <div className="flex flex-wrap gap-0.5">
+                                                {item.options.color && (
+                                                  <span className="rounded bg-purple-100 px-1 py-0 text-[10px] text-purple-800">
+                                                    {item.options.color}
+                                                  </span>
+                                                )}
+                                                {item.options.size && (
+                                                  <span className="rounded bg-blue-100 px-1 py-0 text-[10px] text-blue-800">
+                                                    {item.options.size}
+                                                  </span>
+                                                )}
+                                                <span className="rounded bg-gray-200 px-1 py-0 text-[10px] text-gray-800">
+                                                  ×{item.quantity}
+                                                </span>
+                                              </div>
+                                            );
+                                          }
+                                          if (isClothing) {
+                                            const hasSizeInPosterSize =
+                                              item.selected_poster_size &&
+                                              item.selected_product_type === 'poster';
+                                            return (
+                                              <div className="flex flex-wrap gap-0.5">
+                                                <span className="rounded bg-orange-100 px-1 py-0 text-[10px]">
+                                                  Clothing
+                                                </span>
+                                                {hasSizeInPosterSize && (
+                                                  <span className="rounded bg-blue-100 px-1 py-0 text-[10px]">
+                                                    {item.selected_poster_size}
+                                                  </span>
+                                                )}
+                                                <span className="text-gray-600">Qty {item.quantity}</span>
+                                                {hasSizeInPosterSize && (
+                                                  <span className="rounded bg-red-100 px-1 py-0 text-[10px]">
+                                                    Data issue
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          }
+                                          return (
+                                            <>
+                                              <span className="capitalize">
+                                                {item.selected_product_type === 'poster' ? 'Poster' : 'Digital'}
+                                              </span>
+                                              {item.selected_product_type === 'poster' &&
+                                                item.selected_poster_size && (
+                                                  <span className="ml-1 rounded bg-green-100 px-1 text-[10px]">
+                                                    {item.selected_poster_size}
+                                                  </span>
+                                                )}
+                                              <span className="text-gray-500"> · Qty {item.quantity}</span>
+                                            </>
+                                          );
+                                        })()}
+                                      </div>
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                      <p className="font-semibold tabular-nums text-gray-900">
+                                        {formatCurrency(item.total_price, order.currency_code || 'INR')}
+                                      </p>
+                                      <p className="text-[10px] text-gray-500">
+                                        {formatCurrency(item.unit_price, order.currency_code || 'INR')} ea
+                                      </p>
+                                      {item.gst_amount !== undefined && item.gst_amount !== null && item.gst_amount > 0 && (
+                                        <p className="text-[9px] text-gray-400">
+                                          incl. {item.gst_rate}% GST ({formatCurrency(item.gst_amount, order.currency_code || 'INR')})
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                              <div className="shrink-0 text-right">
-                                <p className="font-semibold tabular-nums text-gray-900">
-                                  {formatCurrency(item.total_price, order.currency_code || 'INR')}
-                                </p>
-                                <p className="text-[10px] text-gray-500">
-                                  {formatCurrency(item.unit_price, order.currency_code || 'INR')} ea
-                                </p>
-                                {item.gst_amount !== undefined && item.gst_amount !== null && item.gst_amount > 0 && (
-                                  <p className="text-[9px] text-gray-400">
-                                    incl. {item.gst_rate}% GST ({formatCurrency(item.gst_amount, order.currency_code || 'INR')})
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <div className="rounded-md border border-gray-200 bg-white p-2">
+                                <h4 className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-gray-900">
+                                  <FileText className="h-3.5 w-3.5 text-gray-600" />
+                                  Details
+                                </h4>
+                                <dl className="space-y-1 text-[11px]">
+                                  <div className="flex justify-between gap-2">
+                                    <dt className="text-gray-500">Payment</dt>
+                                    <dd className="font-medium capitalize text-gray-900">
+                                      {order.payment_method}
+                                    </dd>
+                                  </div>
+                                  {order.gst_amount !== undefined && order.gst_amount !== null && order.gst_amount > 0 && (
+                                    <div className="flex justify-between gap-2">
+                                      <dt className="text-gray-500">GST (Inclusive)</dt>
+                                      <dd className="font-medium text-gray-900">
+                                        {formatCurrency(order.gst_amount, order.currency_code || 'INR')}
+                                      </dd>
+                                    </div>
+                                  )}
+                                  {order.payment_id && (
+                                    <div className="flex justify-between gap-2">
+                                      <dt className="text-gray-500">Payment ID</dt>
+                                      <dd className="max-w-[60%] truncate font-mono text-gray-800">
+                                        {order.payment_id}
+                                      </dd>
+                                    </div>
+                                  )}
+                                  <div className="flex justify-between gap-2">
+                                    <dt className="text-gray-500">Created</dt>
+                                    <dd className="text-right text-gray-800">
+                                      {new Date(order.created_at).toLocaleString()}
+                                    </dd>
+                                  </div>
+                                  <div className="flex justify-between gap-2">
+                                    <dt className="text-gray-500">Updated</dt>
+                                    <dd className="text-right text-gray-800">
+                                      {new Date(order.updated_at).toLocaleString()}
+                                    </dd>
+                                  </div>
+                                </dl>
+                              </div>
+                              {order.shipping_address && (
+                                <div className="rounded-md border border-gray-200 bg-white p-2 text-[11px]">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                    Shipping
                                   </p>
-                                )}
-                              </div>
+                                  <p className="mt-0.5 leading-snug text-gray-800">
+                                    {order.shipping_address}
+                                  </p>
+                                </div>
+                              )}
+                              {order.notes && (
+                                <div className="rounded-md border border-gray-200 bg-white p-2 text-[11px]">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                    Notes
+                                  </p>
+                                  <p className="mt-0.5 leading-snug text-gray-800">{order.notes}</p>
+                                </div>
+                              )}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <div className="rounded-md border border-gray-200 bg-white p-2">
-                          <h4 className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-gray-900">
-                            <FileText className="h-3.5 w-3.5 text-gray-600" />
-                            Details
-                          </h4>
-                          <dl className="space-y-1 text-[11px]">
-                            <div className="flex justify-between gap-2">
-                              <dt className="text-gray-500">Payment</dt>
-                              <dd className="font-medium capitalize text-gray-900">
-                                {order.payment_method}
-                              </dd>
-                            </div>
-                            {order.gst_amount !== undefined && order.gst_amount !== null && order.gst_amount > 0 && (
-                              <div className="flex justify-between gap-2">
-                                <dt className="text-gray-500">GST (Inclusive)</dt>
-                                <dd className="font-medium text-gray-900">
-                                  {formatCurrency(order.gst_amount, order.currency_code || 'INR')}
-                                </dd>
-                              </div>
-                            )}
-                            {order.payment_id && (
-                              <div className="flex justify-between gap-2">
-                                <dt className="text-gray-500">Payment ID</dt>
-                                <dd className="max-w-[60%] truncate font-mono text-gray-800">
-                                  {order.payment_id}
-                                </dd>
-                              </div>
-                            )}
-                            <div className="flex justify-between gap-2">
-                              <dt className="text-gray-500">Created</dt>
-                              <dd className="text-right text-gray-800">
-                                {new Date(order.created_at).toLocaleString()}
-                              </dd>
-                            </div>
-                            <div className="flex justify-between gap-2">
-                              <dt className="text-gray-500">Updated</dt>
-                              <dd className="text-right text-gray-800">
-                                {new Date(order.updated_at).toLocaleString()}
-                              </dd>
-                            </div>
-                          </dl>
-                        </div>
-                        {order.shipping_address && (
-                          <div className="rounded-md border border-gray-200 bg-white p-2 text-[11px]">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                              Shipping
-                            </p>
-                            <p className="mt-0.5 leading-snug text-gray-800">
-                              {order.shipping_address}
-                            </p>
                           </div>
-                        )}
-                        {order.notes && (
-                          <div className="rounded-md border border-gray-200 bg-white p-2 text-[11px]">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                              Notes
-                            </p>
-                            <p className="mt-0.5 leading-snug text-gray-800">{order.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

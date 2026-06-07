@@ -241,6 +241,11 @@ async function generateSecureDownloadLinks(
   const downloadLinks: string[] = [];
 
   for (const item of items) {
+    // Only generate download link if the item is digital
+    if (item.selectedProductType !== 'digital') {
+      continue;
+    }
+
     const { data: product } = await supabaseService
       .from('products')
       .select('pdf_url')

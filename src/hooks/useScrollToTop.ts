@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react';
+import { useLocation } from '../compat/router';
 
 // No-op: rely on browser defaults (including built-in history scroll restoration)
 export const useScrollToTop = () => {
@@ -10,6 +11,8 @@ export const useScrollToTop = () => {
 
 // Global scroll restoration: forward nav -> top; back/forward -> previous position
 export const useScrollRestoration = () => {
+  const location = useLocation();
+
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
@@ -55,9 +58,5 @@ export const useScrollRestoration = () => {
         window.history.scrollRestoration = 'auto';
       }
     };
-  }, []);
+  }, [location.pathname, location.search]);
 };
-
-
-
-

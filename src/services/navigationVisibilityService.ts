@@ -72,11 +72,18 @@ const getCombinedProductText = (product: any): string => {
 };
 
 const isFBProduct = (product: any): boolean => {
+  const type = (product?.productType || product?.product_type || '').toLowerCase();
+  if (type === 'digital' || type === 'poster') return false;
+
   const combined = getCombinedProductText(product);
   return FB_KEYWORDS.some((keyword) => combined.includes(keyword));
 };
 
 const isClothingProduct = (product: any): boolean => {
+  const type = (product?.productType || product?.product_type || '').toLowerCase();
+  if (type === 'digital' || type === 'poster') return false;
+  if (type === 'clothing') return true;
+
   const gender = String(product?.gender || '').toLowerCase();
   if (gender === 'men' || gender === 'women' || gender === 'unisex') return true;
 

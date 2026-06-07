@@ -205,7 +205,7 @@ const ReviewInput: React.FC<ReviewInputProps> = ({
             onChange={(e) => setComment(e.target.value)}
             placeholder="Share your experience with this artwork. What did you like about it? How was the quality? Would you recommend it to others?"
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none text-sm placeholder:text-xs placeholder:font-light placeholder:text-gray-400"
             required
             minLength={10}
             maxLength={500}

@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ReviewInput from '../components/ReviewInput';
 import { MetaPixelService } from '../services/metaPixelService';
 import { formatOrderNumber } from '../utils/sequenceNumberUtils';
+import ReviewService from '../services/reviewService';
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -25,6 +26,7 @@ const PaymentSuccess: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showReviewInput, setShowReviewInput] = useState(false);
   const [selectedProductForReview, setSelectedProductForReview] = useState<any>(null);
+  const [userReviews, setUserReviews] = useState<any[]>([]);
   const { formatUIPrice, currencySettings } = useCurrency();
   const { user, loading: authLoading } = useAuth();
   
@@ -61,6 +63,8 @@ const PaymentSuccess: React.FC = () => {
                   
                   return {
                     id: item.product_id, // Use product_id instead of order item id
+                    orderItemId: item.id,
+                    orderId: orderId,
                     title: item.product_title,
                     price: item.unit_price,
                     category: 'artwork', // Default category
@@ -146,6 +150,23 @@ const PaymentSuccess: React.FC = () => {
     
     fetchOrder();
   }, [orderId, authLoading]);
+
+  const fetchUserReviews = async () => {
+    if (user?.id) {
+      try {
+        const reviews = await ReviewService.getUserReviews(user.id);
+        setUserReviews(reviews || []);
+      } catch (error) {
+        console.error('Error fetching user reviews:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserReviews();
+    }
+  }, [user]);
   
   if (loading) {
     return (
@@ -180,13 +201,16 @@ const PaymentSuccess: React.FC = () => {
   }
   
   const handleReviewProduct = (product: any) => {
-    setSelectedProductForReview(product);
+    setSelectedProductForReview({
+      ...product,
+      orderId: order?.id,
+      orderItemId: product.orderItemId
+    });
     setShowReviewInput(true);
   };
 
   const handleReviewSubmitted = (review: any) => {
-
-    // You can add additional logic here, like showing a success message
+    fetchUserReviews();
   };
   
   return (
@@ -254,15 +278,43 @@ const PaymentSuccess: React.FC = () => {
                         )}
                         <div className="flex items-center gap-2 mt-2 sm:mt-3">
                           <p className="font-bold text-gray-900 text-sm sm:text-base">{formatUIPrice(item.price, 'INR')}</p>
-                          {user && (
-                            <button
-                              onClick={() => handleReviewProduct(item)}
-                              className="inline-flex items-center gap-1 text-xs text-pink-600 hover:text-pink-700 font-medium transition-colors"
-                            >
-                              <Star className="w-3.5 h-3.5" />
-                              <span>Review</span>
-                            </button>
-                          )}
+                          {user && (() => {
+                            const isCodAndNotCompleted = order.paymentMethod?.toLowerCase() === 'cod' && order.status !== 'completed';
+                            const hasReviewed = userReviews.some((r: any) => 
+                              r.orderItemId === item.orderItemId || 
+                              (r.orderId === order.id && r.productId === item.id)
+                            );
+                            return (
+                              <button
+                                onClick={() => {
+                                  if (isCodAndNotCompleted) {
+                                    alert("Reviews for Cash on Delivery orders can only be submitted after the product is delivered and paid for.");
+                                    return;
+                                  }
+                                  if (hasReviewed) {
+                                    alert("You have already submitted a review for this item.");
+                                    return;
+                                  }
+                                  handleReviewProduct(item);
+                                }}
+                                className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ${
+                                  isCodAndNotCompleted || hasReviewed
+                                    ? 'text-gray-400 cursor-not-allowed' 
+                                    : 'text-pink-600 hover:text-pink-700'
+                                }`}
+                                title={
+                                  isCodAndNotCompleted 
+                                    ? "Reviews for Cash on Delivery orders can only be submitted after delivery and payment." 
+                                    : hasReviewed
+                                    ? "You have already reviewed this product."
+                                    : undefined
+                                }
+                              >
+                                <Star className="w-3.5 h-3.5" />
+                                <span>{hasReviewed ? 'Reviewed' : 'Review'}</span>
+                              </button>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -358,6 +410,8 @@ const PaymentSuccess: React.FC = () => {
               productTitle={selectedProductForReview.title}
               userId={user.id}
               userName={user.user_metadata?.name || user.email || 'Anonymous'}
+              orderId={selectedProductForReview.orderId}
+              orderItemId={selectedProductForReview.orderItemId}
               onReviewSubmitted={handleReviewSubmitted}
               onClose={() => {
                 setShowReviewInput(false);

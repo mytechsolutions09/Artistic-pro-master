@@ -35,14 +35,14 @@ const BottomTabs: React.FC = () => {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    setOptimisticPath(null);
+  }, [location.pathname]);
+
   // Hide bottom tabs on dashboard page
   if (location.pathname === '/dashboard') {
     return null;
   }
-
-  useEffect(() => {
-    setOptimisticPath(null);
-  }, [location.pathname]);
 
   // Check if current path matches a tab
   const isActiveTab = (path: string) => {

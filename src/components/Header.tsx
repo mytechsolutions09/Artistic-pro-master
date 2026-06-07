@@ -369,7 +369,7 @@ const Header: React.FC = () => {
                     onKeyDown={handleKeyDown}
                     placeholder="search"
                     autoFocus
-                    className="w-full pl-10 pr-4 py-2 bg-white text-black border border-black rounded-full focus:outline-none focus:border-black focus:ring-0 font-sans font-normal"
+                    className="w-full pl-10 pr-4 py-2 bg-white text-black border border-black rounded-full focus:outline-none focus:border-black focus:ring-0 font-sans font-normal placeholder:text-xs placeholder:font-light placeholder:text-gray-400"
                   />
 
                   {/* Search Suggestions Dropdown */}
@@ -527,7 +527,7 @@ const Header: React.FC = () => {
                       onKeyDown={handleKeyDown}
                       placeholder="search"
                       autoFocus
-                      className="w-full pl-10 pr-4 py-2 bg-white text-black border border-black rounded-full focus:outline-none focus:border-black focus:ring-0 font-sans font-normal"
+                      className="w-full pl-10 pr-4 py-2 bg-white text-black border border-black rounded-full focus:outline-none focus:border-black focus:ring-0 font-sans font-normal placeholder:text-xs placeholder:font-light placeholder:text-gray-400"
                     />
 
                     {showSearchSuggestions && (searchSuggestions.length > 0 || searchHistory.length > 0) && (
@@ -630,7 +630,7 @@ const Header: React.FC = () => {
                   onKeyDown={handleKeyDown}
                   onFocus={() => {}}
                   placeholder="search"
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300 font-sans font-normal"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-300 font-sans font-normal placeholder:text-xs placeholder:font-light placeholder:text-gray-400"
                 />
                 
                 {/* Mobile Search Suggestions */}

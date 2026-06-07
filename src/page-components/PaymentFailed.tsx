@@ -84,6 +84,19 @@ const PaymentFailed: React.FC = () => {
                 </div>
               </div>
             </div>
+            
+            {/* Security Notice */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="text-center">
+                <div className="w-8 h-8 border border-gray-200 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <XCircle className="w-4 h-4 text-gray-700" />
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-1">You Were Not Charged</h4>
+                <p className="text-sm text-gray-600">
+                  Since the payment failed, no money was deducted from your account. Your information is secure.
+                </p>
+              </div>
+            </div>
           </div>
           
           {/* Sidebar */}
@@ -133,19 +146,6 @@ const PaymentFailed: React.FC = () => {
                 </div>
                 <p className="text-xs text-gray-600 mt-2">
                   Our support team is available 24/7 to help you with payment issues.
-                </p>
-              </div>
-            </div>
-            
-            {/* Security Notice */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="text-center">
-                <div className="w-8 h-8 border border-gray-200 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <XCircle className="w-4 h-4 text-gray-700" />
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-1">You Were Not Charged</h4>
-                <p className="text-sm text-gray-600">
-                  Since the payment failed, no money was deducted from your account. Your information is secure.
                 </p>
               </div>
             </div>

@@ -62,137 +62,76 @@ export const emailTemplates: Record<string, EmailTemplate> = {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmation – Lurevi</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; -webkit-font-smoothing: antialiased; }
-    .wrapper { background: #ffffff; padding: 40px 20px; }
-    .email-card { max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
-
-    /* Header */
-    .header { padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-    .logo-text { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase; }
-    .logo-dot { color: #6366f1; }
-    .badge { display: inline-block; margin-top: 20px; background: #f0fdf4; color: #15803d; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #bbf7d0; letter-spacing: 0.03em; }
-
-    /* Hero */
-    .hero { padding: 32px 40px 24px; border-bottom: 1px solid #f3f4f6; }
-    .hero h1 { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-    .hero p { font-size: 15px; color: #6b7280; line-height: 1.6; }
-
-    /* Order meta */
-    .meta-grid { display: table; width: 100%; margin: 24px 0 0; border-collapse: collapse; }
-    .meta-cell { display: table-cell; width: 33.3%; padding: 14px 0; text-align: center; }
-    .meta-cell + .meta-cell { border-left: 1px solid #f3f4f6; }
-    .meta-label { font-size: 11px; font-weight: 500; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-    .meta-value { font-size: 14px; font-weight: 600; color: #0f172a; }
-
-    /* Section */
-    .section { padding: 28px 40px; border-top: 1px solid #f3f4f6; }
-    .section-title { font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
-
-    /* Item row */
-    .item-row { display: table; width: 100%; padding: 14px 0; border-bottom: 1px solid #f9fafb; }
-    .item-row:last-child { border-bottom: none; }
-    .item-left { display: table-cell; vertical-align: middle; }
-    .item-right { display: table-cell; vertical-align: middle; text-align: right; width: 100px; }
-    .item-title { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 3px; }
-    .item-meta { font-size: 12px; color: #9ca3af; }
-    .item-price { font-size: 15px; font-weight: 700; color: #0f172a; }
-
-    /* Totals */
-    .totals { padding-top: 16px; border-top: 1px solid #f3f4f6; margin-top: 8px; }
-    .totals-row { display: table; width: 100%; padding: 6px 0; }
-    .totals-label { display: table-cell; font-size: 13px; color: #6b7280; }
-    .totals-value { display: table-cell; text-align: right; font-size: 13px; color: #374151; font-weight: 500; }
-    .totals-row.grand .totals-label { font-size: 15px; font-weight: 700; color: #0f172a; }
-    .totals-row.grand .totals-value { font-size: 16px; font-weight: 700; color: #0f172a; }
-    .totals-row.gst .totals-label,
-    .totals-row.gst .totals-value { color: #9ca3af; font-size: 12px; }
-
-    /* Download */
-    .download-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin-top: 4px; }
-    .download-block p { font-size: 13px; color: #6b7280; margin-bottom: 14px; }
-    .download-btn { display: inline-block; background: #0f172a; color: #ffffff !important; font-size: 13px; font-weight: 600; padding: 10px 20px; text-decoration: none; border-radius: 8px; margin: 4px 4px 4px 0; letter-spacing: 0.02em; }
-
-    /* Help */
-    .help-block { background: #fafafa; border-radius: 10px; padding: 20px 24px; }
-    .help-block p { font-size: 13px; color: #6b7280; line-height: 1.6; }
-    .help-block a { color: #4f46e5; text-decoration: none; font-weight: 500; }
-
-    /* Footer */
-    .footer { padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center; }
-    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-    .footer a { color: #9ca3af; text-decoration: underline; }
-  </style>
 </head>
-<body>
-<div class="wrapper">
-  <div class="email-card">
+<body style="font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; -webkit-font-smoothing: antialiased; margin: 0; padding: 0;">
+<div style="background: #ffffff; padding: 40px 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
 
     <!-- Header / Logo -->
-    <div class="header">
-      <div class="logo-text">Lurevi<span class="logo-dot">.</span></div>
-      <div class="badge">✓ Order Confirmed</div>
+    <div style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+      <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase;">Lurevi<span style="color: #6366f1;">.</span></div>
+      <div style="display: inline-block; margin-top: 20px; background: #f0fdf4; color: #15803d; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #bbf7d0; letter-spacing: 0.03em;">✓ Order Confirmed</div>
     </div>
 
     <!-- Hero -->
-    <div class="hero">
-      <h1>Thank you, \${'{customerName}'}!</h1>
-      <p>Your order has been placed successfully. We'll send you another email once your item ships or your digital download is ready.</p>
+    <div style="padding: 32px 40px 24px; border-bottom: 1px solid #f3f4f6;">
+      <h1 style="font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Thank you, \${'{customerName}'}!</h1>
+      <p style="font-size: 15px; color: #6b7280; line-height: 1.6; margin: 0;">Your order has been placed successfully. We'll send you another email once your item ships or your digital download is ready.</p>
 
       <!-- Order Meta -->
-      <div class="meta-grid">
-        <div class="meta-cell">
-          <div class="meta-label">Order Number</div>
-          <div class="meta-value">#\${'{orderId}'}</div>
-        </div>
-        <div class="meta-cell">
-          <div class="meta-label">Date</div>
-          <div class="meta-value">\${'{orderDate}'}</div>
-        </div>
-        <div class="meta-cell">
-          <div class="meta-label">Total Paid</div>
-          <div class="meta-value">₹\${'{totalAmount}'}</div>
-        </div>
-      </div>
+      <table style="width: 100%; margin: 24px 0 0 0; border-collapse: collapse;">
+        <tr>
+          <td style="width: 33.3%; padding: 14px 0; text-align: center; vertical-align: top;">
+            <div style="font-size: 11px; font-weight: 500; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">Order Number</div>
+            <div style="font-size: 14px; font-weight: 600; color: #0f172a;">#\${'{orderId}'}</div>
+          </td>
+          <td style="width: 33.3%; padding: 14px 0; text-align: center; vertical-align: top; border-left: 1px solid #f3f4f6;">
+            <div style="font-size: 11px; font-weight: 500; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">Date</div>
+            <div style="font-size: 14px; font-weight: 600; color: #0f172a;">\${'{orderDate}'}</div>
+          </td>
+          <td style="width: 33.3%; padding: 14px 0; text-align: center; vertical-align: top; border-left: 1px solid #f3f4f6;">
+            <div style="font-size: 11px; font-weight: 500; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">Total Paid</div>
+            <div style="font-size: 14px; font-weight: 600; color: #0f172a;">₹\${'{totalAmount}'}</div>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <!-- Items -->
-    <div class="section">
-      <div class="section-title">Your Items</div>
+    <div style="padding: 28px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px;">Your Items</div>
       \${'{items}'}
 
       <!-- Totals -->
-      <div class="totals">
-        <div class="totals-row grand">
-          <div class="totals-label">Total</div>
-          <div class="totals-value">₹\${'{totalAmount}'}</div>
-        </div>
-        <div class="totals-row gst">
-          <div class="totals-label">Includes GST of ₹\${'{gstAmount}'}</div>
-          <div class="totals-value"></div>
-        </div>
-      </div>
+      <table style="width: 100%; padding-top: 16px; border-top: 1px solid #f3f4f6; margin-top: 8px; border-collapse: collapse;">
+        <tr>
+          <td style="font-size: 15px; font-weight: 700; color: #0f172a; padding: 6px 0;">Total</td>
+          <td style="text-align: right; font-size: 16px; font-weight: 700; color: #0f172a; padding: 6px 0;">₹\${'{totalAmount}'}</td>
+        </tr>
+        <tr>
+          <td style="color: #9ca3af; font-size: 12px; padding: 4px 0;">Includes GST of ₹\${'{gstAmount}'}</td>
+          <td style="padding: 4px 0;"></td>
+        </tr>
+      </table>
     </div>
 
     <!-- Downloads (only shown if digital items exist) -->
     \${'{downloadSection}'}
 
     <!-- Help -->
-    <div class="section">
-      <div class="section-title">Need Help?</div>
-      <div class="help-block">
-        <p>Have a question about your order? Our team is happy to help.<br>
-        Reach us at <a href="mailto:support@lurevi.in">support@lurevi.in</a> and we'll get back to you promptly.</p>
+    <div style="padding: 28px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px;">Need Help?</div>
+      <div style="background: #fafafa; border-radius: 10px; padding: 20px 24px;">
+        <p style="font-size: 13px; color: #6b7280; line-height: 1.6; margin: 0;">Have a question about your order? Our team is happy to help.<br>
+        Reach us at <a href="mailto:support@lurevi.in" style="color: #4f46e5; text-decoration: none; font-weight: 500;">support@lurevi.in</a> and we'll get back to you promptly.</p>
       </div>
     </div>
 
     <!-- Footer -->
-    <div class="footer">
-      <p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.7; margin: 0;">
         © 2026 Lurevi. All rights reserved.<br>
-        <a href="https://lurevi.in">lurevi.in</a>
+        <a href="https://lurevi.in" style="color: #9ca3af; text-decoration: underline;">lurevi.in</a>
       </p>
     </div>
 
@@ -229,54 +168,32 @@ Contact us at support@lurevi.in
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to Lurevi</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; }
-    .wrapper { background: #ffffff; padding: 40px 20px; }
-    .email-card { max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
-    .header { padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-    .logo-text { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase; }
-    .logo-dot { color: #6366f1; }
-    .badge { display: inline-block; margin-top: 20px; background: #eef2ff; color: #4338ca; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #c7d2fe; }
-    .section { padding: 28px 40px; border-top: 1px solid #f3f4f6; }
-    .section h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
-    .section p { font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 12px; }
-    .feature-list { list-style: none; padding: 0; margin: 16px 0; }
-    .feature-list li { font-size: 14px; color: #374151; padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px; }
-    .feature-list li::before { content: '→'; color: #6366f1; font-weight: 700; }
-    .cta-wrap { text-align: center; padding: 8px 0 4px; }
-    .cta-btn { display: inline-block; background: #0f172a; color: #ffffff !important; font-size: 14px; font-weight: 600; padding: 13px 28px; text-decoration: none; border-radius: 8px; letter-spacing: 0.02em; }
-    .footer { padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center; }
-    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-    .footer a { color: #9ca3af; text-decoration: underline; }
-  </style>
 </head>
-<body>
-<div class="wrapper">
-  <div class="email-card">
-    <div class="header">
-      <div class="logo-text">Lurevi<span class="logo-dot">.</span></div>
-      <div class="badge">✦ Welcome Aboard</div>
+<body style="font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; margin: 0; padding: 0;">
+<div style="background: #ffffff; padding: 40px 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
+    <div style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+      <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase;">Lurevi<span style="color: #6366f1;">.</span></div>
+      <div style="display: inline-block; margin-top: 20px; background: #eef2ff; color: #4338ca; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #c7d2fe;">✦ Welcome Aboard</div>
     </div>
-    <div class="section">
-      <h1>Hello, \${'{userName}'}!</h1>
-      <p>Welcome to Lurevi — where art meets technology. We're thrilled to have you join our community of artists and art lovers.</p>
-      <ul class="feature-list">
-        <li>Browse our curated collection of artwork</li>
-        <li>Purchase high-quality prints &amp; digital downloads</li>
-        <li>Build your personal art collection</li>
-        <li>Get early access to new releases</li>
+    <div style="padding: 28px 40px; border-top: 1px solid #f3f4f6;">
+      <h1 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">Hello, \${'{userName}'}!</h1>
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 12px;">Welcome to Lurevi — where art meets technology. We're thrilled to have you join our community of artists and art lovers.</p>
+      <ul style="list-style: none; padding: 0; margin: 16px 0;">
+        <li style="font-size: 14px; color: #374151; padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: block;"><span style="color: #6366f1; font-weight: 700; margin-right: 10px;">→</span>Browse our curated collection of artwork</li>
+        <li style="font-size: 14px; color: #374151; padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: block;"><span style="color: #6366f1; font-weight: 700; margin-right: 10px;">→</span>Purchase high-quality prints &amp; digital downloads</li>
+        <li style="font-size: 14px; color: #374151; padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: block;"><span style="color: #6366f1; font-weight: 700; margin-right: 10px;">→</span>Build your personal art collection</li>
+        <li style="font-size: 14px; color: #374151; padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: block;"><span style="color: #6366f1; font-weight: 700; margin-right: 10px;">→</span>Get early access to new releases</li>
       </ul>
-      <div class="cta-wrap">
-        <a href="\${'{dashboardUrl}'}" class="cta-btn">Explore Your Dashboard</a>
+      <div style="text-align: center; padding: 8px 0 4px;">
+        <a href="\${'{dashboardUrl}'}" style="display: inline-block; background: #0f172a; color: #ffffff !important; font-size: 14px; font-weight: 600; padding: 13px 28px; text-decoration: none; border-radius: 8px; letter-spacing: 0.02em;">Explore Your Dashboard</a>
       </div>
     </div>
-    <div class="section">
-      <p>Questions? Reach us at <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a> — we're happy to help.</p>
+    <div style="padding: 28px 40px; border-top: 1px solid #f3f4f6;">
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 0;">Questions? Reach us at <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a> — we're happy to help.</p>
     </div>
-    <div class="footer">
-      <p>© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in">lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.7; margin: 0;">© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in" style="color: #9ca3af; text-decoration: underline;">lurevi.in</a></p>
     </div>
   </div>
 </div>
@@ -292,48 +209,27 @@ Contact us at support@lurevi.in
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reset Your Password – Lurevi</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; }
-    .wrapper { background: #ffffff; padding: 40px 20px; }
-    .email-card { max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
-    .header { padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-    .logo-text { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase; }
-    .logo-dot { color: #6366f1; }
-    .badge { display: inline-block; margin-top: 20px; background: #fef3c7; color: #92400e; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #fde68a; }
-    .section { padding: 28px 40px; border-top: 1px solid #f3f4f6; }
-    .section h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
-    .section p { font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 12px; }
-    .cta-wrap { text-align: center; padding: 8px 0 16px; }
-    .cta-btn { display: inline-block; background: #0f172a; color: #ffffff !important; font-size: 14px; font-weight: 600; padding: 13px 28px; text-decoration: none; border-radius: 8px; }
-    .alert { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 18px; margin: 16px 0; }
-    .alert p { font-size: 13px; color: #78350f; margin: 0; }
-    .footer { padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center; }
-    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-    .footer a { color: #9ca3af; text-decoration: underline; }
-  </style>
 </head>
-<body>
-<div class="wrapper">
-  <div class="email-card">
-    <div class="header">
-      <div class="logo-text">Lurevi<span class="logo-dot">.</span></div>
-      <div class="badge">🔒 Password Reset</div>
+<body style="font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; margin: 0; padding: 0;">
+<div style="background: #ffffff; padding: 40px 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
+    <div style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+      <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase;">Lurevi<span style="color: #6366f1;">.</span></div>
+      <div style="display: inline-block; margin-top: 20px; background: #fef3c7; color: #92400e; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #fde68a;">🔒 Password Reset</div>
     </div>
-    <div class="section">
-      <h1>Hello, \${'{userName}'}!</h1>
-      <p>We received a request to reset your Lurevi account password. Click the button below to set a new password.</p>
-      <div class="cta-wrap">
-        <a href="\${'{resetUrl}'}" class="cta-btn">Reset My Password</a>
+    <div style="padding: 28px 40px; border-top: 1px solid #f3f4f6;">
+      <h1 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 10px 0;">Hello, \${'{userName}'}!</h1>
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 12px;">We received a request to reset your Lurevi account password. Click the button below to set a new password.</p>
+      <div style="text-align: center; padding: 8px 0 16px;">
+        <a href="\${'{resetUrl}'}" style="display: inline-block; background: #0f172a; color: #ffffff !important; font-size: 14px; font-weight: 600; padding: 13px 28px; text-decoration: none; border-radius: 8px;">Reset My Password</a>
       </div>
-      <div class="alert">
-        <p><strong>⏱ This link expires in 1 hour</strong> for security reasons. Do not share it with anyone.</p>
+      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 18px; margin: 16px 0;">
+        <p style="font-size: 13px; color: #78350f; margin: 0;"><strong>⏱ This link expires in 1 hour</strong> for security reasons. Do not share it with anyone.</p>
       </div>
-      <p>If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.</p>
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 0;">If you did not request a password reset, you can safely ignore this email — your password will remain unchanged.</p>
     </div>
-    <div class="footer">
-      <p>© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in">lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.7; margin: 0;">© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in" style="color: #9ca3af; text-decoration: underline;">lurevi.in</a></p>
     </div>
   </div>
 </div>
@@ -348,72 +244,49 @@ Contact us at support@lurevi.in
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>New Return Request – Lurevi</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; }
-    .wrapper { background: #ffffff; padding: 40px 20px; }
-    .email-card { max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
-    .header { padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-    .logo-text { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase; }
-    .logo-dot { color: #6366f1; }
-    .badge { display: inline-block; margin-top: 20px; background: #fffbeb; color: #92400e; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #fde68a; }
-    .section { padding: 24px 40px; border-top: 1px solid #f3f4f6; }
-    .section-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
-    .info-table { width: 100%; border-collapse: collapse; }
-    .info-table tr td { padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-    .info-table tr:last-child td { border-bottom: none; }
-    .info-table .lbl { color: #9ca3af; font-weight: 500; width: 40%; }
-    .info-table .val { color: #111827; font-weight: 600; }
-    .alert { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 18px; margin-bottom: 4px; }
-    .alert p { font-size: 13px; color: #78350f; margin: 0; }
-    .note-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; }
-    .note-box p { font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6; }
-    .cta-wrap { text-align: center; padding: 8px 0; }
-    .cta-btn { display: inline-block; background: #0f172a; color: #ffffff !important; font-size: 13px; font-weight: 600; padding: 11px 24px; text-decoration: none; border-radius: 8px; }
-    .footer { padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center; }
-    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-    .footer a { color: #9ca3af; text-decoration: underline; }
-  </style>
 </head>
-<body>
-<div class="wrapper">
-  <div class="email-card">
-    <div class="header">
-      <div class="logo-text">Lurevi<span class="logo-dot">.</span></div>
-      <div class="badge">⚠ Action Required – New Return</div>
+<body style="font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; margin: 0; padding: 0;">
+<div style="background: #ffffff; padding: 40px 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
+    <div style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+      <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase;">Lurevi<span style="color: #6366f1;">.</span></div>
+      <div style="display: inline-block; margin-top: 20px; background: #fffbeb; color: #92400e; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #fde68a;">⚠ Action Required – New Return</div>
     </div>
-    <div class="section">
-      <div class="alert"><p>A customer has initiated a return request. Please review and process it promptly.</p></div>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 18px; margin-bottom: 4px;">
+        <p style="font-size: 13px; color: #78350f; margin: 0;">A customer has initiated a return request. Please review and process it promptly.</p>
+      </div>
     </div>
-    <div class="section">
-      <div class="section-title">Request Details</div>
-      <table class="info-table">
-        <tr><td class="lbl">Return ID</td><td class="val">\${'{returnId}'}</td></tr>
-        <tr><td class="lbl">Order #</td><td class="val">\${'{orderId}'}</td></tr>
-        <tr><td class="lbl">Customer</td><td class="val">\${'{customerName}'}</td></tr>
-        <tr><td class="lbl">Email</td><td class="val">\${'{customerEmail}'}</td></tr>
-        <tr><td class="lbl">Date</td><td class="val">\${'{requestDate}'}</td></tr>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;">Request Details</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Return ID</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{returnId}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Order #</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{orderId}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Customer</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{customerName}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Email</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{customerEmail}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Date</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{requestDate}'}</td></tr>
       </table>
     </div>
-    <div class="section">
-      <div class="section-title">Product</div>
-      <table class="info-table">
-        <tr><td class="lbl">Item</td><td class="val">\${'{productTitle}'}</td></tr>
-        <tr><td class="lbl">Quantity</td><td class="val">\${'{quantity}'}</td></tr>
-        <tr><td class="lbl">Amount</td><td class="val">₹\${'{totalPrice}'}</td></tr>
-        <tr><td class="lbl">Reason</td><td class="val">\${'{reason}'}</td></tr>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;">Product</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Item</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{productTitle}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Quantity</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{quantity}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Amount</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">₹\${'{totalPrice}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Reason</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{reason}'}</td></tr>
       </table>
     </div>
-    <div class="section">
-      <div class="section-title">Customer Notes</div>
-      <div class="note-box"><p>\${'{customerNotes}'}</p></div>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;">Customer Notes</div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px;">
+        <p style="font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6;">\${'{customerNotes}'}</p>
+      </div>
     </div>
-    <div class="section">
-      <div class="cta-wrap"><a href="\${'{adminUrl}'}" class="cta-btn">Review Return Request</a></div>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="text-align: center; padding: 8px 0;"><a href="\${'{adminUrl}'}" style="display: inline-block; background: #0f172a; color: #ffffff !important; font-size: 13px; font-weight: 600; padding: 11px 24px; text-decoration: none; border-radius: 8px;">Review Return Request</a></div>
     </div>
-    <div class="footer">
-      <p>© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in">lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.7; margin: 0;">© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in" style="color: #9ca3af; text-decoration: underline;">lurevi.in</a></p>
     </div>
   </div>
 </div>
@@ -428,63 +301,38 @@ Contact us at support@lurevi.in
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Return Approved – Lurevi</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; }
-    .wrapper { background: #ffffff; padding: 40px 20px; }
-    .email-card { max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
-    .header { padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-    .logo-text { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase; }
-    .logo-dot { color: #6366f1; }
-    .badge { display: inline-block; margin-top: 20px; background: #f0fdf4; color: #15803d; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #bbf7d0; }
-    .section { padding: 24px 40px; border-top: 1px solid #f3f4f6; }
-    .section h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-    .section p { font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 10px; }
-    .section-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
-    .info-table { width: 100%; border-collapse: collapse; }
-    .info-table tr td { padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-    .info-table tr:last-child td { border-bottom: none; }
-    .info-table .lbl { color: #9ca3af; font-weight: 500; width: 40%; }
-    .info-table .val { color: #111827; font-weight: 600; }
-    .note-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin-top: 4px; }
-    .note-box p { font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6; }
-    .footer { padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center; }
-    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-    .footer a { color: #9ca3af; text-decoration: underline; }
-  </style>
 </head>
-<body>
-<div class="wrapper">
-  <div class="email-card">
-    <div class="header">
-      <div class="logo-text">Lurevi<span class="logo-dot">.</span></div>
-      <div class="badge">✓ Return Approved</div>
+<body style="font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; margin: 0; padding: 0;">
+<div style="background: #ffffff; padding: 40px 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
+    <div style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+      <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase;">Lurevi<span style="color: #6366f1;">.</span></div>
+      <div style="display: inline-block; margin-top: 20px; background: #f0fdf4; color: #15803d; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #bbf7d0;">✓ Return Approved</div>
     </div>
-    <div class="section">
-      <h1>Great news, \${'{customerName}'}!</h1>
-      <p>Your return request for order <strong style="color:#0f172a;">#\${'{orderId}'}</strong> has been approved by our team.</p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <h1 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Great news, \${'{customerName}'}!</h1>
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 10px;">Your return request for order <strong style="color:#0f172a;">#\${'{orderId}'}</strong> has been approved by our team.</p>
     </div>
-    <div class="section">
-      <div class="section-title">Return Details</div>
-      <table class="info-table">
-        <tr><td class="lbl">Product</td><td class="val">\${'{productTitle}'}</td></tr>
-        <tr><td class="lbl">Quantity</td><td class="val">\${'{quantity}'}</td></tr>
-        <tr><td class="lbl">Value</td><td class="val">₹\${'{totalPrice}'}</td></tr>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;">Return Details</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Product</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{productTitle}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Quantity</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{quantity}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Value</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">₹\${'{totalPrice}'}</td></tr>
       </table>
     </div>
     \${'{adminNotesSection}'}
-    <div class="section">
-      <div class="section-title">What Happens Next</div>
-      <div class="note-box">
-        <p>A return pickup has been scheduled. Please keep the item packed and ready with its original tags and invoice.<br><br>Once we receive and verify your item, we'll process your refund promptly.</p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;">What Happens Next</div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin-top: 4px;">
+        <p style="font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6;">A return pickup has been scheduled. Please keep the item packed and ready with its original tags and invoice.<br><br>Once we receive and verify your item, we'll process your refund promptly.</p>
       </div>
     </div>
-    <div class="section">
-      <p>Questions? <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 0;">Questions? <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a></p>
     </div>
-    <div class="footer">
-      <p>© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in">lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.7; margin: 0;">© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in" style="color: #9ca3af; text-decoration: underline;">lurevi.in</a></p>
     </div>
   </div>
 </div>
@@ -499,45 +347,26 @@ Contact us at support@lurevi.in
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Return Update – Lurevi</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; }
-    .wrapper { background: #ffffff; padding: 40px 20px; }
-    .email-card { max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
-    .header { padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-    .logo-text { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase; }
-    .logo-dot { color: #6366f1; }
-    .badge { display: inline-block; margin-top: 20px; background: #fef2f2; color: #991b1b; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #fecaca; }
-    .section { padding: 24px 40px; border-top: 1px solid #f3f4f6; }
-    .section h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-    .section p { font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 10px; }
-    .note-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin-top: 4px; }
-    .note-box p { font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6; }
-    .footer { padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center; }
-    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-    .footer a { color: #9ca3af; text-decoration: underline; }
-  </style>
 </head>
-<body>
-<div class="wrapper">
-  <div class="email-card">
-    <div class="header">
-      <div class="logo-text">Lurevi<span class="logo-dot">.</span></div>
-      <div class="badge">Return Request Update</div>
+<body style="font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; margin: 0; padding: 0;">
+<div style="background: #ffffff; padding: 40px 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
+    <div style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+      <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase;">Lurevi<span style="color: #6366f1;">.</span></div>
+      <div style="display: inline-block; margin-top: 20px; background: #fef2f2; color: #991b1b; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #fecaca;">Return Request Update</div>
     </div>
-    <div class="section">
-      <h1>Hello, \${'{customerName}'}!</h1>
-      <p>We're writing to let you know that your return request for order <strong style="color:#0f172a;">#\${'{orderId}'}</strong> — <strong style="color:#0f172a;">\${'{productTitle}'}</strong> — could not be approved at this time.</p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <h1 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Hello, \${'{customerName}'}!</h1>
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 10px;">We're writing to let you know that your return request for order <strong style="color:#0f172a;">#\${'{orderId}'}</strong> — <strong style="color:#0f172a;">\${'{productTitle}'}</strong> — could not be approved at this time.</p>
     </div>
     \${'{adminNotesSection}'}
-    <div class="section">
-      <div class="note-box">
-        <p>If you believe this is an error or have further questions, please don't hesitate to contact our support team at <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a>.</p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin-top: 4px;">
+        <p style="font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6;">If you believe this is an error or have further questions, please don't hesitate to contact our support team at <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a>.</p>
       </div>
     </div>
-    <div class="footer">
-      <p>© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in">lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.7; margin: 0;">© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in" style="color: #9ca3af; text-decoration: underline;">lurevi.in</a></p>
     </div>
   </div>
 </div>
@@ -552,63 +381,37 @@ Contact us at support@lurevi.in
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Refund Processed – Lurevi</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; }
-    .wrapper { background: #ffffff; padding: 40px 20px; }
-    .email-card { max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
-    .header { padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-    .logo-text { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase; }
-    .logo-dot { color: #6366f1; }
-    .badge { display: inline-block; margin-top: 20px; background: #f0fdf4; color: #15803d; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #bbf7d0; }
-    .section { padding: 24px 40px; border-top: 1px solid #f3f4f6; }
-    .section h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-    .section p { font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 10px; }
-    .section-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
-    .info-table { width: 100%; border-collapse: collapse; }
-    .info-table tr td { padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-    .info-table tr:last-child td { border-bottom: none; }
-    .info-table .lbl { color: #9ca3af; font-weight: 500; width: 40%; }
-    .info-table .val { color: #111827; font-weight: 600; }
-    .amount-highlight { font-size: 22px; font-weight: 700; color: #15803d; }
-    .note-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; }
-    .note-box p { font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6; }
-    .footer { padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center; }
-    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-    .footer a { color: #9ca3af; text-decoration: underline; }
-  </style>
 </head>
-<body>
-<div class="wrapper">
-  <div class="email-card">
-    <div class="header">
-      <div class="logo-text">Lurevi<span class="logo-dot">.</span></div>
-      <div class="badge">✓ Refund Processed</div>
+<body style="font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; margin: 0; padding: 0;">
+<div style="background: #ffffff; padding: 40px 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
+    <div style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+      <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase;">Lurevi<span style="color: #6366f1;">.</span></div>
+      <div style="display: inline-block; margin-top: 20px; background: #f0fdf4; color: #15803d; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #bbf7d0;">✓ Refund Processed</div>
     </div>
-    <div class="section">
-      <h1>Refund on its way, \${'{customerName}'}!</h1>
-      <p>We've successfully processed a refund for order <strong style="color:#0f172a;">#\${'{orderId}'}</strong>.</p>
-      <p class="amount-highlight">₹\${'{refundAmount}'}</p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <h1 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Refund on its way, \${'{customerName}'}!</h1>
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 10px;">We've successfully processed a refund for order <strong style="color:#0f172a;">#\${'{orderId}'}</strong>.</p>
+      <p style="font-size: 22px; font-weight: 700; color: #15803d; margin: 10px 0;">₹\${'{refundAmount}'}</p>
     </div>
-    <div class="section">
-      <div class="section-title">Refund Details</div>
-      <table class="info-table">
-        <tr><td class="lbl">Product</td><td class="val">\${'{productTitle}'}</td></tr>
-        <tr><td class="lbl">Refund Method</td><td class="val">\${'{refundMethod}'}</td></tr>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;">Refund Details</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Product</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{productTitle}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Refund Method</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{refundMethod}'}</td></tr>
       </table>
     </div>
     \${'{adminNotesSection}'}
-    <div class="section">
-      <div class="note-box">
-        <p>Please allow 3–5 business days for the funds to reflect in your account, depending on your bank.</p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px;">
+        <p style="font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6;">Please allow 3–5 business days for the funds to reflect in your account, depending on your bank.</p>
       </div>
     </div>
-    <div class="section">
-      <p>Questions? <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 0;">Questions? <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a></p>
     </div>
-    <div class="footer">
-      <p>© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in">lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.7; margin: 0;">© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in" style="color: #9ca3af; text-decoration: underline;">lurevi.in</a></p>
     </div>
   </div>
 </div>
@@ -623,61 +426,36 @@ Contact us at support@lurevi.in
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Return Request Received – Lurevi</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; }
-    .wrapper { background: #ffffff; padding: 40px 20px; }
-    .email-card { max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; }
-    .header { padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-    .logo-text { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase; }
-    .logo-dot { color: #6366f1; }
-    .badge { display: inline-block; margin-top: 20px; background: #fffbeb; color: #92400e; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #fde68a; }
-    .section { padding: 24px 40px; border-top: 1px solid #f3f4f6; }
-    .section h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-    .section p { font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 10px; }
-    .section-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
-    .info-table { width: 100%; border-collapse: collapse; }
-    .info-table tr td { padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-    .info-table tr:last-child td { border-bottom: none; }
-    .info-table .lbl { color: #9ca3af; font-weight: 500; width: 40%; }
-    .info-table .val { color: #111827; font-weight: 600; }
-    .note-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; }
-    .note-box p { font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6; }
-    .footer { padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center; }
-    .footer p { font-size: 12px; color: #9ca3af; line-height: 1.7; }
-    .footer a { color: #9ca3af; text-decoration: underline; }
-  </style>
 </head>
-<body>
-<div class="wrapper">
-  <div class="email-card">
-    <div class="header">
-      <div class="logo-text">Lurevi<span class="logo-dot">.</span></div>
-      <div class="badge">↩ Return Request Received</div>
+<body style="font-family: 'Inter', Arial, sans-serif; background: #ffffff; color: #111827; margin: 0; padding: 0;">
+<div style="background: #ffffff; padding: 40px 20px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
+    <div style="padding: 36px 40px 28px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+      <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: #0f172a; text-transform: uppercase;">Lurevi<span style="color: #6366f1;">.</span></div>
+      <div style="display: inline-block; margin-top: 20px; background: #fffbeb; color: #92400e; font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 100px; border: 1px solid #fde68a;">↩ Return Request Received</div>
     </div>
-    <div class="section">
-      <h1>We got your request, \${'{customerName}'}!</h1>
-      <p>We've received your return request for order <strong style="color:#0f172a;">#\${'{orderId}'}</strong>. Our team is reviewing it now.</p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <h1 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">We got your request, \${'{customerName}'}!</h1>
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 10px;">We've received your return request for order <strong style="color:#0f172a;">#\${'{orderId}'}</strong>. Our team is reviewing it now.</p>
     </div>
-    <div class="section">
-      <div class="section-title">Return Summary</div>
-      <table class="info-table">
-        <tr><td class="lbl">Product</td><td class="val">\${'{productTitle}'}</td></tr>
-        <tr><td class="lbl">Reason</td><td class="val">\${'{reason}'}</td></tr>
-        <tr><td class="lbl">Quantity</td><td class="val">\${'{quantity}'}</td></tr>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;">Return Summary</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Product</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{productTitle}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Reason</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{reason}'}</td></tr>
+        <tr><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #9ca3af; font-weight: 500; width: 40%;">Quantity</td><td style="padding: 9px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111827; font-weight: 600;">\${'{quantity}'}</td></tr>
       </table>
     </div>
-    <div class="section">
-      <div class="note-box">
-        <p>We'll notify you by email once your request is updated — typically within 24–48 hours.</p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px;">
+        <p style="font-size: 13px; color: #6b7280; margin: 0; line-height: 1.6;">We'll notify you by email once your request is updated — typically within 24–48 hours.</p>
       </div>
     </div>
-    <div class="section">
-      <p>Questions in the meantime? <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6;">
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 0;">Questions in the meantime? <a href="mailto:support@lurevi.in" style="color:#4f46e5;text-decoration:none;font-weight:500;">support@lurevi.in</a></p>
     </div>
-    <div class="footer">
-      <p>© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in">lurevi.in</a></p>
+    <div style="padding: 24px 40px; border-top: 1px solid #f3f4f6; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; line-height: 1.7; margin: 0;">© 2026 Lurevi. All rights reserved.<br><a href="https://lurevi.in" style="color: #9ca3af; text-decoration: underline;">lurevi.in</a></p>
     </div>
   </div>
 </div>
@@ -868,13 +646,13 @@ export class EmailService {
       const typeLabel = item.productType === 'digital' ? 'Digital Download'
         : item.productType === 'poster' ? 'Poster' : '';
       return `
-      <div class="item-row">
-        <div class="item-left">
-          <div class="item-title">${item.title}</div>
-          <div class="item-meta">Qty: ${item.quantity}${typeLabel ? ` · ${typeLabel}` : ''}</div>
+      <div style="display: table; width: 100%; padding: 14px 0; border-bottom: 1px solid #f9fafb;">
+        <div style="display: table-cell; vertical-align: middle;">
+          <div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 3px;">${item.title}</div>
+          <div style="font-size: 12px; color: #9ca3af;">Qty: ${item.quantity}${typeLabel ? ` · ${typeLabel}` : ''}</div>
         </div>
-        <div class="item-right">
-          <div class="item-price">₹${(item.price * item.quantity).toLocaleString('en-IN')}</div>
+        <div style="display: table-cell; vertical-align: middle; text-align: right; width: 100px;">
+          <div style="font-size: 15px; font-weight: 700; color: #0f172a;">₹${(item.price * item.quantity).toLocaleString('en-IN')}</div>
         </div>
       </div>`;
     }).join('');
@@ -884,7 +662,7 @@ export class EmailService {
     ).join('\n');
 
     const downloadLinksHtml = orderData.downloadLinks.map((link, index) => 
-      `<a href="${link}" class="download-btn">Download Artwork ${orderData.downloadLinks.length > 1 ? index + 1 : ''}</a>`
+      `<a href="${link}" style="display: inline-block; background: #0f172a; color: #ffffff !important; font-size: 13px; font-weight: 600; padding: 10px 20px; text-decoration: none; border-radius: 8px; margin: 4px 4px 4px 0; letter-spacing: 0.02em;">Download Artwork ${orderData.downloadLinks.length > 1 ? index + 1 : ''}</a>`
     ).join('');
 
     const downloadLinksText = orderData.downloadLinks.map((link, index) => 
@@ -893,10 +671,10 @@ export class EmailService {
 
     // Only include download section if there are download links
     const downloadSection = orderData.downloadLinks.length > 0 ? `
-    <div class="section">
-      <div class="section-title">Download Your Artwork</div>
-      <div class="download-block">
-        <p>Your digital artwork is ready. Click below to download:</p>
+    <div style="padding: 28px 40px; border-top: 1px solid #f3f4f6;">
+      <div style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px;">Download Your Artwork</div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin-top: 4px;">
+        <p style="font-size: 13px; color: #6b7280; margin-bottom: 14px;">Your digital artwork is ready. Click below to download:</p>
         ${downloadLinksHtml}
       </div>
     </div>` : '';

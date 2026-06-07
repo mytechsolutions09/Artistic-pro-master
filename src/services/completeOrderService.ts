@@ -292,6 +292,11 @@ export class CompleteOrderService {
       const downloadLinks: string[] = [];
       
       for (const item of items) {
+        // Only generate download link if the item is digital
+        if (item.selectedProductType !== 'digital') {
+          continue;
+        }
+
         // Get product details to access PDF URL
         const { data: product } = await supabase
           .from('products')
@@ -308,7 +313,6 @@ export class CompleteOrderService {
       }
 
       return downloadLinks;
-
     } catch (error) {
       console.error('❌ Error generating download links:', error);
       return [];

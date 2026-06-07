@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { CompleteOrderService } from '../services/completeOrderService';
 import { Order, Product } from '../types';
+import ReviewService from '../services/reviewService';
 import { productBelongsToCategoryLabel } from '../utils/productFilterUtils';
 // import { SITE_COLORS } from '../constants/colors';
 import { getProgressToNextLevel } from '../constants/memberLevels';
@@ -111,6 +112,7 @@ const UserDashboard: React.FC = () => {
   // Review state
   const [showReviewInput, setShowReviewInput] = useState(false);
   const [selectedProductForReview, setSelectedProductForReview] = useState<any>(null);
+  const [userReviews, setUserReviews] = useState<any[]>([]);
   
   // Favorites filter state
   const [favoriteFilters, setFavoriteFilters] = useState({
@@ -233,6 +235,18 @@ const UserDashboard: React.FC = () => {
     }
   };
 
+  // Function to fetch user reviews
+  const fetchUserReviews = async () => {
+    try {
+      const userId = user?.id;
+      if (!userId) return;
+      const reviews = await ReviewService.getUserReviews(userId);
+      setUserReviews(reviews || []);
+    } catch (error) {
+      console.error('Error fetching user reviews:', error);
+    }
+  };
+
   // Function to fetch user orders
   const fetchUserOrders = async () => {
     setOrdersLoading(true);
@@ -330,6 +344,7 @@ const UserDashboard: React.FC = () => {
   useEffect(() => {
     fetchUserOrders();
     fetchReturnRequests();
+    fetchUserReviews();
   }, [user]);
 
   const orderSequenceMap = React.useMemo(
@@ -1400,11 +1415,38 @@ const UserDashboard: React.FC = () => {
                           Track
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleReviewProduct(firstItem, order.id, (firstItem as any).orderItemId); }}
-                          className="flex items-center gap-1 px-2.5 py-1 text-[11px] text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const isCodAndNotCompleted = order.paymentMethod?.toLowerCase() === 'cod' && order.status !== 'completed';
+                            if (isCodAndNotCompleted) {
+                              alert("Reviews for Cash on Delivery orders can only be submitted after the product is delivered and paid for.");
+                              return;
+                            }
+                            const hasReviewed = userReviews.some((r: any) => 
+                              r.orderItemId === (firstItem as any).orderItemId || 
+                              (r.orderId === order.id && r.productId === firstItem.id)
+                            );
+                            if (hasReviewed) {
+                              alert("You have already submitted a review for this item.");
+                              return;
+                            }
+                            handleReviewProduct(firstItem, order.id, (firstItem as any).orderItemId);
+                          }}
+                          className={`flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md transition-colors ${
+                            (order.paymentMethod?.toLowerCase() === 'cod' && order.status !== 'completed') || userReviews.some((r: any) => r.orderItemId === (firstItem as any).orderItemId || (r.orderId === order.id && r.productId === firstItem.id))
+                              ? 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed shadow-none'
+                              : 'text-gray-600 bg-white border border-gray-300 hover:bg-gray-50'
+                          }`}
+                          title={
+                            (order.paymentMethod?.toLowerCase() === 'cod' && order.status !== 'completed') 
+                              ? "Reviews for Cash on Delivery orders can only be submitted after delivery and payment." 
+                              : userReviews.some((r: any) => r.orderItemId === (firstItem as any).orderItemId || (r.orderId === order.id && r.productId === firstItem.id))
+                              ? "You have already reviewed this product."
+                              : undefined
+                          }
                         >
                           <Star className="w-2.5 h-2.5" />
-                          Review
+                          {userReviews.some((r: any) => r.orderItemId === (firstItem as any).orderItemId || (r.orderId === order.id && r.productId === firstItem.id)) ? 'Reviewed' : 'Review'}
                         </button>
                       </div>
                     </div>
@@ -1734,13 +1776,8 @@ const UserDashboard: React.FC = () => {
     return (
       <div className="space-y-4">
         {/* Downloads Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-2">
-              <FileDown className="w-5 h-5 text-gray-700" />
-              <h3 className="text-lg font-bold text-gray-800 font-sans font-normal">My Downloads</h3>
-            </div>
-          </div>
+        <div className="bg-transparent sm:bg-white sm:rounded-xl sm:shadow-lg sm:border sm:border-gray-100 p-0 sm:p-6">
+
 
           <div className="mb-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
@@ -2147,14 +2184,16 @@ const UserDashboard: React.FC = () => {
     }
   };
 
+  const isDownloads = activeTab === 'downloads';
+
   return (
     <div className="min-h-screen pb-20 bg-white font-sans">
       <div className="relative z-10 py-6">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className={`max-w-7xl mx-auto ${isDownloads ? 'px-3 sm:px-4' : 'px-4'}`}>
           {/* Main Content */}
           <div className="w-full">
-            <div className="bg-white rounded-lg shadow-sm shadow-gray-100 overflow-hidden">
-              <div className="p-4">
+            <div className={isDownloads ? 'bg-transparent sm:bg-white sm:rounded-lg sm:shadow-sm sm:shadow-gray-100 overflow-hidden' : 'bg-white rounded-lg shadow-sm shadow-gray-100 overflow-hidden'}>
+              <div className={isDownloads ? 'p-1 sm:p-4' : 'p-4'}>
                 {renderContent()}
               </div>
             </div>
@@ -2164,7 +2203,7 @@ const UserDashboard: React.FC = () => {
 
       {/* Dashboard Bottom Tab Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t z-40">
-        <div className="flex items-center justify-around py-2">
+        <div className="flex items-center justify-around py-1 sm:py-2 px-1 max-w-lg mx-auto w-full">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -2172,16 +2211,16 @@ const UserDashboard: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center space-y-1 px-3 py-2 rounded transition-all duration-200 ${
+                className={`flex-1 min-w-0 flex flex-col items-center space-y-0.5 sm:space-y-1 px-1 sm:px-3 py-1 sm:py-2 rounded transition-all duration-200 ${
                   isActive
                     ? 'text-gray-900'
                     : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
-                <div className="w-6 h-6 rounded flex items-center justify-center">
-                  <Icon className="w-4 h-4" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <span className="text-xs font-medium font-sans font-normal">{tab.label}</span>
+                <span className="text-[10px] sm:text-xs font-medium font-sans font-normal text-center truncate w-full">{tab.label}</span>
               </button>
             );
           })}
@@ -2195,12 +2234,12 @@ const UserDashboard: React.FC = () => {
 
               handleLogout();
             }}
-            className="flex flex-col items-center space-y-1 px-3 py-2 rounded transition-all duration-200 text-red-600 hover:text-red-700"
+            className="flex-1 min-w-0 flex flex-col items-center space-y-0.5 sm:space-y-1 px-1 sm:px-3 py-1 sm:py-2 rounded transition-all duration-200 text-red-600 hover:text-red-700"
           >
-            <div className="w-6 h-6 rounded flex items-center justify-center">
-              <LogOut className="w-4 h-4" />
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center flex-shrink-0">
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <span className="text-xs font-medium font-sans font-normal">Logout</span>
+            <span className="text-[10px] sm:text-xs font-medium font-sans font-normal text-center truncate w-full">Logout</span>
           </button>
         </div>
       </div>
@@ -2219,6 +2258,7 @@ const UserDashboard: React.FC = () => {
               onReviewSubmitted={() => {
                 setShowReviewInput(false);
                 setSelectedProductForReview(null);
+                fetchUserReviews();
               }}
               onClose={() => {
                 setShowReviewInput(false);
@@ -2236,6 +2276,7 @@ const UserDashboard: React.FC = () => {
         onClose={closeTrackingModal}
         order={selectedOrderForTracking}
         trackingData={selectedOrderForTracking ? trackingData[selectedOrderForTracking.id] : null}
+        orderDisplayNumber={selectedOrderForTracking ? getOrderDisplayNumber(selectedOrderForTracking.id) : undefined}
       />
 
       {/* Order Detail Modal (for orders with more than 1 product) */}
@@ -2286,11 +2327,38 @@ const UserDashboard: React.FC = () => {
                           Track
                         </button>
                         <button
-                          onClick={() => { handleReviewProduct(item, selectedOrderForDetail.id, item.orderItemId); closeOrderDetailModal(); }}
-                          className="flex items-center gap-1 px-2 py-1 text-[11px] text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                          onClick={() => {
+                            const isCodAndNotCompleted = selectedOrderForDetail.paymentMethod?.toLowerCase() === 'cod' && selectedOrderForDetail.status !== 'completed';
+                            if (isCodAndNotCompleted) {
+                              alert("Reviews for Cash on Delivery orders can only be submitted after the product is delivered and paid for.");
+                              return;
+                            }
+                            const hasReviewed = userReviews.some((r: any) => 
+                              r.orderItemId === item.orderItemId || 
+                              (r.orderId === selectedOrderForDetail.id && r.productId === item.id)
+                            );
+                            if (hasReviewed) {
+                              alert("You have already submitted a review for this item.");
+                              return;
+                            }
+                            handleReviewProduct(item, selectedOrderForDetail.id, item.orderItemId);
+                            closeOrderDetailModal();
+                          }}
+                          className={`flex items-center gap-1 px-2 py-1 text-[11px] rounded-md ${
+                            (selectedOrderForDetail.paymentMethod?.toLowerCase() === 'cod' && selectedOrderForDetail.status !== 'completed') || userReviews.some((r: any) => r.orderItemId === item.orderItemId || (r.orderId === selectedOrderForDetail.id && r.productId === item.id))
+                              ? 'text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed'
+                              : 'text-gray-600 bg-white border border-gray-300 hover:bg-gray-50'
+                          }`}
+                          title={
+                            (selectedOrderForDetail.paymentMethod?.toLowerCase() === 'cod' && selectedOrderForDetail.status !== 'completed') 
+                              ? "Reviews for Cash on Delivery orders can only be submitted after delivery and payment." 
+                              : userReviews.some((r: any) => r.orderItemId === item.orderItemId || (r.orderId === selectedOrderForDetail.id && r.productId === item.id))
+                              ? "You have already reviewed this product."
+                              : undefined
+                          }
                         >
                           <Star className="w-2.5 h-2.5" />
-                          Review
+                          {userReviews.some((r: any) => r.orderItemId === item.orderItemId || (r.orderId === selectedOrderForDetail.id && r.productId === item.id)) ? 'Reviewed' : 'Review'}
                         </button>
                       </div>
                     </div>
