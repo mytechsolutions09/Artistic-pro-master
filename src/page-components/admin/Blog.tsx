@@ -443,6 +443,63 @@ const BlogAdmin: React.FC = () => {
     }
   };
 
+  const addRandomCategoryLinks = () => {
+    const categories = [
+      { slug: 'abstract', label: 'Abstract Art' },
+      { slug: 'animals', label: 'Animals Art' },
+      { slug: 'cars', label: 'Cars Art' },
+      { slug: 'chinese-calligraphy', label: 'Chinese Calligraphy' },
+      { slug: 'classical', label: 'Classical Art' },
+      { slug: 'coder', label: 'Coder Art' },
+      { slug: 'contemporary', label: 'Contemporary Art' },
+      { slug: 'expressionist', label: 'Expressionist Art' },
+      { slug: 'fantasy', label: 'Fantasy Art' },
+      { slug: 'floral', label: 'Floral Art' },
+      { slug: 'food', label: 'Food Art' },
+      { slug: 'football', label: 'Football Art' },
+      { slug: 'forest', label: 'Forest Art' },
+      { slug: 'funny', label: 'Funny Art' },
+      { slug: 'illustration', label: 'Illustration Art' },
+      { slug: 'impressionist', label: 'Impressionist Art' },
+      { slug: 'japanese-calligraphy', label: 'Japanese Calligraphy' },
+      { slug: 'landscapes', label: 'Landscapes Art' },
+      { slug: 'maps', label: 'Maps Art' },
+      { slug: 'minimalist', label: 'Minimalist Art' },
+      { slug: 'monochrome', label: 'Monochrome Art' },
+      { slug: 'motivational', label: 'Motivational Art' },
+      { slug: 'music', label: 'Music Art' },
+      { slug: 'nature', label: 'Nature Art' },
+      { slug: 'painting', label: 'Painting Art' },
+      { slug: 'photography', label: 'Photography' },
+      { slug: 'pop-art', label: 'Pop Art' },
+      { slug: 'popular-shows', label: 'Popular Shows Art' },
+      { slug: 'shapes', label: 'Shapes Art' },
+      { slug: 'sports', label: 'Sports Art' },
+      { slug: 'still-life', label: 'Still Life Art' },
+      { slug: 'street-art', label: 'Street Art' },
+      { slug: 'super-heroes', label: 'Super Heroes Art' },
+      { slug: 'vintage', label: 'Vintage Art' },
+      { slug: 'vintage-movies', label: 'Vintage Movies Art' },
+      { slug: 'woman', label: 'Woman Art' },
+      { slug: 'world-cities', label: 'World Cities Art' }
+    ];
+
+    const shuffled = [...categories].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 3);
+    const linksString = selected
+      .map(cat => `[${cat.label}](https://lurevi.in/categories/${cat.slug})`)
+      .join(', ');
+
+    const textToAppend = `\n\nExplore our related collections: ${linksString}`;
+
+    setForm(prev => ({
+      ...prev,
+      content: prev.content + textToAppend
+    }));
+
+    showMessage('success', 'Added 3 related collection links to content.');
+  };
+
   const publishedCount = useMemo(
     () => posts.filter((post) => post.status === 'published').length,
     [posts]
@@ -686,6 +743,13 @@ const BlogAdmin: React.FC = () => {
               >
                 {checkingLinks ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
                 Verify Links
+              </button>
+              <button
+                onClick={addRandomCategoryLinks}
+                className="px-3 py-2 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg text-sm font-medium inline-flex items-center gap-1"
+                type="button"
+              >
+                Add 3 Category Links
               </button>
               {editingId && (
                 <button
