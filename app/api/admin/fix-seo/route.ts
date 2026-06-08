@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '../../../../src/services/supabaseService';
 
+import { generateProductUrl } from '../../../../src/utils/slugUtils';
+
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -29,12 +31,19 @@ export async function POST(request: Request) {
       try {
         const { data: products } = await supabase
           .from('products')
-          .select('title')
+          .select('title, categories')
           .eq('status', 'active')
           .limit(10);
           
         if (products && products.length > 0) {
-          productListText = `Here are some active products from our store to link to:\n${products.map(p => `- ${p.title} (URL: /shop/${p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')})`).join('\n')}`;
+          productListText = `Here are some active products from our store to link to:\n${products.map(p => {
+            let category = 'all';
+            if (p.categories && p.categories.length > 0) {
+              const specificCategory = p.categories.find((c: string) => !['collections', 'featured', 'new arrivals', 'best sellers'].includes(c.toLowerCase()));
+              category = specificCategory || p.categories[0];
+            }
+            return `- ${p.title} (URL: ${generateProductUrl(category, p.title)})`;
+          }).join('\n')}`;
         }
       } catch (err) {
         console.error('Failed to fetch products for SEO prompt:', err);
@@ -62,13 +71,14 @@ ${productListText ? `Since the issue is related to internal links, please strate
 
 Please fix this specific SEO issue by updating the relevant fields. Keep the changes minimal and focused primarily on resolving the issue, but ensure it remains natural and engaging. Do not drastically rewrite the entire post unless necessary to fix the issue.
 
-Return a valid JSON object with the updated fields (return the full text for these fields, not diffs):
+Return a valid JSON object with the updated fields (return the full text for these fields, not diffs). If the issue is about a previously used keyphrase, make sure to generate a new unique keyphrase that still fits the content:
 {
   "title": "...",
   "slug": "...",
   "content": "...",
   "seo_title": "...",
-  "seo_description": "..."
+  "seo_description": "...",
+  "focus_keyphrase": "..."
 }
 
 Ensure the content is well-written and professional. Do NOT include Markdown code block formatting (like \`\`\`json) in the response, just the raw JSON object.

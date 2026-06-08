@@ -45,6 +45,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export const revalidate = 3600;
 
+export async function generateStaticParams() {
+  const supabase = await createClient();
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('slug')
+    .eq('is_active', true);
+
+  return (categories || []).map((category) => ({
+    categorySlug: category.slug,
+  }));
+}
 export default async function CategoryPage({ params }: Props) {
   const { categorySlug } = await params;
   const supabase = await createClient();

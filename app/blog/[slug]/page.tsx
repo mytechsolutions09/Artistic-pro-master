@@ -113,7 +113,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   const publishedISO = post.published_at || post.created_at;
   const articleSchema = {
     '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
+    '@type': 'Article',
     headline: post.title,
     description: post.seo_description || post.excerpt || '',
     image: blogCoverUrl(post.cover_image),
@@ -156,6 +156,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
         dangerouslySetInnerHTML={{ __html: post.content
           .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
           .replace(/(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>') 
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         }}
       />
 

@@ -40,6 +40,33 @@ export default async function HomePage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Organization',
+                '@id': 'https://lurevi.in/#organization',
+                name: 'Lurevi',
+                url: 'https://lurevi.in/',
+                logo: 'https://lurevi.in/logo.png',
+                description: 'Luxury digital art, wall prints, and premium collections.',
+              },
+              {
+                '@type': 'WebSite',
+                '@id': 'https://lurevi.in/#website',
+                url: 'https://lurevi.in/',
+                name: 'Lurevi',
+                publisher: {
+                  '@id': 'https://lurevi.in/#organization'
+                }
+              }
+            ]
+          })
+        }}
+      />
       {/* Crawlable server-rendered homepage content for non-JS and low-JS crawlers */}
       {hasSeoSections && (
         <main className="mx-auto max-w-6xl px-4 py-2">

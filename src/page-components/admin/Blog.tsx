@@ -333,6 +333,7 @@ const BlogAdmin: React.FC = () => {
         content: data.content || prev.content,
         seo_title: data.seo_title || prev.seo_title,
         seo_description: data.seo_description || prev.seo_description,
+        focus_keyphrase: data.focus_keyphrase || prev.focus_keyphrase,
       }));
 
       showMessage('success', `Fixed: ${issueName}`);
@@ -614,6 +615,7 @@ const BlogAdmin: React.FC = () => {
                     dangerouslySetInnerHTML={{ __html: (form.content || '<p class="text-gray-400 italic">No content yet.</p>')
                       .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
                       .replace(/(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
                     }}
                   />
                 ) : (

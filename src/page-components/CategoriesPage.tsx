@@ -6,8 +6,16 @@ import CategoryCard from '../components/CategoryCard';
 import CategoriesPageSkeleton from '../components/CategoriesPageSkeleton';
 import { useCategories } from '../contexts/CategoryContext';
 
-const CategoriesPage: React.FC = () => {
-  const { categories, loading, error } = useCategories();
+interface Props {
+  initialCategories?: any[];
+}
+
+const CategoriesPage: React.FC<Props> = ({ initialCategories }) => {
+  const { categories: contextCategories, loading: contextLoading, error } = useCategories();
+  
+  const categories = initialCategories && initialCategories.length > 0 ? initialCategories : contextCategories;
+  const loading = initialCategories && initialCategories.length > 0 ? false : contextLoading;
+
   const [displayCount, setDisplayCount] = useState(12);
   const observerTarget = useRef<HTMLDivElement>(null);
 
