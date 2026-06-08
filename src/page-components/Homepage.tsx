@@ -260,6 +260,42 @@ const Homepage: React.FC = () => {
     ]
   };
 
+  const getProductLink = (product: any) => {
+    const category = product.categories?.[0] || product.category || 'Art';
+    
+    // Check if product is clothing by category or properties
+    const clothingCategories = ['unisex', 'men', 'women', 'mens', 'womens', 'clothing', 'tshirt', 't-shirt', 'shirt', 'sweatshirt', 'hoodie'];
+    const isCategoryClothing = clothingCategories.some(cat => 
+      category?.toLowerCase().includes(cat)
+    );
+    const hasClothingProperties = !!(product.sizes || product.colors || product.type === 'clothing' || product.gender);
+    const isClothing = isCategoryClothing || hasClothingProperties;
+
+    // Check if product is F&B
+    const categoriesLower = (product.categories || []).map((c: any) => c.toLowerCase()).join(' ');
+    const isFB = categoriesLower.includes('food & beverage') || 
+                 categoriesLower.includes('f&b') || 
+                 categoriesLower.includes('food-beverage') ||
+                 categoriesLower.includes('dry fruit') || 
+                 categoriesLower.includes('dried fruit') || 
+                 categoriesLower.includes('spice');
+
+    // Check if normal item
+    const isNormalItem = product.categories && product.categories.includes('Normal');
+
+    const productSlug = product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+    if (isClothing) {
+      return `/clothes/${productSlug}`;
+    } else if (isFB) {
+      return `/${productSlug}`;
+    } else if (isNormalItem) {
+      return `/shop/${generateSlug(product.title)}`;
+    } else {
+      return generateProductUrl(category, product.title);
+    }
+  };
+
   // Get best sellers from real products data
   const getBestSellersProducts = () => {
     if (!realProducts || realProducts.length === 0) {
@@ -293,14 +329,7 @@ const Homepage: React.FC = () => {
       const isClothing = isCategoryClothing || hasClothingProperties;
       
       // Generate appropriate URL based on product type
-      let productLink;
-      if (isClothing) {
-        // For clothing products, use /clothes/ prefix
-        productLink = `/clothes/${generateSlug(product.title)}`;
-      } else {
-        // For art products, use category/product format
-        productLink = generateProductUrl(category, product.title);
-      }
+      const productLink = getProductLink(product);
       
       return {
         id: product.id,
@@ -321,12 +350,13 @@ const Homepage: React.FC = () => {
     });
   };
 
-  // Ensure best sellers products have valid images array
+  // Ensure best sellers products have valid images array and correct links
   const safeBestSellers = {
     ...bestSellers,
     selectedProducts: getBestSellersProducts().map((product: any) => ({
       ...product,
-      images: product.images || (product.image ? [product.image] : ['/placeholder-image.jpg'])
+      images: product.images || (product.image ? [product.image] : ['/placeholder-image.jpg']),
+      link: getProductLink(product)
     }))
   };
 
@@ -374,23 +404,8 @@ const Homepage: React.FC = () => {
     return artworkProducts.map(product => {
       const category = product.categories?.[0] || product.category || 'Art';
       
-      // Check if product is clothing by category or properties
-      const clothingCategories = ['unisex', 'men', 'women', 'mens', 'womens', 'clothing', 'tshirt', 't-shirt', 'shirt', 'sweatshirt', 'hoodie'];
-      const isCategoryClothing = clothingCategories.some(cat => 
-        category?.toLowerCase().includes(cat)
-      );
-      const hasClothingProperties = !!(product.sizes || product.colors || product.type === 'clothing' || (product as any).gender);
-      const isClothing = isCategoryClothing || hasClothingProperties;
-      
       // Generate appropriate URL based on product type
-      let productLink;
-      if (isClothing) {
-        // For clothing products, use /clothes/ prefix
-        productLink = `/clothes/${generateSlug(product.title)}`;
-      } else {
-        // For art products, use category/product format
-        productLink = generateProductUrl(category, product.title);
-      }
+      const productLink = getProductLink(product);
       
       return {
         id: product.id,
@@ -492,26 +507,8 @@ const Homepage: React.FC = () => {
   const safeFeaturedArtwork = {
     ...featuredArtwork,
     selectedProducts: getFeaturedArtworkProducts().map((product: any) => {
-      // Regenerate link to ensure correct format (fix /artwork/ links)
-      const category = product.category || product.categories?.[0] || 'Art';
-      
-      // Check if product is clothing by category or properties
-      const clothingCategories = ['unisex', 'men', 'women', 'mens', 'womens', 'clothing', 'tshirt', 't-shirt', 'shirt', 'sweatshirt', 'hoodie'];
-      const isCategoryClothing = clothingCategories.some(cat => 
-        category?.toLowerCase().includes(cat)
-      );
-      const hasClothingProperties = !!(product.sizes || product.colors || product.type === 'clothing' || product.gender);
-      const isClothing = isCategoryClothing || hasClothingProperties;
-      
       // Generate appropriate URL based on product type
-      let productLink;
-      if (isClothing) {
-        // For clothing products, use /clothes/ prefix
-        productLink = `/clothes/${generateSlug(product.title)}`;
-      } else {
-        // For art products, use category/product format
-        productLink = generateProductUrl(category, product.title);
-      }
+      const productLink = getProductLink(product);
       
       return {
         ...product,

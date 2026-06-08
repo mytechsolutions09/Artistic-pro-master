@@ -51,9 +51,7 @@ export const optimizeImageUrl = (
       }
       urlObj.searchParams.set('quality', quality.toString());
       urlObj.searchParams.set('format', 'webp');
-      if (!isPublicStorage) {
-        urlObj.searchParams.set('resize', 'contain');
-      }
+      urlObj.searchParams.set('resize', 'contain');
       optimizedUrl = urlObj.toString();
     }
     // Optimize other image URLs (Cloudinary, Imgix, etc.)

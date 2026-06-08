@@ -29,33 +29,6 @@ const AboutUs: React.FC = () => {
     }
   ];
 
-  const milestones = [
-    {
-      year: "Jan 2023",
-      title: "Founded",
-      description: "Lurevi was established in New Delhi with a vision to make art accessible to everyone. Started with a small team of passionate artists and entrepreneurs."
-    },
-    {
-      year: "Jun 2023",
-      title: "Digital Platform Launch",
-      description: "Launched our digital art platform with thousands of unique designs from talented artists worldwide. Reached our first 5,000 customers milestone."
-    },
-    {
-      year: "Sep 2023",
-      title: "Fashion Launch",
-      description: "Introduced a fashion line featuring original artwork. Partnered with sustainable manufacturers to ensure ethical production practices."
-    },
-    {
-      year: "Dec 2023",
-      title: "Technology Innovation",
-      description: "Launched AI-powered personalization features and mobile app. Implemented advanced printing technology for superior quality products."
-    },
-    {
-      year: "2024",
-      title: "Global Expansion",
-      description: "Expanded to serve customers in over 50 countries worldwide. Achieved 50,000+ happy customers and established partnerships with international artists."
-    }
-  ];
 
   const teamMembers = [
     {
@@ -81,7 +54,7 @@ const AboutUs: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 font-['Inter']">
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Hero Section */}
       <div className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -226,37 +199,7 @@ const AboutUs: React.FC = () => {
         </div>
       </div>
 
-      {/* Timeline Section */}
-      <div className="bg-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Our Journey</h2>
-            <p className="text-base text-gray-600 max-w-2xl mx-auto">
-              Key milestones in our growth and evolution
-            </p>
-          </div>
-          <div className="relative">
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gray-300"></div>
-            <div className="space-y-6">
-              {milestones.map((milestone, index) => (
-                <div key={index} className={`flex items-center ${
-                  index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'
-                }`}>
-                  <div className={`w-1/2 ${index % 2 === 0 ? 'pr-6 text-right' : 'pl-6 text-left'}`}>
-                    <div className="bg-white rounded-lg p-4 shadow-lg">
-                      <div className="text-xl font-bold text-gray-800 mb-1">{milestone.year}</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{milestone.title}</h3>
-                      <p className="text-gray-600 text-sm">{milestone.description}</p>
-                    </div>
-                  </div>
-                  <div className="w-3 h-3 bg-gray-700 rounded-full border-2 border-white shadow-lg z-10"></div>
-                  <div className="w-1/2"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       {/* Team Section */}
       <div className="bg-gray-50 py-8">
@@ -348,12 +291,7 @@ const AboutUs: React.FC = () => {
             >
               Explore Art Gallery
             </Link>
-            <Link
-              to="/clothes"
-              className="bg-white text-gray-900 hover:bg-gray-100 font-semibold py-3 px-8 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              Shop Clothing
-            </Link>
+
             <Link
               to="/contact-us"
               className="border-2 border-white text-white hover:bg-white hover:text-gray-900 font-semibold py-3 px-8 rounded-lg transition-all duration-200"

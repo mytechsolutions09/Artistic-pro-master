@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
   const isHome = location.pathname === '/';
 
   return (
-    <footer className="bg-white text-gray-900 border-t border-gray-300">
+    <footer className="bg-white text-gray-900 border-t border-gray-300" style={{ fontFamily: "'Inter', sans-serif" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {isHome && (
           <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -34,9 +34,12 @@ const Footer: React.FC = () => {
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className="flex items-center mb-3">
-              <span className="text-black font-sans font-bold uppercase text-2xl">Lurevi</span>
+              <span className="text-black font-bold uppercase text-2xl">Lurevi</span>
             </div>
-            <p className="text-gray-600 mb-4 text-xs uppercase tracking-[0.12em] font-['Inter']">
+            <p 
+              className="text-gray-600 mb-4 text-xs uppercase tracking-[0.12em]"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
               Luxury That Stays With You
             </p>
             <div className="flex space-x-3">

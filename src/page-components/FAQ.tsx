@@ -153,7 +153,7 @@ const FAQ: React.FC = () => {
   })).filter(category => category.questions.length > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-['Inter']">
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Inter', sans-serif" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
