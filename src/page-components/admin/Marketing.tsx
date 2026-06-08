@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav';
 import { supabase } from '../../services/supabaseService';
@@ -445,7 +445,17 @@ const SEO_PLAN_ITEMS: SeoPlanItem[] = [
 ];
 
 const Marketing: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan'>('tracking');
+  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb'>('tracking');
+  const [gmbSettings, setGmbSettings] = useState({
+    businessName: '',
+    address: '',
+    phone: '',
+    website: '',
+    category: '',
+    mapsCidLink: '',
+    reviewLink: '',
+    verified: false,
+  });
   const [seoSearch, setSeoSearch] = useState('');
   const [seoFilter, setSeoFilter] = useState('all');
   const [expandedCardIndex, setExpandedCardIndex] = useState<number | null>(null);
@@ -597,7 +607,29 @@ const Marketing: React.FC = () => {
     loadKeywordTracking();
     loadColdEmailConfig();
     loadColdEmailSmtpConfig();
+    loadGmbSettings();
   }, []);
+
+  const loadGmbSettings = () => {
+    try {
+      const raw = localStorage.getItem(`marketing_gmb_settings_${FIXED_ID}`);
+      if (raw) {
+        setGmbSettings(JSON.parse(raw));
+      }
+    } catch (error) {
+      console.error('Failed to load GMB settings:', error);
+    }
+  };
+
+  const saveGmbSettings = () => {
+    try {
+      localStorage.setItem(`marketing_gmb_settings_${FIXED_ID}`, JSON.stringify(gmbSettings));
+      showMessage('success', 'GMB settings saved successfully.');
+    } catch (error) {
+      console.error('Failed to save GMB settings:', error);
+      showMessage('error', 'Failed to save GMB settings.');
+    }
+  };
 
   const loadColdEmailConfig = () => {
     try {
@@ -1602,17 +1634,6 @@ const Marketing: React.FC = () => {
       <MarketingSecondaryNav activeTab={activeSubTab} onTabChange={setActiveSubTab} />
       <div className="ml-24 flex flex-1 flex-col overflow-hidden">
       <div className="space-y-3 px-3 py-4 sm:px-5">
-        <div className={cardCls}>
-          <div className="flex items-start gap-2">
-            <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
-              <TrendingUp className="h-4 w-4 text-gray-800" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-semibold text-gray-900">Marketing &amp; analytics</h1>
-              <p className="text-[11px] text-gray-500">Tracking pixels, SEO, and keyword routines</p>
-            </div>
-          </div>
-        </div>
 
         {message && (
           <div
@@ -2198,6 +2219,148 @@ const Marketing: React.FC = () => {
               className={textareaCls}
               placeholder="Generated action plan…"
             />
+          </div>
+        </div>
+
+        {/* GMB Sub-tab Content */}
+        <div className={activeSubTab === 'gmb' ? 'space-y-3' : 'hidden'}>
+          <div className={cardCls}>
+            <div className="mb-2 flex items-start gap-2 border-b border-gray-100 pb-2">
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+                <MapPin className="h-4 w-4 text-gray-700" />
+              </div>
+              <div>
+                <h2 className="text-xs font-semibold text-gray-900">Google My Business (GMB)</h2>
+                <p className="text-[11px] text-gray-500">Manage Google Business Profile optimization and Local SEO</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="space-y-2.5">
+                <div>
+                  <label className={labelCls}>Business Name (NAP)</label>
+                  <input
+                    type="text"
+                    value={gmbSettings.businessName}
+                    onChange={(e) => setGmbSettings({ ...gmbSettings, businessName: e.target.value })}
+                    className={inputCls}
+                    placeholder="e.g. Lurevi Premium Art Prints"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Business Category</label>
+                  <input
+                    type="text"
+                    value={gmbSettings.category}
+                    onChange={(e) => setGmbSettings({ ...gmbSettings, category: e.target.value })}
+                    className={inputCls}
+                    placeholder="e.g. Art Gallery, Home Goods Store"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Business Address</label>
+                  <textarea
+                    value={gmbSettings.address}
+                    onChange={(e) => setGmbSettings({ ...gmbSettings, address: e.target.value })}
+                    rows={2}
+                    className={textareaCls}
+                    placeholder="Physical address matching listing exactly"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Phone Number</label>
+                  <input
+                    type="text"
+                    value={gmbSettings.phone}
+                    onChange={(e) => setGmbSettings({ ...gmbSettings, phone: e.target.value })}
+                    className={inputCls}
+                    placeholder="e.g. +91 98765 43210"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <div>
+                  <label className={labelCls}>Website URL</label>
+                  <input
+                    type="text"
+                    value={gmbSettings.website}
+                    onChange={(e) => setGmbSettings({ ...gmbSettings, website: e.target.value })}
+                    className={inputCls}
+                    placeholder="e.g. https://lurevi.com"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Google Maps Share / CID Link</label>
+                  <input
+                    type="text"
+                    value={gmbSettings.mapsCidLink}
+                    onChange={(e) => setGmbSettings({ ...gmbSettings, mapsCidLink: e.target.value })}
+                    className={inputCls}
+                    placeholder="https://maps.google.com/?cid=..."
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Direct Review Link</label>
+                  <input
+                    type="text"
+                    value={gmbSettings.reviewLink}
+                    onChange={(e) => setGmbSettings({ ...gmbSettings, reviewLink: e.target.value })}
+                    className={inputCls}
+                    placeholder="https://g.page/r/.../review"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2 rounded-md border border-gray-100 bg-gray-50/80 px-2.5 py-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-800">Verification Status</p>
+                    <p className="text-[10px] text-gray-500">Is this listing verified on Google?</p>
+                  </div>
+                  <label className="relative inline-flex cursor-pointer items-center">
+                    <input
+                      type="checkbox"
+                      checked={gmbSettings.verified}
+                      onChange={(e) => setGmbSettings({ ...gmbSettings, verified: e.target.checked })}
+                      className="peer sr-only"
+                    />
+                    <div className="relative h-5 w-9 shrink-0 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all peer-checked:bg-gray-900 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-300" />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={cardCls}>
+            <h3 className="mb-2 text-xs font-semibold text-gray-900">Local SEO Optimization Checklist</h3>
+            <div className="space-y-1 text-xs text-gray-700">
+              <div className="flex items-start gap-2 rounded-md border border-gray-100 p-2 bg-white">
+                <CheckCircle className="mt-0.5 h-3.5 w-3.5 text-green-600 shrink-0" />
+                <div>
+                  <span className="font-semibold block text-[11px] text-gray-900">NAP Consistency Check</span>
+                  <p className="text-[10px] text-gray-500">Ensure Business Name, Address, and Phone number are exactly identical on your website footer, contact page, and Google Business Profile.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 rounded-md border border-gray-100 p-2 bg-white">
+                <CheckCircle className="mt-0.5 h-3.5 w-3.5 text-green-600 shrink-0" />
+                <div>
+                  <span className="font-semibold block text-[11px] text-gray-900">Review Generation Link</span>
+                  <p className="text-[10px] text-gray-500">Share your Direct Review Link in purchase confirmation emails and on your order status page to collect 5-star customer reviews.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 rounded-md border border-gray-100 p-2 bg-white">
+                <CheckCircle className="mt-0.5 h-3.5 w-3.5 text-green-600 shrink-0" />
+                <div>
+                  <span className="font-semibold block text-[11px] text-gray-900">Local Citations & Geotagging</span>
+                  <p className="text-[10px] text-gray-500">Embed your Google Maps listing on your contact page and submit your business details to premium Indian directories (Justdial, Sulekha, IndiaMart).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={stickyBarCls}>
+            <button type="button" onClick={saveGmbSettings} className={`${btnPrimary} w-full`}>
+              <Save className="h-3.5 w-3.5" />
+              Save GMB settings
+            </button>
           </div>
         </div>
 

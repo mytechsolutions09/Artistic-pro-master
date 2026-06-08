@@ -107,7 +107,7 @@ const Privacy: React.FC = () => {
           
           {/* 1. Introduction */}
           <AccordionSection id="intro" icon={FileText} title="1. Introduction">
-            <p>Welcome to Lurevi's Privacy Policy. This policy describes how Lurevi, Purple Plus, and Necessary Milan (collectively "we", "us", or "our") collect, use, share, and protect your personal information when you use our website at lurevi.in and our services.</p>
+            <p>Welcome to Lurevi's Privacy Policy. lurevi.in is owned by Purple Plus. This policy describes how Lurevi and Purple Plus (collectively "we", "us", or "our") collect, use, share, and protect your personal information when you use our website at lurevi.in and our services.</p>
             <p className="mt-2">By using our website and services, you consent to the data practices described in this policy. If you do not agree with this policy, please do not use our website or services.</p>
             <div className="bg-gray-100 border-l-4 border-gray-400 p-2 mt-2">
               <div className="flex">
@@ -337,7 +337,7 @@ const Privacy: React.FC = () => {
             <div className="bg-gray-100 rounded p-2 border border-gray-200">
               <p className="mb-2">If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:</p>
               <div className="space-y-1 mb-2">
-                <p className="font-semibold text-gray-900">Lurevi (Purple Plus & Necessary Milan)</p>
+                <p className="font-semibold text-gray-900">Lurevi (Purple Plus)</p>
                 <p><strong>Email:</strong> support@lurevi.com</p>
                 <p><strong>Phone:</strong> +91 9625788455</p>
                 <p><strong>Address:</strong> WZ 14 Janakpuri, New Delhi - 110058, India</p>

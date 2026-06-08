@@ -49,8 +49,7 @@ export async function generateStaticParams() {
   const supabase = await createClient();
   const { data: categories } = await supabase
     .from('categories')
-    .select('slug')
-    .eq('is_active', true);
+    .select('slug');
 
   return (categories || []).map((category) => ({
     categorySlug: category.slug,

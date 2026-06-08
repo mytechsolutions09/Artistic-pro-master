@@ -21,7 +21,6 @@ export default async function HomePage() {
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name, slug, description, image_url')
-    .eq('is_active', true)
     .order('sort_order', { ascending: true })
     .limit(24);
 

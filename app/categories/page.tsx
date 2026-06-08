@@ -17,7 +17,6 @@ export default async function Page() {
   const { data: categories } = await supabase
     .from('categories')
     .select('*')
-    .eq('is_active', true)
     .order('sort_order', { ascending: true });
 
   return <CategoriesPage initialCategories={categories || []} />;
