@@ -4,12 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from '@/src/compat/router';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
-import { useAppearance } from '../../contexts/AppearanceContext';
 import AuthIllustration from './AuthIllustration';
-import ArtLoader from './ArtLoader';
 
 const SignUpForm: React.FC = () => {
-  const { loading: appearanceLoading } = useAppearance();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -98,14 +95,7 @@ const SignUpForm: React.FC = () => {
     }
   };
 
-  // Show loading state without white container
-  if (appearanceLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-teal-800">
-        <ArtLoader />
-      </div>
-    );
-  }
+
 
   if (success) {
     return (

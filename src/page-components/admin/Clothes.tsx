@@ -928,9 +928,9 @@ const Clothes: React.FC = () => {
             <div className="mt-3 p-3 bg-white rounded border border-orange-200">
               <p className="text-sm text-gray-700">
                 <span className="font-medium">Preview:</span>{' '}
-                <span className="line-through text-gray-500">₹{Math.round(parseFloat(formData.originalPrice))}</span>{' '}
-                <span className="text-orange-600 font-bold">₹{formData.price}</span>{' '}
-                <span className="text-orange-600">({formData.discountPercentage}% OFF)</span>
+                <span className="line-through text-gray-600">₹{Math.round(parseFloat(formData.originalPrice))}</span>{' '}
+                <span className="text-orange-700 font-bold">₹{formData.price}</span>{' '}
+                <span className="text-orange-700">({formData.discountPercentage}% OFF)</span>
               </p>
             </div>
           )}

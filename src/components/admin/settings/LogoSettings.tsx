@@ -13,7 +13,7 @@ const LogoSettings: React.FC = () => {
     showUnderline: true,
     underlineColor: '#F0B0B0',
     fontSize: 42,
-    fontFamily: 'Brush Script MT'
+    fontFamily: 'Inter'
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -174,7 +174,7 @@ const LogoSettings: React.FC = () => {
       showUnderline: true,
       underlineColor: '#F0B0B0',
       fontSize: 42,
-      fontFamily: 'Brush Script MT'
+      fontFamily: 'Inter'
     });
     setUploadedFile(null);
   };
@@ -211,7 +211,7 @@ const LogoSettings: React.FC = () => {
             <div><input type="text" value={logoSettings.logoText} onChange={(e) => setLogoSettings(prev => ({ ...prev, logoText: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Enter logo text" /></div>
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700">Font Family</label>
-              <select value={logoSettings.fontFamily} onChange={(e) => setLogoSettings(prev => ({ ...prev, fontFamily: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"><option value="Brush Script MT">Brush Script MT</option><option value="Dancing Script">Dancing Script</option><option value="Pacifico">Pacifico</option><option value="Satisfy">Satisfy</option><option value="Kalam">Kalam</option></select>
+              <select value={logoSettings.fontFamily} onChange={(e) => setLogoSettings(prev => ({ ...prev, fontFamily: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"><option value="Inter">Inter</option><option value="Brush Script MT">Brush Script MT</option><option value="Dancing Script">Dancing Script</option><option value="Pacifico">Pacifico</option><option value="Satisfy">Satisfy</option><option value="Kalam">Kalam</option></select>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700">Font Size (px)</label>
@@ -249,7 +249,3 @@ const LogoSettings: React.FC = () => {
 };
 
 export default LogoSettings;
-
-
-
-

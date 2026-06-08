@@ -188,7 +188,7 @@ const ForgotPasswordForm: React.FC = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full px-3 py-3 sm:py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm sm:text-base"
+                    className="block w-full px-3 py-3 sm:py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors text-sm sm:text-base"
                     placeholder="Enter your email address"
                   />
                 </div>

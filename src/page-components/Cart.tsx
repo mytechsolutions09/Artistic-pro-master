@@ -276,14 +276,14 @@ const CartPage: React.FC = () => {
                             
                             return itemOriginalPrice && itemOriginalPrice > item.selectedPrice ? (
                               <>
-                                <p className="text-sm text-gray-500 line-through">
+                                <p className="text-sm text-gray-600 line-through">
                                   {formatUIPrice(itemOriginalPrice, 'INR')}
                                 </p>
                                 <p className="font-bold text-gray-900 text-lg md:text-xl leading-none">
                                   {formatUIPrice(item.selectedPrice, 'INR')}
                                 </p>
                                 {item.product.discountPercentage && (
-                                  <p className="text-xs text-green-600 font-medium">
+                                  <p className="text-xs text-green-700 font-medium">
                                     {item.product.discountPercentage}% OFF
                                   </p>
                                 )}
@@ -359,7 +359,7 @@ const CartPage: React.FC = () => {
 
                 {/* Discount */}
                 {(productDiscount > 0 || discount > 0) && (
-                  <div className="flex justify-between text-sm text-green-600">
+                  <div className="flex justify-between text-sm text-green-700">
                     <span>Discount</span>
                     <span className="font-medium">-{formatUIPrice(productDiscount + discount, 'INR')}</span>
                   </div>

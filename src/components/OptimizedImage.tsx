@@ -114,6 +114,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
           alt={alt}
           className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}
           loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
           decoding="async"
           onLoad={handleLoad}
           onError={handleError}

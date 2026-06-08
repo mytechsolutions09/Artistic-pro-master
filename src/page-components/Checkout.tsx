@@ -1019,10 +1019,10 @@ const Checkout: React.FC = () => {
                         
                         return itemOriginalPrice && itemOriginalPrice > item.selectedPrice ? (
                           <div>
-                            <p className="text-xs text-gray-400 line-through">{formatUIPrice(itemOriginalPrice, 'INR')}</p>
+                            <p className="text-xs text-gray-600 line-through">{formatUIPrice(itemOriginalPrice, 'INR')}</p>
                             <p className="font-semibold text-gray-800 text-xs">{formatUIPrice(item.selectedPrice, 'INR')}</p>
                             {item.product.discountPercentage && (
-                              <p className="text-xs text-green-600 font-medium">{item.product.discountPercentage}% OFF</p>
+                              <p className="text-xs text-green-700 font-medium">{item.product.discountPercentage}% OFF</p>
                             )}
                           </div>
                         ) : (

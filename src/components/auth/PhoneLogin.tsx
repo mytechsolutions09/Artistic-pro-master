@@ -146,7 +146,7 @@ export default function PhoneLogin({ onSuccess, onError }: PhoneLoginProps) {
                 value={phoneNumber}
                 onChange={handlePhoneChange}
                 placeholder="9876543210"
-                className="w-full pl-20 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:border-transparent transition-colors text-sm"
+                className="w-full pl-20 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors text-sm"
                 required
                 disabled={loading}
               />
@@ -162,7 +162,7 @@ export default function PhoneLogin({ onSuccess, onError }: PhoneLoginProps) {
           <button
             type="submit"
             disabled={loading || phoneNumber.length !== 10}
-            className="w-full bg-teal-600 text-white py-2 rounded-md text-sm font-medium hover:bg-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full flex justify-center items-center space-x-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
             {loading ? (
               <>
@@ -197,7 +197,7 @@ export default function PhoneLogin({ onSuccess, onError }: PhoneLoginProps) {
               <p className="text-sm font-medium text-gray-900">+91 {phoneNumber}</p>
               <button
                 onClick={handleChangeNumber}
-                className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                className="text-xs text-black hover:text-gray-700 font-medium transition-colors"
               >
                 Change
               </button>
@@ -215,7 +215,7 @@ export default function PhoneLogin({ onSuccess, onError }: PhoneLoginProps) {
                 onChange={handleOtpChange}
                 placeholder="123456"
                 maxLength={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:border-transparent transition-colors text-center text-lg tracking-widest font-mono"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors text-center text-lg tracking-widest font-mono"
                 required
                 disabled={loading}
                 autoFocus
@@ -231,7 +231,7 @@ export default function PhoneLogin({ onSuccess, onError }: PhoneLoginProps) {
             <button
               type="submit"
               disabled={loading || otp.length !== 6}
-              className="w-full bg-teal-600 text-white py-2 rounded-md text-sm font-medium hover:bg-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="w-full flex justify-center items-center space-x-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {loading ? (
                 <>
@@ -257,7 +257,7 @@ export default function PhoneLogin({ onSuccess, onError }: PhoneLoginProps) {
               <button
                 onClick={handleResendOTP}
                 disabled={loading}
-                className="text-xs text-teal-600 hover:text-teal-700 font-medium inline-flex items-center space-x-1"
+                className="text-xs text-black hover:text-gray-700 font-medium inline-flex items-center space-x-1 transition-colors"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Resend OTP</span>
@@ -269,8 +269,3 @@ export default function PhoneLogin({ onSuccess, onError }: PhoneLoginProps) {
     </div>
   );
 }
-
-
-
-
-

@@ -4,9 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from '@/src/compat/router';
 import { supabase } from '../../services/supabaseService';
 import { Eye, EyeOff, AlertCircle, Mail, Smartphone } from 'lucide-react';
-import { useAppearance } from '../../contexts/AppearanceContext';
 import AuthIllustration from './AuthIllustration';
-import ArtLoader from './ArtLoader';
 import PhoneLogin from './PhoneLogin';
 import CloudflareTurnstile from './CloudflareTurnstile';
 import { clearDebugOnLogin } from '../../utils/debugCleanup';
@@ -24,7 +22,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const { loading: appearanceLoading } = useAppearance();
 
   // Check if Turnstile is enabled
   const turnstileEnabled = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_ENABLED === 'true';
@@ -109,14 +106,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Show loading state without white container
-  if (appearanceLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <ArtLoader />
-      </div>
-    );
-  }
+
 
   return (
     <div 
@@ -167,23 +157,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                     <span>Email</span>
                   </div>
                 </button>
-                {/* Phone tab hidden temporarily - functionality preserved */}
-                {false && (
-                  <button
-                    type="button"
-                    onClick={() => setLoginMethod('phone')}
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                      loginMethod === 'phone'
-                        ? 'bg-white text-black shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <Smartphone className="w-4 h-4" />
-                      <span>Phone</span>
-                    </div>
-                  </button>
-                )}
+                {/* Phone tab enabled */}
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('phone')}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                    loginMethod === 'phone'
+                      ? 'bg-white text-black shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Smartphone className="w-4 h-4" />
+                    <span>Phone</span>
+                  </div>
+                </button>
               </div>
 
               {/* Email Login Form */}
@@ -201,7 +189,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors text-sm"
                     placeholder="Enter your email"
                   />
                 </div>
@@ -219,7 +207,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm"
+                      className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors text-sm"
                       placeholder="Enter your password"
                     />
                     <button

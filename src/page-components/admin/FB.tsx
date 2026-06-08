@@ -667,7 +667,7 @@ const FB: React.FC = () => {
                         <td className="px-4 py-2">
                           <div className="text-xs font-medium text-gray-900">₹{item.price}</div>
                           {item.original_price && (
-                            <div className="text-xs text-gray-500 line-through">₹{item.original_price}</div>
+                            <div className="text-xs text-gray-600 line-through">₹{item.original_price}</div>
                           )}
                         </td>
                         <td className="px-4 py-2 text-xs text-gray-900">{item.stock_quantity}</td>

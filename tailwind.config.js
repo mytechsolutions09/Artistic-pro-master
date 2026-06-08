@@ -22,9 +22,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        handwriting: ['Dancing Script', 'cursive', 'system-ui'],
-        display: ['Playfair Display', 'serif']
+        sans: ['var(--font-inter)'],
       },
       spacing: {
         '18': '4.5rem',

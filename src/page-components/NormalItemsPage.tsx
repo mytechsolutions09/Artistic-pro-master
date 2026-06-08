@@ -481,7 +481,7 @@ const NormalItemsPage: React.FC = () => {
                           <div className="text-lg sm:text-xl font-semibold text-black font-sans font-normal">
                             {formatUIPrice(getCurrentPrice(), 'INR')}
                           </div>
-                          <div className="text-xs text-gray-500 line-through font-sans font-normal">
+                          <div className="text-xs text-gray-600 line-through font-sans font-normal">
                             {formatUIPrice(item.original_price, 'INR')}
                           </div>
                         </div>

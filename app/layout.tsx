@@ -2,6 +2,13 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import ClientShell from './client-shell';
 import './globals.css';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -51,18 +58,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN" className="bg-[#ffffff]">
+    <html lang="en-IN" className={`${inter.variable} bg-[#ffffff]`}>
       <head>
         {/* Meta Domain Verification */}
         <meta name="facebook-domain-verification" content="bp9lo0nxdrgb7znneqsp73r4zyf6or" />
         <meta name="p:domain_verify" content="6c59611e1883982d41b43c4e0a94dfdf" />
-        {/* Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Dancing+Script:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         {/* Structured Data */}
         <script
           type="application/ld+json"
@@ -71,11 +71,47 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               '@context': 'https://schema.org',
               '@graph': [
                 {
-                  '@type': 'Organization',
-                  '@id': 'https://lurevi.in/#organization',
+                  "@type": "Organization",
+                  "@id": "https://lurevi.in/#organization",
                   name: 'Lurevi',
                   url: 'https://lurevi.in',
                   logo: 'https://lurevi.in/logo.png',
+                },
+                {
+                  "@type": "Store",
+                  "@id": "https://lurevi.in/#store",
+                  name: 'Lurevi',
+                  description: 'Discover curated digital art, premium wall prints, and luxury collections crafted for modern spaces at Lurevi. Free shipping across India.',
+                  url: 'https://lurevi.in',
+                  logo: 'https://lurevi.in/logo.png',
+                  image: 'https://lurevi.in/logo.png',
+                  telephone: '+91 9625788455',
+                  email: 'support@lurevi.com',
+                  address: {
+                    "@type": "PostalAddress",
+                    streetAddress: 'WZ 14 Janakpuri',
+                    addressLocality: 'New Delhi',
+                    postalCode: '110058',
+                    addressCountry: 'IN'
+                  },
+                  openingHoursSpecification: [
+                    {
+                      "@type": "OpeningHoursSpecification",
+                      dayOfWeek: [
+                        'Monday',
+                        'Tuesday',
+                        'Wednesday',
+                        'Thursday',
+                        'Friday'
+                      ],
+                      opens: '09:00',
+                      closes: '18:00'
+                    }
+                  ],
+                  sameAs: [
+                    'https://www.facebook.com/lurevi.in',
+                    'https://www.instagram.com/lurevi.in/'
+                  ]
                 },
                 {
                   '@type': 'WebSite',

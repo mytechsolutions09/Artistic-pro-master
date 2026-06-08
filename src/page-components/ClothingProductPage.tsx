@@ -460,7 +460,7 @@ const ClothingProductPage: React.FC = () => {
                 
                 {/* Brand */}
                 {product.brand && (
-                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded font-sans font-normal" style={{ backgroundColor: '#F5F5DC', color: '#ff6e00' }}>
+                  <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded font-sans font-normal" style={{ backgroundColor: '#F5F5DC', color: '#c2410c' }}>
                     {product.brand}
                   </span>
                 )}
@@ -469,14 +469,14 @@ const ClothingProductPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 {product.originalPrice && product.originalPrice > product.price ? (
                   <>
-                    <p className="text-lg text-gray-500 line-through font-sans font-normal">
+                    <p className="text-lg text-gray-600 line-through font-sans font-normal">
                       {formatUIPrice(product.originalPrice)}
                     </p>
                     <p className="text-xl font-semibold font-sans font-normal" style={{ color: '#ff6e00' }}>
                       {formatUIPrice(product.price)}
                     </p>
                     {product.discountPercentage && (
-                      <span className="px-2 py-1 text-sm font-semibold text-white rounded font-sans font-normal" style={{ backgroundColor: '#ff6e00' }}>
+                      <span className="px-2 py-1 text-sm font-semibold text-white rounded font-sans font-normal" style={{ backgroundColor: '#c2410c' }}>
                         {product.discountPercentage}% OFF
                       </span>
                     )}
@@ -1173,7 +1173,7 @@ const ClothingProductPage: React.FC = () => {
                           <div className="flex items-center space-x-2">
                             <span className="text-sm font-semibold text-gray-900 font-sans font-normal">{formatUIPrice(relatedProduct.price, 'INR')}</span>
                             {'originalPrice' in relatedProduct && relatedProduct.originalPrice && relatedProduct.originalPrice > relatedProduct.price && (
-                              <span className="text-xs text-gray-500 line-through font-sans font-normal">{formatUIPrice(relatedProduct.originalPrice, 'INR')}</span>
+                              <span className="text-xs text-gray-600 line-through font-sans font-normal">{formatUIPrice(relatedProduct.originalPrice, 'INR')}</span>
                             )}
                           </div>
                         </div>

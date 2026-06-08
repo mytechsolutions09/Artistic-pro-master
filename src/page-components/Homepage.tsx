@@ -922,11 +922,11 @@ const Homepage: React.FC = () => {
                             <div className="text-base font-semibold text-black font-sans font-normal">
                               {formatUIPrice(product.price, 'INR')}
                             </div>
-                            <div className="text-xs text-green-600 font-semibold font-sans font-normal">
+                            <div className="text-xs text-green-700 font-semibold font-sans font-normal">
                               {product.discountPercentage}% OFF
                             </div>
                           </div>
-                          <div className="text-xs text-gray-400 line-through font-sans font-normal">
+                          <div className="text-xs text-gray-600 line-through font-sans font-normal">
                             {formatUIPrice(product.originalPrice, 'INR')}
                           </div>
                         </div>
@@ -1012,11 +1012,11 @@ const Homepage: React.FC = () => {
                             <div className="text-base font-semibold text-black font-sans font-normal">
                               {formatUIPrice(product.price, 'INR')}
                             </div>
-                            <div className="text-xs text-green-600 font-semibold font-sans font-normal">
+                            <div className="text-xs text-green-700 font-semibold font-sans font-normal">
                               {product.discountPercentage}% OFF
                             </div>
                           </div>
-                          <div className="text-xs text-gray-400 line-through font-sans font-normal">
+                          <div className="text-xs text-gray-600 line-through font-sans font-normal">
                             {formatUIPrice(product.originalPrice, 'INR')}
                           </div>
                         </div>

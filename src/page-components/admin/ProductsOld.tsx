@@ -2200,7 +2200,7 @@ const Products: React.FC = () => {
                         {product.originalPrice && product.originalPrice > product.price ? (
                           <>
                             <div className="text-green-600 font-bold">{formatAdminPrice(product.price)}</div>
-                            <div className="text-gray-500 line-through text-xs">{formatAdminPrice(product.originalPrice)}</div>
+                            <div className="text-gray-600 line-through text-xs">{formatAdminPrice(product.originalPrice)}</div>
                             <div className="text-pink-600 text-xs font-medium">
                               {product.discountPercentage ? `${product.discountPercentage}% OFF` : 'Discounted'}
                             </div>
@@ -2325,7 +2325,7 @@ const Products: React.FC = () => {
                     {product.originalPrice && product.originalPrice > product.price ? (
                       <>
                         <div className="text-green-600 font-bold text-lg">{formatAdminPrice(product.price)}</div>
-                        <div className="text-gray-500 line-through text-sm">{formatAdminPrice(product.originalPrice)}</div>
+                        <div className="text-gray-600 line-through text-sm">{formatAdminPrice(product.originalPrice)}</div>
                         <div className="text-pink-600 text-xs font-medium">
                           {product.discountPercentage ? `${product.discountPercentage}% OFF` : 'Discounted'}
                         </div>
@@ -2452,7 +2452,7 @@ const Products: React.FC = () => {
                       {viewingProduct.originalPrice && viewingProduct.originalPrice > viewingProduct.price ? (
                         <div className="space-y-1">
                           <p className="text-xl font-bold text-green-600">{formatAdminPrice(viewingProduct.price)}</p>
-                          <p className="text-sm text-gray-500 line-through">{formatAdminPrice(viewingProduct.originalPrice)}</p>
+                          <p className="text-sm text-gray-600 line-through">{formatAdminPrice(viewingProduct.originalPrice)}</p>
                           <p className="text-xs text-pink-600 font-medium">
                             {viewingProduct.discountPercentage ? `${viewingProduct.discountPercentage}% OFF` : 'Discounted'}
                           </p>

@@ -39,6 +39,7 @@ const UserDashboard: React.FC = () => {
     firstName: user?.user_metadata?.full_name || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || user?.email?.split('@')[0] || '',
     lastName: '',
     email: user?.email || '',
+    phone: user?.phone || user?.user_metadata?.phone || '',
     bio: user?.user_metadata?.bio || 'Welcome to your dashboard!',
     location: user?.user_metadata?.location || '',
     joinDate: user?.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -213,6 +214,7 @@ const UserDashboard: React.FC = () => {
         firstName: user.user_metadata?.full_name || `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || nameParts.join(' ') || '',
         lastName: '',
         email: user.email || '',
+        phone: user.phone || user.user_metadata?.phone || '',
         bio: user.user_metadata?.bio || 'Welcome to your dashboard!',
         location: user.user_metadata?.location || '',
         joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -1886,11 +1888,13 @@ const UserDashboard: React.FC = () => {
         const fullName = `${firstName} ${lastName}`.trim();
         
         const { error } = await supabase.auth.updateUser({
+          phone: userProfile.phone || undefined,
           data: {
             full_name: fullName,
             first_name: firstName,
             last_name: lastName,
-            bio: userProfile.bio
+            bio: userProfile.bio,
+            phone: userProfile.phone
           }
         });
 
@@ -2007,6 +2011,7 @@ const UserDashboard: React.FC = () => {
                         firstName: user?.user_metadata?.full_name || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || nameParts.join(' ') || '',
                         lastName: '',
                         email: user?.email || '',
+                        phone: user?.phone || user?.user_metadata?.phone || '',
                         location: user?.user_metadata?.location || '',
                         bio: user?.user_metadata?.bio || 'Welcome to your dashboard!',
                         joinDate: user?.created_at || new Date().toISOString(),
@@ -2031,7 +2036,7 @@ const UserDashboard: React.FC = () => {
           </div>
           
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 font-sans font-normal">Name</label>
                 <input
@@ -2069,6 +2074,23 @@ const UserDashboard: React.FC = () => {
                   required
                 />
                 {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-sans font-normal">Mobile Number</label>
+                <input
+                  type="tel"
+                  value={userProfile.phone}
+                  onChange={(e) => {
+                    setUserProfile({ ...userProfile, phone: e.target.value });
+                  }}
+                  disabled={!isEditing}
+                  className={`w-full px-3 py-2 border rounded-lg transition-colors ${
+                    isEditing 
+                      ? 'border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-200' 
+                      : 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                  }`}
+                  placeholder="Mobile Number"
+                />
               </div>
             </div>
 

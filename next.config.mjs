@@ -4,6 +4,7 @@ const nextConfig = {
   // On Windows, resolving that path can fail; externalizing uses node_modules instead.
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js', '@supabase/ssr'],
+    optimizeCss: true,
   },
 
   // Vite (esbuild) didn't type-check at build time — pre-existing TS errors exist.

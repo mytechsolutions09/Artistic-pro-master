@@ -39,14 +39,21 @@ export const optimizeImageUrl = (
     }
     // Optimize Supabase storage images
     else if (url.includes('supabase')) {
-      const urlObj = new URL(url);
-      if (width) {
-        urlObj.searchParams.set('width', width.toString());
+      const isPublicStorage = url.includes('/storage/v1/object/public/');
+      const transformedUrl = isPublicStorage 
+        ? url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
+        : url;
+      
+      const urlObj = new URL(transformedUrl);
+      if (width || isPublicStorage) {
+        const targetWidth = width || 850;
+        urlObj.searchParams.set('width', targetWidth.toString());
       }
       urlObj.searchParams.set('quality', quality.toString());
-      // Request WebP output where supported by Supabase image transforms.
       urlObj.searchParams.set('format', 'webp');
-      urlObj.searchParams.set('resize', 'contain');
+      if (!isPublicStorage) {
+        urlObj.searchParams.set('resize', 'contain');
+      }
       optimizedUrl = urlObj.toString();
     }
     // Optimize other image URLs (Cloudinary, Imgix, etc.)

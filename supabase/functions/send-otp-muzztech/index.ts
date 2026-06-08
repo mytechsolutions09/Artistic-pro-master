@@ -80,17 +80,17 @@ serve(async (req) => {
         )
       }
 
-      // Send SMS via MSG91
-      const msg91AuthKey = Deno.env.get('MSG91_AUTH_KEY')
-      const msg91SenderId = Deno.env.get('MSG91_SENDER_ID') || 'MSGIND'
-      const msg91TemplateId = Deno.env.get('MSG91_TEMPLATE_ID')
+      // Send SMS via Muzztech
+      const muzztechApiKey = Deno.env.get('MUZZTECH_API_KEY')
+      const muzztechSenderId = Deno.env.get('MUZZTECH_SENDER_ID') || 'LUREVI'
+      const muzztechTemplateId = Deno.env.get('MUZZTECH_TEMPLATE_ID') || '1707178091427118894'
 
-      if (!msg91AuthKey) {
-        console.error('MSG91_AUTH_KEY not configured')
+      if (!muzztechApiKey) {
+        console.error('MUZZTECH_API_KEY not configured')
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'SMS service not configured' 
+            error: 'SMS service API key not configured' 
           }),
           { 
             status: 500, 
@@ -100,45 +100,24 @@ serve(async (req) => {
       }
 
       const phoneWithoutPlus = formattedPhone.replace('+', '')
+      const messageText = `Your OTP ${otpCode} to authenticate your login. Never share your OTP with anyone - https://lurevi.in LUREVI`
       
       try {
-        // MSG91 API call
-        const msg91Response = await fetch(
-          `https://control.msg91.com/api/v5/otp?otp=${otpCode}&mobile=${phoneWithoutPlus}&authkey=${msg91AuthKey}&template_id=${msg91TemplateId}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          }
-        )
+        // Muzztech API GET request (highly compatible with Indian SMS gateway specifications)
+        const muzztechUrl = `https://connect.muzztech.com/api/sms/send?api_key=${muzztechApiKey}&sender_name=${muzztechSenderId}&phone_number=${phoneWithoutPlus}&message=${encodeURIComponent(messageText)}&template_id=${muzztechTemplateId}`
+        
+        const muzztechResponse = await fetch(muzztechUrl, {
+          method: 'GET'
+        })
 
-        const msg91Data = await msg91Response.json()
+        const responseText = await muzztechResponse.text()
+        console.log('Muzztech API response:', responseText)
 
-        if (!msg91Response.ok || msg91Data.type === 'error') {
-          console.error('MSG91 error:', msg91Data)
-          
-          // Clean up OTP record
-          await supabaseClient
-            .from('phone_otp')
-            .delete()
-            .eq('phone', formattedPhone)
-            .eq('otp', otpCode)
-
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Failed to send SMS. Please try again.' 
-            }),
-            { 
-              status: 500, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
-          )
+        if (!muzztechResponse.ok) {
+          throw new Error(`HTTP Error: ${muzztechResponse.status} - ${responseText}`)
         }
 
         // SMS sent successfully
-
         return new Response(
           JSON.stringify({ 
             success: true,
@@ -150,7 +129,7 @@ serve(async (req) => {
         )
 
       } catch (error: any) {
-        console.error('MSG91 request error:', error)
+        console.error('Muzztech request error:', error)
         
         // Clean up OTP record
         await supabaseClient
@@ -162,7 +141,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Failed to send SMS. Please check your network connection.' 
+            error: 'Failed to send SMS. Please try again.' 
           }),
           { 
             status: 500, 
@@ -297,19 +276,6 @@ serve(async (req) => {
         userId = newUser.user.id
       }
 
-      // Generate session token for the user
-      const { data: sessionData, error: sessionError } = await supabaseClient.auth.admin.generateLink({
-        type: 'magiclink',
-        email: `phone_${formattedPhone.replace('+', '')}@temp.com`,
-        options: {
-          redirectTo: ''
-        }
-      })
-
-      if (sessionError) {
-        console.error('Error generating session:', sessionError)
-      }
-
       return new Response(
         JSON.stringify({ 
           success: true,
@@ -349,4 +315,3 @@ serve(async (req) => {
     )
   }
 })
-

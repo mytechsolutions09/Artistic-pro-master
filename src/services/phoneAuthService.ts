@@ -12,7 +12,7 @@ export interface PhoneAuthResult {
 class PhoneAuthService {
   private readonly COUNTRY_CODE = '+91'; // India
   private readonly PHONE_REGEX = /^[6-9]\d{9}$/; // Indian mobile numbers start with 6-9
-  private readonly EDGE_FUNCTION_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-otp-msg91`;
+  private readonly EDGE_FUNCTION_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-otp-muzztech`;
 
   /**
    * Format phone number to E.164 format (+91XXXXXXXXXX)
@@ -54,7 +54,7 @@ class PhoneAuthService {
   }
 
   /**
-   * Send OTP to phone number via MSG91
+   * Send OTP to phone number via Muzztech Edge Function
    */
   async sendOTP(phone: string): Promise<PhoneAuthResult> {
     try {
@@ -69,17 +69,13 @@ class PhoneAuthService {
       // Format phone number
       const formattedPhone = this.formatPhoneNumber(phone);
       
-      // Sending OTP via MSG91
-
-      // Get current session for authorization
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Call Supabase Edge Function to send OTP via MSG91
+      // Call Supabase Edge Function to send OTP via Muzztech
       const response = await fetch(this.EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
         },
         body: JSON.stringify({
           phone: formattedPhone,
@@ -90,7 +86,7 @@ class PhoneAuthService {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        console.error('Error sending OTP via MSG91:', result);
+        console.error('Error sending OTP via Muzztech:', result);
         
         // Handle specific errors
         if (result.error?.includes('rate limit') || result.error?.includes('Too many')) {
@@ -107,7 +103,6 @@ class PhoneAuthService {
       }
 
       // OTP sent successfully
-
       return {
         success: true,
         session: result
@@ -122,7 +117,7 @@ class PhoneAuthService {
   }
 
   /**
-   * Verify OTP via MSG91
+   * Verify OTP via Muzztech Edge Function
    */
   async verifyOTP(phone: string, otp: string): Promise<PhoneAuthResult> {
     try {
@@ -144,14 +139,13 @@ class PhoneAuthService {
       // Format phone number
       const formattedPhone = this.formatPhoneNumber(phone);
       
-      // Verifying OTP
-
       // Call Supabase Edge Function to verify OTP
       const response = await fetch(this.EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
         },
         body: JSON.stringify({
           phone: formattedPhone,
@@ -196,7 +190,6 @@ class PhoneAuthService {
       // OTP verified successfully
 
       // After successful OTP verification, sign in the user using phone
-      // This creates or updates the user session in Supabase Auth
       if (result.userId) {
         // Sign in with phone using the verified phone number
         const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
@@ -205,8 +198,6 @@ class PhoneAuthService {
 
         if (authError) {
           console.error('Auth error after OTP verification:', authError);
-        } else {
-          // User signed in successfully
         }
       }
 
@@ -271,8 +262,3 @@ class PhoneAuthService {
 }
 
 export default new PhoneAuthService();
-
-
-
-
-

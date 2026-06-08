@@ -271,7 +271,7 @@ const Header: React.FC = () => {
             <Link 
               to="/" 
               onClick={() => setOptimisticPath('/')}
-              className={`flex flex-col items-center leading-none text-center font-['Inter'] shrink-0 transition-opacity ${isActive('/') ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
+              className={`flex flex-col items-center leading-none text-center font-sans shrink-0 transition-opacity ${isActive('/') ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
             >
               <span className="text-black font-bold uppercase text-2xl">Lurevi</span>
               <span className="text-[9px] sm:text-[10px] text-gray-600 tracking-[0.14em] uppercase mt-0.5">
@@ -345,7 +345,7 @@ const Header: React.FC = () => {
           </div>
 
           {/* Navigation - Desktop Only (lg+) */}
-          <nav className="hidden lg:flex items-center space-x-1">
+          <nav aria-label="Main navigation" className="hidden lg:flex items-center space-x-1">
             {/* Search Icon/Bar - Desktop */}
             <div className={`relative transition-all duration-200 ${isSearchOpen ? 'w-[360px]' : 'w-auto'}`} ref={searchRef}>
               {!isSearchOpen ? (
@@ -356,6 +356,7 @@ const Header: React.FC = () => {
                   }}
                   className="p-2 text-black hover:text-gray-600"
                   title="Search"
+                  aria-label="Search"
                 >
                   <Search className="w-4 h-4" />
                 </button>
@@ -435,6 +436,7 @@ const Header: React.FC = () => {
               to="/favorites" 
               onClick={() => setOptimisticPath('/favorites')}
               className={`p-2 rounded-full transition-colors ${isActive('/favorites') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+              aria-label="Favorites"
             >
               <Heart className="w-4 h-4" />
             </Link>
@@ -485,6 +487,7 @@ const Header: React.FC = () => {
               to="/cart" 
               onClick={() => setOptimisticPath('/cart')}
               className={`relative p-2 rounded-full transition-colors ${isActive('/cart') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+              aria-label="Shopping cart"
             >
               <ShoppingCart className="w-4 h-4" />
               {cartItemCount > 0 && (
@@ -497,6 +500,7 @@ const Header: React.FC = () => {
               to={user ? "/dashboard" : "/sign-in"} 
               onClick={() => setOptimisticPath(user ? "/dashboard" : "/sign-in")}
               className={`p-2 rounded-full transition-colors ${isActive(user ? "/dashboard" : "/sign-in") ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+              aria-label={user ? "Dashboard" : "Sign in"}
             >
               <User className="w-4 h-4" />
             </Link>
@@ -512,6 +516,7 @@ const Header: React.FC = () => {
                 }}
                 className="p-2 text-black hover:text-gray-600"
                 title="Search"
+                aria-label="Search"
               >
                 <Search className="w-4 h-4" />
               </button>
@@ -591,6 +596,7 @@ const Header: React.FC = () => {
               to="/cart" 
               onClick={() => setOptimisticPath('/cart')}
               className={`relative p-2 rounded-full transition-colors ${isActive('/cart') ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+              aria-label="Shopping cart"
             >
               <ShoppingCart className="w-4 h-4" />
               {cartItemCount > 0 && (
@@ -603,6 +609,7 @@ const Header: React.FC = () => {
               to={user ? "/dashboard" : "/sign-in"} 
               onClick={() => setOptimisticPath(user ? "/dashboard" : "/sign-in")}
               className={`p-2 rounded-full transition-colors ${isActive(user ? "/dashboard" : "/sign-in") ? 'bg-gray-100 text-black' : 'text-black hover:text-gray-600 hover:bg-gray-50'}`}
+              aria-label={user ? "Dashboard" : "Sign in"}
             >
               <User className="w-4 h-4" />
             </Link>
@@ -612,6 +619,7 @@ const Header: React.FC = () => {
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="lg:hidden p-2 text-black hover:text-gray-600"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >
             {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -691,7 +699,7 @@ const Header: React.FC = () => {
                 )}
               </div>
             </div>
-            <nav className="flex flex-col space-y-3">
+            <nav aria-label="Mobile navigation" className="flex flex-col space-y-3">
               <Link
                 to="/favorites"
                 className={`flex items-center py-2 font-sans font-normal transition-colors ${isActive('/favorites') ? 'bg-gray-100 text-black px-2 rounded-md' : 'text-black hover:text-gray-600'}`}

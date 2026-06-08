@@ -147,9 +147,9 @@ export class LogoService {
   <defs>
     <style>
       .logo-text {
-        font-family: '${settings.font_family}', 'Lucida Handwriting', 'Comic Sans MS', cursive, sans-serif;
+        font-family: '${settings.font_family}', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: ${settings.font_size}px;
-        font-weight: 400;
+        font-weight: ${settings.font_family === 'Inter' ? 700 : 400};
         fill: ${settings.logo_color};
         stroke: none;
       }
@@ -233,7 +233,3 @@ export class LogoService {
     }
   }
 }
-
-
-
-

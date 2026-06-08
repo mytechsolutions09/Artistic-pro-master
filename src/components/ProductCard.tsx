@@ -81,17 +81,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       onClick={handleCardClick}
     >
       {/* Image Container */}
-      <div className="relative overflow-hidden rounded-none h-80">
+      <div className="relative overflow-hidden rounded-none aspect-[4/5] bg-white flex items-center justify-center">
         {/* Main Image */}
         {product.images && product.images.length > 0 && product.images[0] ? (
-          <OptimizedImage
+          <img
             src={product.images[0]}
             alt={product.title}
-            className="w-full object-cover transition-transform duration-300 h-80 group-hover:scale-102"
-            width={400}
+            className="max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
+            style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
           />
         ) : (
-          <div className="w-full h-80 flex items-center justify-center bg-gray-100">
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
             <div className="text-center text-gray-400">
               <svg className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -137,11 +139,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   <div className="text-sm font-bold text-gray-900">
                     {formatUIPrice(getCurrentPrice(), 'INR')}
                   </div>
-                  <div className="text-xs text-gray-400 line-through">
+                  <div className="text-xs text-gray-600 line-through">
                     {formatUIPrice(product.originalPrice, 'INR')}
                   </div>
                 </div>
-                <div className="text-xs text-green-600 font-semibold">
+                <div className="text-xs text-green-700 font-semibold">
                   {product.discountPercentage}% OFF
                 </div>
               </div>

@@ -367,7 +367,7 @@ const Normal: React.FC = () => {
                           <td className="whitespace-nowrap px-3 py-2">
                             <div className="text-xs font-medium tabular-nums text-gray-900">₹{item.price}</div>
                             {item.original_price != null && item.discount_percentage != null && (
-                              <div className="text-[10px] text-gray-400 line-through">₹{item.original_price}</div>
+                              <div className="text-[10px] text-gray-600 line-through">₹{item.original_price}</div>
                             )}
                           </td>
                           <td className="whitespace-nowrap px-3 py-2">

@@ -131,43 +131,47 @@ const BentoHeroSection: React.FC<BentoHeroSectionProps> = ({ cards }) => {
     card: BentoCard,
     extraClass: string = '',
     style?: React.CSSProperties
-  ) => (
-    <Link
-      key={card.id}
-      to={card.link}
-      className={`relative overflow-hidden rounded-2xl group h-full ${extraClass}`}
-      style={{
-        ...(!card.image ? { backgroundColor: card.bgColor || '#f5f5f5' } : {}),
-        ...(style || {}),
-      }}
-    >
-      {card.image && (
-        <OptimizedImage
-          src={card.image}
-          alt={card.title}
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          // Keep images close to their real rendered dimensions to reduce download size.
-          // Desktop grid: 3 columns, so col-span-2 tiles are ~2x the width of col-span-1.
-          width={clampSpan(card.desktopColSpan, 3) >= 2 ? 850 : 450}
-          quality={70}
-        />
-      )}
-      {!card.image && (
-        <div className="absolute inset-0" style={{ backgroundColor: card.bgColor || '#f0f0f0' }} />
-      )}
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-      {/* Label */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-        <h3 className="text-white font-bold text-sm md:text-base uppercase tracking-widest font-sans leading-tight">
-          {card.title}
-        </h3>
-        {card.subtitle && (
-          <p className="text-white/70 text-xs mt-1 font-sans font-normal">{card.subtitle}</p>
+  ) => {
+    const isFirstCard = card.id === normalizedCards[0]?.id;
+    return (
+      <Link
+        key={card.id}
+        to={card.link}
+        className={`relative overflow-hidden rounded-2xl group h-full ${extraClass}`}
+        style={{
+          ...(!card.image ? { backgroundColor: card.bgColor || '#f5f5f5' } : {}),
+          ...(style || {}),
+        }}
+      >
+        {card.image && (
+          <OptimizedImage
+            src={card.image}
+            alt={card.title}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            // Keep images close to their real rendered dimensions to reduce download size.
+            // Desktop grid: 3 columns, so col-span-2 tiles are ~2x the width of col-span-1.
+            width={clampSpan(card.desktopColSpan, 3) >= 2 ? 850 : 450}
+            quality={70}
+            priority={isFirstCard}
+          />
         )}
-      </div>
-    </Link>
-  );
+        {!card.image && (
+          <div className="absolute inset-0" style={{ backgroundColor: card.bgColor || '#f0f0f0' }} />
+        )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+        {/* Label */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
+          <h3 className="text-white font-bold text-sm md:text-base uppercase tracking-widest font-sans leading-tight">
+            {card.title}
+          </h3>
+          {card.subtitle && (
+            <p className="text-white/70 text-xs mt-1 font-sans font-normal">{card.subtitle}</p>
+          )}
+        </div>
+      </Link>
+    );
+  };
 
   return (
     <section className="pt-3 pb-8 px-4 bg-[#ffffff]">

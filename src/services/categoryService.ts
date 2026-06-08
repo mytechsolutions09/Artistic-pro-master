@@ -314,7 +314,7 @@ class CategoryService {
             name: cat.name,
             slug: cat.slug,
             description: cat.description || '',
-            image: cat.image || '',
+            image: cat.image || cat.image_url || '',
             image_path: cat.image_path || undefined, // Add image_path
             count: cat.product_count || cat.count || 0,
             status: cat.status || 'active',
@@ -372,7 +372,7 @@ class CategoryService {
           name: supabaseCategory.name,
           slug: supabaseCategory.slug,
           description: supabaseCategory.description || '',
-          image: supabaseCategory.image || '',
+          image: supabaseCategory.image || supabaseCategory.image_url || '',
           image_path: supabaseCategory.image_path || undefined, // Add image_path
           count: supabaseCategory.product_count || 0,
           status: supabaseCategory.status || 'active',
