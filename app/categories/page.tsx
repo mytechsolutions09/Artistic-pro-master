@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import CategoriesPage from '@/src/page-components/CategoriesPage';
 
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
   title: 'Art Categories | Lurevi',
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function Page() {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data: categories } = await supabase
     .from('categories')

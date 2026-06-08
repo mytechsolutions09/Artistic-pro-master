@@ -106,6 +106,34 @@ export async function generateStaticParams() {
 /** Always fetch fresh post so cover image edits from Admin appear immediately. */
 export const dynamic = 'force-dynamic';
 
+function extractFaqs(content: string): Array<{ question: string; answer: string }> {
+  const faqs: Array<{ question: string; answer: string }> = [];
+  try {
+    const faqItemRegex = /<div class="faq-item">([\s\S]*?)<\/div>/g;
+    let match;
+    while ((match = faqItemRegex.exec(content)) !== null) {
+      const itemContent = match[1];
+      const questionMatch = itemContent.match(/<strong>([\s\S]*?)<\/strong>/);
+      const paragraphs = [...itemContent.matchAll(/<p>([\s\S]*?)<\/p>/g)].map(m => m[1]);
+      
+      const question = questionMatch ? questionMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+      let answer = '';
+      if (paragraphs.length >= 2) {
+        answer = paragraphs[1].replace(/<[^>]+>/g, '').trim();
+      } else if (paragraphs.length === 1) {
+        answer = paragraphs[0].replace(/<strong>[\s\S]*?<\/strong>/, '').replace(/<[^>]+>/g, '').trim();
+      }
+
+      if (question && answer) {
+        faqs.push({ question, answer });
+      }
+    }
+  } catch (err) {
+    console.error('Failed to parse FAQs from content:', err);
+  }
+  return faqs;
+}
+
 export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
@@ -129,9 +157,26 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     keywords: Array.isArray(post.tags) ? post.tags.join(', ') : undefined,
   };
 
+  const faqs = extractFaqs(post.content);
+  const faqSchema = faqs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  } : null;
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      {faqSchema && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      )}
       <Link href="/blog" className="text-sm text-pink-600 hover:text-pink-700">
         Back to Blog
       </Link>

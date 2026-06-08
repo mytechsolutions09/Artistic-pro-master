@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/server';
 import NormalItemRouteHandlerClient from '@/src/page-components/NormalItemRouteHandler';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { categorySlug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data: category } = await supabase
     .from('categories')
@@ -21,11 +21,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Lurevi' };
   }
 
+  // Fetch count of active products in this category
+  const { count } = await supabase
+    .from('products')
+    .select('*', { count: 'exact', head: true })
+    .contains('categories', [categorySlug])
+    .eq('status', 'active');
+
+  const catName = category.name;
+  const capitalizedName = catName.charAt(0).toUpperCase() + catName.slice(1);
+  const titleText = `${capitalizedName} Digital Art Prints — Buy Online India | Lurevi`;
+  const countPrefix = count ? `${count} ` : '';
+  const descText = `Shop ${countPrefix}curated ${catName.toLowerCase()} digital art prints. Premium wall art for modern Indian homes. Free shipping across India.`;
+
   return {
-    title: `${category.name} — Shop on Lurevi`,
-    description:
-      category.description ||
-      `Browse ${category.name} artworks and prints at Lurevi. Unique curated pieces for your space.`,
+    title: titleText,
+    description: descText,
     alternates: {
       canonical: `https://lurevi.in/categories/${categorySlug}`,
       languages: {
@@ -34,10 +45,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     },
     openGraph: {
-      title: `${category.name} | Lurevi`,
-      description:
-        category.description ||
-        `Explore our ${category.name} collection at Lurevi.`,
+      title: titleText,
+      description: descText,
       images: category.image_url ? [{ url: category.image_url }] : [{ url: '/logo.png' }],
     },
   };
@@ -46,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data: categories } = await supabase
     .from('categories')
     .select('slug');
@@ -57,7 +66,7 @@ export async function generateStaticParams() {
 }
 export default async function CategoryPage({ params }: Props) {
   const { categorySlug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   // Fetch category and its products for server-side SEO HTML
   const [{ data: category }, { data: products }] = await Promise.all([

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/server';
 import dynamic from 'next/dynamic';
 
 const HomepageClient = dynamic(() => import('@/src/page-components/Homepage'));
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   // Fetch categories server-side so Google can index them directly in HTML
   const { data: categories } = await supabase
