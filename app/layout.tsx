@@ -6,7 +6,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: {
     default: 'Lurevi | Luxury That Stays With You',
-    template: '%s | Lurevi',
+    template: '%s',
   },
   description:
     'Discover curated digital art, wall prints, and premium collections at Lurevi. Explore categories, browse unique pieces, and shop online.',
