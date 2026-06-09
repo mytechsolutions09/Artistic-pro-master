@@ -1203,7 +1203,7 @@ const UserDashboard: React.FC = () => {
     };
 
     return (
-      <div className="space-y-3 font-['Inter']">
+      <div className="space-y-3" style={{ fontFamily: "'Inter', sans-serif" }}>
         {/* Single Row Header */}
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -1888,7 +1888,6 @@ const UserDashboard: React.FC = () => {
         const fullName = `${firstName} ${lastName}`.trim();
         
         const { error } = await supabase.auth.updateUser({
-          phone: userProfile.phone || undefined,
           data: {
             full_name: fullName,
             first_name: firstName,
@@ -2238,6 +2237,7 @@ const UserDashboard: React.FC = () => {
                     ? 'text-gray-900'
                     : 'text-gray-400 hover:text-gray-600'
                 }`}
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 <div className="w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center flex-shrink-0">
                   <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

@@ -242,9 +242,13 @@ serve(async (req) => {
         .eq('id', otpRecord.id)
 
       // Check if user exists with this phone number
+      const tenDigitPhone = formattedPhone.replace('+91', '')
       const { data: existingUser } = await supabaseClient.auth.admin.listUsers()
       const userWithPhone = existingUser?.users.find(
-        (u) => u.phone === formattedPhone
+        (u) => u.phone === formattedPhone || 
+               u.user_metadata?.phone === formattedPhone || 
+               u.user_metadata?.phone === tenDigitPhone ||
+               u.user_metadata?.phone === phone.replace('+', '')
       )
 
       let userId: string

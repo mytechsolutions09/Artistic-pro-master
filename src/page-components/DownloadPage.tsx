@@ -41,13 +41,20 @@ const DownloadPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!productId || !token || !orderId) {
-      setError('Invalid download link. Missing required parameters.');
-      setLoading(false);
-      return;
+    const timer = setTimeout(() => {
+      if (!productId || !token || !orderId) {
+        setError('Invalid download link. Missing required parameters.');
+        setLoading(false);
+      }
+    }, 500);
+
+    if (productId && token && orderId) {
+      clearTimeout(timer);
+      setError(null);
+      validateAndLoadDownload();
     }
 
-    validateAndLoadDownload();
+    return () => clearTimeout(timer);
   }, [productId, token, orderId]);
 
   const validateAndLoadDownload = async () => {
