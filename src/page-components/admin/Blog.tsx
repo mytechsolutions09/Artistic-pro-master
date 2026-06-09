@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { FileText, ExternalLink, Pencil, Trash2, Loader2, Save, Upload, AlertTriangle, CheckCircle, Info, Sparkles } from 'lucide-react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { FileText, ExternalLink, Pencil, Trash2, Loader2, Save, Upload, AlertTriangle, CheckCircle, Info, Sparkles, Link2 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Link } from '@/src/compat/router';
 import { BlogPost, BlogService, BlogStatus } from '../../services/blogService';
@@ -51,6 +51,8 @@ const BlogAdmin: React.FC = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const [checkingLinks, setCheckingLinks] = useState(false);
   const [brokenLinks, setBrokenLinks] = useState<{url: string, status: string | number}[] | null>(null);
+
+  const contentTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const loadPosts = async () => {
     try {
@@ -500,6 +502,29 @@ const BlogAdmin: React.FC = () => {
     showMessage('success', 'Added 3 related collection links to content.');
   };
 
+  const insertLink = () => {
+    const textarea = contentTextAreaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = form.content.substring(start, end) || 'link text';
+    
+    const url = window.prompt('Enter URL:', 'https://');
+    if (!url) return;
+
+    const linkMarkdown = `[${selectedText}](${url})`;
+    
+    const newContent = form.content.substring(0, start) + linkMarkdown + form.content.substring(end);
+    
+    setForm(prev => ({ ...prev, content: newContent }));
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + 1, start + 1 + selectedText.length);
+    }, 0);
+  };
+
   const publishedCount = useMemo(
     () => posts.filter((post) => post.status === 'published').length,
     [posts]
@@ -658,13 +683,23 @@ const BlogAdmin: React.FC = () => {
               <div className="md:col-span-2">
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs text-gray-600 font-medium">Main Content</label>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewMode(!previewMode)}
-                    className="text-xs text-pink-600 hover:text-pink-700 font-medium bg-pink-50 px-2.5 py-1 rounded transition-colors"
-                  >
-                    {previewMode ? 'Edit Content' : 'Preview Content'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={insertLink}
+                      disabled={previewMode}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium bg-blue-50 px-2.5 py-1 rounded transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <Link2 className="w-3.5 h-3.5" /> Add Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode(!previewMode)}
+                      className="text-xs text-pink-600 hover:text-pink-700 font-medium bg-pink-50 px-2.5 py-1 rounded transition-colors"
+                    >
+                      {previewMode ? 'Edit Content' : 'Preview Content'}
+                    </button>
+                  </div>
                 </div>
                 {previewMode ? (
                   <div
@@ -677,6 +712,7 @@ const BlogAdmin: React.FC = () => {
                   />
                 ) : (
                   <textarea
+                    ref={contentTextAreaRef}
                     value={form.content}
                     onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
                     placeholder="Full blog content (HTML)"
@@ -930,34 +966,15 @@ const BlogAdmin: React.FC = () => {
           </div>
         )}
 
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-pink-100 rounded-lg">
-              <FileText className="w-5 h-5 text-pink-600" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-gray-800">Blog Admin</h2>
-              <p className="text-sm text-gray-500">
-                Manage blog strategy and publishing workflow from this tab.
-              </p>
-            </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
+          <div className="p-2 bg-pink-100 rounded-lg">
+            <FileText className="w-5 h-5 text-pink-600" />
           </div>
-          <p className="text-sm text-gray-700">Create, edit, publish, and delete blog posts from one place.</p>
-          <p className="text-xs text-gray-500 mt-2">
-            Total posts: {posts.length} | Published: {publishedCount} | Drafts: {posts.length - publishedCount}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              onClick={() => void seedSeoBlogPack()}
-              disabled={seedingSeoPack}
-              type="button"
-              className="px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium disabled:opacity-60"
-            >
-              {seedingSeoPack ? 'Applying SEO Blog Pack...' : 'Apply SEO Blog Pack (10 Posts)'}
-            </button>
-            <span className="text-xs text-gray-500 self-center">
-              One click creates/updates keyword-targeted published blogs.
-            </span>
+          <div>
+            <h2 className="text-base font-semibold text-gray-800">Blog Admin</h2>
+            <p className="text-sm font-medium text-gray-600 mt-1">
+              Total posts: {posts.length} | Published: {publishedCount} | Drafts: {posts.length - publishedCount}
+            </p>
           </div>
         </div>
 

@@ -75,10 +75,12 @@ export default async function BlogPage() {
   };
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pt-0 pb-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }} />
+    <div className="min-h-screen bg-stone-50">
+      <main className="mx-auto max-w-7xl px-4 pt-10 pb-10">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }} />
 
-      <BlogList posts={posts} />
-    </main>
+        <BlogList posts={posts} />
+      </main>
+    </div>
   );
 }

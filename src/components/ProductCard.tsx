@@ -81,16 +81,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       onClick={handleCardClick}
     >
       {/* Image Container */}
-      <div className="relative overflow-hidden rounded-none aspect-[4/5] bg-white flex items-center justify-center">
+      <div className="relative overflow-hidden rounded-none aspect-square bg-white flex items-center justify-center">
         {/* Main Image */}
         {product.images && product.images.length > 0 && product.images[0] ? (
           <img
             src={product.images[0]}
-            alt={product.title}
-            className="max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            alt={`${product.title} — digital art print, available at Lurevi`}
+            width={800}
+            height={800}
+            className={`transition-transform duration-300 group-hover:scale-105 ${
+              isNormalItem 
+                ? 'w-full h-full object-cover' 
+                : 'max-w-full max-h-full w-auto h-auto object-contain'
+            }`}
             loading="lazy"
             decoding="async"
-            style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
+            style={isNormalItem ? undefined : { maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">

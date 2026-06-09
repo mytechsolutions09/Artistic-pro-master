@@ -250,6 +250,112 @@ Great decor gifting feels personal, elegant, and useful in real homes.`,
     cover_image:
       'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=80&auto=format&fit=crop',
   },
+  {
+    title: 'Digital illustration explained',
+    slug: 'digital-illustration-guide',
+    excerpt: 'Learn what digital illustration is, from its key styles and professional tools to tips on buying the best high-quality prints for your home in India.',
+    content: `Digital illustration has transformed how we create, share, and decorate our homes with art. By combining traditional artistic techniques with cutting-edge software, digital illustrators produce stunning, high-fidelity visuals that look spectacular when printed. In this guide, we’ll explore the fundamentals of digital illustration, dive into the three main styles, examine the tools professionals use, and explain how to choose and buy high-quality prints for your home in India.
+
+## What is Digital Illustration?
+
+At its core, digital illustration is the use of digital tools—such as graphics tablets, styluses, and software—to create original artwork. Unlike digital photography or photo manipulation, digital illustration is drawn or painted from scratch, stroke by stroke, just like traditional art on canvas or paper. 
+
+Because it is created in a digital environment, artists have access to an infinite color palette, layers for complex compositions, and the ability to scale their artwork without losing quality. This results in clean lines, precise shading, and vibrant color gradients that look exceptionally rich on physical prints.
+
+## Three Popular Styles of Digital Illustration
+
+While the possibilities are endless, three distinct styles dominate modern home decor and digital galleries:
+
+### 1. Flat Illustration
+Flat illustration relies on clean shapes, minimal detail, and two-dimensional depth. It uses bold color palettes and strong geometries rather than realistic shading or textures.
+- **The Look**: Clean, modern, graphic, and visually striking.
+- **Home Fit**: Perfect for mid-century modern, Scandinavian, or minimalist interiors. It brings a pop of structured color to clean spaces.
+
+### 2. Line Art
+Line art focuses on lines and strokes over solid fills or complex shading. It can range from single-line drawings (where the stylus never leaves the screen) to complex, detailed hatching.
+- **The Look**: Elegant, delicate, abstract, and sophisticated.
+- **Home Fit**: Ideal for modern bedrooms, study areas, or gallery walls. Muted line art creates a calming, luxury feel.
+
+### 3. Painterly Illustration
+Painterly illustration mimics traditional mediums like oil paint, acrylic, watercolor, or gouache. Artists use advanced digital brushes that simulate the texture, blending, and physical weight of real paint.
+- **The Look**: Textured, deep, warm, and highly expressive.
+- **Home Fit**: Adds character and emotional depth to living rooms, dining rooms, and hallways.
+
+## The Tools of the Trade
+
+Creating these beautiful pieces requires a balance of powerful hardware and professional software. Here are the tools digital artists rely on:
+
+### Hardware: Graphics Tablets & Screens
+- **Pen Displays (e.g., Wacom Cintiq, XP-Pen)**: High-resolution screens that artists draw directly on with a stylus. These offer the highest level of precision and pressure sensitivity.
+- **iPad Pro & Apple Pencil**: The industry favorite for mobile illustration, powered by Procreate.
+- **Pen Tablets (e.g., Wacom Intuos)**: Drawing pads without screens that connect to a computer monitor, requiring the artist to look at the screen while drawing.
+
+### Software: Vector vs. Raster
+- **Procreate (iOS)**: The leading tool for raster illustration and painterly styles, beloved for its intuitive brushes and smooth performance.
+- **Adobe Photoshop (Windows/macOS)**: The gold standard for detailed digital painting, offering unmatched texturing and layout control.
+- **Adobe Illustrator (Vector)**: The industry standard for vector-based flat illustration. Vector graphics can scale infinitely without pixelation, making them perfect for extra-large wall prints.
+
+## How to Buy Quality Digital Prints in India
+
+If you want to bring digital illustration into your physical space, buying high-quality prints requires attention to material, finish, and detail. Here is what to look for when shopping online in India:
+
+### 1. Resolution & Scale
+Ensure the artwork is printed from high-resolution files. A print size of 12x18 inches or larger requires at least 300 DPI (dots per inch) to prevent blurry lines and pixelation. Good online stores explicitly specify their print resolution.
+
+### 2. Paper Quality (Gsm & Coating)
+Cheap posters are printed on thin paper that wrinkles easily. For a premium, luxury look, choose:
+- **Paper Weight**: At least 220–300 GSM (Grams per Square Meter) archival-grade paper.
+- **Finish**: A matte or fine art textured finish. Avoid glossy paper for wall art, as it creates harsh reflections from overhead room lights.
+
+### 3. Professional Framing
+High-quality framing preserves the artwork and elevates your wall aesthetic. Opt for:
+- Lightweight, durable frames (like fiberwood or wood composites) in neutral tones (matte black, natural oak, or pristine white).
+- Shatter-resistant acrylic instead of heavy glass, which can break in transit and reflect too much glare.
+
+### 4. Explore Curated Portals
+Instead of generic marketplaces, shop at platforms dedicated to digital art and contemporary prints. For example, you can discover categorized themes on [Art Collections](https://lurevi.in/categories) and purchase premium, ready-to-hang framed prints in the [Art Shop](https://lurevi.in/shop).
+
+<div class="my-8 p-6 bg-pink-50/50 rounded-2xl border border-pink-100/60">
+  <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Featured Digital Illustration Prints</h3>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+      <img src="https://images.unsplash.com/photo-1618005182384-ae9021a400a0?w=600&q=80&auto=format&fit=crop" alt="Abstract Lines Illustration" class="w-full h-48 object-cover" />
+      <div class="p-4">
+        <h4 class="font-semibold text-gray-800 text-sm">Minimalist Abstract Lines</h4>
+        <p class="text-xs text-gray-500 mt-1">Perfect modern line art for living rooms and bedrooms.</p>
+        <div class="mt-3 flex items-center justify-between">
+          <span class="text-sm font-semibold text-pink-600">From ₹499</span>
+          <a href="https://lurevi.in/shop" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-pink-600 hover:bg-pink-700 text-white rounded text-xs font-medium transition-colors">View Product</a>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+      <img src="https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&q=80&auto=format&fit=crop" alt="Vibrant Botanical Illustration" class="w-full h-48 object-cover" />
+      <div class="p-4">
+        <h4 class="font-semibold text-gray-800 text-sm">Vibrant Botanical Flora</h4>
+        <p class="text-xs text-gray-500 mt-1">Colorful flat art to bring nature and warmth into your space.</p>
+        <div class="mt-3 flex items-center justify-between">
+          <span class="text-sm font-semibold text-pink-600">From ₹499</span>
+          <a href="https://lurevi.in/shop" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-pink-600 hover:bg-pink-700 text-white rounded text-xs font-medium transition-colors">View Product</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="text-center mt-8">
+  <a href="https://lurevi.in/categories/illustration" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white rounded-xl font-semibold transition-colors shadow-sm hover:shadow-md">
+    Browse Illustration Prints
+  </a>
+</div>`,
+    status: 'published',
+    tags: ['digital illustration', 'buy digital art prints online', 'digital art prints'],
+    seo_title: 'Digital Illustration Explained | Lurevi',
+    seo_description:
+      'Learn what digital illustration is and how to choose the best digital illustration prints for your home.',
+    cover_image:
+      'https://images.unsplash.com/photo-1618005182384-ae9021a400a0?w=1200&q=80&auto=format&fit=crop',
+  },
 ];
 
 function normalizeRow(row: any): BlogPost {

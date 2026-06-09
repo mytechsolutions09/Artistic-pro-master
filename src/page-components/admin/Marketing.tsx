@@ -114,8 +114,8 @@ const SEO_PLAN_ITEMS: SeoPlanItem[] = [
     intent: "Informational",
     format: "Long-form guide (1200w)",
     kws: ["digital art", "digital artwork"],
-    cta: "Shop Lurevi digital prints",
-    outline: "Definition → history → styles (illustration, painting, sculpture) → how it's made → FAQ",
+    cta: "Shop Lurevi <a href=\"/categories/digital-art-prints\">digital art prints</a>",
+    outline: "Definition → history → styles (illustration, painting, sculpture) → how it's made → where to buy <a href=\"/categories/digital-art-prints\">digital art prints</a> → FAQ",
     h1: "What is digital art?",
     meta: "Explore the world of digital art — from digital illustration to digital painting. Browse Lurevi's curated collection.",
     slug: "/blog/what-is-digital-art"
@@ -143,7 +143,7 @@ const SEO_PLAN_ITEMS: SeoPlanItem[] = [
     format: "Guide + buying tips",
     kws: ["digital artwork"],
     cta: "Shop all artwork",
-    outline: "What makes digital artwork different → print vs screen → sizing for walls → style matching → where to buy in India",
+    outline: "What makes digital artwork different → print vs screen → sizing for walls → style matching → where to buy <a href=\"/categories/digital-art-prints\">curated digital art prints</a> in India",
     h1: "How to choose digital artwork for your home",
     meta: "A practical guide to buying digital artwork in India — sizing, framing, styles, and where to find curated prints.",
     slug: "/blog/digital-artwork-for-home"
@@ -156,8 +156,8 @@ const SEO_PLAN_ITEMS: SeoPlanItem[] = [
     intent: "Informational",
     format: "Comparison + examples",
     kws: ["digital painting", "digital illustration"],
-    cta: "Explore both collections",
-    outline: "Definition of each → visual comparison → techniques → which to choose for home decor → Lurevi examples",
+    cta: "<a href=\"/categories/digital-art-prints\">browse digital art prints</a>",
+    outline: "Definition of each → visual comparison → techniques → which to choose for home decor → Lurevi examples → <a href=\"/categories/digital-art-prints\">browse digital art prints</a>",
     h1: "Digital painting vs digital illustration",
     meta: "Understand the difference between digital painting and digital illustration, with curated examples from Lurevi.",
     slug: "/blog/digital-painting-vs-illustration"

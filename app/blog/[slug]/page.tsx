@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import { blogCoverUrl } from '@/lib/blogCover';
+import ProductCard from '@/src/components/ProductCard';
+import { marked } from 'marked';
+
 
 const SITE_URL = 'https://lurevi.in';
 
@@ -26,6 +29,21 @@ function getPublicSupabaseClient() {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) return null;
   return createClient(url, anonKey);
+}
+
+async function getFeaturedProducts() {
+  try {
+    const supabase = getPublicSupabaseClient();
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .limit(4);
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
 }
 
 async function getPostBySlug(slug: string): Promise<BlogPost | null> {
@@ -138,6 +156,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) notFound();
+  const featuredProducts = await getFeaturedProducts();
   const publishedISO = post.published_at || post.created_at;
   const articleSchema = {
     '@context': 'https://schema.org',
@@ -197,12 +216,8 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
       {post.excerpt && <p className="mt-5 text-base text-gray-700">{post.excerpt}</p>}
 
       <article 
-        className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-pink-600 [&_a]:hover:underline"
-        dangerouslySetInnerHTML={{ __html: post.content
-          .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
-          .replace(/(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>') 
-          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        }}
+        className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-pink-600 [&_a]:hover:underline [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
+        dangerouslySetInnerHTML={{ __html: marked.parse(post.content) as string }}
       />
 
       {Array.isArray(post.tags) && post.tags.length > 0 && (
@@ -212,6 +227,18 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
               #{tag}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Featured Products Section */}
+      {featuredProducts && featuredProducts.length > 0 && (
+        <div className="mt-16 border-t border-gray-100 pt-10">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Related Products</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {featuredProducts.map((product: any) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         </div>
       )}
     </main>
