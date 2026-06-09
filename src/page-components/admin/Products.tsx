@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@/src/compat/router';
 import { 
   Plus, Edit2, Trash2, Eye, Search, Grid, List, Star, 
-  Download, TrendingUp, Package, DollarSign, RefreshCw, CheckSquare, Image as ImageIcon,
+  Download, TrendingUp, Package, IndianRupee, RefreshCw, CheckSquare, Image as ImageIcon,
   X, FileText, File, Copy, Heart, ChevronDown
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -1834,7 +1834,7 @@ const Products: React.FC = () => {
           </div>
           <div className="bg-white p-2.5 rounded-lg border border-gray-100">
             <div className="flex items-center space-x-2">
-              <DollarSign className="w-4 h-4 text-green-600" />
+              <IndianRupee className="w-4 h-4 text-green-600" />
             <div>
                 <p className="text-xs text-gray-500">Revenue</p>
                 <p className="text-base font-bold text-gray-900">{formatCurrency(stats.totalRevenue, currencySettings.defaultCurrency)}</p>

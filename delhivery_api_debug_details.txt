@@ -1,0 +1,100 @@
+DELHIVERY API INTEGRATION DEBUG DETAILS
+=======================================
+
+This file contains the details required by Delhivery Support to troubleshoot the 401 Unauthorized / Authentication errors on the pickup scheduling endpoint.
+
+--------------------------------------------------
+1. API ENDPOINT & METHOD
+--------------------------------------------------
+* Action: Booking / Scheduling a Pickup Request
+* Endpoint URL: https://express.delhivery.com/fm/request/new/
+* Method: POST
+* Headers:
+    Authorization: Token 8dacd64288d20726dcf2448d25ecaf8b7c8f7021
+    Content-Type: application/json
+
+--------------------------------------------------
+2. API TOKEN
+--------------------------------------------------
+* Active Token: 8dacd64288d20726dcf2448d25ecaf8b7c8f7021
+* Secondary/Alternative Token: d69d7c5a886a898e0975c1d4b14d112185b8c17a
+* Note: This API Token successfully authorizes requests for waybill generation and shipment creation, but fails with a 401 status for the pickup scheduling endpoint.
+
+--------------------------------------------------
+3. DELHIvery API REQUEST PAYLOAD
+--------------------------------------------------
+* Format: application/json
+* Sample Payload:
+{
+  "pickup_time": "10:00:00",
+  "pickup_date": "2026-06-09",
+  "warehouse_name": "Lurevi - Janak puri",
+  "quantity": 1,
+  "client_name": "Arpit kanotra"
+}
+
+* Note:
+  - `warehouse_name` is set to "Lurevi - Janak puri", which is registered under the account.
+  - `client_name` is set to "Arpit kanotra" (B2B field registration).
+
+--------------------------------------------------
+4. DELHIVERY API RESPONSE PAYLOAD
+--------------------------------------------------
+* HTTP Status: 401 Unauthorized
+* Response Payload:
+{
+  "error": "Unauthorized",
+  "message": "Authentication failed"
+}
+
+* Context:
+  The API returns 401 Unauthorized status indicating the token lacks pickup permissions or fails authorization specifically for the '/fm/request/new/' endpoint.
+
+==================================================
+ADDITIONAL REFERENCE: WORKING SHIPMENT CREATION
+==================================================
+For comparison, the shipment creation API works successfully with the same token.
+
+* Endpoint URL: https://express.delhivery.com/api/cmu/create.json
+* Method: POST
+* Content-Type: application/x-www-form-urlencoded
+* Format: format=json&data=<url_encoded_shipment_data>
+* Decoded Data Payload:
+{
+  "shipments": [
+    {
+      "name": "Customer Name",
+      "add": "123 Main Street, Sector 4",
+      "pin": "110001",
+      "city": "New Delhi",
+      "state": "Delhi",
+      "country": "India",
+      "phone": "9876543210",
+      "order": "ORD-12345",
+      "payment_mode": "Prepaid",
+      "products_desc": "Digital Art Print",
+      "total_amount": "1200",
+      "quantity": "1",
+      "weight": "0.5",
+      "shipment_width": "10",
+      "shipment_height": "10",
+      "shipping_mode": "Express"
+    }
+  ],
+  "pickup_location": {
+    "name": "Lurevi - Janak puri"
+  }
+}
+* Response Payload:
+{
+  "success": true,
+  "rmk": "Refer to detail below",
+  "packages": [
+    {
+      "status": "Success",
+      "client": "Arpit kanotra",
+      "waybill": "DL1234567890",
+      "refnum": "ORD-12345"
+    }
+  ]
+}

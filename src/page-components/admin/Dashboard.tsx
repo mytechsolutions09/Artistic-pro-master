@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import {
-  DollarSign,
+  IndianRupee,
   Users,
   TrendingUp,
   Settings,
@@ -107,7 +107,7 @@ const Dashboard: React.FC = () => {
   const getMainStats = () => {
     if (!dashboardData || !realtimeStats) {
       return [
-        { title: 'Total Revenue', value: formatAmountInDefault(0), change: '0%', trend: 'up', icon: DollarSign, color: 'text-green-600', bgColor: 'bg-green-100', description: 'vs last month' },
+        { title: 'Total Revenue', value: formatAmountInDefault(0), change: '0%', trend: 'up', icon: IndianRupee, color: 'text-green-600', bgColor: 'bg-green-100', description: 'vs last month' },
         { title: 'Active Users', value: '0', change: '0%', trend: 'up', icon: Users, color: 'text-blue-600', bgColor: 'bg-blue-100', description: 'registered users' },
         { title: 'Total Tasks', value: '0', change: '0%', trend: 'up', icon: CheckCircle, color: 'text-purple-600', bgColor: 'bg-purple-100', description: 'active tasks' },
         { title: 'Products', value: '0', change: '0%', trend: 'up', icon: Package, color: 'text-pink-600', bgColor: 'bg-pink-100', description: 'in catalog' }
@@ -120,7 +120,7 @@ const Dashboard: React.FC = () => {
         value: dashboardData.revenue?.total ? formatCurrency(dashboardData.revenue.total, currencySettings.defaultCurrency) : formatCurrency(0, currencySettings.defaultCurrency),
         change: `+${dashboardData.revenue?.growth || 0}%`,
         trend: 'up',
-        icon: DollarSign,
+        icon: IndianRupee,
         color: 'text-green-600',
         bgColor: 'bg-green-100',
         description: 'vs last month'

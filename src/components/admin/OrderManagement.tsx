@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Package,
   Calendar,
-  DollarSign,
+  IndianRupee,
   CheckCircle,
   XCircle,
   Clock,
@@ -304,13 +304,13 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ isFBOnly = false }) =
     {
       label: 'Revenue',
       value: formatCurrency(stats.totalRevenue, currencySettings.defaultCurrency),
-      Icon: DollarSign,
+      Icon: IndianRupee,
       iconClass: 'text-green-600',
     },
     {
-      label: 'Today $',
+      label: 'Today',
       value: formatCurrency(stats.todayRevenue, currencySettings.defaultCurrency),
-      Icon: DollarSign,
+      Icon: IndianRupee,
       iconClass: 'text-green-700',
     },
   ];

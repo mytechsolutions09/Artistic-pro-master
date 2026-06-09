@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Edit2, Trash2, Eye, Filter, Search, Grid, List, Star, 
-  Download, TrendingUp, Package, DollarSign, RefreshCw, CheckSquare, Image as ImageIcon
+  Download, TrendingUp, Package, IndianRupee, RefreshCw, CheckSquare, Image as ImageIcon
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { ProductService } from '../../services/supabaseService';
@@ -189,7 +189,7 @@ const Products: React.FC = () => {
           </div>
           <div className="bg-white p-3 rounded-lg border border-gray-100">
             <div className="flex items-center space-x-2">
-              <DollarSign className="w-4 h-4 text-green-600" />
+              <IndianRupee className="w-4 h-4 text-green-600" />
               <div>
                 <p className="text-xs text-gray-500">Revenue</p>
                 <p className="text-lg font-bold text-gray-900">{formatCurrency(stats.totalRevenue, currencySettings.defaultCurrency)}</p>
