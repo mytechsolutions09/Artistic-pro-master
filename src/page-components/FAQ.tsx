@@ -63,7 +63,7 @@ const FAQ: React.FC = () => {
       questions: [
         {
           question: "What file formats do you provide for digital art?",
-          answer: "Digital art downloads are typically provided in high-resolution JPEG and PNG formats. Some pieces may also be available in PDF format for print purposes."
+          answer: "Digital art downloads are typically provided in high-resolution JPEG and pdf"
         },
         {
           question: "Can I print the digital art I purchase?",

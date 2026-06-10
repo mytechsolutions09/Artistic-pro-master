@@ -131,57 +131,17 @@ export class RealUserService {
   // Get all users from auth.users table
   static async getAllUsers(): Promise<RealUser[]> {
     try {
-      // Try admin API first (requires service role key)
-      const config = getSupabaseConfig();
-      if (config.serviceKey) {
-        const supabaseAdmin = getSupabaseAdmin();
-        const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-        
-        if (error) {
-          console.error('Error fetching users with admin API:', error);
-          // Fall back to alternative method
-          return await this.getUsersFallback();
+      // First try to fetch from our secure Next.js API route
+      const response = await fetch('/api/admin/users');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.users) {
+          return data.users;
         }
-
-        return data.users.map(user => ({
-          id: user.id,
-          email: user.email || '',
-          created_at: user.created_at,
-          email_confirmed_at: user.email_confirmed_at,
-          last_sign_in_at: user.last_sign_in_at,
-          phone: user.phone,
-          raw_app_meta_data: user.app_metadata,
-          raw_user_meta_data: user.user_metadata,
-          is_anonymous: user.is_anonymous,
-          role: user.app_metadata?.role || 'customer',
-          aud: user.aud,
-          confirmation_sent_at: user.confirmation_sent_at,
-          recovery_sent_at: user.recovery_sent_at,
-          email_change_sent_at: user.email_change_sent_at,
-          new_email: user.new_email,
-          invited_at: user.invited_at,
-          action_link: user.action_link,
-          email_change: user.new_email,
-          new_phone: user.phone,
-          phone_change: user.phone,
-          phone_change_sent_at: user.email_change_sent_at,
-          confirmed_at: user.confirmed_at,
-          email_change_confirm_status: 0,
-          banned_until: undefined,
-          reauthentication_sent_at: undefined,
-          reauthentication_token: undefined,
-          is_sso_user: user.is_sso_user,
-          deleted_at: user.deleted_at,
-          is_super_admin: false,
-          app_metadata: user.app_metadata,
-          user_metadata: user.user_metadata,
-          identities: user.identities,
-          factors: user.factors
-        }));
-      } else {
-        // No service role key, use fallback method
-        return await this.getUsersFallback();
       }
+      
+      console.warn('API route failed, using fallback user fetch');
+      return await this.getUsersFallback();
     } catch (error) {
       console.error('Error fetching users:', error);
       return await this.getUsersFallback();

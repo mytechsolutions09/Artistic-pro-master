@@ -64,8 +64,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     }
 
     try {
+      let loginEmail = email.trim();
+      
+      // Resolve email, phone, or username to the correct email address
+      try {
+        const { data: resolvedEmail, error: rpcError } = await supabase.rpc('resolve_user_email', {
+          identifier: loginEmail
+        });
+        if (rpcError) {
+          console.warn('RPC resolution error:', rpcError);
+        } else if (resolvedEmail) {
+          loginEmail = resolvedEmail;
+        }
+      } catch (rpcErr) {
+        console.warn('Failed to resolve identifier to email:', rpcErr);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: loginEmail,
         password,
       });
 
@@ -179,18 +195,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
               <form className="space-y-3" onSubmit={handleLogin}>
                 <div>
                   <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">
-                    Email
+                    Email, Username, or Mobile Number
                   </label>
                   <input
                     id="email"
                     name="email"
-                    type="email"
-                    autoComplete="email"
+                    type="text"
+                    autoComplete="username"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors text-sm"
-                    placeholder="Enter your email"
+                    placeholder="Enter email, username, or mobile number"
                   />
                 </div>
                 

@@ -16,6 +16,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import ReviewInput from '../components/ReviewInput';
 import { MetaPixelService } from '../services/metaPixelService';
+import { GoogleAnalyticsService } from '../services/googleAnalyticsService';
 import { formatOrderNumber } from '../utils/sequenceNumberUtils';
 import ReviewService from '../services/reviewService';
 
@@ -107,6 +108,19 @@ const PaymentSuccess: React.FC = () => {
               currency: 'INR',
               num_items: transformedOrder.items.length
             });
+
+            // Track Purchase event for Google Analytics / Ads
+            GoogleAnalyticsService.trackPurchase({
+              transaction_id: transformedOrder.id,
+              value: transformedOrder.total,
+              currency: 'INR',
+              items: transformedOrder.items.map(item => ({
+                item_id: item.id,
+                item_name: item.title,
+                price: item.price,
+                quantity: (item as any).quantity || 1
+              }))
+            });
           } else {
             // Fallback to mock OrderManager
             const foundOrder = OrderManager.getOrderById(orderId);
@@ -120,6 +134,19 @@ const PaymentSuccess: React.FC = () => {
                 value: foundOrder.total,
                 currency: 'INR',
                 num_items: foundOrder.items.length
+              });
+
+              // Track Purchase event for Google Analytics / Ads
+              GoogleAnalyticsService.trackPurchase({
+                transaction_id: foundOrder.id,
+                value: foundOrder.total,
+                currency: 'INR',
+                items: foundOrder.items.map(item => ({
+                  item_id: item.id,
+                  item_name: item.title,
+                  price: item.price,
+                  quantity: (item as any).quantity || 1
+                }))
               });
             } else {
               setOrder(null);
@@ -139,6 +166,19 @@ const PaymentSuccess: React.FC = () => {
               value: foundOrder.total,
               currency: 'INR',
               num_items: foundOrder.items.length
+            });
+
+            // Track Purchase event for Google Analytics / Ads
+            GoogleAnalyticsService.trackPurchase({
+              transaction_id: foundOrder.id,
+              value: foundOrder.total,
+              currency: 'INR',
+              items: foundOrder.items.map(item => ({
+                item_id: item.id,
+                item_name: item.title,
+                price: item.price,
+                quantity: (item as any).quantity || 1
+              }))
             });
           } else {
             setOrder(null);

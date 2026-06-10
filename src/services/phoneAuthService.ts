@@ -189,22 +189,31 @@ class PhoneAuthService {
 
       // OTP verified successfully
 
-      // After successful OTP verification, sign in the user using phone
-      if (result.userId) {
-        // Sign in with phone using the verified phone number
-        const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
-          phone: formattedPhone,
+      // After successful OTP verification, sign in the user using magic link token to avoid overwriting passwords
+      if (result.userId && result.tokenHash && result.loginEmail) {
+        const { data: authData, error: authError } = await supabase.auth.verifyOtp({
+          token_hash: result.tokenHash,
+          type: 'magiclink'
         });
 
         if (authError) {
           console.error('Auth error after OTP verification:', authError);
+          return {
+            success: false,
+            error: 'Failed to establish session: ' + authError.message
+          };
         }
+
+        return {
+          success: true,
+          session: authData.session,
+          userId: result.userId
+        };
       }
 
       return {
-        success: true,
-        session: result,
-        userId: result.userId
+        success: false,
+        error: 'Failed to establish session. Security details missing.'
       };
     } catch (error: any) {
       console.error('Exception verifying OTP:', error);

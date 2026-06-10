@@ -217,7 +217,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
       <article 
         className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-pink-600 [&_a]:hover:underline [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
-        dangerouslySetInnerHTML={{ __html: marked.parse(post.content) as string }}
+        dangerouslySetInnerHTML={{ __html: marked.parse(post.content.replace(/^[ \\t]+/gm, '')) as string }}
       />
 
       {Array.isArray(post.tags) && post.tags.length > 0 && (

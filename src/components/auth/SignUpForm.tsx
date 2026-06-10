@@ -10,6 +10,7 @@ const SignUpForm: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +33,16 @@ const SignUpForm: React.FC = () => {
     }
     if (!email.trim()) {
       setError('Please enter your email address');
+      return;
+    }
+    
+    if (!phone.trim()) {
+      setError('Please enter your mobile number');
+      return;
+    }
+
+    if (phone.trim().length !== 10) {
+      setError('Please enter a valid 10-digit mobile number');
       return;
     }
     
@@ -65,6 +76,7 @@ const SignUpForm: React.FC = () => {
             full_name: fullName,
             first_name: firstName.trim(),
             last_name: lastName.trim(),
+            phone: phone.trim(),
             email_confirm: true
           }
         }
@@ -252,6 +264,26 @@ const SignUpForm: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm"
                     placeholder="Enter your email"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-xs font-medium text-gray-700 mb-1">
+                    Mobile Number
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '').substring(0, 10);
+                      setPhone(digits);
+                    }}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition-colors text-sm"
+                    placeholder="Enter 10-digit mobile number"
                   />
                 </div>
                 

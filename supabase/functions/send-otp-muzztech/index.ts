@@ -244,21 +244,46 @@ serve(async (req) => {
       // Check if user exists with this phone number
       const tenDigitPhone = formattedPhone.replace('+91', '')
       const { data: existingUser } = await supabaseClient.auth.admin.listUsers()
-      const userWithPhone = existingUser?.users.find(
-        (u) => u.phone === formattedPhone || 
-               u.user_metadata?.phone === formattedPhone || 
-               u.user_metadata?.phone === tenDigitPhone ||
-               u.user_metadata?.phone === phone.replace('+', '')
-      )
+
+      // Find all users matching the phone number
+      const matchingUsers = existingUser?.users.filter(u => 
+        (u.phone && u.phone.includes(tenDigitPhone)) || 
+        (u.user_metadata?.phone && u.user_metadata.phone.includes(tenDigitPhone))
+      ) || []
+      
+      // Prioritize the user that has a real email (handles the case where there's a test phone-only account and a real email account)
+      const userWithPhone = matchingUsers.find(u => u.email) || matchingUsers[0]
 
       let userId: string
+      let loginEmail: string
 
       if (userWithPhone) {
         userId = userWithPhone.id
+        loginEmail = userWithPhone.email
+        
+        // If the user doesn't have an email, assign a dummy one so we can generate a magic link for them
+        if (!loginEmail) {
+          loginEmail = `phone_${tenDigitPhone}@lurevi-internal.local`
+          const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
+            userId,
+            { email: loginEmail, email_confirm: true }
+          )
+          
+          if (updateError) {
+            console.error('Error assigning dummy email to phone user:', updateError)
+            return new Response(
+              JSON.stringify({ success: false, error: 'Failed to update user security credentials: ' + updateError.message }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+        }
       } else {
-        // Create new user with phone number
+        loginEmail = `phone_${tenDigitPhone}@lurevi-internal.local`
+        // Create new user with phone number and dummy email
         const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
           phone: formattedPhone,
+          email: loginEmail,
+          password: crypto.randomUUID() + 'A1!', // Give them a random valid password, they'll never use it
           phone_confirm: true,
           email_confirm: true
         })
@@ -266,25 +291,39 @@ serve(async (req) => {
         if (createError || !newUser.user) {
           console.error('Error creating user:', createError)
           return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Failed to create user account' 
-            }),
-            { 
-              status: 500, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
+            JSON.stringify({ success: false, error: 'Failed to create user account' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
 
         userId = newUser.user.id
       }
+      
+      // Generate a magic link for the user's email to securely log them in without touching their real password
+      const { data: linkData, error: linkError } = await supabaseClient.auth.admin.generateLink({
+        type: 'magiclink',
+        email: loginEmail
+      })
+      
+      if (linkError) {
+        console.error('Error generating magic link:', linkError)
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to generate session token' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      // Extract the token_hash from the generated link
+      const actionUrl = new URL(linkData.properties.action_link)
+      const tokenHash = actionUrl.searchParams.get('token')
 
       return new Response(
         JSON.stringify({ 
           success: true,
           userId: userId,
           phone: formattedPhone,
+          loginEmail: loginEmail,
+          tokenHash: tokenHash,
           message: 'OTP verified successfully'
         }),
         { 
