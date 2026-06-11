@@ -11,6 +11,7 @@ import { categoryImageService } from '../services/categoryImageService';
 import { Product } from '../types';
 import { generateCategorySlug, generateSlug } from '../utils/slugUtils';
 import { productBelongsToCategoryLabel } from '../utils/productFilterUtils';
+import { getCategoryExplainer } from '../config/categoryExplainers';
 
 const CategoryDetailPage: React.FC = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
@@ -19,6 +20,8 @@ const CategoryDetailPage: React.FC = () => {
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const explainer = categorySlug ? getCategoryExplainer(categorySlug) : null;
   const [loadingMore, setLoadingMore] = useState(false);
   const [filters, setFilters] = useState({
     priceRange: [1, 10000] as [number, number],
@@ -401,8 +404,10 @@ const CategoryDetailPage: React.FC = () => {
           </button>
         </div>
 
+
+
         {/* Products Grid */}
-        <div className="flex-1">
+        <div id="product-grid" className="flex-1">
           {displayedProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {displayedProducts.map((product, index) => (
@@ -447,6 +452,40 @@ const CategoryDetailPage: React.FC = () => {
             </button>
           </div>
         )}
+
+        {/* Category Explainer Block */}
+        {explainer && (
+          <div className="mt-12 p-6 md:p-8 bg-gradient-to-br from-gray-50/50 to-teal-50/10 rounded-2xl border border-gray-150 shadow-sm font-sans animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+              <div>
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-3">{explainer.title}</h2>
+                <p className="text-sm md:text-base text-gray-600 leading-relaxed font-normal">{explainer.description}</p>
+              </div>
+              <div className="md:border-l md:border-gray-100 md:pl-8">
+                <h3 className="text-xs font-bold text-gray-950 uppercase tracking-wider mb-3 font-sans">{explainer.benefitsTitle}</h3>
+                <ul className="space-y-2.5 mb-6">
+                  {explainer.benefits.map((benefit, i) => (
+                    <li key={i} className="flex items-start text-sm text-gray-600 font-sans">
+                      <span className="text-teal-600 mr-2.5 mt-0.5 shrink-0 select-none">✦</span>
+                      <span className="font-normal leading-normal">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button 
+                  onClick={() => {
+                    const gridEl = document.getElementById('product-grid');
+                    if (gridEl) {
+                      gridEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  className="inline-flex items-center text-sm font-semibold text-teal-700 hover:text-teal-800 transition-colors"
+                >
+                  {explainer.ctaText}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filters Sidebar - Modal (Outside main content flow) */}
@@ -464,6 +503,8 @@ const CategoryDetailPage: React.FC = () => {
     </div>
   );
 };
+
+
 
 export default CategoryDetailPage;
 

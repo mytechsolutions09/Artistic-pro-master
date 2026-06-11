@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createStaticClient } from '@/lib/supabase/server';
 import NormalItemRouteHandlerClient from '@/src/page-components/NormalItemRouteHandler';
+import { getCategoryExplainer } from '@/src/config/categoryExplainers';
 
 interface Props {
   params: Promise<{ categorySlug: string }>;
@@ -137,6 +138,23 @@ export default async function CategoryPage({ params }: Props) {
                 </ul>
               </section>
             )}
+
+            {(() => {
+              const explainer = categorySlug ? getCategoryExplainer(categorySlug) : null;
+              if (!explainer) return null;
+              return (
+                <section style={{ marginTop: '2rem', marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#fafafa', borderRadius: '0.5rem', border: '1px solid #eaeaea' }}>
+                  <h2>{explainer.title}</h2>
+                  <p>{explainer.description}</p>
+                  <h3>{explainer.benefitsTitle}</h3>
+                  <ul>
+                    {explainer.benefits.map((benefit, i) => (
+                      <li key={i}>{benefit}</li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })()}
           </main>
         </noscript>
       )}

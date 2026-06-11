@@ -1,6 +1,31 @@
 User-agent: *
 Allow: /
 
+# Explicit rules for AI/LLM Crawlers to allow guidance files and full site
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Cohere-ai
+Allow: /
+
 # LLM guidance files
 Allow: /llms.txt
 Allow: /llms-full.txt

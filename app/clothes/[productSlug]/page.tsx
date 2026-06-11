@@ -26,6 +26,60 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export const revalidate = 3600;
 
-export default function Page() {
-  return <ClothingProductPage />;
+export default async function Page({ params }: Props) {
+  const { productSlug } = await params;
+  const supabase = createStaticClient();
+
+  const { data: product } = await supabase
+    .from('products')
+    .select('id, title, description, price, images')
+    .eq('slug', productSlug)
+    .single();
+
+  return (
+    <>
+      {product && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'Product',
+                  '@id': `https://lurevi.in/clothes/${productSlug}/#product`,
+                  name: product.title,
+                  description: product.description?.replace(/<[^>]*>/g, '') ?? undefined,
+                  image: Array.isArray(product.images) ? product.images : product.images ? [product.images] : [],
+                  brand: { '@type': 'Brand', name: 'Lurevi' },
+                  offers: {
+                    '@type': 'Offer',
+                    url: `https://lurevi.in/clothes/${productSlug}`,
+                    priceCurrency: 'INR',
+                    price: product.price,
+                    availability: 'https://schema.org/InStock',
+                    seller: { '@id': 'https://lurevi.in/#organization' },
+                  },
+                },
+                {
+                  '@type': 'BreadcrumbList',
+                  itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://lurevi.in' },
+                    { '@type': 'ListItem', position: 2, name: 'Clothing', item: 'https://lurevi.in/clothes' },
+                    {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: product.title,
+                      item: `https://lurevi.in/clothes/${productSlug}`,
+                    },
+                  ],
+                },
+              ],
+            }),
+          }}
+        />
+      )}
+      <ClothingProductPage />
+    </>
+  );
 }

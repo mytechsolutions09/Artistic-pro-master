@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { blogCoverUrl } from '@/lib/blogCover';
 import ProductCard from '@/src/components/ProductCard';
 import { marked } from 'marked';
+import { User } from 'lucide-react';
 
 
 const SITE_URL = 'https://lurevi.in';
@@ -196,27 +197,34 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
       {faqSchema && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       )}
-      <Link href="/blog" className="text-sm text-pink-600 hover:text-pink-700">
+      <Link href="/blog" className="text-sm text-teal-700 hover:text-teal-800 font-medium">
         Back to Blog
       </Link>
       <h1 className="mt-3 text-3xl font-semibold text-gray-900">{post.title}</h1>
-      <p className="mt-2 text-xs text-gray-500">
-        {new Date(publishedISO).toLocaleDateString('en-IN')}
-      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500 font-sans">
+        <span>Published: {new Date(publishedISO).toLocaleDateString('en-IN')}</span>
+        <span>•</span>
+        <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Last Updated: June 2026
+        </span>
+      </div>
 
-      <img
-        src={blogCoverUrl(post.cover_image)}
-        alt={post.title}
-        className="mt-5 w-full h-72 object-cover rounded-lg border border-gray-100"
-        loading="eager"
-        decoding="async"
-        fetchPriority="high"
-      />
+      {post.slug !== 'lurevi-vs-artzolo-comparison-guide' && (
+        <img
+          src={blogCoverUrl(post.cover_image)}
+          alt={post.title}
+          className="mt-5 w-full h-72 object-cover rounded-lg border border-gray-100"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+      )}
 
       {post.excerpt && <p className="mt-5 text-base text-gray-700">{post.excerpt}</p>}
 
       <article 
-        className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-pink-600 [&_a]:hover:underline [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
+        className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-teal-700 [&_a]:hover:underline [&_a]:font-medium [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
         dangerouslySetInnerHTML={{ __html: marked.parse(post.content.replace(/^[ \\t]+/gm, '')) as string }}
       />
 
@@ -229,6 +237,20 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
           ))}
         </div>
       )}
+
+      {/* Author & Reviewer Attribution */}
+      <div className="mt-12 border-t border-gray-200 pt-6 flex items-start space-x-4 bg-gray-50 p-4 rounded-xl font-sans">
+        <div className="w-12 h-12 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0 text-teal-600">
+          <User className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Written & Reviewed by Arpit</h3>
+          <p className="text-xs text-gray-500 font-medium">Co-Founder & Lead Art Curation Director</p>
+          <p className="text-xs text-gray-600 mt-1.5 leading-relaxed font-normal font-sans">
+            Arpit is a co-founder and lead curator at Lurevi. With extensive experience in the Indian e-commerce landscape and digital art curation, Arpit drives the platform's vision of making premium contemporary prints accessible to modern homes across India.
+          </p>
+        </div>
+      </div>
 
       {/* Featured Products Section */}
       {featuredProducts && featuredProducts.length > 0 && (

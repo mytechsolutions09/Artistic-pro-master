@@ -202,7 +202,7 @@ export default function BlogList({ posts }: BlogListProps) {
                     }}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                       selectedTag === 'All'
-                        ? 'bg-pink-600 border-pink-600 text-white'
+                        ? 'bg-teal-700 border-teal-700 text-white'
                         : 'bg-white border-stone-200 text-stone-700 hover:border-stone-300'
                     }`}
                   >

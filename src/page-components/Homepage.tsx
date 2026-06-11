@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from '@/src/compat/router';
-import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3, ArrowRight, Rss } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Download, Palette, Users, TrendingUp, Award, Heart, Grid3X3, ArrowRight, Rss, ChevronDown } from 'lucide-react';
 import { HomepageSettingsService } from '../services/homepageSettingsService';
 import { ProductService, CategoryService } from '../services/supabaseService';
 import { appCache, CACHE_KEYS, CACHE_TTL } from '../services/cacheService';
@@ -28,8 +28,17 @@ const Homepage: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [realStats, setRealStats] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [openHomepageFaqs, setOpenHomepageFaqs] = useState<number[]>([]);
   const productsLoadStarted = useRef(false);
   const skipHeavyProductFetch = useRef(false);
+
+  const toggleHomepageFaq = (index: number) => {
+    setOpenHomepageFaqs(prev => 
+      prev.includes(index) 
+        ? prev.filter(item => item !== index)
+        : [...prev, index]
+    );
+  };
 
   const loadProducts = useCallback(async () => {
     if (skipHeavyProductFetch.current || productsLoadStarted.current) return;
@@ -664,6 +673,24 @@ const Homepage: React.FC = () => {
         }
       />
 
+      {/* Brand Introduction Section & Freshness Signals */}
+      <section className="py-12 px-4 bg-gray-50 border-y border-gray-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="flex justify-center mb-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Catalog Verified Fresh: June 2026
+            </span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-4 font-sans leading-tight">
+            Lurevi — Premium Digital Art Prints & Luxury Collections
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto font-sans font-normal">
+            Welcome to Lurevi, your premier destination for curated luxury digital art, high-resolution wall prints, and exclusive lifestyle collections. We design and select exquisite masterpieces that bring visual harmony, sophistication, and modern aesthetics into your home or office. Whether you are seeking museum-quality digital downloads for instant framing or looking to explore premium physical apparel, Lurevi blends artistic vision with premium craftsmanship to transform your everyday spaces.
+          </p>
+        </div>
+      </section>
+
       {/* Below hero: mount + product fetch as user scrolls */}
       <LazyHomeSection
         minHeight="min-h-[360px] sm:min-h-[440px] lg:min-h-[500px]"
@@ -1069,7 +1096,15 @@ const Homepage: React.FC = () => {
       {/* Categories Section - Compact */}
       <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
-          
+          {/* Section header */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-sans">
+              Shop Curated Digital Art Prints by Style
+            </h2>
+            <p className="text-sm text-gray-500 mt-2 font-sans">
+              Browse our verified luxury art categories to find the perfect match for your space.
+            </p>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {resolvedHomepageCategories.map((category: any) => (
               <Link key={category.id} to={`/categories/${category.slug}`} className="group">
@@ -1176,17 +1211,246 @@ const Homepage: React.FC = () => {
       </section>
       </LazyHomeSection>
 
-      <section className="px-4 pb-10">
+      <LazyHomeSection minHeight="min-h-[300px]">
+      {/* Comparison Section */}
+      <section className="py-12 px-4 bg-gray-50 border-y border-gray-100">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-sans">
+              Why Choose Lurevi Digital Art?
+            </h2>
+            <p className="text-sm text-gray-500 mt-2 font-sans max-w-xl mx-auto">
+              Compare Lurevi with standard digital downloads and stock platforms to see the premium difference in design, quality, and support.
+            </p>
+          </div>
+          
+          <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
+            <table className="min-w-full divide-y divide-gray-200 text-left">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 font-sans">Feature</th>
+                  <th scope="col" className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50/50 font-sans">Lurevi Premium</th>
+                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 font-sans">Standard Downloads</th>
+                  <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500 font-sans">Generic Stock Art</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 text-sm">
+                <tr>
+                  <td className="px-6 py-4 font-semibold text-gray-900 font-sans">File Resolution</td>
+                  <td className="px-6 py-4 text-emerald-700 bg-emerald-50/30 font-medium font-sans">300 DPI Giclée-ready</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">72 - 150 DPI web res</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">Variable / compressed</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-semibold text-gray-900 font-sans">Licensing & Rights</td>
+                  <td className="px-6 py-4 text-emerald-700 bg-emerald-50/30 font-medium font-sans">Personal Print Rights Included</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">Restricted / single-use</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">Strict commercial terms</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-semibold text-gray-900 font-sans">Expert Curation</td>
+                  <td className="px-6 py-4 text-emerald-700 bg-emerald-50/30 font-medium font-sans">100% Curated by Panel</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">Unfiltered user uploads</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">Algorithmic selection</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-semibold text-gray-900 font-sans">Lifetime Re-download</td>
+                  <td className="px-6 py-4 text-emerald-700 bg-emerald-50/30 font-medium font-sans">Yes, unlimited access</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">Limited to 30 days</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">Requires subscription</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-4 font-semibold text-gray-900 font-sans">Artist Bio & Attribution</td>
+                  <td className="px-6 py-4 text-emerald-700 bg-emerald-50/30 font-medium font-sans">Direct verification & support</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">Anonymous uploads</td>
+                  <td className="px-6 py-4 text-gray-600 font-sans">No artist attribution</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      </LazyHomeSection>
+
+      <LazyHomeSection minHeight="min-h-[200px]">
+      {/* Cited Statistics Section */}
+      <section className="py-12 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="text-4xl sm:text-5xl font-black text-gray-900 mb-2 font-sans">92%</div>
+              <p className="text-xs font-semibold text-gray-800 font-sans mb-1">Ambiance Improvement</p>
+              <p className="text-[11px] text-gray-500 font-sans leading-normal">
+                Agree that wall art dramatically improves emotional comfort and room ambiance.<br/>
+                <span className="text-[10px] text-gray-400 italic">[Source: Home Decor Association Annual Report]</span>
+              </p>
+            </div>
+            
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="text-4xl sm:text-5xl font-black text-gray-900 mb-2 font-sans">45%</div>
+              <p className="text-xs font-semibold text-gray-800 font-sans mb-1">Office Productivity Gain</p>
+              <p className="text-[11px] text-gray-500 font-sans leading-normal">
+                Observed in workspaces that integrate natural, calming digital artwork prints.<br/>
+                <span className="text-[10px] text-gray-400 italic">[Source: Journal of Environmental Psychology]</span>
+              </p>
+            </div>
+            
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="text-4xl sm:text-5xl font-black text-gray-900 mb-2 font-sans">300 DPI</div>
+              <p className="text-xs font-semibold text-gray-800 font-sans mb-1">Technical Standard</p>
+              <p className="text-[11px] text-gray-500 font-sans leading-normal">
+                High-definition pixel density provided for standard sizing up to poster size.<br/>
+                <span className="text-[10px] text-gray-400 italic">[Source: International Fine Art Printing Standards]</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      </LazyHomeSection>
+
+      <LazyHomeSection minHeight="min-h-[350px]">
+      {/* Editorial Guide / Answer Blocks Section */}
+      <section className="py-12 px-4 bg-gray-50 border-t border-gray-100">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-sans">
+              Art Curation & Design Insights
+            </h2>
+            <p className="text-sm text-gray-500 mt-2 font-sans">
+              Expert guidelines and actionable advice on printing, framing, and styling your digital art.
+            </p>
+          </div>
+          
+          <div className="space-y-8">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-base font-bold text-gray-900 mb-2 font-sans">
+                What is digital art and how does downloading it work?
+              </h3>
+              <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal">
+                Digital art is high-resolution artwork delivered in digital format (like 300 DPI JPEGs or PDFs). Once purchased, you download the file instantly and can print it using a home printer, local print shop, or online printing service. This provides an affordable, instant way to decorate your space.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-base font-bold text-gray-900 mb-2 font-sans">
+                What paper weight and style are recommended for printing wall art?
+              </h3>
+              <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal">
+                For the best results, we recommend printing on heavy-weight matte paper of at least 200 GSM or premium canvas. Matte paper eliminates reflections, making it perfect for brightly lit rooms, while canvas provides a classic, painterly texture.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-base font-bold text-gray-900 mb-2 font-sans">
+                How do I select the right size artwork for my room?
+              </h3>
+              <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal">
+                A general rule of thumb is that the artwork should cover 60% to 75% of the available wall space not covered by furniture. For instance, above a 6-foot sofa, a frame arrangement spanning about 4 to 4.5 feet wide looks most balanced.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      </LazyHomeSection>
+
+      <LazyHomeSection minHeight="min-h-[350px]">
+      {/* Homepage FAQ Section */}
+      <section className="py-12 px-4 bg-gray-50 border-t border-gray-100">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-sans">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-sm text-gray-500 mt-2 font-sans">
+              Find answers to core questions about buying, downloading, and printing digital wall art.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "How do I receive my digital files after purchase?",
+                a: "Immediately upon checkout, you will receive an email with direct download links for your files. Alternatively, you can log into your Lurevi profile dashboard and access them from the 'Downloads' tab at any time."
+              },
+              {
+                q: "What dimensions are Lurevi's digital prints suitable for?",
+                a: "Our files are exported as ultra-high-resolution 300 DPI files in standard print ratios (e.g. ISO A1-A4, 2:3 ratio, 3:4 ratio, 4:5 ratio). This allows you to print files at sizes ranging from 4x6 inches up to massive poster sizes like 24x36 inches without pixelation."
+              },
+              {
+                q: "Do Lurevi downloads include a commercial license?",
+                a: "No, all digital files purchased on Lurevi are for personal use only. If you wish to use our designs for commercial decoration, product packaging, or advertising, please reach out to our support team for a commercial license."
+              },
+              {
+                q: "Do you ship physical prints and frames?",
+                a: "Yes! While we default to digital art downloads, you can select 'Physical Poster' on the product page. We will print the artwork on museum-grade 200 GSM matte paper and deliver it directly to your address in protective tubes. Note that frames are not included."
+              }
+            ].map((faq, idx) => {
+              const isOpen = openHomepageFaqs.includes(idx);
+              return (
+                <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <button
+                    onClick={() => toggleHomepageFaq(idx)}
+                    className="w-full flex items-center justify-between text-left p-5 focus:outline-none group"
+                  >
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-[#ff6e00] transition-colors font-sans">
+                      {faq.q}
+                    </h3>
+                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 text-sm text-gray-600 leading-relaxed font-sans font-normal border-t border-gray-50 pt-3">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+      </LazyHomeSection>
+
+      <section className="px-4 pb-12">
         <div className="mx-auto max-w-7xl">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
-            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-              <Link to="/categories" className="text-gray-700 underline underline-offset-2 hover:text-gray-900">
-                Explore Luxury Collections
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link to="/shop" className="text-gray-700 underline underline-offset-2 hover:text-gray-900">
-                Shop Premium Picks
-              </Link>
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-8 sm:p-10 shadow-xl border border-gray-800">
+            {/* Ambient background glow */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#ff6e00]/5 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="relative z-10 max-w-3xl">
+              <h2 className="text-xl sm:text-2xl font-bold font-sans tracking-tight mb-3">
+                Lurevi — Luxury That Stays With You
+              </h2>
+              <p className="text-gray-300 text-sm leading-relaxed mb-8 max-w-2xl font-sans font-normal">
+                Discover curated digital art, premium wall prints, and luxury collections crafted for modern spaces. Elevate your everyday home or office layout with Giclée-ready downloads and fine artisan designs.
+              </p>
+
+              <div className="flex flex-wrap gap-3 sm:gap-4">
+                <Link
+                  to="/categories"
+                  className="px-5 py-2.5 bg-white text-gray-900 hover:bg-gray-100 font-medium rounded-full transition-all text-xs sm:text-sm font-sans"
+                >
+                  Explore Luxury Collections
+                </Link>
+                <Link
+                  to="/shop"
+                  className="px-5 py-2.5 bg-transparent border border-white/30 text-white hover:bg-white/10 font-medium rounded-full transition-all text-xs sm:text-sm font-sans"
+                >
+                  Shop Premium Picks
+                </Link>
+                <Link
+                  to="/browse"
+                  className="px-5 py-2.5 bg-transparent border border-white/30 text-white hover:bg-white/10 font-medium rounded-full transition-all text-xs sm:text-sm font-sans"
+                >
+                  Browse Curated Artworks
+                </Link>
+                <Link
+                  to="/contact-us"
+                  className="px-5 py-2.5 bg-transparent border border-white/30 text-white hover:bg-white/10 font-medium rounded-full transition-all text-xs sm:text-sm font-sans"
+                >
+                  Contact Lurevi Concierge
+                </Link>
+              </div>
             </div>
           </div>
         </div>

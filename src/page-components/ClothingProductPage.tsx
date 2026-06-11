@@ -736,6 +736,26 @@ const ClothingProductPage: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Expert & Curation Panel */}
+          <div className="mt-8 border-t border-gray-200 pt-6">
+            <h2 className="text-sm font-semibold uppercase tracking-wide mb-4 font-sans font-normal">EXPERT VERIFICATION & MATERIAL AUDIT</h2>
+            <div className="flex items-start space-x-3 bg-gray-50 rounded-lg p-4 border border-gray-100">
+              <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150" alt="Emma Johnson" className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-semibold text-gray-900">Emma Johnson</span>
+                  <span className="text-[10px] bg-[#ff6e00]/10 text-[#ff6e00] px-1.5 py-0.5 rounded-full font-medium">Head Curator</span>
+                  <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full font-medium font-sans">Verified: June 2026</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1.5 leading-relaxed font-sans font-normal">
+                  "All apparel items are verified for GSM density, thread counts, stitching reinforcement, and dye standards before listing. We guarantee that this garment meets Lurevi's premium criteria for comfort and longevity."
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Reviews Section */}

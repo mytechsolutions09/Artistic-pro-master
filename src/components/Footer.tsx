@@ -4,6 +4,8 @@ import React from 'react';
 import { Link } from '@/src/compat/router';
 import { useLocation } from '@/src/compat/router';
 import { Heart, Mail, Phone, MapPin, Facebook, Instagram, Rss } from 'lucide-react';
+import NewsletterForm from './NewsletterForm';
+
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -13,22 +15,20 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-white text-gray-900 border-t border-gray-300" style={{ fontFamily: "'Inter', sans-serif" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {isHome && (
-          <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <h2 className="text-xl font-semibold text-gray-900">Lurevi - Luxury That Stays With You</h2>
-            <p className="mt-2 text-sm text-gray-700">
-              Discover curated digital art, premium wall prints, and luxury collections crafted for modern spaces.
+
+
+        {/* Newsletter Section */}
+        <div className="mb-8 border-b border-gray-200 pb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="max-w-md">
+            <h3 className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Outfit', sans-serif" }}>Join the Lurevi Club</h3>
+            <p className="mt-1 text-xs text-gray-600">
+              Subscribe to receive updates on new curated digital art, premium wall prints, and exclusive offers.
             </p>
-            <nav aria-label="Homepage discovery links" className="mt-4">
-              <ul className="flex flex-wrap gap-3 text-sm">
-                <li><Link to="/categories" className="text-gray-600 hover:text-gray-900 hover:underline transition-colors">Explore Luxury Collections</Link></li>
-                <li><Link to="/shop" className="text-gray-600 hover:text-gray-900 hover:underline transition-colors">Shop Premium Picks</Link></li>
-                <li><Link to="/browse" className="text-gray-600 hover:text-gray-900 hover:underline transition-colors">Browse Curated Artworks</Link></li>
-                <li><Link to="/contact-us" className="text-gray-600 hover:text-gray-900 hover:underline transition-colors">Contact Lurevi Concierge</Link></li>
-              </ul>
-            </nav>
           </div>
-        )}
+          <div className="w-full md:w-auto shrink-0">
+            <NewsletterForm />
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Company Info */}

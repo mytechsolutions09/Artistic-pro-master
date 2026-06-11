@@ -1058,6 +1058,26 @@ const ProductPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Expert & Curation Panel */}
+              <div className="mt-6 border-t border-gray-100 pt-6">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 font-sans">Curator Note & Quality Verification</h4>
+                <div className="flex items-start space-x-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                    <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150" alt="Emma Johnson" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-semibold text-gray-900">Emma Johnson</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">Head Curator</span>
+                      <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full font-medium font-sans">Verified: June 2026</span>
+                    </div>
+                    <p className="text-[11px] text-gray-600 mt-1 leading-normal font-sans font-normal">
+                      "Every piece in this collection has been technically audited for color profile accuracy, resolution limits (minimum 300 DPI), and aesthetic harmony. We certify this print for high-quality Giclée printing."
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -28,7 +28,8 @@ import {
   Shirt,
   FileText,
   Share2,
-  Gift
+  Gift,
+  Rss
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -42,6 +43,35 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick, onExpand, onLogout }) => {
   const location = useLocation();
   const { navRef, onNavScroll } = usePreserveNavScroll([location.pathname]);
+  const [hoveredItem, setHoveredItem] = useState<{ label: string; top: number } | null>(null);
+
+  const handleMouseEnter = (e: React.MouseEvent, label: string) => {
+    if (!collapsed) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoveredItem({
+      label,
+      top: rect.top + rect.height / 2,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredItem(null);
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setHoveredItem(null);
+    };
+    const nav = navRef.current;
+    if (nav) {
+      nav.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      if (nav) {
+        nav.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [collapsed, navRef]);
   
   const menuItems = [
     { id: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/admin/tasks' },
@@ -57,6 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
     { id: 'customer-care', label: 'Customer Care', icon: MessageSquare, path: '/admin/customer-care' },
     { id: 'email', label: 'Email Management', icon: Mail, path: '/admin/email' },
+    { id: 'newsletter', label: 'Newsletter', icon: Rss, path: '/admin/newsletter' },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, path: '/admin/analytics' },
     { id: 'homepage', label: 'Homepage', icon: Home, path: '/admin/homepage' },
     { id: 'social-posting', label: 'Social posting', icon: Share2, path: '/admin/social-posting' },
@@ -102,6 +133,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
                   <Link
                     to={item.path}
                     onMouseDown={(e) => e.preventDefault()}
+                    onMouseEnter={(e) => handleMouseEnter(e, item.label)}
+                    onMouseLeave={handleMouseLeave}
                     className={`relative flex items-center ${collapsed ? 'justify-center px-3 py-2' : 'space-x-3 px-4 py-2'} rounded-lg transition-all duration-200 ${
                       isActive
                         ? 'bg-gray-100 text-black'
@@ -120,14 +153,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
                     />
                     {!collapsed && <span className="font-medium">{item.label}</span>}
                   </Link>
-                  
-                  {/* Tooltip for collapsed state - positioned below */}
-                  {collapsed && (
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
-                      {item.label}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900" />
-                    </div>
-                  )}
                 </div>
               </li>
             );
@@ -141,16 +166,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
           <div className="relative group">
             <button 
               onClick={onLogout}
+              onMouseEnter={(e) => handleMouseEnter(e, 'Logout')}
+              onMouseLeave={handleMouseLeave}
               className="flex items-center justify-center w-full py-2 px-3 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200"
             >
               <LogOut className="w-4 h-4 text-gray-500 group-hover:text-red-500" />
             </button>
-            
-            {/* Tooltip for collapsed state - positioned below */}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
-              Logout
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-900" />
-            </div>
           </div>
         ) : (
           <button 
@@ -162,6 +183,21 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
           </button>
         )}
       </div>
+
+      {/* Portal-like Tooltip for collapsed state - avoids overflow-x-hidden clipping */}
+      {collapsed && hoveredItem && (
+        <div 
+          className="fixed bg-gray-900 text-white text-xs rounded px-2.5 py-1.5 whitespace-nowrap z-50 pointer-events-none shadow-md"
+          style={{
+            top: `${hoveredItem.top}px`,
+            left: '88px', // w-20 (80px) + ml-2 (8px)
+            transform: 'translateY(-50%)'
+          }}
+        >
+          {hoveredItem.label}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+        </div>
+      )}
     </div>
   );
 };
