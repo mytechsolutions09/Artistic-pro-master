@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/server';
 import dynamic from 'next/dynamic';
 
 const NormalItemsPage = dynamic(() => import('@/src/page-components/NormalItemsPage'));
@@ -10,7 +10,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { itemSlug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   // Prefer matching by stored slug; if it fails we fall back to a generic title.
   const { data: item } = await supabase
@@ -37,7 +37,7 @@ export const revalidate = 3600;
 
 export default async function Page({ params }: Props) {
   const { itemSlug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data: item } = await supabase
     .from('normal_items')

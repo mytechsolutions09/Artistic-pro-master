@@ -86,7 +86,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {product.images && product.images.length > 0 && product.images[0] ? (
           <img
             src={product.images[0]}
-            alt={`${product.title} — digital art print, available at Lurevi`}
+            alt={`${product.title} — digital art print by Lurevi`}
             width={800}
             height={800}
             className={`transition-transform duration-300 group-hover:scale-105 ${

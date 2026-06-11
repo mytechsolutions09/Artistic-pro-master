@@ -377,6 +377,17 @@ const CategoryDetailPage: React.FC = () => {
     <div className="min-h-screen bg-[#ffffff]">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500 mb-4 font-sans font-normal overflow-x-auto whitespace-nowrap scrollbar-hide py-1">
+          <Link to="/" className="hover:text-teal-800 transition-colors duration-200">Home</Link>
+          <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+          <Link to="/categories" className="hover:text-teal-800 transition-colors duration-200">Categories</Link>
+          <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+          <span className="text-gray-900 font-medium font-sans font-normal truncate max-w-[200px] sm:max-w-none capitalize">
+            {categorySlug ? categorySlug.replace(/-/g, ' ') : ''}
+          </span>
+        </div>
+
         {/* All Filters Button */}
         <div className="mb-4">
           <button 

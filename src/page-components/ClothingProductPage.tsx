@@ -361,6 +361,29 @@ const ClothingProductPage: React.FC = () => {
       
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Breadcrumb */}
+          <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500 mb-6 font-sans font-normal overflow-x-auto whitespace-nowrap scrollbar-hide py-1">
+            <Link to="/" className="hover:text-[#ff6e00] transition-colors duration-200">Home</Link>
+            <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+            <Link to="/clothes" className="hover:text-[#ff6e00] transition-colors duration-200">Clothes</Link>
+            {product.gender && (
+              <>
+                <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+                <span className="text-gray-500 capitalize">{product.gender}</span>
+              </>
+            )}
+            {product.clothingType && (
+              <>
+                <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+                <span className="text-gray-500 capitalize">{product.clothingType}</span>
+              </>
+            )}
+            <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+            <span className="text-gray-900 font-medium font-sans font-normal truncate max-w-[200px] sm:max-w-none capitalize">
+              {product.title}
+            </span>
+          </div>
+
           {/* Image Section - Shows first on mobile */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-16">
           <div className="order-1 lg:order-2">

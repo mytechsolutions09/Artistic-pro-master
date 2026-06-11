@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/server';
 import dynamic from 'next/dynamic';
 
 const ClothingProductPage = dynamic(() => import('@/src/page-components/ClothingProductPage'));
@@ -10,7 +10,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { productSlug } = await params;
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from('products')
     .select('title, description')

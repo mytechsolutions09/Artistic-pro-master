@@ -454,11 +454,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
         setLoadingCategories(true);
         const categoryData = await categoryService.getAllCategories();
         const categoryNames = categoryData.map((cat: { name: string }) => cat.name);
-
-          categoryData: categoryData.length,
-          categoryNames,
-          firstCategory: categoryData[0]
-        });
         setCategories(categoryNames);
       } catch (error) {
         console.error('Error loading categories:', error);

@@ -235,6 +235,24 @@ const ProductPage: React.FC = () => {
   // Find the product using category and product slugs
   const product = findProductBySlugs(allProducts, categorySlug || '', productSlug || '');
 
+  const productCategory = (product as any)?.category || (product?.categories && product.categories[0]) || 'General';
+  const productCategoryLower = productCategory.toLowerCase();
+  const isFBCategory =
+    productCategoryLower.includes('f & b') ||
+    productCategoryLower.includes('f&b') ||
+    productCategoryLower.includes('food & beverage') ||
+    productCategoryLower.includes('food and beverage');
+  const isCommissionedCategory =
+    productCategoryLower.includes('commission') || productCategoryLower.includes('commissioned');
+  const isClothing = (product as any)?.gender === 'Men' || (product as any)?.gender === 'Women' || (product as any)?.gender === 'Unisex' ||
+    (product?.categories && product.categories.some((cat: string) => 
+      cat.toLowerCase().includes('men') || 
+      cat.toLowerCase().includes('women') || 
+      cat.toLowerCase().includes('unisex') ||
+      cat.toLowerCase().includes('clothing')
+    ));
+  const isNormalItem = (product?.categories && product.categories.includes('Normal')) || (product as any)?.category === 'Normal';
+
   // Stable "random" cart count between 5 and 30 per product
   const cartCount = React.useMemo(() => {
     if (!product) return 20;
@@ -353,17 +371,6 @@ const ProductPage: React.FC = () => {
     : 0;
   const totalReviews = reviews.length;
 
-  // Get related products - only art/digital products, exclude clothing, normal items, F&B
-  const productCategory = (product as any)?.category || (product?.categories && product.categories[0]) || 'General';
-  const productCategoryLower = productCategory.toLowerCase();
-  const isFBCategory =
-    productCategoryLower.includes('f & b') ||
-    productCategoryLower.includes('f&b') ||
-    productCategoryLower.includes('food & beverage') ||
-    productCategoryLower.includes('food and beverage');
-  const isCommissionedCategory =
-    productCategoryLower.includes('commission') || productCategoryLower.includes('commissioned');
-  
   // Get related art products - filter from allProducts directly
   const getRelatedArtProducts = () => {
     if (!product || !allProducts || allProducts.length === 0) return [];
@@ -565,6 +572,21 @@ const ProductPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#ffffff]" onContextMenu={handleContextMenu}>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-4 lg:py-6">
+        {/* Breadcrumb */}
+        <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500 mb-6 font-sans font-normal overflow-x-auto whitespace-nowrap scrollbar-hide py-1">
+          <Link to="/" className="hover:text-teal-800 transition-colors duration-200">Home</Link>
+          <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+          <Link to="/categories" className="hover:text-teal-800 transition-colors duration-200">Categories</Link>
+          <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+          <Link to={`/categories/${categorySlug}`} className="hover:text-teal-800 transition-colors duration-200 capitalize">
+            {productCategory.toLowerCase() === 'general' ? (categorySlug ? categorySlug.replace(/-/g, ' ') : 'General') : productCategory}
+          </Link>
+          <span className="text-gray-300 select-none font-sans font-normal">&gt;</span>
+          <span className="text-gray-900 font-medium font-sans font-normal truncate max-w-[200px] sm:max-w-none capitalize">
+            {product.title}
+          </span>
+        </div>
+
         {/* Product Top Section - Matching Image Layout */}
         <div className="grid grid-cols-[auto_1fr] lg:grid-cols-12 gap-2 sm:gap-4 lg:gap-8 mb-4 sm:mb-6 lg:mb-8">
           
@@ -628,7 +650,7 @@ const ProductPage: React.FC = () => {
                   <div className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 overflow-hidden border-2 border-gray-200">
                     <img 
                       src={productImages[0]} 
-                      alt={product.title} 
+                      alt={`${product.title} — digital art print by Lurevi`} 
                       className="w-full h-full object-contain transition-transform duration-300 ease-in-out hover:scale-120"
                       onContextMenu={handleContextMenu}
                       onDragStart={handleDragStart}
@@ -686,7 +708,7 @@ const ProductPage: React.FC = () => {
                 >
                   <img
                     src={productImages[selectedProductImage]}
-                    alt={product.title}
+                    alt={`${product.title} — digital art print by Lurevi`}
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-125 origin-center"
                     onContextMenu={handleContextMenu}
                     onDragStart={handleDragStart}
@@ -755,10 +777,11 @@ const ProductPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Product Title - moved above price (F&B: all caps) */}
+              {/* Product Title */}
               <div className="mt-2 mb-4">
-                <h1 className={`text-sm sm:text-base font-semibold text-gray-800 leading-tight text-center font-sans font-normal ${isFBCategory ? 'uppercase' : 'capitalize'}`}>
+                <h1 className="text-lg sm:text-xl font-semibold text-gray-900 leading-tight text-left" style={{ fontFamily: 'Inter, sans-serif' }}>
                   {product.title}
+                  {!isFBCategory && !isClothing && !isNormalItem && " Art"}
                 </h1>
               </div>
 
@@ -985,6 +1008,59 @@ const ProductPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* On-Page Content & Spec Table for SEO */}
+        {!isFBCategory && !isClothing && !isNormalItem && (
+          <div className="w-full px-3 sm:px-4 lg:px-6 mb-8 mt-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-gray-900 mb-4 font-sans">Artwork Details & Print Specifications</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Description Block */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans">About this Print</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal">
+                    This premium wall art print showcases {product.title} in exquisite detail, featuring a vibrant color palette designed to elevate the mood of any room. Perfectly suited for living rooms, modern bedrooms, hallways, or home offices, this artwork seamlessly blends contemporary design aesthetics with classic artistic elements. Every piece is crafted to bring a sophisticated, creative atmosphere to your living spaces, serving as a captivating focal point for family and guests alike.
+                  </p>
+                  <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal mt-3">
+                    Available as either an instant high-resolution digital download for self-printing or as a museum-quality physical poster delivered directly to your doorstep.
+                  </p>
+                </div>
+
+                {/* Spec Table */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans">Specifications</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50 w-1/3">Sizes Available</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">A4, A3, A2, A1, and Custom Dimensions</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Print Materials</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">200 GSM Premium Heavy-weight Matte Paper / Premium Canvas</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Print Process</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">High-definition Giclée printing with Archival Inks</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Digital File Quality</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">300 DPI High-Resolution JPEG / PDF files</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Shipping & Delivery</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">Free shipping across India. Dispatched in 24-48 hours. Delivered in 3-5 business days.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabbed Information Section */}
         <div className="w-full px-3 sm:px-4 lg:px-6 mb-6 sm:mb-8 lg:mb-10">
@@ -1466,111 +1542,122 @@ const ProductPage: React.FC = () => {
                 </button>
               )}
             </div>
-
           </div>
         </div>
-
       </div>
 
       {/* Related Products Section */}
       {product && relatedProducts && relatedProducts.length > 0 && (
-        <div className="py-6 sm:py-8 mt-4">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 lg:p-8">
-              <div className="text-center mb-6">
-                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1 font-sans font-normal">Related Products</h2>
-                <p className="text-sm text-gray-600 font-sans font-normal">Discover more amazing artwork you might love</p>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="py-12 mt-8 bg-gray-50/50 border-t border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight font-sans">Related Artworks</h2>
+              <p className="text-sm text-gray-500 mt-2 font-sans">Handpicked pieces you might also appreciate</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
               {relatedProducts.map((relatedProduct) => (
-              <Link
-                key={relatedProduct.id}
-                to={`/${generateSlug('categories' in relatedProduct ? (relatedProduct.categories && relatedProduct.categories.length > 0 ? relatedProduct.categories[0] : 'general') : ('category' in relatedProduct ? relatedProduct.category : 'general'))}/${generateSlug(relatedProduct.title)}`}
-                className="block bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
-              >
-                <div className="relative overflow-hidden rounded-t-xl">
-                  <img 
-                    src={relatedProduct.images && relatedProduct.images.length > 0 ? relatedProduct.images[0] : 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=600'} 
-                    alt={relatedProduct.title}
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (!user) {
-                          window.location.href = '/sign-in';
-                          return;
-                        }
-                        try {
-                          if (relatedProduct.id) {
-                            await FavoritesService.addToFavorites(relatedProduct.id);
+                <Link
+                  key={relatedProduct.id}
+                  to={`/${generateSlug('categories' in relatedProduct ? (relatedProduct.categories && relatedProduct.categories.length > 0 ? relatedProduct.categories[0] : 'general') : ('category' in relatedProduct ? relatedProduct.category : 'general'))}/${generateSlug(relatedProduct.title)}`}
+                  className="block bg-white border border-gray-100 hover:border-gray-200 transition-all duration-300 group relative flex flex-col h-full rounded-none overflow-hidden hover:shadow-lg"
+                >
+                  {/* Image Container */}
+                  <div className="relative overflow-hidden aspect-[4/5] bg-gray-50 flex items-center justify-center">
+                    <img 
+                      src={relatedProduct.images && relatedProduct.images.length > 0 ? relatedProduct.images[0] : 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=600'} 
+                      alt={relatedProduct.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    
+                    {/* Hover Favorite Button Overlay */}
+                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-sm z-10">
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!user) {
+                            window.location.href = '/sign-in';
+                            return;
                           }
-                        } catch (error) {
-                          console.error('Error adding to favorites:', error);
-                        }
-                      }}
-                      className="w-4 h-4 text-black hover:text-black cursor-pointer transition-colors"
-                    >
-                      <Heart className="w-4 h-4" />
-                    </button>
+                          try {
+                            if (relatedProduct.id) {
+                              await FavoritesService.addToFavorites(relatedProduct.id);
+                            }
+                          } catch (error) {
+                            console.error('Error adding to favorites:', error);
+                          }
+                        }}
+                        className="w-4 h-4 text-gray-600 hover:text-red-500 transition-colors"
+                      >
+                        <Heart className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2 group-hover:text-black transition-colors duration-200 truncate font-sans font-normal" title={relatedProduct.title}>
-                    {relatedProduct.title}
-                  </h3>
                   
-                  <p className="text-xs text-gray-600 mb-2 truncate font-sans font-normal" title={'description' in relatedProduct ? relatedProduct.description : "Beautiful handcrafted artwork that brings nature's beauty into your home."}>
-                    {'description' in relatedProduct ? relatedProduct.description : "Beautiful handcrafted artwork that brings nature's beauty into your home."}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold text-gray-900 font-sans font-normal">{formatUIPrice(relatedProduct.price, 'INR')}</span>
-                      {'originalPrice' in relatedProduct && 'discountPercentage' in relatedProduct && relatedProduct.originalPrice && relatedProduct.discountPercentage && (
-                        <span className="text-xs text-gray-600 line-through font-sans font-normal">{formatUIPrice(relatedProduct.originalPrice, 'INR')}</span>
+                  {/* Content */}
+                  <div className="p-4 flex flex-col flex-grow justify-between">
+                    <div>
+                      {/* Category Label */}
+                      <span className="text-[10px] font-semibold tracking-wider text-teal-800 uppercase block mb-1">
+                        {('categories' in relatedProduct && relatedProduct.categories && relatedProduct.categories[0]) || relatedProduct.category || 'Artwork'}
+                      </span>
+                      {/* Product Title */}
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-teal-800 transition-colors duration-200 line-clamp-1 font-sans capitalize mb-1" title={relatedProduct.title}>
+                        {relatedProduct.title}
+                      </h3>
+                      
+                      {/* Price Section */}
+                      <div className="flex items-baseline space-x-2 mb-2 mt-1">
+                        <span className="text-sm font-bold text-gray-900 font-sans">{formatUIPrice(relatedProduct.price, 'INR')}</span>
+                        {'originalPrice' in relatedProduct && 'discountPercentage' in relatedProduct && relatedProduct.originalPrice && relatedProduct.discountPercentage && (
+                          <>
+                            <span className="text-xs text-gray-400 line-through font-sans">{formatUIPrice(relatedProduct.originalPrice, 'INR')}</span>
+                            <span className="text-xs font-semibold text-green-700 font-sans">{relatedProduct.discountPercentage}% OFF</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      {/* Rating (Compact) */}
+                      {relatedProduct.rating && (
+                        <div className="flex items-center space-x-1 mb-3">
+                          <div className="flex items-center space-x-0.5">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-2.5 h-2.5 ${
+                                  i < Math.floor(relatedProduct.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-200'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[10px] text-gray-500">({relatedProduct.rating})</span>
+                        </div>
                       )}
+                      
+                      {/* Call To Action */}
+                      <div className="w-full mt-2 py-2 bg-gray-900 group-hover:bg-teal-800 text-white text-xs font-semibold transition-colors duration-300 flex items-center justify-center space-x-1">
+                        <span>Explore Artwork</span>
+                        <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-1 mb-3">
-                    <div className="flex items-center space-x-1">
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3 h-3 ${
-                            i < Math.floor(relatedProduct.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-gray-500">({relatedProduct.rating || 0})</span>
-                  </div>
-                  
-                  <div className="w-full bg-white border border-gray-300 group-hover:border-gray-400 group-hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 font-sans font-normal">
-                    <ShoppingCart className="w-4 h-4" />
-                    <span>View Product</span>
-                  </div>
-                </div>
-              </Link>
+                </Link>
               ))}
             </div>
-          
-            <div className="text-center mt-8 sm:mt-10 lg:mt-12">
+            
+            <div className="text-center mt-10">
               <Link 
                 to={`/${generateSlug(productCategory)}`}
-                className="inline-block bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 font-medium py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-200 text-sm sm:text-base font-sans font-normal"
+                className="inline-block bg-white border border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold py-3 px-8 transition-all duration-300 text-xs tracking-wider uppercase"
               >
-                View All {productCategory} Products
+                View All {productCategory} Artworks
               </Link>
             </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* Image Modal */}
