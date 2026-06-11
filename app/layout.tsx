@@ -54,6 +54,9 @@ export const metadata: Metadata = {
     shortcut: '/favicon.png',
     apple: '/favicon.png',
   },
+  other: {
+    'msvalidate.01': process.env.NEXT_PUBLIC_BING_VERIFICATION_CODE || 'YOUR_BING_VERIFICATION_CODE',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

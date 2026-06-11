@@ -12,13 +12,19 @@ import CategoryPageSkeleton from '../components/CategoryPageSkeleton';
 
 interface NormalItemRouteHandlerProps {
   isCategoryPage?: boolean;
+  initialCategory?: any;
+  initialProducts?: any[];
 }
 
 /**
  * Route handler that checks if a slug belongs to a normal item, F&B product, or category.
  * Priority: Normal Item > F&B Product > Category
  */
-const NormalItemRouteHandler: React.FC<NormalItemRouteHandlerProps> = ({ isCategoryPage = false }) => {
+const NormalItemRouteHandler: React.FC<NormalItemRouteHandlerProps> = ({ 
+  isCategoryPage = false,
+  initialCategory,
+  initialProducts
+}) => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const { adminProducts, loading: productsLoading } = useProducts();
   const [itemType, setItemType] = useState<'normal' | 'fb' | 'category' | null>(null);
@@ -78,7 +84,7 @@ const NormalItemRouteHandler: React.FC<NormalItemRouteHandlerProps> = ({ isCateg
   }, [categorySlug, adminProducts, productsLoading]);
 
   // Show loading state
-  if (loading || productsLoading) {
+  if (loading || (productsLoading && !initialProducts)) {
     return <CategoryPageSkeleton showFilters={false} productCount={8} />;
   }
 
@@ -93,7 +99,7 @@ const NormalItemRouteHandler: React.FC<NormalItemRouteHandlerProps> = ({ isCateg
   }
 
   // Otherwise, show CategoryDetailPage
-  return <CategoryDetailPage />;
+  return <CategoryDetailPage initialCategory={initialCategory} initialProducts={initialProducts} />;
 };
 
 export default NormalItemRouteHandler;

@@ -13,12 +13,19 @@ import { generateCategorySlug, generateSlug } from '../utils/slugUtils';
 import { productBelongsToCategoryLabel } from '../utils/productFilterUtils';
 import { getCategoryExplainer } from '../config/categoryExplainers';
 
-const CategoryDetailPage: React.FC = () => {
+interface CategoryDetailPageProps {
+  initialCategory?: any;
+  initialProducts?: Product[];
+}
+
+const CategoryDetailPage: React.FC<CategoryDetailPageProps> = ({ initialCategory, initialProducts }) => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const { adminProducts, loading, error } = useProducts();
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
-  const [category, setCategory] = useState<any>(null);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts || []);
+  const [displayedProducts, setDisplayedProducts] = useState<Product[]>(
+    initialProducts ? initialProducts.slice(0, 8) : []
+  );
+  const [category, setCategory] = useState<any>(initialCategory || null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const explainer = categorySlug ? getCategoryExplainer(categorySlug) : null;
@@ -37,8 +44,10 @@ const CategoryDetailPage: React.FC = () => {
 
   /** Products belonging to this category URL (same rules as applyFilters base set) — price range */
   const categoryScopeProducts = useMemo(() => {
-    if (!categorySlug || adminProducts.length === 0) return [];
-    return adminProducts.filter((product) => {
+    if (!categorySlug) return [];
+    const activeProducts = adminProducts.length > 0 ? adminProducts : (initialProducts || []);
+    if (activeProducts.length === 0) return [];
+    return activeProducts.filter((product) => {
       const categories = (product.categories || []).map((c: string) => c.toLowerCase());
       const tags = ((product as any).tags || []).map((t: string) => t.toLowerCase());
       const combined = [...categories, ...tags].join(' ');
@@ -69,19 +78,20 @@ const CategoryDetailPage: React.FC = () => {
       }
       return false;
     });
-  }, [categorySlug, adminProducts]);
+  }, [categorySlug, adminProducts, initialProducts]);
 
   useEffect(() => {
     setFilters((prev) => ({ ...prev, category: undefined }));
   }, [categorySlug]);
 
   useEffect(() => {
-    if (categorySlug && adminProducts.length > 0) {
+    const activeProducts = adminProducts.length > 0 ? adminProducts : (initialProducts || []);
+    if (categorySlug && activeProducts.length > 0) {
 
 
       
               // Check if this might be a product URL by looking for products with matching category slug
-        const categoryProducts = adminProducts.filter(product => {
+        const categoryProducts = activeProducts.filter(product => {
           // Handle both old single category and new categories array
           if (product.categories && Array.isArray(product.categories)) {
             return product.categories.some(category => {
@@ -122,7 +132,7 @@ const CategoryDetailPage: React.FC = () => {
 
         // If no products found for this category, it might be a product URL
         // Check if there's a product with a title that matches this slug
-        const possibleProduct = adminProducts.find(product => {
+        const possibleProduct = activeProducts.find(product => {
           const productTitleSlug = generateSlug(product.title);
           return productTitleSlug === categorySlug;
         });
@@ -141,7 +151,7 @@ const CategoryDetailPage: React.FC = () => {
 
       }
       
-      const foundCategory = {
+      const foundCategory = initialCategory || {
         id: categorySlug,
         name: categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1),
         slug: categorySlug
@@ -165,7 +175,7 @@ const CategoryDetailPage: React.FC = () => {
         }));
       }
     }
-  }, [categorySlug, adminProducts]);
+  }, [categorySlug, adminProducts, initialProducts, initialCategory]);
 
   useEffect(() => {
     applyFilters();
@@ -202,8 +212,8 @@ const CategoryDetailPage: React.FC = () => {
     if (!categorySlug) return;
     
 
-    
-          let filtered = adminProducts.filter(product => {
+    const activeProducts = adminProducts.length > 0 ? adminProducts : (initialProducts || []);
+    let filtered = activeProducts.filter(product => {
         // Exclude F&B products from art categories
         const categories = (product.categories || []).map((c: string) => c.toLowerCase());
         const tags = ((product as any).tags || []).map((t: string) => t.toLowerCase());
@@ -337,7 +347,7 @@ const CategoryDetailPage: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loadingMore, hasMoreProducts]);
 
-  if (loading) {
+  if (loading && !initialProducts) {
     return <CategoryPageSkeleton showFilters={showFilters} productCount={8} />;
   }
 

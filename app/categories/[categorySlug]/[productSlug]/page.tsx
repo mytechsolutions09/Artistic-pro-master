@@ -194,7 +194,7 @@ export default async function ProductPage({ params }: Props) {
       )}
 
       {/* Full interactive React page */}
-      <ProductPageClient />
+      <ProductPageClient initialProduct={product} />
     </>
   );
 }

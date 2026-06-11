@@ -12,28 +12,41 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { categorySlug } = await params;
   const supabase = createStaticClient();
 
-  const { data: category } = await supabase
-    .from('categories')
-    .select('name, description, image_url')
-    .eq('slug', categorySlug)
-    .single();
-
-  if (!category) {
-    return { title: 'Lurevi' };
+  let category = null;
+  try {
+    const { data } = await supabase
+      .from('categories')
+      .select('name, description, image_url')
+      .eq('slug', categorySlug)
+      .single();
+    category = data;
+  } catch (err) {
+    console.error('Error fetching category for metadata:', err);
   }
 
-  // Fetch count of active products in this category
-  const { count } = await supabase
-    .from('products')
-    .select('*', { count: 'exact', head: true })
-    .contains('categories', [categorySlug])
-    .eq('status', 'active');
+  // Fallback if fetch fails
+  const name = category?.name ?? categorySlug.replace(/-/g, ' ');
+  const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
 
-  const catName = category.name;
-  const capitalizedName = catName.charAt(0).toUpperCase() + catName.slice(1);
-  const titleText = `${capitalizedName} Digital Art Prints — Buy Online India | Lurevi`;
+  // Fetch count of active products in this category
+  let count = null;
+  if (category) {
+    try {
+      const { count: fetchedCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .contains('categories', [categorySlug])
+        .eq('status', 'active');
+      count = fetchedCount;
+    } catch (err) {
+      console.error('Error fetching count for metadata:', err);
+    }
+  }
+
+  const titleText = `${formattedName} Digital Art Prints — Buy Online India | Lurevi`;
   const countPrefix = count ? `${count} ` : '';
-  const descText = `Shop ${countPrefix}curated ${catName.toLowerCase()} digital art prints. Premium wall art for modern Indian homes. Free shipping across India.`;
+  const descText = category?.description ?? 
+    `Browse ${countPrefix}curated ${formattedName.toLowerCase()} digital art prints at Lurevi. Curated collection, premium quality, ships across India.`;
 
   return {
     title: titleText,
@@ -48,7 +61,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: titleText,
       description: descText,
-      images: category.image_url ? [{ url: category.image_url }] : [{ url: '/logo.png' }],
+      url: `https://lurevi.in/categories/${categorySlug}`,
+      images: category?.image_url ? [{ url: category.image_url }] : [{ url: '/logo.png' }],
     },
   };
 }
@@ -65,29 +79,45 @@ export async function generateStaticParams() {
     categorySlug: category.slug,
   }));
 }
+
 export default async function CategoryPage({ params }: Props) {
   const { categorySlug } = await params;
   const supabase = createStaticClient();
 
   // Fetch category and its products for server-side SEO HTML
-  const [{ data: category }, { data: products }] = await Promise.all([
-    supabase
-      .from('categories')
-      .select('id, name, slug, description, image_url')
-      .eq('slug', categorySlug)
-      .single(),
-    supabase
-      .from('products')
-      .select('id, title, slug, description, price, images')
-      .contains('categories', [categorySlug])
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(24),
-  ]);
+  let category = null;
+  let products = null;
+  try {
+    const [{ data: catData }, { data: prodData }] = await Promise.all([
+      supabase
+        .from('categories')
+        .select('id, name, slug, description, image_url')
+        .eq('slug', categorySlug)
+        .single(),
+      supabase
+        .from('products')
+        .select('id, title, slug, description, price, images, rating, featured, created_date, status, categories, tags')
+        .contains('categories', [categorySlug])
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(24),
+    ]);
+    category = catData;
+    products = prodData;
+  } catch (err) {
+    console.error('Error fetching category/products for CategoryPage:', err);
+  }
+
+  const finalCategory = category || {
+    id: categorySlug,
+    name: categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1).replace(/-/g, ' '),
+    slug: categorySlug,
+    description: `Browse ${categorySlug.replace(/-/g, ' ')} digital art prints.`
+  };
 
   return (
     <>
-      {category && (
+      {finalCategory && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -98,8 +128,8 @@ export default async function CategoryPage({ params }: Props) {
                   '@type': 'CollectionPage',
                   '@id': `https://lurevi.in/categories/${categorySlug}/#webpage`,
                   url: `https://lurevi.in/categories/${categorySlug}`,
-                  name: `${category.name} — Luxury Collection`,
-                  description: category.description ?? undefined,
+                  name: `${finalCategory.name} — Luxury Collection`,
+                  description: finalCategory.description ?? undefined,
                   inLanguage: 'en-IN',
                   isPartOf: { '@id': 'https://lurevi.in/#website' },
                 },
@@ -108,7 +138,7 @@ export default async function CategoryPage({ params }: Props) {
                   itemListElement: [
                     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://lurevi.in' },
                     { '@type': 'ListItem', position: 2, name: 'Categories', item: 'https://lurevi.in/categories' },
-                    { '@type': 'ListItem', position: 3, name: category.name, item: `https://lurevi.in/categories/${categorySlug}` },
+                    { '@type': 'ListItem', position: 3, name: finalCategory.name, item: `https://lurevi.in/categories/${categorySlug}` },
                   ],
                 },
               ],
@@ -117,15 +147,15 @@ export default async function CategoryPage({ params }: Props) {
         />
       )}
       {/* Server-rendered content for Google */}
-      {category && (
+      {finalCategory && (
         <noscript>
           <main style={{ maxWidth: '72rem', margin: '0 auto', padding: '1rem', fontFamily: 'Inter, sans-serif' }}>
-            <h1>{category.name}</h1>
-            {category.description && <p>{category.description}</p>}
+            <h1>{finalCategory.name}</h1>
+            {finalCategory.description && <p>{finalCategory.description}</p>}
 
             {products && products.length > 0 && (
               <section>
-                <h2>{category.name} Artworks</h2>
+                <h2>{finalCategory.name} Artworks</h2>
                 <ul>
                   {products.map((p) => (
                     <li key={p.id}>
@@ -160,7 +190,11 @@ export default async function CategoryPage({ params }: Props) {
       )}
 
       {/* Full interactive React page */}
-      <NormalItemRouteHandlerClient isCategoryPage={true} />
+      <NormalItemRouteHandlerClient 
+        isCategoryPage={true} 
+        initialCategory={finalCategory}
+        initialProducts={products || []}
+      />
     </>
   );
 }

@@ -26,7 +26,8 @@ import {
   FileText,
   Truck,
   Info,
-  Package
+  Package,
+  ShieldCheck
 } from 'lucide-react';
 
 import ArtCard from '../components/ArtCard';
@@ -44,7 +45,11 @@ import { Review } from '../types';
 import { NavigationVisibilityService } from '../services/navigationVisibilityService';
 import ProductPageSkeleton from '../components/ProductPageSkeleton';
 
-const ProductPage: React.FC = () => {
+interface ProductPageProps {
+  initialProduct?: any;
+}
+
+const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
   const { categorySlug, productSlug } = useParams<{ categorySlug: string; productSlug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -158,18 +163,16 @@ const ProductPage: React.FC = () => {
 
   // Initialize product type and size based on product data
   React.useEffect(() => {
-    if (allProducts.length > 0) {
-      const product = findProductBySlugs(allProducts, categorySlug || '', productSlug || '');
-      if (product) {
-        setSelectedProductType(product.productType || 'digital');
-        if (product.posterSize && product.posterPricing && product.posterPricing[product.posterSize]) {
-          setSelectedPosterSize(product.posterSize);
-        } else if (product.posterPricing && Object.keys(product.posterPricing).length > 0) {
-          setSelectedPosterSize(Object.keys(product.posterPricing)[0]);
-        }
+    const activeProduct = findProductBySlugs(allProducts, categorySlug || '', productSlug || '') || initialProduct;
+    if (activeProduct) {
+      setSelectedProductType(activeProduct.productType || 'digital');
+      if (activeProduct.posterSize && activeProduct.posterPricing && activeProduct.posterPricing[activeProduct.posterSize]) {
+        setSelectedPosterSize(activeProduct.posterSize);
+      } else if (activeProduct.posterPricing && Object.keys(activeProduct.posterPricing).length > 0) {
+        setSelectedPosterSize(Object.keys(activeProduct.posterPricing)[0]);
       }
     }
-  }, [allProducts, categorySlug, productSlug]);
+  }, [allProducts, categorySlug, productSlug, initialProduct]);
 
 
   // Keyboard navigation support
@@ -233,7 +236,7 @@ const ProductPage: React.FC = () => {
   }, []);
 
   // Find the product using category and product slugs
-  const product = findProductBySlugs(allProducts, categorySlug || '', productSlug || '');
+  const product = findProductBySlugs(allProducts, categorySlug || '', productSlug || '') || initialProduct;
 
   const productCategory = (product as any)?.category || (product?.categories && product.categories[0]) || 'General';
   const productCategoryLower = productCategory.toLowerCase();
@@ -314,7 +317,7 @@ const ProductPage: React.FC = () => {
   }, [product, user]);
 
   // Show loading state while products are being fetched or transitioning
-  if (loading || transitionLoading) {
+  if ((loading && !initialProduct) || transitionLoading) {
     return <ProductPageSkeleton />;
   }
 
@@ -1009,78 +1012,7 @@ const ProductPage: React.FC = () => {
           </div>
         </div>
 
-        {/* On-Page Content & Spec Table for SEO */}
-        {!isFBCategory && !isClothing && !isNormalItem && (
-          <div className="w-full px-3 sm:px-4 lg:px-6 mb-8 mt-4">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 font-sans">Artwork Details & Print Specifications</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Description Block */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans">About this Print</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal">
-                    This premium wall art print showcases {product.title} in exquisite detail, featuring a vibrant color palette designed to elevate the mood of any room. Perfectly suited for living rooms, modern bedrooms, hallways, or home offices, this artwork seamlessly blends contemporary design aesthetics with classic artistic elements. Every piece is crafted to bring a sophisticated, creative atmosphere to your living spaces, serving as a captivating focal point for family and guests alike.
-                  </p>
-                  <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal mt-3">
-                    Available as either an instant high-resolution digital download for self-printing or as a museum-quality physical poster delivered directly to your doorstep.
-                  </p>
-                </div>
 
-                {/* Spec Table */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans">Specifications</h3>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        <tr>
-                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50 w-1/3">Sizes Available</td>
-                          <td className="px-4 py-2 text-xs text-gray-600">A4, A3, A2, A1, and Custom Dimensions</td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Print Materials</td>
-                          <td className="px-4 py-2 text-xs text-gray-600">200 GSM Premium Heavy-weight Matte Paper / Premium Canvas</td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Print Process</td>
-                          <td className="px-4 py-2 text-xs text-gray-600">High-definition Giclée printing with Archival Inks</td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Digital File Quality</td>
-                          <td className="px-4 py-2 text-xs text-gray-600">300 DPI High-Resolution JPEG / PDF files</td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Shipping & Delivery</td>
-                          <td className="px-4 py-2 text-xs text-gray-600">Free shipping across India. Dispatched in 24-48 hours. Delivered in 3-5 business days.</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              {/* Expert & Curation Panel */}
-              <div className="mt-6 border-t border-gray-100 pt-6">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 font-sans">Curator Note & Quality Verification</h4>
-                <div className="flex items-start space-x-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                    <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150" alt="Emma Johnson" className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs font-semibold text-gray-900">Emma Johnson</span>
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">Head Curator</span>
-                      <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full font-medium font-sans">Verified: June 2026</span>
-                    </div>
-                    <p className="text-[11px] text-gray-600 mt-1 leading-normal font-sans font-normal">
-                      "Every piece in this collection has been technically audited for color profile accuracy, resolution limits (minimum 300 DPI), and aesthetic harmony. We certify this print for high-quality Giclée printing."
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Tabbed Information Section */}
         <div className="w-full px-3 sm:px-4 lg:px-6 mb-6 sm:mb-8 lg:mb-10">
@@ -1297,6 +1229,79 @@ const ProductPage: React.FC = () => {
             onTabChange={setActiveTab}
           />
         </div>
+
+        {/* On-Page Content & Spec Table for SEO */}
+        {!isFBCategory && !isClothing && !isNormalItem && (
+          <div className="w-full px-3 sm:px-4 lg:px-6 mb-8 mt-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-gray-900 mb-4 font-sans">Artwork Details & Print Specifications</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Description Block */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans">About this Print</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal">
+                    This premium wall art print showcases {product.title} in exquisite detail, featuring a vibrant color palette designed to elevate the mood of any room. Perfectly suited for living rooms, modern bedrooms, hallways, or home offices, this artwork seamlessly blends contemporary design aesthetics with classic artistic elements. Every piece is crafted to bring a sophisticated, creative atmosphere to your living spaces, serving as a captivating focal point for family and guests alike.
+                  </p>
+                  <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal mt-3">
+                    Available as either an instant high-resolution digital download for self-printing or as a museum-quality physical poster delivered directly to your doorstep.
+                  </p>
+                </div>
+
+                {/* Spec Table */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans">Specifications</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50 w-1/3">Sizes Available</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">A4, A3, A2, A1, and Custom Dimensions</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Print Materials</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">200 GSM Premium Heavy-weight Matte Paper / Premium Canvas</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Print Process</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">High-definition Giclée printing with Archival Inks</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Digital File Quality</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">300 DPI High-Resolution JPEG / PDF files</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-xs font-semibold text-gray-900 bg-gray-50">Shipping & Delivery</td>
+                          <td className="px-4 py-2 text-xs text-gray-600">Free shipping across India. Dispatched in 24-48 hours. Delivered in 3-5 business days.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Expert & Curation Panel */}
+              <div className="mt-6 border-t border-gray-100 pt-6">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 font-sans">Curator Note & Quality Verification</h4>
+                <div className="flex items-start space-x-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  <div className="w-10 h-10 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-5 h-5 text-teal-600" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-semibold text-gray-900">Arpit</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">Head Curator</span>
+                      <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full font-medium font-sans">Verified: June 2026</span>
+                    </div>
+                    <p className="text-[11px] text-gray-600 mt-1 leading-normal font-sans font-normal">
+                      "Every piece in this collection has been technically audited for color profile accuracy, resolution limits (minimum 300 DPI), and aesthetic harmony. We certify this print for high-quality Giclée printing."
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Reviews Section - Using Site Colors - Left Side */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 mb-0 mt-0">
