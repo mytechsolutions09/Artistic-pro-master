@@ -54,7 +54,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { allProducts, getRelatedProducts, loading } = useProducts();
-  const { formatUIPrice, currencySettings } = useCurrency();
+  const { formatUIPrice, currencySettings, currentCurrency } = useCurrency();
+  const isInternational = currentCurrency !== 'INR';
   const { user } = useAuth();
   const [selectedProductImage, setSelectedProductImage] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
@@ -75,6 +76,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
   const [transitionLoading, setTransitionLoading] = useState(false);
+
+  // Reset selected product type to digital for international users if it is poster
+  React.useEffect(() => {
+    if (isInternational && selectedProductType === 'poster') {
+      setSelectedProductType('digital');
+    }
+  }, [isInternational, selectedProductType]);
 
   // Scroll to top and reset states on product change (must be before any early returns)
   useEffect(() => {
@@ -165,14 +173,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
   React.useEffect(() => {
     const activeProduct = findProductBySlugs(allProducts, categorySlug || '', productSlug || '') || initialProduct;
     if (activeProduct) {
-      setSelectedProductType(activeProduct.productType || 'digital');
+      if (isInternational) {
+        setSelectedProductType('digital');
+      } else {
+        setSelectedProductType(activeProduct.productType || 'digital');
+      }
       if (activeProduct.posterSize && activeProduct.posterPricing && activeProduct.posterPricing[activeProduct.posterSize]) {
         setSelectedPosterSize(activeProduct.posterSize);
       } else if (activeProduct.posterPricing && Object.keys(activeProduct.posterPricing).length > 0) {
         setSelectedPosterSize(Object.keys(activeProduct.posterPricing)[0]);
       }
     }
-  }, [allProducts, categorySlug, productSlug, initialProduct]);
+  }, [allProducts, categorySlug, productSlug, initialProduct, isInternational]);
 
 
   // Keyboard navigation support
@@ -847,8 +859,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
                 </div>
               )}
 
-              {/* Product Type & Poster Size - Hide for F&B and Commissioned Art */}
-              {!isFBCategory && !product.categories?.some((cat: string) => 
+              {/* Product Type & Poster Size - Hide for F&B, Commissioned Art, and International Users */}
+              {!isInternational && !isFBCategory && !product.categories?.some((cat: string) => 
                 cat.toLowerCase().includes('commission')
               ) && !product.category?.toLowerCase().includes('commission') && (
               <div className="space-y-3 mb-4">
@@ -1244,7 +1256,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
                     This premium wall art print showcases {product.title} in exquisite detail, featuring a vibrant color palette designed to elevate the mood of any room. Perfectly suited for living rooms, modern bedrooms, hallways, or home offices, this artwork seamlessly blends contemporary design aesthetics with classic artistic elements. Every piece is crafted to bring a sophisticated, creative atmosphere to your living spaces, serving as a captivating focal point for family and guests alike.
                   </p>
                   <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal mt-3">
-                    Available as either an instant high-resolution digital download for self-printing or as a museum-quality physical poster delivered directly to your doorstep.
+                    {isInternational 
+                      ? "Available as an instant high-resolution digital download for self-printing. Please note that physical poster prints are only shipped within India."
+                      : "Available as either an instant high-resolution digital download for self-printing or as a museum-quality physical poster delivered directly to your doorstep."}
                   </p>
                 </div>
 

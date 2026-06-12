@@ -3,6 +3,7 @@ import { createStaticClient } from '@/lib/supabase/server';
 import dynamic from 'next/dynamic';
 
 const HomepageClient = dynamic(() => import('@/src/page-components/Homepage'));
+import { generateSlug } from '@/src/utils/slugUtils';
 
 export const metadata: Metadata = {
   title: 'Lurevi | Luxury That Stays With You',
@@ -27,7 +28,7 @@ export default async function HomePage() {
   // Fetch featured products server-side for SEO visibility
   const { data: featuredProducts } = await supabase
     .from('products')
-    .select('id, title, slug, description, price, images, categories')
+    .select('id, title, description, price, images, categories')
     .eq('status', 'active')
     .eq('featured', true)
     .order('created_at', { ascending: false })
@@ -107,6 +108,9 @@ export default async function HomePage() {
       {/* Crawlable server-rendered homepage content for non-JS and low-JS crawlers */}
       {hasSeoSections && (
         <main className="mx-auto max-w-6xl px-4 py-2">
+          <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+            Lurevi — Premium Digital Art Prints & Luxury Collections
+          </h1>
           {categories && categories.length > 0 && (
             <section className="mt-2">
               <h2 className="text-lg font-medium text-gray-900">Popular Categories</h2>
@@ -131,7 +135,7 @@ export default async function HomePage() {
                   const categorySlug = Array.isArray(p.categories) ? p.categories[0] : 'browse';
                   return (
                     <li key={p.id}>
-                      <a href={`/${categorySlug}/${p.slug}`} className="hover:underline">
+                      <a href={`/${categorySlug}/${p.slug || generateSlug(p.title)}`} className="hover:underline">
                         {p.title}
                       </a>
                     </li>
@@ -227,7 +231,7 @@ export default async function HomePage() {
               <ul>
                 {featuredProducts.map((p) => (
                   <li key={p.id}>
-                    <a href={`/${Array.isArray(p.categories) ? p.categories[0] : 'browse'}/${p.slug}`}>
+                    <a href={`/${Array.isArray(p.categories) ? p.categories[0] : 'browse'}/${p.slug || generateSlug(p.title)}`}>
                       {p.title} — ₹{p.price}
                     </a>
                   </li>

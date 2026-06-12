@@ -17,7 +17,7 @@ import { NavigationVisibilityService } from '../services/navigationVisibilitySer
 
 const Homepage: React.FC = () => {
   // Currency context
-  const { formatUIPrice } = useCurrency();
+  const { formatUIPrice, currentCurrency } = useCurrency();
   
   // State for loaded settings and data
   const [homepageSettings, setHomepageSettings] = useState<any>(null);
@@ -1156,40 +1156,67 @@ const Homepage: React.FC = () => {
 
       <LazyHomeSection minHeight="min-h-[300px] md:min-h-[380px]">
       {/* Trending Collections Section */}
-      <section className="py-12 px-4 bg-[#ffffff]">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-16 px-4 bg-gradient-to-b from-[#fbfbfc] via-[#f5f7f8] to-[#fbfbfc] relative overflow-hidden">
+        {/* Soft ambient background glows */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-100/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-100/20 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4 font-sans font-normal">{trendingCollections.title}</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto font-sans font-normal">{trendingCollections.subtitle}</p>
+            <span className="text-[10px] tracking-[0.25em] font-bold text-teal-800 uppercase block mb-3">
+              Curated Collections
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-teal-900 to-gray-900 mb-4 font-sans tracking-tight">
+              {trendingCollections.title}
+            </h2>
+            <p className="text-gray-500 text-sm sm:text-base max-w-xl mx-auto font-sans font-normal leading-relaxed">
+              {trendingCollections.subtitle}
+            </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {trendingCollections.collections.map((collection: any) => (
               <Link key={collection.id} to={collection.link} className="group">
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative h-48">
+                <div className="bg-white/80 backdrop-blur-md rounded-3xl overflow-hidden border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(4,120,120,0.1)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col h-full">
+                  <div className="relative h-56 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent z-10 opacity-70 group-hover:opacity-40 transition-opacity duration-500" />
                     <OptimizedImage
                       src={collection.image}
                       alt={collection.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out scale-100 group-hover:scale-105"
                       width={500}
                       priority={false}
                     />
-                    <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium text-white bg-${collection.badgeColor}-500 font-sans font-normal`}>
-                      {collection.badge}
+                    <div className="absolute top-4 left-4 z-20">
+                      <span className="backdrop-blur-md bg-black/40 border border-white/20 text-white text-[9px] tracking-widest uppercase font-semibold py-1 px-3.5 rounded-full shadow-sm">
+                        {collection.badge}
+                      </span>
                     </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-base font-semibold text-gray-800 mb-2 font-sans font-normal">{collection.title}</h3>
-                    <p className="text-gray-600 text-xs mb-3 font-sans font-normal">{collection.description}</p>
-                    <div className="flex items-center justify-between mb-3 font-sans font-normal">
-                      <span className="text-xs text-gray-500">{collection.artworkCount} artworks</span>
-                      <span className="text-xs text-gray-400">{collection.updateFrequency}</span>
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-teal-700 transition-colors duration-300 font-sans tracking-tight">
+                      {collection.title}
+                    </h3>
+                    <p className="text-gray-500 text-xs font-sans font-normal line-clamp-2 mt-2 mb-5 leading-relaxed flex-grow">
+                      {collection.description}
+                    </p>
+                    
+                    {/* Stats Box */}
+                    <div className="flex items-center justify-between py-2.5 px-3 bg-gray-50/80 border border-gray-100 rounded-xl mb-4 font-sans text-xs">
+                      <div className="flex items-center space-x-1.5 text-gray-600 font-medium">
+                        <Grid3X3 className="w-3.5 h-3.5 text-teal-600" />
+                        <span>{collection.artworkCount} artworks</span>
+                      </div>
+                      <div className="flex items-center space-x-1 font-semibold text-teal-700 uppercase tracking-wider text-[9px]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse mr-1" />
+                        <span>{collection.updateFrequency || 'Fresh content'}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between font-sans font-normal">
-                      <span className="text-black text-xs font-medium group-hover:text-gray-700">
-                        Explore Collection →
-                      </span>
+                    
+                    {/* Explore Link */}
+                    <div className="flex items-center text-xs font-bold text-gray-900 group-hover:text-teal-750 transition-colors duration-300 mt-auto">
+                      <span>Explore Collection</span>
+                      <ArrowRight className="w-3.5 h-3.5 ml-1 transition-transform duration-300 group-hover:translate-x-1.5" />
                     </div>
                   </div>
                 </div>
@@ -1198,10 +1225,10 @@ const Homepage: React.FC = () => {
           </div>
 
           {trendingCollections.showButton && (
-            <div className="text-center mt-8">
+            <div className="text-center mt-12">
               <Link
                 to={trendingCollections.buttonLink}
-                className="inline-block px-6 py-3 bg-white border border-black text-black hover:bg-gray-50 font-medium rounded-full transition-colors text-sm font-sans font-normal"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-gray-900 hover:bg-teal-800 text-white font-semibold rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.08)] hover:shadow-[0_6px_20px_rgba(4,120,120,0.22)] hover:scale-105 transition-all duration-300 text-xs tracking-wider uppercase font-sans"
               >
                 {trendingCollections.buttonText}
               </Link>
@@ -1382,7 +1409,9 @@ const Homepage: React.FC = () => {
               },
               {
                 q: "Do you ship physical prints and frames?",
-                a: "Yes! While we default to digital art downloads, you can select 'Physical Poster' on the product page. We will print the artwork on museum-grade 200 GSM matte paper and deliver it directly to your address in protective tubes. Note that frames are not included."
+                a: currentCurrency !== 'INR'
+                  ? "We offer physical poster delivery exclusively within India. For international customers, we provide instant high-resolution digital downloads of our artwork, which you can easily print locally on your preferred paper or canvas."
+                  : "Yes! While we default to digital art downloads, you can select 'Physical Poster' on the product page. We will print the artwork on museum-grade 200 GSM matte paper and deliver it directly to your address in protective tubes. Note that frames are not included."
               }
             ].map((faq, idx) => {
               const isOpen = openHomepageFaqs.includes(idx);

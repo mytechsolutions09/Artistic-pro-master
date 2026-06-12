@@ -34,6 +34,77 @@ const EMPTY_FORM: BlogFormState = {
   focus_keyphrase: '',
 };
 
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
+  const pages: (number | string)[] = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (
+      i === 1 ||
+      i === totalPages ||
+      (i >= currentPage - 2 && i <= currentPage + 2)
+    ) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== '...') {
+      pages.push('...');
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-4">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+        type="button"
+      >
+        Previous
+      </button>
+      <div className="flex items-center gap-1.5">
+        {pages.map((p, idx) => {
+          if (p === '...') {
+            return (
+              <span key={`ellipsis-${idx}`} className="px-2.5 py-1.5 text-xs text-gray-400">
+                ...
+              </span>
+            );
+          }
+          const pageNum = p as number;
+          const isActive = pageNum === currentPage;
+          return (
+            <button
+              key={`page-${pageNum}`}
+              onClick={() => onPageChange(pageNum)}
+              className={`w-8 h-8 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
+                isActive
+                  ? 'bg-pink-600 text-white shadow-sm shadow-pink-100'
+                  : 'text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+              }`}
+              type="button"
+            >
+              {pageNum}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+        type="button"
+      >
+        Next
+      </button>
+    </div>
+  );
+};
+
 const BlogAdmin: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<BlogTabId>('posts');
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -41,6 +112,53 @@ const BlogAdmin: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<BlogFormState>(EMPTY_FORM);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editPage, setEditPage] = useState(1);
+  const [listPage, setListPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  const filteredPosts = useMemo(() => {
+    if (!searchQuery.trim()) return posts;
+    const q = searchQuery.toLowerCase();
+    return posts.filter(
+      (post) =>
+        post.title.toLowerCase().includes(q) ||
+        post.slug.toLowerCase().includes(q) ||
+        (post.excerpt && post.excerpt.toLowerCase().includes(q))
+    );
+  }, [posts, searchQuery]);
+
+  const paginatedEditPosts = useMemo(() => {
+    const start = (editPage - 1) * ITEMS_PER_PAGE;
+    return filteredPosts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPosts, editPage]);
+
+  const editTotalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE);
+
+  const paginatedListPosts = useMemo(() => {
+    const start = (listPage - 1) * ITEMS_PER_PAGE;
+    return filteredPosts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPosts, listPage]);
+
+  const listTotalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setEditPage(1);
+    setListPage(1);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (editPage > editTotalPages && editTotalPages > 0) {
+      setEditPage(editTotalPages);
+    }
+  }, [filteredPosts.length, editPage, editTotalPages]);
+
+  useEffect(() => {
+    if (listPage > listTotalPages && listTotalPages > 0) {
+      setListPage(listTotalPages);
+    }
+  }, [filteredPosts.length, listPage, listTotalPages]);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [seedingSeoPack, setSeedingSeoPack] = useState(false);
@@ -990,101 +1108,167 @@ const BlogAdmin: React.FC = () => {
 
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Edit Existing Blog Post</h3>
-          {loading ? (
-            <div className="text-sm text-gray-500">Loading posts...</div>
-          ) : posts.length === 0 ? (
-            <div className="text-sm text-gray-500">No posts found yet.</div>
-          ) : (
-            <div className="space-y-2">
-              {posts.map((post) => (
-                <div key={`edit-row-${post.id}`} className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-2 border border-gray-200 rounded-lg p-2.5">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{post.title}</p>
-                      <p className="text-xs text-gray-500 truncate">/{post.slug}</p>
+            
+            {posts.length > 0 && (
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search blog posts..."
+                  className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                />
+              </div>
+            )}
+
+            {loading ? (
+              <div className="text-sm text-gray-500">Loading posts...</div>
+            ) : posts.length === 0 ? (
+              <div className="text-sm text-gray-500">No posts found yet.</div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="text-sm text-gray-500 italic">No posts match your search query.</div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  {paginatedEditPosts.map((post) => (
+                    <div key={`edit-row-${post.id}`} className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-2 border border-gray-200 rounded-lg p-2.5">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-50 border border-gray-200 flex-shrink-0">
+                            {post.cover_image ? (
+                              <img
+                                src={post.cover_image}
+                                alt={post.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-pink-50 text-pink-400">
+                                <FileText className="w-5 h-5" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-800 truncate">{post.title}</p>
+                            <p className="text-xs text-gray-500 truncate">/{post.slug}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (editingId === post.id) resetForm();
+                            else startEdit(post);
+                          }}
+                          type="button"
+                          className={`px-2.5 py-1.5 rounded text-xs inline-flex items-center gap-1 ${
+                            editingId === post.id 
+                              ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' 
+                              : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+                          }`}
+                        >
+                          {editingId === post.id ? 'Cancel' : <><Pencil className="w-3.5 h-3.5" /> Edit</>}
+                        </button>
+                      </div>
+                      {editingId === post.id && (
+                        <div className="mt-2 mb-4 bg-gray-50 p-4 rounded-xl border border-pink-100 shadow-inner">
+                          {renderEditor()}
+                        </div>
+                      )}
                     </div>
-                    <button
-                      onClick={() => {
-                        if (editingId === post.id) resetForm();
-                        else startEdit(post);
-                      }}
-                      type="button"
-                      className={`px-2.5 py-1.5 rounded text-xs inline-flex items-center gap-1 ${
-                        editingId === post.id 
-                          ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' 
-                          : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-                      }`}
-                    >
-                      {editingId === post.id ? 'Cancel' : <><Pencil className="w-3.5 h-3.5" /> Edit</>}
-                    </button>
-                  </div>
-                  {editingId === post.id && (
-                    <div className="mt-2 mb-4 bg-gray-50 p-4 rounded-xl border border-pink-100 shadow-inner">
-                      {renderEditor()}
-                    </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <Pagination currentPage={editPage} totalPages={editTotalPages} onPageChange={setEditPage} />
+              </>
+            )}
+          </div>
         </div>
 
         <div className={activeSubTab === 'list' ? 'bg-white p-4 rounded-lg border border-gray-200 shadow-sm' : 'hidden'}>
           <h3 className="text-sm font-semibold text-gray-800 mb-3">All Blog Posts</h3>
+          
+          {posts.length > 0 && (
+            <div className="mb-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search blog posts..."
+                className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+              />
+            </div>
+          )}
+
           {loading ? (
             <div className="text-sm text-gray-500">Loading blog posts...</div>
           ) : posts.length === 0 ? (
             <div className="text-sm text-gray-500">No posts yet. Create your first blog post above.</div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="text-sm text-gray-500 italic">No posts match your search query.</div>
           ) : (
-            <div className="space-y-2">
-              {posts.map((post) => (
-                <div
-                  key={post.id}
-                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border border-gray-200 rounded-lg p-3"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">{post.title}</p>
-                    <p className="text-xs text-gray-500">/{post.slug}</p>
-                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">{post.excerpt || 'No excerpt provided.'}</p>
-                    <span
-                      className={`inline-flex mt-2 px-2 py-0.5 rounded text-xs ${
-                        post.status === 'published'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-amber-100 text-amber-700'
-                      }`}
-                    >
-                      {post.status}
-                    </span>
+            <>
+              <div className="space-y-2">
+                {paginatedListPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-gray-200 rounded-lg p-3"
+                  >
+                    <div className="flex gap-4 min-w-0 flex-1">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-gray-50 border border-gray-200 flex-shrink-0">
+                        {post.cover_image ? (
+                          <img
+                            src={post.cover_image}
+                            alt={post.title}
+                            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-pink-50 text-pink-400">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{post.title}</p>
+                        <p className="text-xs text-gray-500 truncate">/{post.slug}</p>
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">{post.excerpt || 'No excerpt provided.'}</p>
+                        <span
+                          className={`inline-flex mt-2 px-2 py-0.5 rounded text-xs ${
+                            post.status === 'published'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}
+                        >
+                          {post.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/blog/${post.slug}`}
+                        className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs inline-flex items-center gap-1"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        View
+                      </Link>
+                      <button
+                        onClick={() => startEdit(post)}
+                        className="px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs inline-flex items-center gap-1"
+                        type="button"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => void removePost(post.id)}
+                        className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs inline-flex items-center gap-1"
+                        type="button"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Link
-                      to={`/blog/${post.slug}`}
-                      className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs inline-flex items-center gap-1"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      View
-                    </Link>
-                    <button
-                      onClick={() => startEdit(post)}
-                      className="px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs inline-flex items-center gap-1"
-                      type="button"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => void removePost(post.id)}
-                      className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs inline-flex items-center gap-1"
-                      type="button"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              <Pagination currentPage={listPage} totalPages={listTotalPages} onPageChange={setListPage} />
+            </>
           )}
         </div>
 

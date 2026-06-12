@@ -86,6 +86,9 @@ const CategoriesPage: React.FC<Props> = ({ initialCategories }) => {
   return (
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-7xl mx-auto px-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 tracking-tight text-center">
+          Art Categories
+        </h1>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {displayedCategories.map((category) => (

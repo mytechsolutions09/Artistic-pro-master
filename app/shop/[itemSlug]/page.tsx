@@ -45,6 +45,9 @@ export default async function Page({ params }: Props) {
     .eq('slug', itemSlug)
     .single();
 
+  const images = item && (Array.isArray(item.images) ? item.images : item.images ? [item.images] : []);
+  const fallbackImages = images && images.length > 0 ? images : ['https://lurevi.in/logo.png'];
+
   return (
     <>
       {item && (
@@ -57,7 +60,7 @@ export default async function Page({ params }: Props) {
               '@id': `https://lurevi.in/shop/${itemSlug}/#product`,
               name: item.title,
               description: item.description?.replace(/<[^>]*>/g, '') ?? undefined,
-              image: Array.isArray(item.images) ? item.images : item.images ? [item.images] : [],
+              image: fallbackImages,
               brand: { '@type': 'Brand', name: 'Lurevi' },
               offers: {
                 '@type': 'Offer',

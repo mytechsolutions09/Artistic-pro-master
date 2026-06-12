@@ -176,8 +176,7 @@ const canDeactivate = CurrencyService.canDeactivateCurrency('USD');
 
 // Get currency details
 const details = CurrencyService.getCurrencyDetails('EUR');
-
-
+`}
         </pre>
       </div>
 

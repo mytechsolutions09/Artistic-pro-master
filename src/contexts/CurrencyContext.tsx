@@ -70,11 +70,18 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   // Load currency data from service
   const loadCurrencyData = () => {
     const settings = CurrencyService.getCurrencySettings();
-    const currencies = CurrencyService.getEnabledCurrencies();
+    const currencies = CurrencyService.getEnabledCurrencies().filter(
+      c => c.code === 'INR' || c.code === 'USD'
+    );
     
     setCurrencySettings(settings);
     setEnabledCurrencies(currencies);
-    setCurrentCurrency(settings.defaultCurrency);
+    
+    const userPreference = typeof window !== 'undefined' ? localStorage.getItem('user_preferred_currency') : null;
+    const initialCode = userPreference || settings.defaultCurrency;
+    const allowedCode = (initialCode === 'INR' || initialCode === 'USD') ? initialCode : 'USD';
+    
+    setCurrentCurrency(allowedCode);
     setLastUpdated(settings.lastUpdated);
   };
 
@@ -115,11 +122,12 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
   // Set current currency (user preference)
   const setCurrency = (currencyCode: string) => {
-    const currency = CurrencyService.getCurrency(currencyCode);
+    const allowedCode = (currencyCode === 'INR' || currencyCode === 'USD') ? currencyCode : 'USD';
+    const currency = CurrencyService.getCurrency(allowedCode);
     if (currency && currency.enabled) {
-      setCurrentCurrency(currencyCode);
+      setCurrentCurrency(allowedCode);
       // Store user preference in localStorage
-      localStorage.setItem('user_preferred_currency', currencyCode);
+      localStorage.setItem('user_preferred_currency', allowedCode);
     }
   };
 
@@ -238,9 +246,10 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   useEffect(() => {
     const userPreference = localStorage.getItem('user_preferred_currency');
     if (userPreference) {
-      const currency = CurrencyService.getCurrency(userPreference);
+      const allowedCode = (userPreference === 'INR' || userPreference === 'USD') ? userPreference : 'USD';
+      const currency = CurrencyService.getCurrency(allowedCode);
       if (currency && currency.enabled) {
-        setCurrentCurrency(userPreference);
+        setCurrentCurrency(allowedCode);
       }
     }
   }, [enabledCurrencies]);

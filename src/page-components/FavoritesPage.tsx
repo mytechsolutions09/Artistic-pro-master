@@ -42,11 +42,11 @@ const FavoritesPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Heart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view favorites</h2>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view favorites</h1>
           <p className="text-gray-600 mb-6">You need to be logged in to see your favorite products.</p>
           <Link
             to="/sign-in"
-            className="inline-flex items-center px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition-colors duration-200"
+            className="inline-flex items-center px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors duration-200"
           >
             Sign In
           </Link>
@@ -85,7 +85,7 @@ const FavoritesPage: React.FC = () => {
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={loadFavorites}
-            className="inline-flex items-center px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition-colors duration-200"
+            className="inline-flex items-center px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors duration-200"
           >
             Try Again
           </button>
@@ -101,7 +101,7 @@ const FavoritesPage: React.FC = () => {
         <div className="mb-8">
           <div className="mt-4">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <Heart className="w-8 h-8 text-pink-600 mr-3" />
+              <Heart className="w-8 h-8 text-rose-500 mr-3" />
               My Favorites
             </h1>
             <p className="text-gray-600 mt-2">
@@ -123,7 +123,7 @@ const FavoritesPage: React.FC = () => {
             </p>
             <Link
               to="/browse"
-              className="inline-flex items-center px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition-colors duration-200"
+              className="inline-flex items-center px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors duration-200"
             >
               Browse Products
             </Link>
@@ -144,7 +144,7 @@ const FavoritesPage: React.FC = () => {
             <p className="text-gray-600 mb-4">Looking for more amazing products?</p>
             <Link
               to="/browse"
-              className="inline-flex items-center px-6 py-3 bg-white text-pink-600 font-semibold rounded-lg border-2 border-pink-600 hover:bg-pink-50 transition-colors duration-200"
+              className="inline-flex items-center px-6 py-3 bg-white text-gray-900 font-semibold rounded-lg border-2 border-gray-900 hover:bg-gray-50 transition-colors duration-200"
             >
               Browse All Products
             </Link>

@@ -1,19 +1,19 @@
 'use client'
 
 import React from 'react';
-import { TrendingUp, Search, CheckCircle, LineChart, Mail, Calendar, MapPin } from 'lucide-react';
+import { TrendingUp, Search, CheckCircle, LineChart, Mail, Calendar, MapPin, Link2 } from 'lucide-react';
 import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 
 export interface MarketingTab {
-  id: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb';
+  id: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb' | 'urls';
   label: string;
   icon: React.ReactNode;
   description: string;
 }
 
 interface MarketingSecondaryNavProps {
-  activeTab: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb';
-  onTabChange: (tabId: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb') => void;
+  activeTab: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb' | 'urls';
+  onTabChange: (tabId: 'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb' | 'urls') => void;
   className?: string;
 }
 
@@ -59,6 +59,12 @@ const MARKETING_TABS: MarketingTab[] = [
     label: 'Email',
     icon: <Mail className="w-4 h-4" />,
     description: 'Cold email campaign sender/recipient controls',
+  },
+  {
+    id: 'urls',
+    label: 'All URLs',
+    icon: <Link2 className="w-4 h-4" />,
+    description: 'List of all live site URLs',
   },
 ];
 

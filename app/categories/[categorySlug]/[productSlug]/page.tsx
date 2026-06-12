@@ -78,6 +78,9 @@ export default async function ProductPage({ params }: Props) {
 
   const product = (products || []).find((p) => generateSlug(p.title) === productSlug);
 
+  const images = product && (Array.isArray(product.images) ? product.images : product.images ? [product.images] : []);
+  const fallbackImages = images && images.length > 0 ? images : ['https://lurevi.in/logo.png'];
+
   return (
     <>
       {product && (
@@ -92,7 +95,7 @@ export default async function ProductPage({ params }: Props) {
                   '@id': `https://lurevi.in/categories/${categorySlug}/${productSlug}/#product`,
                   name: product.title,
                   description: product.description?.replace(/<[^>]*>/g, '') ?? undefined,
-                  image: Array.isArray(product.images) ? product.images : product.images ? [product.images] : [],
+                  image: fallbackImages,
                   brand: { '@type': 'Brand', name: 'Lurevi' },
                   offers: {
                     '@type': 'Offer',
@@ -131,6 +134,10 @@ export default async function ProductPage({ params }: Props) {
             itemType="https://schema.org/Product"
           >
             <h1 itemProp="name">{product.title}</h1>
+            {fallbackImages.map((img) => (
+              <meta key={img} itemProp="image" content={img} />
+            ))}
+            <meta itemProp="brand" content="Lurevi" />
             
             {/* Rich evocative description for indexing */}
             <div itemProp="description">

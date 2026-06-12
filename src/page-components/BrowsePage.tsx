@@ -307,6 +307,10 @@ const BrowsePage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 tracking-tight">
+          Browse Digital Art & Prints
+        </h1>
+
         {/* All Filters Button */}
         <div className="mb-4">
           <button 

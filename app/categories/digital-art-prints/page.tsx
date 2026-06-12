@@ -134,10 +134,10 @@ export default async function DigitalArtPrintsPage() {
 
       {/* Hero Section */}
       <section className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 flex flex-col lg:flex-row items-center gap-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 sm:pt-8 sm:pb-12 lg:pt-10 lg:pb-16 flex flex-col lg:flex-row items-center gap-12">
           <div className="w-full lg:w-1/2 space-y-6">
             <nav className="text-sm text-gray-500 mb-4">
-              <Link to="/" className="hover:text-pink-600 transition-colors">Home</Link>
+              <Link to="/" className="hover:text-teal-800 transition-colors duration-200">Home</Link>
               <span className="mx-2">›</span>
               <span className="text-gray-900 font-medium">Digital Art Prints</span>
             </nav>
@@ -174,7 +174,7 @@ export default async function DigitalArtPrintsPage() {
             Digital art prints bring together the precision of technology and the sensibility of a human artist. At Lurevi, every print in this collection is hand-selected — chosen for how it reads on a wall, not just a screen.
           </p>
           <p className="text-base text-gray-600 leading-relaxed">
-            Whether you're looking for a bold statement piece for your living room or something quieter for a home office, our <Link to="/categories/digital-wall-paintings" className="text-pink-600 hover:underline">digital wall painting</Link> and <Link to="/blog/what-is-digital-art" className="text-pink-600 hover:underline">what is digital art</Link> collections are available in multiple sizes and printed on archival-quality paper. Each order ships across India within 5–7 business days.
+            Whether you're looking for a bold statement piece for your living room or something quieter for a home office, our <Link to="/categories/digital-wall-paintings" className="text-teal-600 font-semibold hover:underline">digital wall painting</Link> and <Link to="/blog/what-is-digital-art" className="text-teal-600 font-semibold hover:underline">what is digital art</Link> collections are available in multiple sizes and printed on archival-quality paper. Each order ships across India within 5–7 business days.
           </p>
         </div>
       </section>
@@ -205,14 +205,14 @@ export default async function DigitalArtPrintsPage() {
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Curated for Indian spaces</h2>
                 <p className="text-gray-600 leading-relaxed">
-                  Indian home aesthetics vary widely — Lurevi's curation covers both contemporary and traditional-leaning styles. Our artworks work exceptionally well in typical Indian room proportions, offering popular sizes like A3, A2, and 12×18. Furthermore, our color grading is carefully chosen to complement the warm lighting conditions commonly found in Indian interiors. To learn more about selecting the perfect piece, read our guide on <Link to="/blog/digital-artwork-for-home" className="text-pink-600 hover:underline">how to choose digital artwork</Link>.
+                  Indian home aesthetics vary widely — Lurevi's curation covers both contemporary and traditional-leaning styles. Our artworks work exceptionally well in typical Indian room proportions, offering popular sizes like A3, A2, and 12×18. Furthermore, our color grading is carefully chosen to complement the warm lighting conditions commonly found in Indian interiors. To learn more about selecting the perfect piece, read our guide on <Link to="/blog/digital-artwork-for-home" className="text-teal-600 font-semibold hover:underline">how to choose digital artwork</Link>.
                 </p>
               </div>
 
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Print quality that lasts</h2>
                 <p className="text-gray-600 leading-relaxed">
-                  Will it look good in person? Yes. We print exclusively on 240+ GSM archival-grade paper and canvas. By utilizing pigment-based inks and a strictly color-calibrated process, we ensure museum-level color accuracy. Unlike mass printed stock, each <Link to="/categories" className="text-pink-600 hover:underline">digital illustration prints</Link> is produced to order for you.
+                  Will it look good in person? Yes. We print exclusively on 240+ GSM archival-grade paper and canvas. By utilizing pigment-based inks and a strictly color-calibrated process, we ensure museum-level color accuracy. Unlike mass printed stock, each <Link to="/categories" className="text-teal-600 font-semibold hover:underline">digital illustration prints</Link> is produced to order for you.
                 </p>
               </div>
             </div>

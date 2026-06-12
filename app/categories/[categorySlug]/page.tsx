@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createStaticClient } from '@/lib/supabase/server';
 import NormalItemRouteHandlerClient from '@/src/page-components/NormalItemRouteHandler';
 import { getCategoryExplainer } from '@/src/config/categoryExplainers';
+import { generateSlug } from '@/src/utils/slugUtils';
 
 interface Props {
   params: Promise<{ categorySlug: string }>;
@@ -96,7 +97,7 @@ export default async function CategoryPage({ params }: Props) {
         .single(),
       supabase
         .from('products')
-        .select('id, title, slug, description, price, images, rating, featured, created_date, status, categories, tags')
+        .select('id, title, description, price, images, rating, featured, created_date, status, categories, tags')
         .contains('categories', [categorySlug])
         .eq('status', 'active')
         .order('created_at', { ascending: false })
@@ -159,7 +160,7 @@ export default async function CategoryPage({ params }: Props) {
                 <ul>
                   {products.map((p) => (
                     <li key={p.id}>
-                      <a href={`/categories/${categorySlug}/${p.slug}`}>
+                      <a href={`/categories/${categorySlug}/${p.slug || generateSlug(p.title)}`}>
                         {p.title} — ₹{p.price}
                         {p.description && ` — ${p.description.substring(0, 120)}`}
                       </a>

@@ -39,20 +39,24 @@ export const optimizeImageUrl = (
     }
     // Optimize Supabase storage images
     else if (url.includes('supabase')) {
+      // Supabase Storage Image Transformations has a very low quota limit (e.g., 100/month).
+      // We disable it by default to prevent quota exhaustion and errors, serving images from public storage directly.
+      // Set NEXT_PUBLIC_ENABLE_SUPABASE_TRANSFORMATIONS=true in .env to explicitly enable this.
+      const enableTransformations = process.env.NEXT_PUBLIC_ENABLE_SUPABASE_TRANSFORMATIONS === 'true';
       const isPublicStorage = url.includes('/storage/v1/object/public/');
-      const transformedUrl = isPublicStorage 
-        ? url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
-        : url;
-      
-      const urlObj = new URL(transformedUrl);
-      if (width || isPublicStorage) {
+
+      if (isPublicStorage && enableTransformations) {
+        const transformedUrl = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+        const urlObj = new URL(transformedUrl);
         const targetWidth = width || 850;
         urlObj.searchParams.set('width', targetWidth.toString());
+        urlObj.searchParams.set('quality', quality.toString());
+        urlObj.searchParams.set('format', 'webp');
+        urlObj.searchParams.set('resize', 'contain');
+        optimizedUrl = urlObj.toString();
+      } else {
+        optimizedUrl = url;
       }
-      urlObj.searchParams.set('quality', quality.toString());
-      urlObj.searchParams.set('format', 'webp');
-      urlObj.searchParams.set('resize', 'contain');
-      optimizedUrl = urlObj.toString();
     }
     // Optimize other image URLs (Cloudinary, Imgix, etc.)
     else if (url.includes('cloudinary.com')) {

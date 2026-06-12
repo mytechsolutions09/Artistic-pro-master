@@ -1,12 +1,13 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp, MapPin, RefreshCw, Download } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav';
 import { supabase } from '../../services/supabaseService';
 import MetaPixelService from '../../services/metaPixelService';
 import EmailService from '../../services/emailService';
+import { generateSlug } from '../../utils/slugUtils';
 
 const inputCls =
   'h-8 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900';
@@ -174,7 +175,7 @@ const SEO_PLAN_ITEMS: SeoPlanItem[] = [
     outline: "Hero intro → why digital art prints → print quality at Lurevi → filter by style/size → FAQ schema",
     h1: "Digital art prints",
     meta: "Buy digital art prints in India. Curated digital wall art, premium archival prints. Free shipping above ₹999.",
-    slug: "/collections/digital-art-prints"
+    slug: "/categories/digital-art-prints"
   },
   {
     w: 6,
@@ -188,7 +189,7 @@ const SEO_PLAN_ITEMS: SeoPlanItem[] = [
     outline: "What is a digital wall painting → room-wise curation → size guide → material options → FAQ",
     h1: "Digital wall paintings",
     meta: "Shop digital wall painting prints for your living room, bedroom and office. Modern, curated, made in India.",
-    slug: "/collections/digital-wall-paintings"
+    slug: "/categories/digital-wall-paintings"
   },
   {
     w: 7,
@@ -356,7 +357,7 @@ const SEO_PLAN_ITEMS: SeoPlanItem[] = [
     outline: "10-question FAQ covering: what is digital art, how are prints made, print sizes, framing, India delivery, returns",
     h1: "FAQ schema",
     meta: "Deploy FAQPage schema on all collection pages and top 5 blog posts",
-    slug: "/collections/* + /blog/*"
+    slug: "/categories/* + /blog/*"
   },
   {
     w: "—",
@@ -440,12 +441,52 @@ const SEO_PLAN_ITEMS: SeoPlanItem[] = [
     outline: "Every 4 weeks: ensure every blog post links to at least one collection page with exact-match anchor text. Add new posts to the pillar page internal link cluster.",
     h1: "Internal linking",
     meta: "Review after every 4 new posts",
-    slug: "/blog/* → /collections/*"
+    slug: "/blog/* → /categories/*"
   }
 ];
 
+interface SiteUrlItem {
+  type: 'Static' | 'Category' | 'Product' | 'Blog';
+  path: string;
+  title: string;
+}
+
+const STATIC_PAGES: { path: string; title: string }[] = [
+  { path: '/', title: 'Home' },
+  { path: '/browse', title: 'Browse Art' },
+  { path: '/categories', title: 'Categories' },
+  { path: '/categories/digital-art', title: 'Digital Art' },
+  { path: '/categories/digital-art-prints', title: 'Digital Art Prints' },
+  { path: '/shop', title: 'Shop' },
+  { path: '/blog', title: 'Blog' },
+  { path: '/clothes', title: 'Clothes' },
+  { path: '/about-us', title: 'About Us' },
+  { path: '/contact-us', title: 'Contact Us' },
+  { path: '/gifts', title: 'Gifts' },
+  { path: '/faq', title: 'FAQ' },
+  { path: '/help-center', title: 'Help Center' },
+  { path: '/shipping-info', title: 'Shipping Info' },
+  { path: '/returns-and-refunds', title: 'Returns & Refunds' },
+  { path: '/privacy', title: 'Privacy Policy' },
+  { path: '/terms-and-conditions', title: 'Terms & Conditions' },
+];
+
 const Marketing: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb'>('tracking');
+  const [activeSubTab, setActiveSubTab] = useState<'tracking' | 'seo' | 'keyword_tracking' | 'seo_daily' | 'email' | 'seo_plan' | 'gmb' | 'urls'>('tracking');
+  const [urlsList, setUrlsList] = useState<SiteUrlItem[]>([]);
+  const [urlsLoading, setUrlsLoading] = useState(false);
+  const [urlsSearch, setUrlsSearch] = useState('');
+  const [urlsTypeFilter, setUrlsTypeFilter] = useState<'all' | 'Static' | 'Category' | 'Product' | 'Blog'>('all');
+  const [copiedUrlIndex, setCopiedUrlIndex] = useState<number | null>(null);
+  const [auditResults, setAuditResults] = useState<Record<string, any>>({});
+  const [auditingPaths, setAuditingPaths] = useState<Record<string, boolean>>({});
+  const [expandedAuditIndex, setExpandedAuditIndex] = useState<number | null>(null);
+  const [isAuditingAll, setIsAuditingAll] = useState(false);
+  const [urlsPage, setUrlsPage] = useState(1);
+
+  useEffect(() => {
+    setUrlsPage(1);
+  }, [urlsSearch, urlsTypeFilter]);
   const [gmbSettings, setGmbSettings] = useState({
     businessName: '',
     address: '',
@@ -608,7 +649,419 @@ const Marketing: React.FC = () => {
     loadColdEmailConfig();
     loadColdEmailSmtpConfig();
     loadGmbSettings();
+    loadSeoAuditCache();
   }, []);
+
+  const fetchUrls = async () => {
+    setUrlsLoading(true);
+    try {
+      const items: SiteUrlItem[] = STATIC_PAGES.map(p => ({
+        type: 'Static',
+        path: p.path,
+        title: p.title
+      }));
+
+      const [{ data: categories }, { data: products }, { data: blogPosts }, { data: dbScores }] = await Promise.all([
+        supabase
+          .from('categories')
+          .select('slug, name'),
+        supabase
+          .from('products')
+          .select('title, categories')
+          .eq('status', 'active'),
+        supabase
+          .from('blog_posts')
+          .select('slug, title')
+          .eq('status', 'published'),
+        supabase
+          .from('seo_scores')
+          .select('path, score, audit_data'),
+      ]);
+
+      if (dbScores) {
+        const scoresMap: Record<string, any> = {};
+        dbScores.forEach((row) => {
+          if (row.path && row.audit_data) {
+            scoresMap[row.path] = {
+              score: row.score,
+              title: row.audit_data.title,
+              description: row.audit_data.description,
+              h1: row.audit_data.h1,
+              headings: row.audit_data.headings,
+              images: row.audit_data.images,
+              og: row.audit_data.og
+            };
+          }
+        });
+        setAuditResults(scoresMap);
+      }
+
+      if (categories) {
+        categories.forEach((category) => {
+          if (category.slug) {
+            items.push({
+              type: 'Category',
+              path: `/categories/${category.slug}`,
+              title: category.name || category.slug
+            });
+          }
+        });
+      }
+
+      if (products) {
+        products.forEach((product) => {
+          const pSlug = generateSlug(product.title);
+          if (pSlug && Array.isArray(product.categories) && product.categories.length > 0) {
+            const catName = product.categories[0];
+            const catSlug = generateSlug(catName);
+            if (catSlug) {
+              items.push({
+                type: 'Product',
+                path: `/categories/${catSlug}/${pSlug}`,
+                title: product.title || pSlug
+              });
+            }
+          }
+        });
+      }
+
+      if (blogPosts) {
+        blogPosts.forEach((post) => {
+          if (post.slug) {
+            items.push({
+              type: 'Blog',
+              path: `/blog/${post.slug}`,
+              title: post.title || post.slug
+            });
+          }
+        });
+      }
+
+      setUrlsList(items);
+    } catch (err) {
+      console.error('Error fetching URLs:', err);
+      showMessage('error', 'Failed to retrieve site URLs from the database.');
+    } finally {
+      setUrlsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSubTab === 'urls' && urlsList.length === 0) {
+      fetchUrls();
+    }
+  }, [activeSubTab, urlsList.length]);
+
+  const auditUrl = async (path: string) => {
+    setAuditingPaths((prev) => ({ ...prev, [path]: true }));
+    try {
+      const response = await fetch(path, { headers: { 'Accept': 'text/html' } });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const htmlText = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+
+      // 1. Analyze Title
+      const titleTag = doc.querySelector('title');
+      const titleText = titleTag ? titleTag.textContent || '' : '';
+      const titleLen = titleText.trim().length;
+      let titleStatus: 'good' | 'warning' | 'error' = 'good';
+      let titleMessage = 'Title tag is optimized.';
+      let titleScore = 20;
+
+      if (titleLen === 0) {
+        titleStatus = 'error';
+        titleMessage = 'Title tag is missing.';
+        titleScore = 0;
+      } else if (titleLen < 30) {
+        titleStatus = 'warning';
+        titleMessage = `Title is too short (${titleLen} chars). Recommend 30-60 chars.`;
+        titleScore = 10;
+      } else if (titleLen > 65) {
+        titleStatus = 'warning';
+        titleMessage = `Title is too long (${titleLen} chars). Recommend 30-60 chars.`;
+        titleScore = 12;
+      }
+
+      // 2. Analyze Description
+      const descTag = doc.querySelector('meta[name="description"]');
+      const descText = descTag ? descTag.getAttribute('content') || '' : '';
+      const descLen = descText.trim().length;
+      let descStatus: 'good' | 'warning' | 'error' = 'good';
+      let descMessage = 'Meta description is optimized.';
+      let descScore = 20;
+
+      if (descLen === 0) {
+        descStatus = 'error';
+        descMessage = 'Meta description is missing.';
+        descScore = 0;
+      } else if (descLen < 80) {
+        descStatus = 'warning';
+        descMessage = `Meta description is too short (${descLen} chars). Recommend 120-160 chars.`;
+        descScore = 10;
+      } else if (descLen > 170) {
+        descStatus = 'warning';
+        descMessage = `Meta description is too long (${descLen} chars). Recommend 120-160 chars.`;
+        descScore = 12;
+      }
+
+      // 3. Analyze H1
+      const h1Tags = doc.querySelectorAll('h1');
+      const h1Count = h1Tags.length;
+      let h1Status: 'good' | 'warning' | 'error' = 'good';
+      let h1Message = 'Exactly one H1 tag found.';
+      let h1Score = 20;
+
+      if (h1Count === 0) {
+        h1Status = 'error';
+        h1Message = 'H1 tag is missing. Every page should have exactly one H1.';
+        h1Score = 0;
+      } else if (h1Count > 1) {
+        h1Status = 'warning';
+        h1Message = `Multiple H1 tags found (${h1Count}). Recommend using only one H1 per page.`;
+        h1Score = 10;
+      }
+
+      // 4. Analyze Subheadings
+      const h2Count = doc.querySelectorAll('h2').length;
+      const h3Count = doc.querySelectorAll('h3').length;
+      let headingsStatus: 'good' | 'warning' | 'error' = 'good';
+      let headingsMessage = `Found ${h2Count} H2s and ${h3Count} H3s.`;
+      let headingsScore = 10;
+
+      if (h2Count === 0 && h3Count === 0) {
+        headingsStatus = 'warning';
+        headingsMessage = 'No H2 or H3 subheadings found. Use subheadings to structure content.';
+        headingsScore = 0;
+      }
+
+      // 5. Analyze Images
+      const imagesList = doc.querySelectorAll('img');
+      const totalImages = imagesList.length;
+      let missingAltCount = 0;
+      imagesList.forEach((img) => {
+        if (!img.getAttribute('alt')) {
+          missingAltCount++;
+        }
+      });
+      let imagesStatus: 'good' | 'warning' | 'error' = 'good';
+      let imagesMessage = `All images (${totalImages}) have alt tags.`;
+      let imagesScore = 20;
+
+      if (totalImages > 0 && missingAltCount > 0) {
+        const pct = Math.round(((totalImages - missingAltCount) / totalImages) * 20);
+        imagesScore = pct;
+        imagesStatus = missingAltCount === totalImages ? 'error' : 'warning';
+        imagesMessage = `${missingAltCount} of ${totalImages} images are missing alt attributes.`;
+      } else if (totalImages === 0) {
+        imagesScore = 20;
+        imagesMessage = 'No images found on page.';
+      }
+
+      // 6. Analyze Open Graph
+      const ogTitle = doc.querySelector('meta[property="og:title"]');
+      const ogDesc = doc.querySelector('meta[property="og:description"]');
+      const ogImg = doc.querySelector('meta[property="og:image"]');
+      const hasOgTitle = !!ogTitle;
+      const hasOgDesc = !!ogDesc;
+      const hasOgImg = !!ogImg;
+      let ogStatus: 'good' | 'warning' | 'error' = 'good';
+      let ogMessage = 'Open Graph tags are present.';
+      let ogScore = 10;
+
+      const missingOg: string[] = [];
+      if (!hasOgTitle) missingOg.push('og:title');
+      if (!hasOgDesc) missingOg.push('og:description');
+      if (!hasOgImg) missingOg.push('og:image');
+
+      if (missingOg.length > 0) {
+        ogStatus = missingOg.length === 3 ? 'error' : 'warning';
+        ogMessage = `Missing Open Graph tags: ${missingOg.join(', ')}.`;
+        ogScore = 10 - missingOg.length * 3;
+      }
+
+      const totalScore = titleScore + descScore + h1Score + headingsScore + imagesScore + ogScore;
+      const finalScore = Math.max(0, Math.min(100, Math.round(totalScore)));
+      const auditPayload = {
+        title: { text: titleText, status: titleStatus, message: titleMessage },
+        description: { text: descText, status: descStatus, message: descMessage },
+        h1: { count: h1Count, status: h1Status, message: h1Message },
+        headings: { h2Count, h3Count, status: headingsStatus, message: headingsMessage },
+        images: { total: totalImages, missingAlt: missingAltCount, status: imagesStatus, message: imagesMessage },
+        og: { hasTitle: hasOgTitle, hasDesc: hasOgDesc, hasImage: hasOgImg, status: ogStatus, message: ogMessage },
+      };
+
+      setAuditResults((prev) => {
+        const updated = {
+          ...prev,
+          [path]: {
+            score: finalScore,
+            ...auditPayload
+          },
+        };
+        try {
+          localStorage.setItem('seo_audit_results_cache', JSON.stringify(updated));
+        } catch (error) {
+          console.error('Failed to save SEO audit cache:', error);
+        }
+        return updated;
+      });
+
+      try {
+        const { error } = await supabase
+          .from('seo_scores')
+          .upsert({
+            path,
+            score: finalScore,
+            audit_data: auditPayload
+          }, { onConflict: 'path' });
+
+        if (error) {
+          console.error('Failed to save SEO score to database:', error);
+        }
+      } catch (dbErr) {
+        console.error('Database connection error saving SEO score:', dbErr);
+      }
+    } catch (err) {
+      console.error('Audit failed for path:', path, err);
+      const errorPayload = {
+        title: { text: '', status: 'error' as const, message: 'Failed to access the URL page.' },
+        description: { text: '', status: 'error' as const, message: 'Could not fetch page HTML.' },
+        h1: { count: 0, status: 'error' as const, message: 'N/A' },
+        headings: { h2Count: 0, h3Count: 0, status: 'error' as const, message: 'N/A' },
+        images: { total: 0, missingAlt: 0, status: 'error' as const, message: 'N/A' },
+        og: { hasTitle: false, hasDesc: false, hasImage: false, status: 'error' as const, message: 'N/A' },
+      };
+
+      setAuditResults((prev) => {
+        const updated = {
+          ...prev,
+          [path]: {
+            score: 0,
+            ...errorPayload
+          },
+        };
+        try {
+          localStorage.setItem('seo_audit_results_cache', JSON.stringify(updated));
+        } catch (error) {
+          console.error('Failed to save SEO audit cache:', error);
+        }
+        return updated;
+      });
+
+      try {
+        const { error } = await supabase
+          .from('seo_scores')
+          .upsert({
+            path,
+            score: 0,
+            audit_data: errorPayload
+          }, { onConflict: 'path' });
+
+        if (error) {
+          console.error('Failed to save error SEO score to database:', error);
+        }
+      } catch (dbErr) {
+        console.error('Database connection error saving error SEO score:', dbErr);
+      }
+    } finally {
+      setAuditingPaths((prev) => ({ ...prev, [path]: false }));
+    }
+  };
+
+  const auditAllUrls = async (filteredList?: SiteUrlItem[]) => {
+    const targetList = filteredList || urlsList.filter((item) => {
+      const query = urlsSearch.toLowerCase().trim();
+      const matchesSearch =
+        !query ||
+        item.title.toLowerCase().includes(query) ||
+        item.path.toLowerCase().includes(query);
+
+      if (!matchesSearch) return false;
+      if (urlsTypeFilter === 'all') return true;
+      return item.type === urlsTypeFilter;
+    });
+
+    setIsAuditingAll(true);
+    try {
+      for (const item of targetList) {
+        await auditUrl(item.path);
+      }
+      showMessage('success', `Completed SEO audit of ${targetList.length} pages.`);
+    } catch (error) {
+      console.error('Error during bulk audit:', error);
+      showMessage('error', 'SEO audit was interrupted.');
+    } finally {
+      setIsAuditingAll(false);
+    }
+  };
+
+  const exportUrlsToCsv = () => {
+    const targetType = urlsTypeFilter;
+    const filtered = urlsList.filter((item) => {
+      const query = urlsSearch.toLowerCase().trim();
+      const matchesSearch =
+        !query ||
+        item.title.toLowerCase().includes(query) ||
+        item.path.toLowerCase().includes(query);
+
+      if (!matchesSearch) return false;
+      if (urlsTypeFilter === 'all') return true;
+      return item.type === urlsTypeFilter;
+    });
+
+    if (filtered.length === 0) {
+      showMessage('error', 'No URLs to export.');
+      return;
+    }
+
+    const domain = window.location.origin;
+    const headers = ['Title', 'Type', 'Relative Path', 'Absolute URL', 'SEO Score'];
+    const rows = filtered.map((item) => {
+      const score = auditResults[item.path] ? String(auditResults[item.path].score) : 'N/A';
+      return [
+        item.title,
+        item.type,
+        item.path,
+        `${domain}${item.path}`,
+        score
+      ];
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const typeLabel = targetType === 'all' ? 'all' : `${targetType.toLowerCase()}s`;
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `lurevi_urls_${typeLabel}_${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showMessage('success', `Exported ${filtered.length} ${typeLabel} URLs to CSV.`);
+  };
+
+  const loadSeoAuditCache = () => {
+    try {
+      const raw = localStorage.getItem('seo_audit_results_cache');
+      if (raw) {
+        setAuditResults(JSON.parse(raw));
+      }
+    } catch (error) {
+      console.error('Failed to load SEO audit cache:', error);
+    }
+  };
 
   const loadGmbSettings = () => {
     try {
@@ -2991,6 +3444,382 @@ const Marketing: React.FC = () => {
                   </div>
                 </div>
               ));
+            })()}
+          </div>
+        </div>
+        
+        {/* All URLs Sub-tab Content */}
+        <div className={activeSubTab === 'urls' ? 'space-y-3' : 'hidden'}>
+          {/* Header Card with Refresh button */}
+          <div className={cardCls}>
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-gray-100 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+                  <Link2 className="h-4 w-4 text-gray-700" />
+                </div>
+                <div>
+                  <h2 className="text-xs font-semibold text-gray-900">All Site URLs</h2>
+                  <p className="text-[11px] text-gray-500">
+                    Directory of static, category, product, and blog pages.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={exportUrlsToCsv}
+                  disabled={urlsLoading || isAuditingAll || urlsList.length === 0}
+                  className={btnOutline}
+                  title="Export current filtered URLs to CSV"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Export {urlsTypeFilter === 'all' ? 'All' : `${urlsTypeFilter}s`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void auditAllUrls()}
+                  disabled={isAuditingAll || urlsLoading || urlsList.length === 0}
+                  className={btnOutline}
+                >
+                  <TrendingUp className={`h-3.5 w-3.5 ${isAuditingAll ? 'animate-pulse' : ''}`} />
+                  {isAuditingAll ? 'Scanning SEO...' : 'Scan All SEO'}
+                </button>
+                <button
+                  type="button"
+                  onClick={fetchUrls}
+                  disabled={urlsLoading || isAuditingAll}
+                  className={btnOutline}
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${urlsLoading ? 'animate-spin' : ''}`} />
+                  {urlsLoading ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by title or URL path..."
+                  value={urlsSearch}
+                  onChange={(e) => setUrlsSearch(e.target.value)}
+                  className={`${inputCls} pl-8`}
+                />
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {(['all', 'Static', 'Category', 'Product', 'Blog'] as const).map((type) => {
+                  const count = type === 'all'
+                    ? urlsList.length
+                    : urlsList.filter((item) => item.type === type).length;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setUrlsTypeFilter(type)}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors border ${
+                        urlsTypeFilter === type
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {type === 'all' ? `All (${count})` : `${type}s (${count})`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* URLs Table List */}
+          <div className={cardCls}>
+            {urlsLoading ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-12">
+                <RefreshCw className="h-5 w-5 animate-spin text-gray-500" />
+                <span className="text-[11px] text-gray-500">Fetching URLs from database...</span>
+              </div>
+            ) : (() => {
+              const filtered = urlsList.filter((item) => {
+                const query = urlsSearch.toLowerCase().trim();
+                const matchesSearch =
+                  !query ||
+                  item.title.toLowerCase().includes(query) ||
+                  item.path.toLowerCase().includes(query);
+
+                if (!matchesSearch) return false;
+                if (urlsTypeFilter === 'all') return true;
+                return item.type === urlsTypeFilter;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="py-8 text-center text-xs text-gray-500">
+                    No URLs found matching the current search or filters.
+                  </div>
+                );
+              }
+
+              // Pagination calculation
+              const totalItems = filtered.length;
+              const urlsPerPage = 20;
+              const totalPages = Math.ceil(totalItems / urlsPerPage);
+              const startIndex = (urlsPage - 1) * urlsPerPage;
+              const endIndex = Math.min(startIndex + urlsPerPage, totalItems);
+              const paginatedList = filtered.slice(startIndex, endIndex);
+
+              const handlePageChange = (page: number) => {
+                setUrlsPage(page);
+                setExpandedAuditIndex(null);
+                setCopiedUrlIndex(null);
+              };
+
+              const handleCopyUrl = (path: string, index: number) => {
+                const absoluteUrl = `${window.location.origin}${path}`;
+                navigator.clipboard.writeText(absoluteUrl)
+                  .then(() => {
+                    setCopiedUrlIndex(index);
+                    setTimeout(() => setCopiedUrlIndex(null), 2000);
+                  })
+                  .catch((err) => {
+                    console.error('Failed to copy URL:', err);
+                  });
+              };
+
+              const getUrlTypeBadgeCls = (type: string) => {
+                switch (type) {
+                  case 'Static':
+                    return 'bg-gray-100 text-gray-700 border-gray-200';
+                  case 'Category':
+                    return 'bg-sky-50 text-sky-700 border-sky-100';
+                  case 'Product':
+                    return 'bg-teal-50 text-teal-700 border-teal-100';
+                  case 'Blog':
+                    return 'bg-purple-50 text-purple-700 border-purple-100';
+                  default:
+                    return 'bg-gray-100 text-gray-600 border-gray-200';
+                }
+              };
+
+              return (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-gray-100 text-gray-400 font-medium">
+                          <th className="pb-2 font-medium">Page Title / Name</th>
+                          <th className="pb-2 font-medium">Type</th>
+                          <th className="pb-2 font-medium">URL Path</th>
+                          <th className="pb-2 font-medium">SEO Score</th>
+                          <th className="pb-2 text-right font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {paginatedList.map((item, idx) => {
+                          const audit = auditResults[item.path];
+                          const isAuditing = auditingPaths[item.path];
+                          const isExpanded = expandedAuditIndex === idx;
+
+                          return (
+                            <React.Fragment key={idx}>
+                              <tr className="group hover:bg-gray-50/50">
+                                <td className="py-2.5 font-medium text-gray-800 pr-3 max-w-[200px] truncate" title={item.title}>
+                                  {item.title}
+                                </td>
+                                <td className="py-2.5 pr-3">
+                                  <span className={`inline-flex rounded border px-1.5 py-0.5 text-[10px] font-medium ${getUrlTypeBadgeCls(item.type)}`}>
+                                    {item.type}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 text-gray-500 font-mono text-[11px] pr-3 max-w-[250px] truncate" title={item.path}>
+                                  {item.path}
+                                </td>
+                                <td className="py-2.5 pr-3">
+                                  {isAuditing ? (
+                                    <span className="flex items-center gap-1 text-[11px] text-gray-500">
+                                      <RefreshCw className="h-3 w-3 animate-spin text-teal-600" />
+                                      Scanning...
+                                    </span>
+                                  ) : audit ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedAuditIndex(isExpanded ? null : idx)}
+                                      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold border transition-colors cursor-pointer ${
+                                        audit.score >= 90
+                                          ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                                          : audit.score >= 60
+                                            ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                                      }`}
+                                      title="Click to view detailed SEO report"
+                                    >
+                                      {audit.score}/100
+                                      <ChevronDown className={`h-2.5 w-2.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => void auditUrl(item.path)}
+                                      disabled={isAuditingAll}
+                                      className="inline-flex items-center gap-1 text-[10px] font-medium text-teal-600 hover:text-teal-800 hover:underline cursor-pointer"
+                                    >
+                                      <Search className="h-3 w-3" />
+                                      Analyze
+                                    </button>
+                                  )}
+                                </td>
+                                <td className="py-2.5 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyUrl(item.path, idx)}
+                                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+                                      title="Copy URL"
+                                    >
+                                      {copiedUrlIndex === idx ? (
+                                        <Check className="h-3 w-3 text-green-600" />
+                                      ) : (
+                                        <Copy className="h-3 w-3" />
+                                      )}
+                                    </button>
+                                    <a
+                                      href={item.path}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+                                      title="Open Page"
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  </div>
+                                </td>
+                              </tr>
+                              {isExpanded && audit && (
+                                <tr className="bg-gray-50/30">
+                                  <td colSpan={5} className="p-3 border-t border-b border-gray-100">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-gray-700">
+                                      {/* Page Title Audit */}
+                                      <div className="p-2 bg-white rounded border border-gray-200/80 shadow-sm space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-semibold text-gray-800">Page Title SEO</span>
+                                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                            audit.title.status === 'good' ? 'bg-green-100 text-green-800' :
+                                            audit.title.status === 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                                          }`}>
+                                            {audit.title.status.toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 font-mono bg-gray-50 p-1 rounded border max-h-[36px] overflow-y-auto">
+                                          "{audit.title.text || 'None'}"
+                                        </p>
+                                        <p className="text-[10px] text-gray-600">{audit.title.message}</p>
+                                      </div>
+
+                                      {/* Meta Description Audit */}
+                                      <div className="p-2 bg-white rounded border border-gray-200/80 shadow-sm space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-semibold text-gray-800">Meta Description SEO</span>
+                                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                            audit.description.status === 'good' ? 'bg-green-100 text-green-800' :
+                                            audit.description.status === 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                                          }`}>
+                                            {audit.description.status.toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 font-mono bg-gray-50 p-1 rounded border max-h-[36px] overflow-y-auto">
+                                          "{audit.description.text || 'None'}"
+                                        </p>
+                                        <p className="text-[10px] text-gray-600">{audit.description.message}</p>
+                                      </div>
+
+                                      {/* Heading Checklist */}
+                                      <div className="p-2 bg-white rounded border border-gray-200/80 shadow-sm space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-semibold text-gray-800">Heading Tag Audit</span>
+                                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                            audit.h1.status === 'good' ? 'bg-green-100 text-green-800' :
+                                            audit.h1.status === 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                                          }`}>
+                                            H1: {audit.h1.status.toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-600 font-medium">H1 Tags Found: {audit.h1.count}</p>
+                                        <p className="text-[10px] text-gray-600">{audit.h1.message}</p>
+                                        <p className="text-[10px] text-gray-500">{audit.headings.message}</p>
+                                      </div>
+
+                                      {/* Media & Social Tags */}
+                                      <div className="p-2 bg-white rounded border border-gray-200/80 shadow-sm space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-semibold text-gray-800">Media & Social Preview</span>
+                                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                            audit.images.status === 'good' && audit.og.status === 'good' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                                          }`}>
+                                            OG: {audit.og.status.toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-600">{audit.images.message}</p>
+                                        <p className="text-[10px] text-gray-600">{audit.og.message}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-600">
+                      <div>
+                        Showing <span className="font-semibold text-gray-900">{startIndex + 1}</span> to{' '}
+                        <span className="font-semibold text-gray-900">{endIndex}</span> of{' '}
+                        <span className="font-semibold text-gray-900">{totalItems}</span> URLs
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handlePageChange(urlsPage - 1)}
+                          disabled={urlsPage === 1}
+                          className="inline-flex h-8 items-center gap-1 rounded border border-gray-200 bg-white px-2.5 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Previous
+                        </button>
+                        {Array.from({ length: totalPages }).map((_, pIdx) => {
+                          const pageNum = pIdx + 1;
+                          const isCurrent = pageNum === urlsPage;
+                          return (
+                            <button
+                              key={pageNum}
+                              type="button"
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`inline-flex h-8 w-8 items-center justify-center rounded border font-medium transition-colors ${
+                                isCurrent
+                                  ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => handlePageChange(urlsPage + 1)}
+                          disabled={urlsPage === totalPages}
+                          className="inline-flex h-8 items-center gap-1 rounded border border-gray-200 bg-white px-2.5 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
             })()}
           </div>
         </div>
