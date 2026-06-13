@@ -6,6 +6,7 @@ import { blogCoverUrl } from '@/lib/blogCover';
 import ProductCard from '@/src/components/ProductCard';
 import { marked } from 'marked';
 import { User } from 'lucide-react';
+import ShareButton from '@/src/components/ShareButton';
 
 
 const SITE_URL = 'https://lurevi.in';
@@ -207,6 +208,9 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
         <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
           Last Updated: June 2026
+        </span>
+        <span className="ml-auto">
+          <ShareButton title={post.title} url={`${SITE_URL}/blog/${post.slug}`} />
         </span>
       </div>
 

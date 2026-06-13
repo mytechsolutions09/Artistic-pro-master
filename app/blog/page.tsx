@@ -79,7 +79,7 @@ export default async function BlogPage() {
       <main className="mx-auto max-w-7xl px-4 pt-10 pb-10">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }} />
 
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-stone-900 mb-8 text-center font-serif">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-stone-900 mb-8 text-center font-sans">
           Lurevi Blog & Insights
         </h1>
 
