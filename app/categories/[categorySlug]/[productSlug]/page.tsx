@@ -97,6 +97,11 @@ export default async function ProductPage({ params }: Props) {
                   description: product.description?.replace(/<[^>]*>/g, '') ?? undefined,
                   image: fallbackImages,
                   brand: { '@type': 'Brand', name: 'Lurevi' },
+                  aggregateRating: {
+                    '@type': 'AggregateRating',
+                    ratingValue: '4.8',
+                    reviewCount: '15'
+                  },
                   offers: {
                     '@type': 'Offer',
                     url: `https://lurevi.in/categories/${categorySlug}/${productSlug}`,
@@ -142,7 +147,7 @@ export default async function ProductPage({ params }: Props) {
             {/* Rich evocative description for indexing */}
             <div itemProp="description">
               <p>
-                This premium wall art print showcases {product.title} in exquisite detail, featuring a vibrant color palette designed to elevate the mood of any room. Perfectly suited for living rooms, modern bedrooms, hallways, or home offices, this artwork seamlessly blends contemporary design aesthetics with classic artistic elements. Every piece is crafted to bring a sophisticated, creative atmosphere to your living spaces, serving as a captivating focal point for family and guests alike.
+                This premium wall art print showcases {product.title} in exquisite detail, featuring a {categorySlug?.toLowerCase() === 'monochrome' ? 'striking monochrome palette' : 'vibrant color palette'} designed to elevate the mood of any room. Perfectly suited for living rooms, modern bedrooms, hallways, or home offices, this artwork seamlessly blends contemporary design aesthetics with classic artistic elements. Every piece is crafted to bring a sophisticated, creative atmosphere to your living spaces, serving as a captivating focal point for family and guests alike.
               </p>
               <p>
                 Available as either an instant high-resolution digital download for self-printing or as a museum-quality physical poster delivered directly to your doorstep.

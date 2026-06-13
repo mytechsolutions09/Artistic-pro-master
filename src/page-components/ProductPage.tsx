@@ -1253,7 +1253,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 mb-2 font-sans">About this Print</h3>
                   <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal">
-                    This premium wall art print showcases {product.title} in exquisite detail, featuring a vibrant color palette designed to elevate the mood of any room. Perfectly suited for living rooms, modern bedrooms, hallways, or home offices, this artwork seamlessly blends contemporary design aesthetics with classic artistic elements. Every piece is crafted to bring a sophisticated, creative atmosphere to your living spaces, serving as a captivating focal point for family and guests alike.
+                    This premium wall art print showcases {product.title} in exquisite detail, featuring a {categorySlug?.toLowerCase() === 'monochrome' ? 'striking monochrome palette' : 'vibrant color palette'} designed to elevate the mood of any room. Perfectly suited for living rooms, modern bedrooms, hallways, or home offices, this artwork seamlessly blends contemporary design aesthetics with classic artistic elements. Every piece is crafted to bring a sophisticated, creative atmosphere to your living spaces, serving as a captivating focal point for family and guests alike.
                   </p>
                   <p className="text-sm text-gray-600 leading-relaxed font-sans font-normal mt-3">
                     {isInternational 
