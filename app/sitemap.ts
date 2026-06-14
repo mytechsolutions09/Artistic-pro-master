@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { generateSlug } from '@/src/utils/slugUtils';
 
 const SITE_URL = 'https://lurevi.in';
 
@@ -44,10 +45,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       supabase
         .from('categories')
         .select('slug, updated_at')
-        .eq('is_active', true),
+        .eq('status', 'active'),
       supabase
         .from('products')
-        .select('slug, categories, updated_at')
+        .select('title, categories, updated_at')
         .eq('status', 'active'),
       supabase
         .from('blog_posts')
@@ -67,14 +68,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     for (const product of products ?? []) {
-      if (!product?.slug || !Array.isArray(product.categories) || product.categories.length === 0) {
+      if (!product?.title || !Array.isArray(product.categories) || product.categories.length === 0) {
         continue;
       }
 
       const categorySlug = product.categories[0];
       if (!categorySlug) continue;
-      const safeCategorySlug = encodeURIComponent(String(categorySlug));
-      const safeProductSlug = encodeURIComponent(String(product.slug));
+      const safeCategorySlug = encodeURIComponent(generateSlug(String(categorySlug)));
+      const safeProductSlug = encodeURIComponent(generateSlug(product.title));
 
       entries.push({
         url: `${SITE_URL}/categories/${safeCategorySlug}/${safeProductSlug}`,
