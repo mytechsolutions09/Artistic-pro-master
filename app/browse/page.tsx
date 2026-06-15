@@ -4,8 +4,8 @@ import dynamic from 'next/dynamic';
 const BrowsePage = dynamic(() => import('@/src/page-components/BrowsePage'));
 
 export const metadata: Metadata = {
-  title: 'Browse Art | Lurevi',
-  description: 'Browse all digital art and prints at Lurevi.',
+  title: 'Shop Premium Digital Art & Wall Prints | Lurevi Collection',
+  description: 'Browse 100+ curated digital art prints — illustration, abstract, wall art — delivered across India. Find your style at Lurevi.',
   alternates: { canonical: 'https://lurevi.in/browse' },
 };
 

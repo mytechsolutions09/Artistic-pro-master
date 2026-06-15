@@ -70,15 +70,18 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params;
+  const canonicalUrl = `${SITE_URL}/blog/${slug}`;
   const post = await getPostBySlug(slug);
   if (!post) {
     return {
       title: 'Blog Post | Lurevi',
       description: 'Read the latest insights from Lurevi.',
+      alternates: {
+        canonical: canonicalUrl,
+      },
     };
   }
 
-  const canonicalUrl = `${SITE_URL}/blog/${post.slug}`;
   const title = post.seo_title || `${post.title} | Lurevi Blog`;
   const description = post.seo_description || post.excerpt || 'Read this article on the Lurevi blog.';
   const ogImage = blogCoverUrl(post.cover_image);

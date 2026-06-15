@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { permanentRedirect } from 'next/navigation';
 
 interface Props {
   params: Promise<{ categorySlug: string }>;
@@ -6,5 +6,6 @@ interface Props {
 
 export default async function Page({ params }: Props) {
   const { categorySlug } = await params;
-  redirect(`/categories/${categorySlug}`);
+  permanentRedirect(`/categories/${categorySlug}`);
 }
+

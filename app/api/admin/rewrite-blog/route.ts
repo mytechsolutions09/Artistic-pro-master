@@ -40,7 +40,7 @@ Please return a valid JSON object with the following structure:
 {
   "title": "An improved, catchy, SEO-friendly title",
   "excerpt": "A short 1-2 sentence excerpt summarizing the post",
-  "content": "The full improved blog content in HTML format, structured with <h2>, <h3>, <p>, <ul> etc.",
+  "content": "The full improved blog content in HTML format, structured with <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>, <hr>, etc. CRITICAL: You MUST use HTML tags for all headings, lists, bold text, italics, and structure. Do NOT use any Markdown formatting (like ##, #, **, *, _, etc.) inside this string. It must be pure, clean HTML.",
   "seo_title": "SEO title (around 60 characters)",
   "seo_description": "SEO description (around 150-160 characters)",
   "tags": "comma, separated, tags"

@@ -117,7 +117,7 @@ export default async function HomePage() {
               <ul className="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
                 {categories.slice(0, 10).map((cat) => (
                   <li key={cat.id}>
-                    <a href={`/${cat.slug}`} className="hover:underline">
+                    <a href={`/categories/${cat.slug}`} className="hover:underline">
                       {cat.name}
                     </a>
                     {cat.description ? ` - ${cat.description}` : ''}
@@ -135,7 +135,7 @@ export default async function HomePage() {
                   const categorySlug = Array.isArray(p.categories) ? p.categories[0] : 'browse';
                   return (
                     <li key={p.id}>
-                      <a href={`/${categorySlug}/${p.slug || generateSlug(p.title)}`} className="hover:underline">
+                      <a href={`/categories/${categorySlug}/${p.slug || generateSlug(p.title)}`} className="hover:underline">
                         {p.title}
                       </a>
                     </li>
@@ -215,7 +215,7 @@ export default async function HomePage() {
               <ul>
                 {categories.map((cat) => (
                   <li key={cat.id}>
-                    <a href={`/${cat.slug}`}>
+                    <a href={`/categories/${cat.slug}`}>
                       <strong>{cat.name}</strong>
                       {cat.description && ` — ${cat.description}`}
                     </a>
@@ -231,7 +231,7 @@ export default async function HomePage() {
               <ul>
                 {featuredProducts.map((p) => (
                   <li key={p.id}>
-                    <a href={`/${Array.isArray(p.categories) ? p.categories[0] : 'browse'}/${p.slug || generateSlug(p.title)}`}>
+                    <a href={`/categories/${Array.isArray(p.categories) ? p.categories[0] : 'browse'}/${p.slug || generateSlug(p.title)}`}>
                       {p.title} — ₹{p.price}
                     </a>
                   </li>

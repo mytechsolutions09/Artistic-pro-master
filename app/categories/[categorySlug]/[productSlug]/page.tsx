@@ -20,7 +20,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = (products || []).find((p) => generateSlug(p.title) === productSlug);
 
   if (!product) {
-    return { title: 'Product | Lurevi' };
+    return {
+      title: 'Product | Lurevi',
+      alternates: {
+        canonical: `https://lurevi.in/categories/${categorySlug}/${productSlug}`,
+        languages: {
+          'en-IN': `https://lurevi.in/categories/${categorySlug}/${productSlug}`,
+          'x-default': `https://lurevi.in/categories/${categorySlug}/${productSlug}`,
+        },
+      },
+    };
   }
 
   const image = Array.isArray(product.images) ? product.images[0] : product.images;
