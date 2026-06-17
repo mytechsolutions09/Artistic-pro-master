@@ -149,7 +149,9 @@ GRANT EXECUTE ON FUNCTION get_table_columns(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION execute_sql(text) TO authenticated;
 
 -- Create a view for easier table statistics
-CREATE OR REPLACE VIEW table_statistics AS
+CREATE OR REPLACE VIEW table_statistics 
+WITH (security_invoker = true)
+AS
 SELECT 
   schemaname,
   tablename,

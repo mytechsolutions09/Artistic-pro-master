@@ -878,7 +878,9 @@ INSERT INTO product_templates (name, icon, description, data) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Create a view for easy template access
-CREATE OR REPLACE VIEW product_templates_view AS 
+CREATE OR REPLACE VIEW product_templates_view 
+WITH (security_invoker = true)
+AS 
 SELECT 
     id, 
     name, 

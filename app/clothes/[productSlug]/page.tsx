@@ -21,6 +21,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       data?.description?.replace(/<[^>]*>/g, '').substring(0, 200) ??
       'Shop clothing at Lurevi.',
+    alternates: {
+      canonical: `https://lurevi.in/clothes/${productSlug}`,
+      languages: {
+        'en-IN': `https://lurevi.in/clothes/${productSlug}`,
+        'x-default': `https://lurevi.in/clothes/${productSlug}`,
+      },
+    },
   };
 }
 

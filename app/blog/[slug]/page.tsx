@@ -70,15 +70,18 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params;
+  const canonicalUrl = `${SITE_URL}/blog/${slug}`;
   const post = await getPostBySlug(slug);
   if (!post) {
     return {
       title: 'Blog Post | Lurevi',
       description: 'Read the latest insights from Lurevi.',
+      alternates: {
+        canonical: canonicalUrl,
+      },
     };
   }
 
-  const canonicalUrl = `${SITE_URL}/blog/${post.slug}`;
   const title = post.seo_title || `${post.title} | Lurevi Blog`;
   const description = post.seo_description || post.excerpt || 'Read this article on the Lurevi blog.';
   const ogImage = blogCoverUrl(post.cover_image);
@@ -152,6 +155,21 @@ function extractFaqs(content: string): Array<{ question: string; answer: string 
     console.error('Failed to parse FAQs from content:', err);
   }
   return faqs;
+}
+
+function parseMarkdownInsideHtml(content: string): string {
+  if (!content) return '';
+  return content
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
+    .replace(/(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+      const isInternal = url.startsWith('/') || url.startsWith('#') || url.includes('lurevi.in');
+      if (isInternal) {
+        return `<a href="${url}">${text}</a>`;
+      } else {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+      }
+    })
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 }
 
 export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -229,7 +247,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
       <article 
         className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-teal-700 [&_a]:hover:underline [&_a]:font-medium [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
-        dangerouslySetInnerHTML={{ __html: marked.parse(post.content.replace(/^[ \\t]+/gm, '')) as string }}
+        dangerouslySetInnerHTML={{ __html: marked.parse(parseMarkdownInsideHtml(post.content.replace(/^[ \t]+/gm, ''))) as string }}
       />
 
       {Array.isArray(post.tags) && post.tags.length > 0 && (

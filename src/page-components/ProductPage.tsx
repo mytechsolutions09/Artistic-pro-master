@@ -1598,7 +1598,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
               {relatedProducts.map((relatedProduct) => (
                 <Link
                   key={relatedProduct.id}
-                  to={`/${generateSlug('categories' in relatedProduct ? (relatedProduct.categories && relatedProduct.categories.length > 0 ? relatedProduct.categories[0] : 'general') : ('category' in relatedProduct ? relatedProduct.category : 'general'))}/${generateSlug(relatedProduct.title)}`}
+                  to={`/categories/${generateSlug('categories' in relatedProduct ? (relatedProduct.categories && relatedProduct.categories.length > 0 ? relatedProduct.categories[0] : 'general') : ('category' in relatedProduct ? relatedProduct.category : 'general'))}/${generateSlug(relatedProduct.title)}`}
                   className="block bg-white border border-gray-100 hover:border-gray-200 transition-all duration-300 group relative flex flex-col h-full rounded-none overflow-hidden hover:shadow-lg"
                 >
                   {/* Image Container */}
@@ -1689,7 +1689,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
             
             <div className="text-center mt-10">
               <Link 
-                to={`/${generateSlug(productCategory)}`}
+                to={`/categories/${generateSlug(productCategory)}`}
                 className="inline-block bg-white border border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold py-3 px-8 transition-all duration-300 text-xs tracking-wider uppercase"
               >
                 View All {productCategory} Artworks

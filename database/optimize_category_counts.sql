@@ -99,6 +99,25 @@ CREATE INDEX IF NOT EXISTS idx_refresh_queue_processed
 ON category_counts_refresh_queue(processed_at) 
 WHERE processed_at IS NULL;
 
+-- Enable RLS
+ALTER TABLE category_counts_refresh_queue ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS Policies
+DROP POLICY IF EXISTS "Allow authenticated users to read refresh queue" ON category_counts_refresh_queue;
+CREATE POLICY "Allow authenticated users to read refresh queue" 
+    ON category_counts_refresh_queue 
+    FOR SELECT 
+    TO authenticated 
+    USING (true);
+
+DROP POLICY IF EXISTS "Allow admin/system to manage refresh queue" ON category_counts_refresh_queue;
+CREATE POLICY "Allow admin/system to manage refresh queue" 
+    ON category_counts_refresh_queue 
+    FOR ALL 
+    TO authenticated 
+    USING (true) 
+    WITH CHECK (true);
+
 -- ===========================================
 -- 5. CREATE BACKGROUND JOB FUNCTION
 -- ===========================================
@@ -171,7 +190,9 @@ SELECT refresh_all_category_counts();
 -- 9. CREATE VIEW FOR CACHED CATEGORY DATA
 -- ===========================================
 -- This view can be used by the frontend instead of the raw table
-CREATE OR REPLACE VIEW categories_with_counts AS
+CREATE OR REPLACE VIEW categories_with_counts 
+WITH (security_invoker = true)
+AS
 SELECT 
   c.*,
   COALESCE(c.count, 0) as count_safe

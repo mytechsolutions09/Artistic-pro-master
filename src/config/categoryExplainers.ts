@@ -7,6 +7,18 @@ export interface CategoryExplainer {
 }
 
 export const CATEGORY_EXPLAINERS: Record<string, CategoryExplainer> = {
+  'luxury-wall-art': {
+    title: 'What Is Luxury Wall Art?',
+    description: 'Luxury wall art represents premium, curated digital and fine art designs selected to elevate modern interiors. Printed on high-weight archival canvas or museum-grade matte paper, these pieces combine visual refinement, rich color palettes, and standard-setting clarity to serve as elegant statement anchors in living rooms, luxury homes, and executive offices.',
+    benefitsTitle: 'Why collectors choose luxury wall art:',
+    benefits: [
+      'Archival-grade giclée prints designed to resist fading for 75+ years',
+      'Museum-quality heavy media (240+ GSM paper or 350 GSM canvas)',
+      'Curated contemporary designs that fit upscale and modern spaces',
+      'Supports independent artists with license payouts for each piece'
+    ],
+    ctaText: "Explore Lurevi's Luxury Collection →"
+  },
   abstract: {
     title: 'What Is Abstract Art?',
     description: 'Abstract art moves away from realistic representation, using shapes, colors, forms, and lines to express ideas and emotions. Unlike figurative art, abstract pieces invite personal interpretation — the same painting can evoke entirely different responses in different viewers. Abstract art has been central to modern art movements since the early 20th century.',
