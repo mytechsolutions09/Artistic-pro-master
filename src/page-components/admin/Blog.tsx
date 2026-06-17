@@ -1,10 +1,13 @@
 'use client'
 
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { FileText, ExternalLink, Pencil, Trash2, Loader2, Save, Upload, AlertTriangle, CheckCircle, Info, Sparkles, Link2 } from 'lucide-react';
+import { FileText, ExternalLink, Pencil, Trash2, Loader2, Save, Upload, AlertTriangle, CheckCircle, Info, Sparkles, Link2, Key, Search, ShoppingBag } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Link } from '@/src/compat/router';
 import { BlogPost, BlogService, BlogStatus } from '../../services/blogService';
+import { ProductService } from '../../services/supabaseService';
+import { Product } from '../../types';
+import { generateProductUrl, generateSlug } from '../../utils/slugUtils';
 import BlogSecondaryNav, { BlogTabId } from '../../components/admin/BlogSecondaryNav';
 import { runSeoAnalysis, SeoCheckResult } from '../../utils/seoAnalysis';
 
@@ -116,7 +119,48 @@ const BlogAdmin: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [editPage, setEditPage] = useState(1);
   const [listPage, setListPage] = useState(1);
+  const [keyphraseSearchQuery, setKeyphraseSearchQuery] = useState('');
   const ITEMS_PER_PAGE = 10;
+
+  const keyphrasesData = useMemo(() => {
+    const mapping: Record<string, { keyphrase: string; posts: BlogPost[] }> = {};
+    const noKeyphrase: BlogPost[] = [];
+
+    posts.forEach((post) => {
+      const kp = post.tags?.[0]?.trim();
+      if (kp) {
+        const normalized = kp.toLowerCase();
+        if (!mapping[normalized]) {
+          mapping[normalized] = { keyphrase: kp, posts: [] };
+        }
+        mapping[normalized].posts.push(post);
+      } else {
+        noKeyphrase.push(post);
+      }
+    });
+
+    return {
+      mapping,
+      list: Object.values(mapping),
+      noKeyphrase,
+    };
+  }, [posts]);
+
+  const filteredKeyphrases = useMemo(() => {
+    if (!keyphraseSearchQuery.trim()) return keyphrasesData.list;
+    const q = keyphraseSearchQuery.toLowerCase();
+    return keyphrasesData.list.filter((item) =>
+      item.keyphrase.toLowerCase().includes(q) ||
+      item.posts.some((post) => post.title.toLowerCase().includes(q))
+    );
+  }, [keyphrasesData.list, keyphraseSearchQuery]);
+
+  const keyphraseMetrics = useMemo(() => {
+    const totalUnique = keyphrasesData.list.length;
+    const cannibalized = keyphrasesData.list.filter((item) => item.posts.length > 1).length;
+    const missing = keyphrasesData.noKeyphrase.length;
+    return { totalUnique, cannibalized, missing };
+  }, [keyphrasesData]);
 
   const filteredPosts = useMemo(() => {
     if (!searchQuery.trim()) return posts;
@@ -170,6 +214,25 @@ const BlogAdmin: React.FC = () => {
   const [checkingLinks, setCheckingLinks] = useState(false);
   const [brokenLinks, setBrokenLinks] = useState<{url: string, status: string | number}[] | null>(null);
 
+  const [showBlogLinkModal, setShowBlogLinkModal] = useState(false);
+  const [blogLinkSearchQuery, setBlogLinkSearchQuery] = useState('');
+
+  const [showProductLinkModal, setShowProductLinkModal] = useState(false);
+  const [productLinkSearchQuery, setProductLinkSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  const filteredBlogLinks = useMemo(() => {
+    const otherPosts = posts.filter(p => p.id !== editingId);
+    if (!blogLinkSearchQuery.trim()) return otherPosts;
+    const q = blogLinkSearchQuery.toLowerCase();
+    return otherPosts.filter(
+      (post) =>
+        post.title.toLowerCase().includes(q) ||
+        post.slug.toLowerCase().includes(q)
+    );
+  }, [posts, editingId, blogLinkSearchQuery]);
+
   const contentTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const loadPosts = async () => {
@@ -188,8 +251,53 @@ const BlogAdmin: React.FC = () => {
     }
   };
 
+  const loadProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const data = await ProductService.getAllProducts();
+      setProducts(data);
+    } catch (error: any) {
+      console.error('Failed to load products:', error);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const getProductUrl = (product: Product): string => {
+    const isClothing =
+      (product as any).gender === 'Men' ||
+      (product as any).gender === 'Women' ||
+      (product as any).gender === 'Unisex' ||
+      product.categories?.some(cat =>
+        cat.toLowerCase().includes('men') ||
+        cat.toLowerCase().includes('women') ||
+        cat.toLowerCase().includes('unisex') ||
+        cat.toLowerCase().includes('clothing')
+      );
+    const categoriesLower = (product.categories || []).map(c => c.toLowerCase()).join(' ');
+    const isFB =
+      categoriesLower.includes('food & beverage') ||
+      categoriesLower.includes('f&b') ||
+      categoriesLower.includes('food-beverage') ||
+      categoriesLower.includes('dry fruit') ||
+      categoriesLower.includes('dried fruit') ||
+      categoriesLower.includes('spice');
+    const isNormalItem = product.categories && product.categories.includes('Normal');
+    const productSlug = product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (isClothing) return `/clothes/${productSlug}`;
+    if (isFB) return `/${productSlug}`;
+    if (isNormalItem) return `/shop/${generateSlug(product.title)}`;
+    return generateProductUrl(
+      product.categories && product.categories.length > 0
+        ? product.categories[0]
+        : (product as any).category || 'general',
+      product.title
+    );
+  };
+
   useEffect(() => {
     void loadPosts();
+    void loadProducts();
   }, []);
 
   const showMessage = (type: 'success' | 'error', text: string) => {
@@ -234,6 +342,7 @@ const BlogAdmin: React.FC = () => {
     });
     setBrokenLinks(null);
     setActiveSubTab('posts');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const submit = async () => {
@@ -253,6 +362,24 @@ const BlogAdmin: React.FC = () => {
       return;
     }
 
+    const newKeyphrase = form.focus_keyphrase.trim();
+    const parsedTags = form.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    let finalTags: string[] = [];
+    if (newKeyphrase) {
+      finalTags.push(newKeyphrase);
+      const restTags = parsedTags.filter((t, idx) => {
+        if (idx === 0) return false;
+        return t.toLowerCase() !== newKeyphrase.toLowerCase();
+      });
+      finalTags = [...finalTags, ...restTags];
+    } else {
+      finalTags = parsedTags;
+    }
+
     const payload = {
       title: form.title.trim(),
       slug: toSlug(form.slug),
@@ -260,10 +387,7 @@ const BlogAdmin: React.FC = () => {
       content: form.content.trim(),
       cover_image: form.cover_image.trim() || null,
       status: form.status,
-      tags: form.tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
+      tags: finalTags,
       seo_title: form.seo_title.trim() || null,
       seo_description: form.seo_description.trim() || null,
     };
@@ -488,7 +612,7 @@ const BlogAdmin: React.FC = () => {
       while ((match = htmlImgRegex.exec(text)) !== null) linksToVerify.push(match[1]);
       while ((match = htmlLinkRegex.exec(text)) !== null) linksToVerify.push(match[1]);
       
-      const uniqueLinks = [...new Set(linksToVerify)].filter(l => l.startsWith('http'));
+      const uniqueLinks = Array.from(new Set(linksToVerify)).filter(l => l.startsWith('http'));
       
       if (uniqueLinks.length === 0) {
         showMessage('success', 'No external links found to check.');
@@ -642,6 +766,61 @@ const BlogAdmin: React.FC = () => {
       textarea.setSelectionRange(start + 1, start + 1 + selectedText.length);
     }, 0);
   };
+
+  const insertBlogLink = (post: BlogPost) => {
+    const textarea = contentTextAreaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = form.content.substring(start, end) || post.title;
+    
+    const url = `/blog/${post.slug}`;
+    const linkMarkdown = `[${selectedText}](${url})`;
+    
+    const newContent = form.content.substring(0, start) + linkMarkdown + form.content.substring(end);
+    
+    setForm(prev => ({ ...prev, content: newContent }));
+    setShowBlogLinkModal(false);
+    setBlogLinkSearchQuery('');
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + 1, start + 1 + selectedText.length);
+    }, 0);
+  };
+
+  const insertProductLink = (product: Product) => {
+    const textarea = contentTextAreaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = form.content.substring(start, end) || product.title;
+
+    const url = getProductUrl(product);
+    const linkMarkdown = `[${selectedText}](${url})`;
+
+    const newContent = form.content.substring(0, start) + linkMarkdown + form.content.substring(end);
+
+    setForm(prev => ({ ...prev, content: newContent }));
+    setShowProductLinkModal(false);
+    setProductLinkSearchQuery('');
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + 1, start + 1 + selectedText.length);
+    }, 0);
+  };
+
+  const filteredProducts = products.filter(p => {
+    if (!productLinkSearchQuery.trim()) return true;
+    const q = productLinkSearchQuery.toLowerCase();
+    return (
+      p.title.toLowerCase().includes(q) ||
+      (p.categories || []).some(c => c.toLowerCase().includes(q))
+    );
+  });
 
   const publishedCount = useMemo(
     () => posts.filter((post) => post.status === 'published').length,
@@ -804,11 +983,27 @@ const BlogAdmin: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      onClick={() => { setShowProductLinkModal(true); }}
+                      disabled={previewMode}
+                      className="text-xs text-emerald-600 hover:text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" /> Link Product
+                    </button>
+                    <button
+                      type="button"
                       onClick={insertLink}
                       disabled={previewMode}
                       className="text-xs text-blue-600 hover:text-blue-700 font-medium bg-blue-50 px-2.5 py-1 rounded transition-colors inline-flex items-center gap-1 disabled:opacity-50"
                     >
                       <Link2 className="w-3.5 h-3.5" /> Add Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowBlogLinkModal(true)}
+                      disabled={previewMode || posts.length === 0}
+                      className="text-xs text-pink-600 hover:text-pink-700 font-medium bg-pink-50 px-2.5 py-1 rounded transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <Link2 className="w-3.5 h-3.5" /> Link Blog
                     </button>
                     <button
                       type="button"
@@ -841,7 +1036,18 @@ const BlogAdmin: React.FC = () => {
               </div>
               <input
                 value={form.tags}
-                onChange={(e) => setForm((prev) => ({ ...prev, tags: e.target.value }))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setForm((prev) => {
+                    const parsedTags = val.split(',').map((t) => t.trim()).filter(Boolean);
+                    const firstTag = parsedTags[0] || '';
+                    return {
+                      ...prev,
+                      tags: val,
+                      focus_keyphrase: firstTag,
+                    };
+                  });
+                }}
                 placeholder="Tags (comma separated)"
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
               />
@@ -983,7 +1189,19 @@ const BlogAdmin: React.FC = () => {
                 <label className="text-xs font-medium text-gray-600 block mb-1">Focus Keyphrase</label>
                 <input
                   value={form.focus_keyphrase}
-                  onChange={(e) => setForm((prev) => ({ ...prev, focus_keyphrase: e.target.value }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm((prev) => {
+                      const parsedTags = prev.tags.split(',').map((t) => t.trim()).filter(Boolean);
+                      const restTags = parsedTags.slice(1);
+                      const newTags = val.trim() ? [val.trim(), ...restTags].join(', ') : restTags.join(', ');
+                      return {
+                        ...prev,
+                        focus_keyphrase: val,
+                        tags: newTags,
+                      };
+                    });
+                  }}
                   placeholder="e.g. luxury wall art"
                   className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
                 />
@@ -1063,6 +1281,159 @@ const BlogAdmin: React.FC = () => {
               </div>
             </div>
           </div>
+          {showBlogLinkModal && (
+            <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-xl p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                    <Link2 className="w-4 h-4 text-pink-600" /> Link Another Blog Post
+                  </h3>
+                  <button 
+                    onClick={() => { setShowBlogLinkModal(false); setBlogLinkSearchQuery(''); }}
+                    className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500">
+                  Select a blog post to insert its link at your current cursor position. If you selected text, it will be wrapped by the link.
+                </p>
+
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
+                    <Search className="w-3.5 h-3.5" />
+                  </span>
+                  <input
+                    type="text"
+                    value={blogLinkSearchQuery}
+                    onChange={(e) => setBlogLinkSearchQuery(e.target.value)}
+                    placeholder="Search posts by title or slug..."
+                    className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-pink-300 font-sans"
+                  />
+                </div>
+
+                <div className="max-h-60 overflow-y-auto divide-y divide-gray-100 border border-gray-200 rounded-lg pr-1">
+                  {filteredBlogLinks.map((post) => (
+                    <button
+                      key={post.id}
+                      onClick={() => insertBlogLink(post)}
+                      className="w-full text-left px-3.5 py-2.5 hover:bg-pink-50/55 hover:text-pink-750 transition-colors flex flex-col gap-0.5 text-xs text-gray-700 font-medium"
+                      type="button"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-semibold text-gray-800">{post.title}</span>
+                        {post.status === 'draft' && (
+                          <span className="px-1.5 py-0.5 text-[9px] bg-amber-50 border border-amber-200 text-amber-600 rounded">Draft</span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-gray-400">/blog/{post.slug}</span>
+                    </button>
+                  ))}
+                  {filteredBlogLinks.length === 0 && (
+                    <p className="text-center py-6 text-xs text-gray-400 italic">No matching blog posts found.</p>
+                  )}
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={() => { setShowBlogLinkModal(false); setBlogLinkSearchQuery(''); }}
+                    className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-750 rounded-lg text-xs font-semibold"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showProductLinkModal && (
+            <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-xl p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                    <ShoppingBag className="w-4 h-4 text-emerald-600" /> Link a Product
+                  </h3>
+                  <button
+                    onClick={() => { setShowProductLinkModal(false); setProductLinkSearchQuery(''); }}
+                    className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500">
+                  Select a product to insert its link at your current cursor position. If you have text selected, it will be used as the link label.
+                </p>
+
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
+                    <Search className="w-3.5 h-3.5" />
+                  </span>
+                  <input
+                    type="text"
+                    value={productLinkSearchQuery}
+                    onChange={(e) => setProductLinkSearchQuery(e.target.value)}
+                    placeholder="Search products by title or category..."
+                    autoFocus
+                    className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-300 font-sans"
+                  />
+                </div>
+
+                <div className="max-h-64 overflow-y-auto divide-y divide-gray-100 border border-gray-200 rounded-lg">
+                  {loadingProducts ? (
+                    <div className="flex items-center justify-center py-8 gap-2 text-xs text-gray-400">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Loading products...
+                    </div>
+                  ) : filteredProducts.length === 0 ? (
+                    <p className="text-center py-6 text-xs text-gray-400 italic">No matching products found.</p>
+                  ) : (
+                    filteredProducts.map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => insertProductLink(product)}
+                        className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/60 transition-colors flex items-center gap-3 text-xs text-gray-700"
+                        type="button"
+                      >
+                        {product.images?.[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.title}
+                            className="w-9 h-9 rounded-md object-cover flex-shrink-0 border border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-md bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-gray-800 truncate">{product.title}</p>
+                          <p className="text-[10px] text-gray-400 truncate mt-0.5">
+                            {(product.categories || []).join(', ') || 'Uncategorised'}
+                            <span className="mx-1">·</span>
+                            <span className="font-mono text-emerald-600">{getProductUrl(product)}</span>
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={() => { setShowProductLinkModal(false); setProductLinkSearchQuery(''); }}
+                    className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
     );
   };
@@ -1097,14 +1468,21 @@ const BlogAdmin: React.FC = () => {
         </div>
 
         <div className={activeSubTab === 'posts' ? 'flex flex-col gap-6' : 'hidden'}>
-          {!editingId && (
-            <div className="mb-2">
-              <h3 className="text-sm font-semibold text-gray-800 mb-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                Create New Blog Post
-              </h3>
-              {renderEditor()}
-            </div>
-          )}
+          <div className="mb-2">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between">
+              <span>{editingId ? 'Edit Blog Post' : 'Create New Blog Post'}</span>
+              {editingId && (
+                <button
+                  onClick={resetForm}
+                  className="text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors"
+                  type="button"
+                >
+                  Cancel Edit & Create New
+                </button>
+              )}
+            </h3>
+            {renderEditor()}
+          </div>
 
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Edit Existing Blog Post</h3>
@@ -1153,25 +1531,13 @@ const BlogAdmin: React.FC = () => {
                           </div>
                         </div>
                         <button
-                          onClick={() => {
-                            if (editingId === post.id) resetForm();
-                            else startEdit(post);
-                          }}
+                          onClick={() => startEdit(post)}
                           type="button"
-                          className={`px-2.5 py-1.5 rounded text-xs inline-flex items-center gap-1 ${
-                            editingId === post.id 
-                              ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' 
-                              : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-                          }`}
+                          className="px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs inline-flex items-center gap-1"
                         >
-                          {editingId === post.id ? 'Cancel' : <><Pencil className="w-3.5 h-3.5" /> Edit</>}
+                          <Pencil className="w-3.5 h-3.5" /> Edit
                         </button>
                       </div>
-                      {editingId === post.id && (
-                        <div className="mt-2 mb-4 bg-gray-50 p-4 rounded-xl border border-pink-100 shadow-inner">
-                          {renderEditor()}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -1272,50 +1638,193 @@ const BlogAdmin: React.FC = () => {
           )}
         </div>
 
-        <div className={activeSubTab === 'media' ? 'bg-white p-4 rounded-lg border border-gray-200 shadow-sm' : 'hidden'}>
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">Blog Media Library</h3>
-          <label
-            className={`w-full max-w-md flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg text-sm ${
-              uploadingImage
-                ? 'border-gray-300 text-gray-400 cursor-not-allowed'
-                : 'border-gray-300 text-gray-700 hover:border-pink-400 cursor-pointer'
-            }`}
-          >
-            {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploadingImage ? 'Uploading image...' : 'Upload blog image from local'}
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-              onChange={(e) => void onLocalImageSelect(e)}
-              disabled={uploadingImage}
-              className="hidden"
-            />
-          </label>
-          <p className="text-xs text-gray-500 mt-2">
-            Uploaded image will be saved in bucket `{BlogService.BLOG_IMAGES_BUCKET}` and auto-filled in cover URL.
-          </p>
-          {form.cover_image && (
-            <div className="mt-3">
-              <p className="text-xs text-gray-600 break-all">{form.cover_image}</p>
-              <img
-                key={form.cover_image}
-                src={form.cover_image}
-                alt="Uploaded blog media"
-                className="mt-2 w-full max-w-md h-44 object-cover rounded-lg border border-gray-200"
+        <div className={activeSubTab === 'keyphrases' ? 'bg-white p-6 rounded-lg border border-gray-200 shadow-sm font-sans' : 'hidden'}>
+          <div className="space-y-6">
+            {/* Header & Description */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 gap-4">
+              <div>
+                <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                  <Key className="w-5 h-5 text-pink-600" />
+                  Focus Keyphrases Directory
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Manage focus keyphrases across all blogs to prevent keyword cannibalization and improve SEO ranking structure.
+                </p>
+              </div>
+            </div>
+
+            {/* Metrics cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-3">
+                <div className="p-2 bg-pink-50 text-pink-600 rounded-lg">
+                  <Key className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Unique Keyphrases</p>
+                  <p className="text-xl font-bold text-gray-800 mt-0.5">{keyphraseMetrics.totalUnique}</p>
+                </div>
+              </div>
+
+              <div className={`p-4 border rounded-xl flex items-center gap-3 ${
+                keyphraseMetrics.cannibalized > 0 
+                  ? 'bg-red-50 border-red-200 text-red-700' 
+                  : 'bg-gray-50 border-gray-200 text-gray-800'
+              }`}>
+                <div className={`p-2 rounded-lg ${
+                  keyphraseMetrics.cannibalized > 0 ? 'bg-red-100 text-red-600' : 'bg-green-50 text-green-600'
+                }`}>
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Cannibalized Terms</p>
+                  <p className="text-xl font-bold mt-0.5">{keyphraseMetrics.cannibalized}</p>
+                </div>
+              </div>
+
+              <div className={`p-4 border rounded-xl flex items-center gap-3 ${
+                keyphraseMetrics.missing > 0 
+                  ? 'bg-amber-50 border-amber-200 text-amber-700' 
+                  : 'bg-gray-50 border-gray-200 text-gray-800'
+              }`}>
+                <div className={`p-2 rounded-lg ${
+                  keyphraseMetrics.missing > 0 ? 'bg-amber-100 text-amber-600' : 'bg-green-50 text-green-600'
+                }`}>
+                  <Info className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Missing Keyphrase</p>
+                  <p className="text-xl font-bold mt-0.5">{keyphraseMetrics.missing}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <Search className="w-4 h-4" />
+              </span>
+              <input
+                type="text"
+                value={keyphraseSearchQuery}
+                onChange={(e) => setKeyphraseSearchQuery(e.target.value)}
+                placeholder="Search by keyphrase or blog title..."
+                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 font-sans"
               />
             </div>
-          )}
-        </div>
 
-        <div className={activeSubTab === 'guide' ? 'bg-white p-4 rounded-lg border border-gray-200 shadow-sm' : 'hidden'}>
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">Blog Workflow Guide</h3>
-          <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-            <li>Open Posts tab and create a draft with title, slug, excerpt, and content.</li>
-            <li>Use Media tab to upload a local image and reuse the generated cover URL.</li>
-            <li>Set status to Published only when content is final.</li>
-            <li>Add SEO title and description for better search visibility.</li>
-            <li>Open public `/blog` to verify card, article page, and metadata.</li>
-          </ul>
+            {/* Keyphrases Table */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200 text-xs">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-700 uppercase tracking-wider">Focus Keyphrase</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-700 uppercase tracking-wider w-32">SEO Status</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-700 uppercase tracking-wider">Used In Blog Posts</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {filteredKeyphrases.map((item, idx) => {
+                    const isCannibalized = item.posts.length > 1;
+                    return (
+                      <tr key={`kp-row-${idx}`} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-4 py-3 font-semibold text-gray-800 align-top">
+                          <span className="inline-flex items-center gap-1.5 font-sans">
+                            <Key className="w-3.5 h-3.5 text-gray-400" />
+                            {item.keyphrase}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          {isCannibalized ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 border border-red-200 text-red-600">
+                              <AlertTriangle className="w-3 h-3" /> Duplicate
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-green-50 border border-green-200 text-green-600">
+                              <CheckCircle className="w-3 h-3" /> Unique
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 space-y-2.5">
+                          {item.posts.map((post) => (
+                            <div key={post.id} className="flex items-center justify-between gap-3 border border-gray-100 rounded-md p-2 bg-gray-50/35 hover:bg-gray-50 transition-all">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-gray-800 truncate font-sans text-xs">{post.title}</p>
+                                <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400">
+                                  <span className="font-mono">/{post.slug}</span>
+                                  <span>•</span>
+                                  <span className={`px-1 rounded ${
+                                    post.status === 'published' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                  }`}>
+                                    {post.status}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => startEdit(post)}
+                                  className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                  title="Edit Post"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <Link
+                                  to={`/blog/${post.slug}`}
+                                  className="p-1 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                  title="View Public Post"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredKeyphrases.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-8 text-center text-gray-400 italic">
+                        No focus keyphrases match your search or exist in database.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Section: Missing Keyphrases */}
+            {keyphrasesData.noKeyphrase.length > 0 && (
+              <div className="border border-amber-200 rounded-xl bg-amber-50/40 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  <h4 className="text-xs font-semibold uppercase tracking-wider">Posts Missing Focus Keyphrases ({keyphrasesData.noKeyphrase.length})</h4>
+                </div>
+                <p className="text-[11px] text-amber-700/80 leading-normal">
+                  These posts do not have a focus keyphrase set (no tags). Set a keyphrase on each post to perform Yoast SEO analysis and optimize search discoverability.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  {keyphrasesData.noKeyphrase.map((post) => (
+                    <div key={`missing-kp-${post.id}`} className="bg-white border border-amber-100 rounded-lg p-2.5 flex items-center justify-between gap-3 shadow-sm hover:border-amber-200 transition-colors">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-gray-800 truncate">{post.title}</p>
+                        <p className="text-[10px] text-gray-400 truncate">/{post.slug}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => startEdit(post)}
+                        className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-semibold flex items-center gap-1 transition-colors shadow-sm"
+                      >
+                        <Pencil className="w-3 h-3" /> Edit
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         </div>
       </div>
