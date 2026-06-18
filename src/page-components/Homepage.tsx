@@ -15,19 +15,25 @@ import BentoHeroSection from '../components/BentoHeroSection';
 import LazyHomeSection from '../components/LazyHomeSection';
 import { NavigationVisibilityService } from '../services/navigationVisibilityService';
 
-const Homepage: React.FC = () => {
+interface HomepageProps {
+  initialCategories?: any[];
+  initialSettings?: any;
+  initialProducts?: any[];
+}
+
+const Homepage: React.FC<HomepageProps> = ({
+  initialCategories,
+  initialSettings,
+  initialProducts
+}) => {
   // Currency context
   const { formatUIPrice, currentCurrency } = useCurrency();
   
   // State for loaded settings and data
-  const [homepageSettings, setHomepageSettings] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [realProducts, setRealProducts] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [realCategories, setRealCategories] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [realStats, setRealStats] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [homepageSettings, setHomepageSettings] = useState<any>(initialSettings || null);
+  const [realProducts, setRealProducts] = useState<any[]>(initialProducts || []);
+  const [realCategories, setRealCategories] = useState<any[]>(initialCategories || []);
+  const [loading, setLoading] = useState<boolean>(!initialSettings || !initialCategories);
   const [openHomepageFaqs, setOpenHomepageFaqs] = useState<number[]>([]);
   const productsLoadStarted = useRef(false);
   const skipHeavyProductFetch = useRef(false);
@@ -70,8 +76,12 @@ const Homepage: React.FC = () => {
     }
   }, []);
 
-  // First paint: settings + categories + stats only (no 50-row product query).
+  // First paint: settings + categories only
   const loadCriticalHomepageData = useCallback(async () => {
+    if (initialSettings && initialCategories) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       logMemoryUsage('Homepage - Before Loading Data');
@@ -83,38 +93,35 @@ const Homepage: React.FC = () => {
         setHomepageSettings(settings);
         setRealProducts([]);
         setRealCategories([]);
-        setRealStats(null);
         return;
       }
 
-      const [settings, categories, stats] = await Promise.all([
+      const [settings, categories] = await Promise.all([
         HomepageSettingsService.getHomepageSettings(),
         appCache.getOrFetch(CACHE_KEYS.CATEGORIES_ALL, () => CategoryService.getAllCategories(), CACHE_TTL.CATEGORIES),
-        appCache.getOrFetch('stats:products', () => ProductService.getProductStats(), CACHE_TTL.PRODUCTS),
       ]);
 
       setHomepageSettings(settings);
       setRealCategories(categories);
-      setRealStats(stats);
     } catch (error) {
       console.error('Error loading homepage data:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initialCategories, initialSettings]);
 
   useEffect(() => {
     loadCriticalHomepageData();
   }, [loadCriticalHomepageData]);
 
-  // If the user never scrolls, still load products after a short delay.
+  // If the user never scrolls, still load products after a short delay (unless initialProducts is already populated).
   useEffect(() => {
-    if (loading || skipHeavyProductFetch.current) return;
+    if (loading || skipHeavyProductFetch.current || (initialProducts && initialProducts.length > 0)) return;
     const id = window.setTimeout(() => {
       loadProducts();
     }, 2200);
     return () => window.clearTimeout(id);
-  }, [loading, loadProducts]);
+  }, [loading, loadProducts, initialProducts]);
 
   // These variables are used in loadHomepageData function
 

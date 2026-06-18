@@ -21,9 +21,8 @@ export default async function HomePage() {
   // Fetch categories server-side so Google can index them directly in HTML
   const { data: categories } = await supabase
     .from('categories')
-    .select('id, name, slug, description, image_url')
-    .order('sort_order', { ascending: true })
-    .limit(24);
+    .select('*')
+    .order('sort_order', { ascending: true });
 
   // Fetch featured products server-side for SEO visibility
   const { data: featuredProducts } = await supabase
@@ -33,6 +32,28 @@ export default async function HomePage() {
     .eq('featured', true)
     .order('created_at', { ascending: false })
     .limit(12);
+
+  // Fetch initial products for the homepage (Best Sellers, Featured Artwork)
+  const { data: initialProducts } = await supabase
+    .from('products')
+    .select('id, title, price, original_price, discount_percentage, images, main_image, categories, category, rating, downloads, slug, status, featured, product_type, created_date')
+    .eq('status', 'active')
+    .order('created_date', { ascending: false })
+    .limit(36);
+
+  // Fetch homepage settings
+  let settings = null;
+  try {
+    const { data } = await supabase
+      .from('homepage_settings')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    settings = data;
+  } catch (err) {
+    console.error('Error fetching homepage settings on server:', err);
+  }
 
   const hasSeoSections =
     Boolean(categories && categories.length > 0) ||
@@ -243,7 +264,11 @@ export default async function HomePage() {
       </noscript>
 
       {/* Client-side React app — full interactive experience */}
-      <HomepageClient />
+      <HomepageClient 
+        initialCategories={categories || []}
+        initialSettings={settings}
+        initialProducts={initialProducts || []}
+      />
     </>
   );
 }
