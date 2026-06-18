@@ -72,9 +72,12 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     return combined;
   }, [adminProducts, featuredArtworks]);
 
-  // Load products from database on mount
+  // Load products from database on mount (deferred to free up the main thread during initial load)
   useEffect(() => {
-    refreshProducts();
+    const timer = setTimeout(() => {
+      refreshProducts();
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Helper function to map database fields to Product interface

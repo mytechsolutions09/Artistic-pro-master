@@ -46,7 +46,7 @@ export const throttle = <T extends (...args: any[]) => any>(
  * Request idle callback with fallback
  */
 export const requestIdleCallback = (callback: () => void): void => {
-  if ('requestIdleCallback' in window) {
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
     window.requestIdleCallback(callback);
   } else {
     setTimeout(callback, 1);
@@ -71,7 +71,7 @@ export const measurePerformance = async <T>(
  * Check if device is on slow connection
  */
 export const isSlowConnection = (): boolean => {
-  if ('connection' in navigator) {
+  if (typeof navigator !== 'undefined' && 'connection' in navigator) {
     const connection = (navigator as any).connection;
     const effectiveType = connection?.effectiveType;
     const saveData = connection?.saveData;
@@ -85,7 +85,7 @@ export const isSlowConnection = (): boolean => {
  * Get device memory in GB
  */
 export const getDeviceMemory = (): number => {
-  if ('deviceMemory' in navigator) {
+  if (typeof navigator !== 'undefined' && 'deviceMemory' in navigator) {
     return (navigator as any).deviceMemory;
   }
   return 4; // Default assumption
@@ -156,7 +156,7 @@ export const deferOperation = (callback: () => void, delay: number = 0): void =>
  * Check if browser supports native lazy loading
  */
 export const supportsNativeLazyLoading = (): boolean => {
-  return 'loading' in HTMLImageElement.prototype;
+  return typeof HTMLImageElement !== 'undefined' && 'loading' in HTMLImageElement.prototype;
 };
 
 /**

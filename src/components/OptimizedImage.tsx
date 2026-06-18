@@ -25,10 +25,11 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   onError,
   onClick
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const serverSafeSrc = src ? optimizeImageUrl(src, width, quality) : '';
+  const [isLoaded, setIsLoaded] = useState(priority);
   const [isInView, setIsInView] = useState(priority); // Start with true for priority images
   const imgRef = useRef<HTMLImageElement>(null);
-  const [imageSrc, setImageSrc] = useState<string>('');
+  const [imageSrc, setImageSrc] = useState<string>(priority ? serverSafeSrc : '');
 
   // Intersection Observer for lazy loading - ENABLED for non-priority images
   useEffect(() => {
@@ -97,7 +98,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   return (
     <div ref={imgRef} className="relative overflow-hidden" style={{ width: '100%', height: '100%' }}>
       {/* Blur placeholder */}
-      {!isLoaded && (
+      {!priority && !isLoaded && (
         <div 
           className="absolute inset-0 bg-gray-200 animate-pulse"
           style={{
@@ -112,7 +113,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         <img
           src={imageSrc}
           alt={alt}
-          className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}
+          className={`${className} ${(!priority && !isLoaded) ? 'opacity-0' : 'opacity-100'} ${!priority ? 'transition-opacity duration-500' : ''}`}
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : undefined}
           decoding="async"

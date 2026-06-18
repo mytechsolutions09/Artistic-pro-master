@@ -42,9 +42,12 @@ export const CategoryProvider: React.FC<CategoryProviderProps> = ({ children }) 
   // Use memory-efficient array for categories
   const categoriesArray = useMemo(() => new MemoryEfficientArray<Category>(50), []);
 
-  // Load categories from database on mount
+  // Load categories from database on mount (deferred to free up the main thread during initial load)
   useEffect(() => {
-    refreshCategories();
+    const timer = setTimeout(() => {
+      refreshCategories();
+    }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   // REMOVED: Auto-refresh polling (was causing 14,000+ DB updates per hour)

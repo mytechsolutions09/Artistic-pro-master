@@ -5,6 +5,13 @@
 // Cache for loaded images
 const imageCache = new Map<string, string>();
 
+// Next.js standard device and image widths
+const NEXT_IMAGE_WIDTHS = [16, 32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+
+const getNextJsWidth = (width: number): number => {
+  return NEXT_IMAGE_WIDTHS.find(w => w >= width) || NEXT_IMAGE_WIDTHS[NEXT_IMAGE_WIDTHS.length - 1];
+};
+
 /**
  * Optimize image URL with compression parameters
  */
@@ -31,32 +38,28 @@ export const optimizeImageUrl = (
       urlObj.searchParams.set('cs', 'tinysrgb');
       urlObj.searchParams.set('fit', 'crop');
       
-      // Set appropriate width
-      const targetWidth = width || (window.innerWidth > 768 ? 800 : 400);
+      // Set appropriate width safely
+      const isClient = typeof window !== 'undefined';
+      const targetWidth = width || (isClient && window.innerWidth > 768 ? 800 : 400);
       urlObj.searchParams.set('w', targetWidth.toString());
       
       optimizedUrl = urlObj.toString();
     }
     // Optimize Supabase storage images
     else if (url.includes('supabase')) {
-      // Supabase Storage Image Transformations has a very low quota limit (e.g., 100/month).
-      // We disable it by default to prevent quota exhaustion and errors, serving images from public storage directly.
-      // Set NEXT_PUBLIC_ENABLE_SUPABASE_TRANSFORMATIONS=true in .env to explicitly enable this.
-      const enableTransformations = process.env.NEXT_PUBLIC_ENABLE_SUPABASE_TRANSFORMATIONS === 'true';
       const isPublicStorage = url.includes('/storage/v1/object/public/');
-
-      if (isPublicStorage && enableTransformations) {
-        const transformedUrl = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
-        const urlObj = new URL(transformedUrl);
-        const targetWidth = width || 850;
-        urlObj.searchParams.set('width', targetWidth.toString());
-        urlObj.searchParams.set('quality', quality.toString());
-        urlObj.searchParams.set('format', 'webp');
-        urlObj.searchParams.set('resize', 'contain');
-        optimizedUrl = urlObj.toString();
+      if (isPublicStorage) {
+        // Route through Next.js built-in image optimization endpoint
+        const targetWidth = getNextJsWidth(width || 800);
+        optimizedUrl = `/_next/image?url=${encodeURIComponent(url)}&w=${targetWidth}&q=${quality}`;
       } else {
         optimizedUrl = url;
       }
+    }
+    // Local assets
+    else if (url.startsWith('/') && !url.startsWith('//')) {
+      const targetWidth = getNextJsWidth(width || 800);
+      optimizedUrl = `/_next/image?url=${encodeURIComponent(url)}&w=${targetWidth}&q=${quality}`;
     }
     // Optimize other image URLs (Cloudinary, Imgix, etc.)
     else if (url.includes('cloudinary.com')) {
@@ -175,7 +178,7 @@ export const estimateCompression = (originalWidth: number, targetWidth: number):
  * Get optimal image width based on viewport
  */
 export const getOptimalImageWidth = (): number => {
-  const width = window.innerWidth;
+  const width = typeof window !== 'undefined' ? window.innerWidth : 1000;
   
   if (width < 640) return 400; // Mobile
   if (width < 768) return 600; // Tablet portrait
@@ -251,14 +254,17 @@ export const loadImageWithRetry = async (
  * Compress image URL by reducing quality based on viewport
  */
 export const getCompressedImageUrl = (url: string): string => {
-  const isMobile = window.innerWidth < 768;
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
   
   // Check for slow connection safely
-  const connection = (navigator as any).connection;
-  const isSlowConnection = connection && 
-    (connection.effectiveType === 'slow-2g' || 
-     connection.effectiveType === '2g' ||
-     connection.saveData);
+  let isSlowConnection = false;
+  if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+    const connection = (navigator as any).connection;
+    isSlowConnection = connection && 
+      (connection.effectiveType === 'slow-2g' || 
+       connection.effectiveType === '2g' ||
+       connection.saveData);
+  }
 
   const quality = isSlowConnection ? 50 : (isMobile ? 70 : 80);
   const width = isMobile ? 400 : 800;
