@@ -69,6 +69,41 @@ export default async function Page({ params }: Props) {
                     price: product.price,
                     availability: 'https://schema.org/InStock',
                     seller: { '@id': 'https://lurevi.in/#organization' },
+                    hasMerchantReturnPolicy: {
+                      '@type': 'MerchantReturnPolicy',
+                      applicableCountry: 'IN',
+                      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+                      merchantReturnDays: 7,
+                      returnMethod: 'https://schema.org/ReturnByMail',
+                      returnFees: 'https://schema.org/FreeReturn',
+                    },
+                    shippingDetails: {
+                      '@type': 'OfferShippingDetails',
+                      shippingRate: {
+                        '@type': 'MonetaryAmount',
+                        value: 0,
+                        currency: 'INR',
+                      },
+                      shippingDestination: {
+                        '@type': 'DefinedRegion',
+                        addressCountry: 'IN',
+                      },
+                      deliveryTime: {
+                        '@type': 'ShippingDeliveryTime',
+                        handlingTime: {
+                          '@type': 'QuantitativeValue',
+                          minValue: 1,
+                          maxValue: 2,
+                          unitCode: 'DAY',
+                        },
+                        transitTime: {
+                          '@type': 'QuantitativeValue',
+                          minValue: 3,
+                          maxValue: 5,
+                          unitCode: 'DAY',
+                        },
+                      },
+                    },
                   },
                 },
                 {

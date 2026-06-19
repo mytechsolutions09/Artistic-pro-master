@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
-import { FileText, List, Key } from 'lucide-react';
+import { FileText, List, Key, Download } from 'lucide-react';
 
-export type BlogTabId = 'posts' | 'list' | 'keyphrases';
+export type BlogTabId = 'posts' | 'list' | 'keyphrases' | 'export';
 
 interface BlogSecondaryNavProps {
   activeTab: BlogTabId;
@@ -35,6 +35,12 @@ const BLOG_TABS: Array<{
     label: 'Keyphrases',
     icon: <Key className="w-4 h-4" />,
     description: 'View focus keyphrases used in blogs',
+  },
+  {
+    id: 'export',
+    label: 'Export Blogs',
+    icon: <Download className="w-4 h-4" />,
+    description: 'Export blog posts to CSV file',
   },
 ];
 

@@ -5,7 +5,7 @@ const BrowsePage = dynamic(() => import('@/src/page-components/BrowsePage'));
 
 export const metadata: Metadata = {
   title: 'Shop Premium Digital Art & Wall Prints | Lurevi Collection',
-  description: 'Browse 100+ curated digital art prints — illustration, abstract, wall art — delivered across India. Find your style at Lurevi.',
+  description: 'Browse 100+ premium digital art prints, abstract wall art, and illustrations at Lurevi. Free shipping across India. Find the perfect design for your home.',
   alternates: { canonical: 'https://lurevi.in/browse' },
 };
 

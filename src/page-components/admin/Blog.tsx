@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { FileText, ExternalLink, Pencil, Trash2, Loader2, Save, Upload, AlertTriangle, CheckCircle, Info, Sparkles, Link2, Key, Search, ShoppingBag } from 'lucide-react';
+import { FileText, ExternalLink, Pencil, Trash2, Loader2, Save, Upload, AlertTriangle, CheckCircle, Info, Sparkles, Link2, Key, Search, ShoppingBag, Download } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Link } from '@/src/compat/router';
 import { BlogPost, BlogService, BlogStatus } from '../../services/blogService';
@@ -303,6 +303,77 @@ const BlogAdmin: React.FC = () => {
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 3000);
+  };
+
+  const escapeCSV = (value: string | number | null | undefined): string => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'number') return value.toString();
+    
+    const stringValue = value.toString();
+    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')) {
+      return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+  };
+
+  const handleExportCSV = () => {
+    if (posts.length === 0) {
+      showMessage('error', 'No blog posts to export.');
+      return;
+    }
+
+    const headers = [
+      'id',
+      'title',
+      'slug',
+      'excerpt',
+      'content',
+      'cover_image',
+      'status',
+      'tags',
+      'seo_title',
+      'seo_description',
+      'published_at',
+      'created_at',
+      'updated_at'
+    ];
+
+    const rows = posts.map(post => {
+      const tagsString = (post.tags || []).join(', ');
+      return [
+        escapeCSV(post.id),
+        escapeCSV(post.title),
+        escapeCSV(post.slug),
+        escapeCSV(post.excerpt),
+        escapeCSV(post.content),
+        escapeCSV(post.cover_image),
+        escapeCSV(post.status),
+        escapeCSV(tagsString),
+        escapeCSV(post.seo_title),
+        escapeCSV(post.seo_description),
+        escapeCSV(post.published_at),
+        escapeCSV(post.created_at),
+        escapeCSV(post.updated_at)
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `lurevi-blogs-${timestamp}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showMessage('success', `Exported ${posts.length} blog posts successfully.`);
   };
 
   const toSlug = (value: string) =>
@@ -1823,6 +1894,72 @@ const BlogAdmin: React.FC = () => {
                   ))}
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+
+        <div className={activeSubTab === 'export' ? 'space-y-4' : 'hidden'}>
+          {/* Header */}
+          <div className="bg-gradient-to-r from-slate-700 to-slate-800 p-4 rounded-lg shadow-sm text-white font-sans">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-white/10 rounded-md backdrop-blur-sm">
+                <Download className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-base font-bold text-white">Blog Content Export</h1>
+                <p className="text-xs text-slate-300">Export blog posts, excerpts, and SEO configurations to CSV</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-3 gap-3 font-sans">
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm text-center md:text-left">
+              <div className="text-[11px] text-gray-500 font-medium">Total Posts</div>
+              <div className="text-lg font-bold text-gray-900">{posts.length}</div>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm text-center md:text-left">
+              <div className="text-[11px] text-gray-500 font-medium">Published</div>
+              <div className="text-lg font-bold text-emerald-600">{publishedCount}</div>
+            </div>
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm text-center md:text-left">
+              <div className="text-[11px] text-gray-500 font-medium">Drafts</div>
+              <div className="text-lg font-bold text-slate-500">{posts.length - publishedCount}</div>
+            </div>
+          </div>
+
+          {/* Export Section */}
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3 font-sans">
+            <div className="flex items-center justify-between mb-1">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-800">Export to CSV</h2>
+                <p className="text-xs text-gray-500">Download a spreadsheet file containing all your blog contents and settings.</p>
+              </div>
+            </div>
+
+            {/* CSV Format Info */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-left text-xs">
+              <h4 className="font-semibold text-slate-800 mb-1">Exported Columns:</h4>
+              <p className="text-slate-600 leading-relaxed">
+                id, title, slug, excerpt, content, cover_image, status, tags, seo_title, seo_description, published_at, created_at, updated_at
+              </p>
+            </div>
+
+            {/* Export Button */}
+            <button
+              onClick={handleExportCSV}
+              disabled={posts.length === 0}
+              className="w-full px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-xs"
+              type="button"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export All {posts.length} Blog Posts (CSV)</span>
+            </button>
+
+            {posts.length === 0 && (
+              <p className="text-xs text-gray-500 text-center">
+                No blog posts available to export. Create blog posts first.
+              </p>
             )}
           </div>
         </div>
