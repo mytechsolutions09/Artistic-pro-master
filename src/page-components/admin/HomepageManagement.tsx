@@ -21,10 +21,12 @@ import {
   LayoutGrid,
   Megaphone,
   ChevronDown,
+  HelpCircle,
+  Sparkles,
 } from 'lucide-react';
 import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { HeroSectionConfig, ImageSliderConfig, FeaturedGridConfig, BestSellersConfig, FeaturedArtworkConfig, CategoriesConfig, TrendingCollectionsConfig, StatsConfig, NewsletterConfig } from '../../types';
+import { HeroSectionConfig, SingleBannerHeroConfig, ImageSliderConfig, FeaturedGridConfig, BestSellersConfig, FeaturedArtworkConfig, CategoriesConfig, TrendingCollectionsConfig, StatsConfig, NewsletterConfig } from '../../types';
 import { ProductService, CategoryService } from '../../services/supabaseService';
 import { HomepageSettingsService } from '../../services/homepageSettingsService';
 import { ImageUploadService } from '../../services/imageUploadService';
@@ -58,6 +60,7 @@ const HomepageManagement: React.FC = () => {
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
+  const [activePreviewFaqIndex, setActivePreviewFaqIndex] = useState<number | null>(null);
   const { navRef, onNavScroll } = usePreserveNavScroll([selectedSection]);
 
   // Real data state
@@ -105,13 +108,27 @@ const HomepageManagement: React.FC = () => {
 
         
         // Apply saved settings to state variables
-        if (savedSettings.bento_hero) {
-          setBentoHero({ cards: normalizeBentoCards(savedSettings.bento_hero.cards || []) });
-        } else if (savedSettings.hero_section?.bento_cards) {
-          setBentoHero({ cards: normalizeBentoCards(savedSettings.hero_section.bento_cards) });
-        }
+        const bentoCards = savedSettings.bento_hero?.cards || savedSettings.hero_section?.bento_cards || [];
+        const bentoEnabled = savedSettings.bento_hero?.enabled !== undefined 
+          ? savedSettings.bento_hero.enabled 
+          : (savedSettings.hero_section?.bento_enabled !== undefined ? savedSettings.hero_section.bento_enabled : true);
+          
+        setBentoHero({ 
+          cards: normalizeBentoCards(bentoCards), 
+          enabled: bentoEnabled 
+        });
+
         if (savedSettings.hero_section) {
-          setHeroSection(savedSettings.hero_section);
+          setHeroSection({
+            ...savedSettings.hero_section,
+            enabled: savedSettings.hero_section.enabled !== undefined ? savedSettings.hero_section.enabled : true
+          });
+          if (savedSettings.hero_section.single_banner) {
+            setSingleBannerHero({
+              ...singleBannerHero,
+              ...savedSettings.hero_section.single_banner
+            });
+          }
         }
         if (savedSettings.image_slider) {
           setImageSlider(savedSettings.image_slider);
@@ -139,6 +156,14 @@ const HomepageManagement: React.FC = () => {
         }
         if (savedSettings.promotional_bar) {
           setPromoBar(savedSettings.promotional_bar);
+        }
+        if (savedSettings.faq) {
+          setFaqSection({
+            enabled: savedSettings.faq.enabled !== undefined ? savedSettings.faq.enabled : true,
+            title: savedSettings.faq.title || 'Frequently Asked Questions',
+            subtitle: savedSettings.faq.subtitle || 'Find answers to core questions about buying, downloading, and printing digital wall art.',
+            faqs: savedSettings.faq.faqs || []
+          });
         }
         setSettingsLoaded(true);
       } else {
@@ -204,8 +229,23 @@ const HomepageManagement: React.FC = () => {
     dismissible: true,
   });
 
+  // Single Banner Hero State
+  const [singleBannerHero, setSingleBannerHero] = useState<SingleBannerHeroConfig>({
+    enabled: true,
+    title: 'Transform Your Space with Premium Wall Art',
+    subtitle: 'Explore our curated collections of museum-quality digital prints and luxury framing guides.',
+    buttonText: 'Shop Collections',
+    buttonLink: '/browse',
+    image: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    height: 'medium',
+    textColor: 'light',
+    overlayOpacity: 40,
+    alignment: 'center'
+  });
+
   // Bento Hero State
-  const [bentoHero, setBentoHero] = useState<{ cards: any[] }>({
+  const [bentoHero, setBentoHero] = useState<{ cards: any[], enabled?: boolean }>({
+    enabled: true,
     cards: [
       { id: '1', title: 'Paintings', subtitle: 'Explore Collection', image: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/paintings', bgColor: '#f5e6d3', desktopColSpan: 1, desktopRowSpan: 2 },
       { id: '2', title: 'Photography', subtitle: 'Stunning Shots', image: 'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=800', link: '/categories/photography', bgColor: '#d3e8f5', desktopColSpan: 2, desktopRowSpan: 1 },
@@ -217,13 +257,15 @@ const HomepageManagement: React.FC = () => {
   });
 
   // Hero Section State
-  const [heroSection, setHeroSection] = useState<HeroSectionConfig>({
+  const [heroSection, setHeroSection] = useState<HeroSectionConfig & { enabled?: boolean }>({
+    enabled: true,
     mainCard: {
       title: 'Digital Art Collection',
       subtitle: 'Discover unique digital artworks for your space',
       buttonText: 'Discover more',
       buttonLink: '/browse',
-      gradientColors: ['from-orange-200', 'to-orange-300']
+      gradientColors: ['from-orange-200', 'to-orange-300'],
+      image: ''
     },
     featuredCard: {
       title: 'Featured Artwork',
@@ -237,6 +279,36 @@ const HomepageManagement: React.FC = () => {
       images: ['https://images.pexels.com/photos/1047540/pexels-photo-1047540.jpeg?auto=compress&cs=tinysrgb&w=800'],
       link: '/categories'
     }
+  });
+
+  // FAQ Section State
+  const [faqSection, setFaqSection] = useState<{
+    enabled: boolean;
+    title: string;
+    subtitle: string;
+    faqs: Array<{ q: string; a: string }>;
+  }>({
+    enabled: true,
+    title: 'Frequently Asked Questions',
+    subtitle: 'Find answers to core questions about buying, downloading, and printing digital wall art.',
+    faqs: [
+      {
+        q: "How do I receive my digital files after purchase?",
+        a: "Immediately upon checkout, you will receive an email with direct download links for your files. Alternatively, you can log into your Lurevi profile dashboard and access them from the 'Downloads' tab at any time."
+      },
+      {
+        q: "What dimensions are Lurevi's digital prints suitable for?",
+        a: "Our files are exported as ultra-high-resolution 300 DPI files in standard print ratios (e.g. ISO A1-A4, 2:3 ratio, 3:4 ratio, 4:5 ratio). This allows you to print files at sizes ranging from 4x6 inches up to massive poster sizes like 24x36 inches without pixelation."
+      },
+      {
+        q: "Do Lurevi downloads include a commercial license?",
+        a: "No, all digital files purchased on Lurevi are for personal use only. If you wish to use our designs for commercial decoration, product packaging, or advertising, please reach out to our support team for a commercial license."
+      },
+      {
+        q: "Do you ship physical prints and frames?",
+        a: "We offer physical poster delivery exclusively within India. For international customers, we provide instant high-resolution digital downloads of our artwork, which you can easily print locally on your preferred paper or canvas."
+      }
+    ]
   });
 
   // Image Slider State
@@ -458,7 +530,9 @@ const HomepageManagement: React.FC = () => {
         bento_hero: bentoHero, // Backward/forward compatible payload
         hero_section: {
           ...heroSection,
-          bento_cards: bentoHero.cards
+          bento_cards: bentoHero.cards,
+          bento_enabled: bentoHero.enabled,
+          single_banner: singleBannerHero
         },
         image_slider: imageSlider,
         featured_grid: featuredGrid,
@@ -468,7 +542,8 @@ const HomepageManagement: React.FC = () => {
         trending_collections: trendingCollections,
         stats: statsSection,
         newsletter: newsletterSection,
-        promotional_bar: promoBar
+        promotional_bar: promoBar,
+        faq: faqSection
       };
 
       // Save to database
@@ -489,7 +564,7 @@ const HomepageManagement: React.FC = () => {
   };
 
   // Image Upload Function
-  const handleImageUpload = async (file: File, cardType: 'featured' | 'categories') => {
+  const handleImageUpload = async (file: File, cardType: 'featured' | 'categories' | 'main') => {
     if (!file) return;
     
     setUploadingImage(cardType);
@@ -505,10 +580,15 @@ const HomepageManagement: React.FC = () => {
             ...heroSection,
             featuredCard: { ...heroSection.featuredCard, images: [uploadResult.url] }
           });
-        } else {
+        } else if (cardType === 'categories') {
           setHeroSection({
             ...heroSection,
             categoriesCard: { ...heroSection.categoriesCard, images: [uploadResult.url] }
+          });
+        } else if (cardType === 'main') {
+          setHeroSection({
+            ...heroSection,
+            mainCard: { ...heroSection.mainCard, image: uploadResult.url }
           });
         }
 
@@ -528,6 +608,7 @@ const HomepageManagement: React.FC = () => {
     const ic = 'h-3.5 w-3.5';
     switch (type) {
       case 'promoBar': return <Megaphone className={ic} />;
+      case 'singleBannerHero': return <Sparkles className={ic} />;
       case 'bentoHero': return <LayoutGrid className={ic} />;
       case 'hero': return <Layout className={ic} />;
       case 'imageSlider': return <Image className={ic} />;
@@ -538,6 +619,7 @@ const HomepageManagement: React.FC = () => {
       case 'trendingCollections': return <TrendingUp className={ic} />;
       case 'stats': return <BarChart3 className={ic} />;
       case 'newsletter': return <Mail className={ic} />;
+      case 'faq': return <HelpCircle className={ic} />;
       default: return <Settings className={ic} />;
     }
   };
@@ -546,7 +628,7 @@ const HomepageManagement: React.FC = () => {
     setBentoHero(prev => {
       const updated = [...prev.cards];
       updated[index] = { ...updated[index], [field]: value };
-      return { cards: updated };
+      return { ...prev, cards: updated };
     });
   };
 
@@ -573,17 +655,38 @@ const HomepageManagement: React.FC = () => {
     }
   };
 
+  // Single Banner local image upload state
+  const [uploadingSingleBannerImage, setUploadingSingleBannerImage] = useState<boolean>(false);
+
+  const handleSingleBannerImageUpload = async (file: File) => {
+    if (!file) return;
+    setUploadingSingleBannerImage(true);
+    try {
+      const result = await ImageUploadService.uploadFile(file, 'homepage-hero-images', 'single_banner');
+      if (result.success && result.url) {
+        setSingleBannerHero(prev => ({ ...prev, image: result.url }));
+      } else {
+        alert(result.error || 'Image upload failed. Please try again.');
+      }
+    } catch (err) {
+      alert('Image upload failed. Please try again.');
+    } finally {
+      setUploadingSingleBannerImage(false);
+    }
+  };
+
   const updateBentoCardSpan = (index: number, field: 'desktopColSpan' | 'desktopRowSpan', value: number) => {
     const safeValue = Math.max(1, Math.min(3, Number(value || 1)));
     setBentoHero(prev => {
       const updated = [...prev.cards];
       updated[index] = { ...updated[index], [field]: safeValue };
-      return { cards: updated };
+      return { ...prev, cards: updated };
     });
   };
 
   const addBentoCard = () => {
     setBentoHero(prev => ({
+      ...prev,
       cards: [
         ...prev.cards,
         {
@@ -604,6 +707,7 @@ const HomepageManagement: React.FC = () => {
     setBentoHero(prev => {
       if (prev.cards.length <= 1) return prev;
       return {
+        ...prev,
         cards: prev.cards.filter((_, idx) => idx !== index),
       };
     });
@@ -744,11 +848,254 @@ const HomepageManagement: React.FC = () => {
             </div>
           </div>
         );
+      case 'singleBannerHero':
+        return (
+          <div className="space-y-4">
+            {/* Enabled toggle */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+              <div>
+                <p className="text-sm font-medium text-gray-700 font-sans">Show Single Banner Hero</p>
+                <p className="text-xs text-gray-500 font-sans">Display the full-width single banner hero section on the homepage</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSingleBannerHero(prev => ({ ...prev, enabled: !prev.enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${singleBannerHero.enabled ? 'bg-gray-900' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${singleBannerHero.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Form Config */}
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-4">
+                <h4 className="border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900 uppercase tracking-wider">Banner Configuration</h4>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Banner Title</label>
+                    <input
+                      type="text"
+                      value={singleBannerHero.title}
+                      onChange={(e) => setSingleBannerHero(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      placeholder="Banner Title"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Banner Subtitle</label>
+                    <textarea
+                      value={singleBannerHero.subtitle}
+                      onChange={(e) => setSingleBannerHero(prev => ({ ...prev, subtitle: e.target.value }))}
+                      rows={3}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      placeholder="Banner Subtitle"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Button Text</label>
+                      <input
+                        type="text"
+                        value={singleBannerHero.buttonText}
+                        onChange={(e) => setSingleBannerHero(prev => ({ ...prev, buttonText: e.target.value }))}
+                        className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                        placeholder="Button Text"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Button Link</label>
+                      <input
+                        type="text"
+                        value={singleBannerHero.buttonLink}
+                        onChange={(e) => setSingleBannerHero(prev => ({ ...prev, buttonLink: e.target.value }))}
+                        className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                        placeholder="/browse"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Banner Background Image</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={singleBannerHero.image}
+                        onChange={(e) => setSingleBannerHero(prev => ({ ...prev, image: e.target.value }))}
+                        className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                        placeholder="Background Image URL"
+                      />
+                      <label className="flex items-center justify-center h-8 px-3 border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                        <Upload className="w-3.5 h-3.5 text-gray-500 mr-1.5" />
+                        <span className="text-xs font-medium text-gray-700">
+                          {uploadingSingleBannerImage ? 'Uploading...' : 'Upload'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingSingleBannerImage}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleSingleBannerImageUpload(file);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Height</label>
+                      <select
+                        value={singleBannerHero.height}
+                        onChange={(e) => setSingleBannerHero(prev => ({ ...prev, height: e.target.value as any }))}
+                        className="w-full rounded-md border border-gray-200 px-2 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      >
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Text Color</label>
+                      <select
+                        value={singleBannerHero.textColor}
+                        onChange={(e) => setSingleBannerHero(prev => ({ ...prev, textColor: e.target.value as any }))}
+                        className="w-full rounded-md border border-gray-200 px-2 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      >
+                        <option value="light">Light (White)</option>
+                        <option value="dark">Dark (Gray-900)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Alignment</label>
+                      <select
+                        value={singleBannerHero.alignment}
+                        onChange={(e) => setSingleBannerHero(prev => ({ ...prev, alignment: e.target.value as any }))}
+                        className="w-full rounded-md border border-gray-200 px-2 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      >
+                        <option value="left">Left</option>
+                        <option value="center">Center</option>
+                        <option value="right">Right</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-xs font-medium text-gray-600">Overlay Opacity</label>
+                      <span className="text-[10px] font-semibold text-gray-700">{singleBannerHero.overlayOpacity}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={singleBannerHero.overlayOpacity}
+                      onChange={(e) => setSingleBannerHero(prev => ({ ...prev, overlayOpacity: Number(e.target.value) }))}
+                      className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-time Preview */}
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm flex flex-col justify-between">
+                <h4 className="border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900 uppercase tracking-wider mb-4">Live Preview</h4>
+                
+                {/* Simulated Single Banner */}
+                <div 
+                  className={`relative w-full rounded-2xl overflow-hidden flex transition-all duration-300 ${
+                    singleBannerHero.height === 'small' ? 'h-48' : singleBannerHero.height === 'medium' ? 'h-64' : 'h-80'
+                  }`}
+                >
+                  {singleBannerHero.image ? (
+                    <>
+                      <img 
+                        src={singleBannerHero.image} 
+                        alt="Preview" 
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div 
+                        className="absolute inset-0 z-0" 
+                        style={{ backgroundColor: `rgba(0,0,0, ${singleBannerHero.overlayOpacity / 100})` }}
+                      />
+                    </>
+                  ) : (
+                    <div 
+                      className={`absolute inset-0 bg-gradient-to-br ${
+                        singleBannerHero.textColor === 'light' ? 'from-gray-800 to-gray-950' : 'from-gray-50 to-gray-200'
+                      }`}
+                    />
+                  )}
+
+                  <div 
+                    className={`relative z-10 flex flex-col w-full h-full justify-center p-6 ${
+                      singleBannerHero.alignment === 'left' 
+                        ? 'items-start text-left' 
+                        : singleBannerHero.alignment === 'right' 
+                          ? 'items-end text-right' 
+                          : 'items-center text-center'
+                    }`}
+                  >
+                    <h2 
+                      className={`text-lg sm:text-xl md:text-2xl font-extrabold tracking-tight mb-2 ${
+                        singleBannerHero.textColor === 'light' ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      {singleBannerHero.title || 'Untitled Banner'}
+                    </h2>
+                    <p 
+                      className={`text-xs max-w-md mb-4 ${
+                        singleBannerHero.textColor === 'light' ? 'text-white/80' : 'text-gray-600'
+                      }`}
+                    >
+                      {singleBannerHero.subtitle || 'Add subtitle text here'}
+                    </p>
+                    {singleBannerHero.buttonText && (
+                      <span 
+                        className={`inline-flex items-center px-4 py-2 rounded-full text-xs font-semibold shadow-sm ${
+                          singleBannerHero.textColor === 'light' 
+                            ? 'bg-white text-gray-900' 
+                            : 'bg-gray-900 text-white'
+                        }`}
+                      >
+                        {singleBannerHero.buttonText}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 p-2 bg-gray-50 rounded-lg text-[10px] text-gray-400 text-center">
+                  Simulated preview. Layout adapts responsively to desktop and mobile screen sizes.
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       case 'bentoHero':
         return (
           <div className="space-y-3">
             <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
               <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Bento hero cards</h4>
+              
+              {/* Enabled toggle */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Show Bento Hero Section</p>
+                  <p className="text-xs text-gray-500">Display the bento hero block on the public landing page</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBentoHero(prev => ({ ...prev, enabled: !prev.enabled }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${bentoHero.enabled !== false ? 'bg-gray-900' : 'bg-gray-300'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${bentoHero.enabled !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
               <p className="text-sm text-gray-500 mb-6">
                 Configure the bento hero cards. First 6 cards use the featured bento layout, extra cards appear below in a responsive grid.
               </p>
@@ -964,9 +1311,23 @@ const HomepageManagement: React.FC = () => {
           </div>
         );
       case 'hero':
-  return (
-          <div className="space-y-8">
-                        {/* Editor Section */}
+        return (
+          <div className="space-y-3">
+            {/* Enabled toggle */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Show Standard Hero Section</p>
+                <p className="text-xs text-gray-500">Display the standard hero card layout on the public homepage</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHeroSection(prev => ({ ...prev, enabled: !prev.enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${heroSection.enabled !== false ? 'bg-gray-900' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${heroSection.enabled !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               {/* Main Card Editor */}
               <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
@@ -1063,6 +1424,62 @@ const HomepageManagement: React.FC = () => {
                     </select>
                   </div>
                 </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium text-gray-600">Background Image (Optional)</label>
+                  <div className="space-y-3">
+                    {/* URL Input */}
+                    <input
+                      type="url"
+                      value={heroSection.mainCard.image || ''}
+                      onChange={(e) => setHeroSection({
+                        ...heroSection,
+                        mainCard: { ...heroSection.mainCard, image: e.target.value }
+                      })}
+                      className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      placeholder="Enter image URL"
+                    />
+                    
+                    <div className="text-center text-sm text-gray-500">or</div>
+                    
+                    {/* File Upload */}
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file, 'main');
+                          }
+                        }}
+                        className="hidden"
+                        id="main-image-upload"
+                      />
+                      <label
+                        htmlFor="main-image-upload"
+                        className={`flex w-full cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-gray-300 px-2 py-1.5 text-[11px] transition-colors hover:border-gray-400 ${
+                          uploadingImage === 'main' ? 'bg-gray-50' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <Upload className="w-4 h-4 mr-2 text-gray-400" />
+                        <span className="text-[11px] text-gray-600">
+                          {uploadingImage === 'main' ? 'Uploading...' : 'Upload image'}
+                        </span>
+                      </label>
+                    </div>
+                    
+                    {/* Image Preview */}
+                    {heroSection.mainCard.image && (
+                      <div className="mt-2">
+                        <img
+                          src={heroSection.mainCard.image}
+                          alt="Preview"
+                          className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
                 </div>
               </div>
 
@@ -1102,10 +1519,10 @@ const HomepageManagement: React.FC = () => {
                     {/* URL Input */}
                     <input
                       type="url"
-                      value={heroSection.featuredCard.image}
+                      value={heroSection.featuredCard.images?.[0] || ''}
                       onChange={(e) => setHeroSection({
                         ...heroSection,
-                        featuredCard: { ...heroSection.featuredCard, image: e.target.value }
+                        featuredCard: { ...heroSection.featuredCard, images: [e.target.value] }
                       })}
                       className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter image URL"
@@ -1141,10 +1558,10 @@ const HomepageManagement: React.FC = () => {
                     </div>
                     
                     {/* Image Preview */}
-                    {heroSection.featuredCard.image && (
+                    {heroSection.featuredCard.images?.[0] && (
                       <div className="mt-2">
                         <img
-                          src={heroSection.featuredCard.image}
+                          src={heroSection.featuredCard.images[0]}
                           alt="Preview"
                           className="w-full h-20 object-cover rounded-lg border border-gray-200"
                         />
@@ -1198,16 +1615,16 @@ const HomepageManagement: React.FC = () => {
                     placeholder="Enter categories subtitle"
                   />
                 </div>
-                                <div>
+                <div>
                   <label className="mb-1 block text-[11px] font-medium text-gray-600">Image</label>
                   <div className="space-y-3">
                     {/* URL Input */}
                     <input
                       type="url"
-                      value={heroSection.categoriesCard.image}
+                      value={heroSection.categoriesCard.images?.[0] || ''}
                       onChange={(e) => setHeroSection({
                         ...heroSection,
-                        categoriesCard: { ...heroSection.categoriesCard, image: e.target.value }
+                        categoriesCard: { ...heroSection.categoriesCard, images: [e.target.value] }
                       })}
                       className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="Enter image URL"
@@ -1240,20 +1657,20 @@ const HomepageManagement: React.FC = () => {
                           {uploadingImage === 'categories' ? 'Uploading...' : 'Upload Image'}
                         </span>
                       </label>
-          </div>
-          
+                    </div>
+                    
                     {/* Image Preview */}
-                    {heroSection.categoriesCard.image && (
+                    {heroSection.categoriesCard.images?.[0] && (
                       <div className="mt-2">
                         <img
-                          src={heroSection.categoriesCard.image}
+                          src={heroSection.categoriesCard.images[0]}
                           alt="Preview"
                           className="w-full h-20 object-cover rounded-lg border border-gray-200"
                         />
                       </div>
                     )}
                   </div>
-            </div>
+                </div>
                 <div>
                   <label className="mb-1 block text-[11px] font-medium text-gray-600">Link</label>
                   <input
@@ -1276,32 +1693,54 @@ const HomepageManagement: React.FC = () => {
               <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* Main Card Preview */}
-                <div className={`bg-gradient-to-br ${heroSection.mainCard.gradientColors?.[0] || 'from-orange-200'} ${heroSection.mainCard.gradientColors?.[1] || 'to-orange-300'} rounded-2xl p-8 flex flex-col justify-center min-h-[300px] relative`}>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                    {heroSection.mainCard.title || 'Main Title'}
-                  </h1>
-                  <p className="text-gray-700 mb-6 text-sm">
-                    {heroSection.mainCard.subtitle || 'Subtitle goes here'}
-                  </p>
-                  <button className="inline-block px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-full transition-colors w-fit text-sm">
-                    {heroSection.mainCard.buttonText || 'Button Text'}
-            </button>
-                  {isPreviewMode && (
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
-                      Live
-          </div>
+                <div className={`rounded-2xl p-8 flex flex-col justify-center min-h-[300px] relative overflow-hidden group ${
+                  heroSection.mainCard.image 
+                    ? '' 
+                    : `bg-gradient-to-br ${heroSection.mainCard.gradientColors?.[0] || 'from-orange-200'} ${heroSection.mainCard.gradientColors?.[1] || 'to-orange-300'}`
+                }`}>
+                  {heroSection.mainCard.image && (
+                    <>
+                      <img
+                        src={heroSection.mainCard.image}
+                        alt={heroSection.mainCard.title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 scale-100 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/40 z-0" />
+                    </>
                   )}
-        </div>
+                  <div className="relative z-10 flex flex-col justify-between h-full">
+                    <div>
+                      <h1 className={`text-2xl font-bold mb-2 ${heroSection.mainCard.image ? 'text-white' : 'text-gray-800'}`}>
+                        {heroSection.mainCard.title || 'Main Title'}
+                      </h1>
+                      <p className={`mb-6 text-sm ${heroSection.mainCard.image ? 'text-white/90' : 'text-gray-700'}`}>
+                        {heroSection.mainCard.subtitle || 'Subtitle goes here'}
+                      </p>
+                    </div>
+                    <button className={`inline-block px-4 py-2 font-medium rounded-full transition-colors w-fit text-sm ${
+                      heroSection.mainCard.image
+                        ? 'bg-white text-gray-900 hover:bg-gray-100'
+                        : 'bg-gray-800 hover:bg-gray-900 text-white'
+                    }`}>
+                      {heroSection.mainCard.buttonText || 'Button Text'}
+                    </button>
+                  </div>
+                  {isPreviewMode && (
+                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs z-10">
+                      Live
+                    </div>
+                  )}
+                </div>
 
                 {/* Featured Card Preview */}
                 <div className="relative rounded-2xl overflow-hidden group cursor-pointer min-h-[300px]">
                   <img
-                    src={heroSection.featuredCard.image || 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800'}
+                    src={heroSection.featuredCard.images?.[0] || (heroSection.featuredCard as any).image || 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800'}
                     alt={heroSection.featuredCard.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute bottom-6 left-6 text-white">
+                  <div className="absolute bottom-6 left-6 text-white z-10">
                     <h3 className="text-lg font-bold mb-1">{heroSection.featuredCard.title || 'Featured Title'}</h3>
                     <p className="text-white/90 text-sm">{heroSection.featuredCard.subtitle || 'Featured subtitle'}</p>
                   </div>
@@ -1310,12 +1749,12 @@ const HomepageManagement: React.FC = () => {
                 {/* Categories Card Preview */}
                 <div className="relative rounded-2xl overflow-hidden group cursor-pointer min-h-[300px]">
                   <img
-                    src={heroSection.categoriesCard.image || 'https://images.pexels.com/photos/1047540/pexels-photo-1047540.jpeg?auto=compress&cs=tinysrgb&w=800'}
+                    src={heroSection.categoriesCard.images?.[0] || (heroSection.categoriesCard as any).image || 'https://images.pexels.com/photos/1047540/pexels-photo-1047540.jpeg?auto=compress&cs=tinysrgb&w=800'}
                     alt={heroSection.categoriesCard.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-6 left-6 text-white">
+                  <div className="absolute bottom-6 left-6 text-white z-10">
                     <h3 className="text-lg font-bold mb-1">{heroSection.categoriesCard.title || 'Categories Title'}</h3>
                     <p className="text-white/90 text-sm">{heroSection.categoriesCard.subtitle || 'Categories subtitle'}</p>
                   </div>
@@ -3169,7 +3608,13 @@ const HomepageManagement: React.FC = () => {
                             setCategoriesSection({
                               ...categoriesSection,
                               selectedCategories: [...categoriesSection.selectedCategories, {
-                                ...category,
+                                id: category.id,
+                                name: category.name,
+                                slug: category.slug,
+                                count: category.count || 0,
+                                images: [category.image || 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800'],
+                                image: category.image,
+                                description: category.description || '',
                                 featured: false
                               }]
                             });
@@ -3455,13 +3900,14 @@ const HomepageManagement: React.FC = () => {
                       id: Date.now().toString(),
                       title: 'New Collection',
                       image: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=600',
+                      images: ['https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=600'],
                       artworkCount: 0,
                       description: 'Collection description',
                       badge: 'New',
                       badgeColor: 'purple',
                       link: '/collections/new-collection',
                       updateFrequency: 'Fresh content',
-                      status: 'new'
+                      status: 'new' as const
                     };
                     setTrendingCollections({
                       ...trendingCollections,
@@ -3941,6 +4387,212 @@ const HomepageManagement: React.FC = () => {
           </div>
         );
 
+      case 'faq':
+        return (
+          <div className="space-y-4">
+            {/* Enabled toggle */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+              <div>
+                <p className="text-sm font-medium text-gray-700 font-sans">Show FAQ Section</p>
+                <p className="text-xs text-gray-500 font-sans">Display the FAQ accordion on the public landing page</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFaqSection(prev => ({ ...prev, enabled: !prev.enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${faqSection.enabled !== false ? 'bg-gray-900' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${faqSection.enabled !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* FAQ Editor Form */}
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-4 h-fit max-h-[80vh] overflow-y-auto">
+                <h4 className="border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900 uppercase tracking-wider">FAQ Settings</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Section Title</label>
+                    <input
+                      type="text"
+                      value={faqSection.title}
+                      onChange={(e) => setFaqSection(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      placeholder="Frequently Asked Questions"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Section Subtitle</label>
+                    <textarea
+                      value={faqSection.subtitle}
+                      onChange={(e) => setFaqSection(prev => ({ ...prev, subtitle: e.target.value }))}
+                      rows={2}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      placeholder="Section subtitle..."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                    <h5 className="text-xs font-semibold text-gray-700">FAQ Items ({faqSection.faqs.length})</h5>
+                    <button
+                      type="button"
+                      onClick={() => setFaqSection(prev => ({
+                        ...prev,
+                        faqs: [...prev.faqs, { q: '', a: '' }]
+                      }))}
+                      className="inline-flex h-8 items-center gap-1 rounded-md bg-gray-900 px-2.5 text-xs font-medium text-white transition-colors hover:bg-gray-800"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Item
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {faqSection.faqs.map((faq, idx) => (
+                      <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2 relative group/item">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Item {idx + 1}</span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={() => {
+                                const newFaqs = [...faqSection.faqs];
+                                const temp = newFaqs[idx];
+                                newFaqs[idx] = newFaqs[idx - 1];
+                                newFaqs[idx - 1] = temp;
+                                setFaqSection(prev => ({ ...prev, faqs: newFaqs }));
+                              }}
+                              className="p-1 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent"
+                              title="Move up"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5 rotate-180" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === faqSection.faqs.length - 1}
+                              onClick={() => {
+                                const newFaqs = [...faqSection.faqs];
+                                const temp = newFaqs[idx];
+                                newFaqs[idx] = newFaqs[idx + 1];
+                                newFaqs[idx + 1] = temp;
+                                setFaqSection(prev => ({ ...prev, faqs: newFaqs }));
+                              }}
+                              className="p-1 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent"
+                              title="Move down"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFaqSection(prev => ({
+                                  ...prev,
+                                  faqs: prev.faqs.filter((_, i) => i !== idx)
+                                }));
+                              }}
+                              className="p-1 rounded text-red-600 hover:bg-red-50"
+                              title="Delete FAQ"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-500 mb-0.5">Question</label>
+                          <input
+                            type="text"
+                            value={faq.q}
+                            onChange={(e) => {
+                              const newFaqs = [...faqSection.faqs];
+                              newFaqs[idx] = { ...newFaqs[idx], q: e.target.value };
+                              setFaqSection(prev => ({ ...prev, faqs: newFaqs }));
+                            }}
+                            className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-900 focus:border-gray-900 focus:outline-none"
+                            placeholder="e.g., How do I receive my digital files?"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-500 mb-0.5">Answer</label>
+                          <textarea
+                            value={faq.a}
+                            onChange={(e) => {
+                              const newFaqs = [...faqSection.faqs];
+                              newFaqs[idx] = { ...newFaqs[idx], a: e.target.value };
+                              setFaqSection(prev => ({ ...prev, faqs: newFaqs }));
+                            }}
+                            rows={3}
+                            className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-900 focus:border-gray-900 focus:outline-none"
+                            placeholder="e.g., Immediately upon checkout, you will receive an email with direct download links..."
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {faqSection.faqs.length === 0 && (
+                    <div className="text-center py-6 border border-dashed border-gray-200 rounded-lg text-xs text-gray-400">
+                      No FAQ items. Click "Add Item" above to add some.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* FAQ Accordion Live Preview */}
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm h-fit">
+                <h4 className="border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900 uppercase tracking-wider mb-4">Live Preview (Interactive)</h4>
+                
+                <div className="bg-white px-4 py-8 rounded-2xl border border-gray-100 shadow-sm max-w-lg mx-auto">
+                  <div className="text-center mb-8">
+                    <h2 className="text-xl font-extrabold text-gray-900 font-sans tracking-tight">
+                      {faqSection.title || 'Frequently Asked Questions'}
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-2 font-sans max-w-xs mx-auto">
+                      {faqSection.subtitle}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {faqSection.faqs.map((faq, idx) => {
+                      const isOpen = activePreviewFaqIndex === idx;
+                      return (
+                        <div
+                          key={idx}
+                          className="border-b border-gray-100 pb-3"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setActivePreviewFaqIndex(isOpen ? null : idx)}
+                            className="w-full flex items-center justify-between text-left py-2 font-sans font-semibold text-xs text-gray-800 hover:text-gray-900 focus:outline-none"
+                          >
+                            <span>{faq.q || `Question ${idx + 1} (Empty)`}</span>
+                            <ChevronDown
+                              className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-gray-800' : ''}`}
+                            />
+                          </button>
+                          
+                          {isOpen && (
+                            <div className="mt-1 text-xs text-gray-600 font-sans leading-relaxed animate-fadeIn">
+                              {faq.a || 'No answer provided yet.'}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {faqSection.faqs.length === 0 && (
+                      <div className="text-center py-6 text-xs text-gray-400 font-sans">
+                        No questions to display.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/80 px-4 py-8 text-center text-[11px] text-gray-500">
@@ -3952,6 +4604,7 @@ const HomepageManagement: React.FC = () => {
 
   const sections = [
     { id: 'promoBar', name: 'Promo Bar', type: 'promoBar' },
+    { id: 'singleBannerHero', name: 'Single Banner Hero', type: 'singleBannerHero' },
     { id: 'bentoHero', name: 'Bento Hero', type: 'bentoHero' },
     { id: 'hero', name: 'Hero Section', type: 'hero' },
     { id: 'imageSlider', name: 'Image Slider', type: 'imageSlider' },
@@ -3961,7 +4614,8 @@ const HomepageManagement: React.FC = () => {
     { id: 'categories', name: 'Categories', type: 'categories' },
     { id: 'trendingCollections', name: 'Trending Collections', type: 'trendingCollections' },
     { id: 'stats', name: 'Statistics', type: 'stats' },
-    { id: 'newsletter', name: 'Newsletter', type: 'newsletter' }
+    { id: 'newsletter', name: 'Newsletter', type: 'newsletter' },
+    { id: 'faq', name: 'FAQs', type: 'faq' }
   ];
 
   return (

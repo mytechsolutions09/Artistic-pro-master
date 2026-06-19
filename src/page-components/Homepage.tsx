@@ -12,6 +12,7 @@ import { logMemoryUsage, isMemoryUsageHigh } from '../utils/memoryUtils';
 import HomepageSkeleton from '../components/HomepageSkeleton';
 import OptimizedImage from '../components/OptimizedImage';
 import BentoHeroSection from '../components/BentoHeroSection';
+import SingleBannerHeroSection from '../components/SingleBannerHeroSection';
 import LazyHomeSection from '../components/LazyHomeSection';
 import { NavigationVisibilityService } from '../services/navigationVisibilityService';
 
@@ -635,6 +636,36 @@ const Homepage: React.FC = () => {
 
   // const statsSection = homepageSettings?.stats || { stats: [] };
 
+  const defaultFaqs = [
+    {
+      q: "How do I receive my digital files after purchase?",
+      a: "Immediately upon checkout, you will receive an email with direct download links for your files. Alternatively, you can log into your Lurevi profile dashboard and access them from the 'Downloads' tab at any time."
+    },
+    {
+      q: "What dimensions are Lurevi's digital prints suitable for?",
+      a: "Our files are exported as ultra-high-resolution 300 DPI files in standard print ratios (e.g. ISO A1-A4, 2:3 ratio, 3:4 ratio, 4:5 ratio). This allows you to print files at sizes ranging from 4x6 inches up to massive poster sizes like 24x36 inches without pixelation."
+    },
+    {
+      q: "Do Lurevi downloads include a commercial license?",
+      a: "No, all digital files purchased on Lurevi are for personal use only. If you wish to use our designs for commercial decoration, product packaging, or advertising, please reach out to our support team for a commercial license."
+    },
+    {
+      q: "Do you ship physical prints and frames?",
+      a: currentCurrency !== 'INR'
+        ? "We offer physical poster delivery exclusively within India. For international customers, we provide instant high-resolution digital downloads of our artwork, which you can easily print locally on your preferred paper or canvas."
+        : "Yes! While we default to digital art downloads, you can select 'Physical Poster' on the product page. We will print the artwork on museum-grade 200 GSM matte paper and deliver it directly to your address in protective tubes. Note that frames are not included."
+    }
+  ];
+
+  const faqData = homepageSettings?.faq || {
+    enabled: true,
+    title: "Frequently Asked Questions",
+    subtitle: "Find answers to core questions about buying, downloading, and printing digital wall art.",
+    faqs: []
+  };
+
+  const faqItems = faqData.faqs && faqData.faqs.length > 0 ? faqData.faqs : defaultFaqs;
+
   // Image Slider state
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -664,14 +695,138 @@ const Homepage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#ffffff]">
 
+      {/* Single Banner Hero Section */}
+      {homepageSettings?.hero_section?.single_banner?.enabled && (
+        <SingleBannerHeroSection config={homepageSettings.hero_section.single_banner} />
+      )}
+
       {/* Bento Hero Section */}
-      <BentoHeroSection
-        cards={
-          homepageSettings?.bento_hero?.cards ||
-          homepageSettings?.hero_section?.bento_cards ||
-          []
-        }
-      />
+      {homepageSettings?.bento_hero?.enabled !== false && 
+       homepageSettings?.hero_section?.bento_enabled !== false && (
+        <BentoHeroSection
+          cards={
+            homepageSettings?.bento_hero?.cards ||
+            homepageSettings?.hero_section?.bento_cards ||
+            []
+          }
+        />
+      )}
+
+      {/* Standard Hero Section */}
+      {homepageSettings?.hero_section?.enabled !== false && (
+        <section className="pt-3 pb-8 px-4 bg-[#ffffff]">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Card */}
+            <div
+              className="lg:col-span-2 rounded-3xl p-8 sm:p-12 flex flex-col justify-between min-h-[380px] relative overflow-hidden group shadow-sm"
+            >
+              {heroSection.mainCard.image ? (
+                <>
+                  <OptimizedImage
+                    src={heroSection.mainCard.image}
+                    alt={heroSection.mainCard.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 scale-100 group-hover:scale-105"
+                    width={1000}
+                    priority={true}
+                  />
+                  {/* Dark overlay for readability */}
+                  <div className="absolute inset-0 bg-black/40 z-0" />
+                </>
+              ) : (
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${
+                    heroSection.mainCard.gradientColors?.[0] || 'from-orange-200'
+                  } ${
+                    heroSection.mainCard.gradientColors?.[1] || 'to-orange-300'
+                  } z-0`}
+                />
+              )}
+              
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <h2 className={`text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 ${heroSection.mainCard.image ? 'text-white' : 'text-gray-900'} leading-tight font-sans`}>
+                    {heroSection.mainCard.title}
+                  </h2>
+                  <p className={`text-base sm:text-lg max-w-md ${heroSection.mainCard.image ? 'text-white/90' : 'text-gray-700'} font-sans font-normal leading-relaxed`}>
+                    {heroSection.mainCard.subtitle}
+                  </p>
+                </div>
+                
+                <div className="mt-8">
+                  <Link
+                    to={heroSection.mainCard.buttonLink}
+                    className={`inline-flex items-center justify-center px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 shadow-sm ${
+                      heroSection.mainCard.image
+                        ? 'bg-white text-gray-900 hover:bg-gray-100'
+                        : 'bg-gray-900 text-white hover:bg-gray-800'
+                    }`}
+                  >
+                    {heroSection.mainCard.buttonText}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Side Cards (Featured Card & Categories Card) */}
+            <div className="flex flex-col gap-6">
+              {/* Featured Card */}
+              <Link
+                to={heroSection.featuredCard.link}
+                className="flex-1 rounded-3xl overflow-hidden relative min-h-[180px] group shadow-sm flex flex-col justify-end p-6"
+              >
+                {heroSection.featuredCard.images?.[0] && (
+                  <OptimizedImage
+                    src={heroSection.featuredCard.images[0]}
+                    alt={heroSection.featuredCard.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 scale-100 group-hover:scale-105"
+                    width={500}
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-0" />
+                <div className="relative z-10">
+                  <span className="inline-block px-2.5 py-1 bg-white/20 backdrop-blur-md text-white rounded-full text-[10px] uppercase tracking-wider font-semibold mb-2">
+                    Featured
+                  </span>
+                  <h3 className="text-white text-lg font-bold font-sans uppercase tracking-wide leading-snug">
+                    {heroSection.featuredCard.title}
+                  </h3>
+                  <p className="text-white/80 text-xs mt-1 font-sans">
+                    {heroSection.featuredCard.subtitle}
+                  </p>
+                </div>
+              </Link>
+
+              {/* Categories Card */}
+              <Link
+                to={heroSection.categoriesCard.link}
+                className="flex-1 rounded-3xl overflow-hidden relative min-h-[180px] group shadow-sm flex flex-col justify-end p-6"
+              >
+                {heroSection.categoriesCard.images?.[0] && (
+                  <OptimizedImage
+                    src={heroSection.categoriesCard.images[0]}
+                    alt={heroSection.categoriesCard.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 scale-100 group-hover:scale-105"
+                    width={500}
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-0" />
+                <div className="relative z-10">
+                  <span className="inline-block px-2.5 py-1 bg-white/20 backdrop-blur-md text-white rounded-full text-[10px] uppercase tracking-wider font-semibold mb-2">
+                    Browse
+                  </span>
+                  <h3 className="text-white text-lg font-bold font-sans uppercase tracking-wide leading-snug">
+                    {heroSection.categoriesCard.title}
+                  </h3>
+                  <p className="text-white/80 text-xs mt-1 font-sans">
+                    {heroSection.categoriesCard.subtitle}
+                  </p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Brand Introduction Section & Freshness Signals */}
       <section className="py-12 px-4 bg-gray-50 border-y border-gray-100">
@@ -1380,64 +1535,47 @@ const Homepage: React.FC = () => {
       </section>
       </LazyHomeSection>
 
-      <LazyHomeSection minHeight="min-h-[350px]">
-      {/* Homepage FAQ Section */}
-      <section className="py-12 px-4 bg-gray-50 border-t border-gray-100">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-sans">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-sm text-gray-500 mt-2 font-sans">
-              Find answers to core questions about buying, downloading, and printing digital wall art.
-            </p>
-          </div>
+      {faqData.enabled !== false && (
+        <LazyHomeSection minHeight="min-h-[350px]">
+        {/* Homepage FAQ Section */}
+        <section className="py-12 px-4 bg-gray-50 border-t border-gray-100">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-sans">
+                {faqData.title || "Frequently Asked Questions"}
+              </h2>
+              <p className="text-sm text-gray-500 mt-2 font-sans">
+                {faqData.subtitle || "Find answers to core questions about buying, downloading, and printing digital wall art."}
+              </p>
+            </div>
 
-          <div className="space-y-4">
-            {[
-              {
-                q: "How do I receive my digital files after purchase?",
-                a: "Immediately upon checkout, you will receive an email with direct download links for your files. Alternatively, you can log into your Lurevi profile dashboard and access them from the 'Downloads' tab at any time."
-              },
-              {
-                q: "What dimensions are Lurevi's digital prints suitable for?",
-                a: "Our files are exported as ultra-high-resolution 300 DPI files in standard print ratios (e.g. ISO A1-A4, 2:3 ratio, 3:4 ratio, 4:5 ratio). This allows you to print files at sizes ranging from 4x6 inches up to massive poster sizes like 24x36 inches without pixelation."
-              },
-              {
-                q: "Do Lurevi downloads include a commercial license?",
-                a: "No, all digital files purchased on Lurevi are for personal use only. If you wish to use our designs for commercial decoration, product packaging, or advertising, please reach out to our support team for a commercial license."
-              },
-              {
-                q: "Do you ship physical prints and frames?",
-                a: currentCurrency !== 'INR'
-                  ? "We offer physical poster delivery exclusively within India. For international customers, we provide instant high-resolution digital downloads of our artwork, which you can easily print locally on your preferred paper or canvas."
-                  : "Yes! While we default to digital art downloads, you can select 'Physical Poster' on the product page. We will print the artwork on museum-grade 200 GSM matte paper and deliver it directly to your address in protective tubes. Note that frames are not included."
-              }
-            ].map((faq, idx) => {
-              const isOpen = openHomepageFaqs.includes(idx);
-              return (
-                <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                  <button
-                    onClick={() => toggleHomepageFaq(idx)}
-                    className="w-full flex items-center justify-between text-left p-5 focus:outline-none group"
-                  >
-                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-[#ff6e00] transition-colors font-sans">
-                      {faq.q}
-                    </h3>
-                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 text-sm text-gray-600 leading-relaxed font-sans font-normal border-t border-gray-50 pt-3">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            <div className="space-y-4">
+              {faqItems.map((faq: any, idx: number) => {
+                const isOpen = openHomepageFaqs.includes(idx);
+                return (
+                  <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <button
+                      onClick={() => toggleHomepageFaq(idx)}
+                      className="w-full flex items-center justify-between text-left p-5 focus:outline-none group"
+                    >
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-[#ff6e00] transition-colors font-sans">
+                        {faq.q}
+                      </h3>
+                      <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5 text-sm text-gray-600 leading-relaxed font-sans font-normal border-t border-gray-50 pt-3">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
-      </LazyHomeSection>
+        </section>
+        </LazyHomeSection>
+      )}
 
       <section className="px-4 pb-12">
         <div className="mx-auto max-w-7xl">

@@ -1559,7 +1559,9 @@ export class ProductService {
     try {
       if (!files || files.length === 0) return [];
       
-      const imageUrls = await this.uploadProductImages(files, productId, productData.title);
+      const product = await this.getProductById(productId);
+      const title = product?.title || 'product';
+      const imageUrls = await this.uploadProductImages(files, productId, title);
       
       // Update product with new image URLs
       await this.updateProductImages(productId, imageUrls, []);
@@ -1585,7 +1587,7 @@ export class ProductService {
       }
 
       // Upload new images
-      const newImageUrls = await this.uploadProductImages(newFiles, productId, productData.title);
+      const newImageUrls = await this.uploadProductImages(newFiles, productId, product.title);
 
       // Update product with new image URLs
       const { data: updatedProduct, error } = await supabase

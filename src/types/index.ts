@@ -172,12 +172,14 @@ export interface HomepageSection {
 }
 
 export interface HeroSectionConfig {
+  enabled?: boolean;
   mainCard: {
     title: string;
     subtitle: string;
     buttonText: string;
     buttonLink: string;
     gradientColors?: string[];
+    image?: string;
   };
   featuredCard: {
     title: string;
@@ -193,11 +195,26 @@ export interface HeroSectionConfig {
   };
 }
 
+export interface SingleBannerHeroConfig {
+  enabled: boolean;
+  title: string;
+  subtitle: string;
+  buttonText: string;
+  buttonLink: string;
+  image: string;
+  height: 'small' | 'medium' | 'large';
+  textColor: 'light' | 'dark';
+  overlayOpacity: number;
+  alignment: 'left' | 'center' | 'right';
+}
+
 export interface ImageSliderConfig {
   slides: Array<{
     id: string;
     images: string[]; // Changed from single image to array of images
     title: string;
+    subtitle?: string;
+    artist?: string;
     description: string;
     link?: string;
   }>;
@@ -290,6 +307,7 @@ export interface CategoriesConfig {
     slug: string;
     count: number;
     images: string[]; // Changed from single image to array of images
+    image?: string; // Add optional image property for compatibility
     description?: string;
     featured?: boolean;
   }>;
@@ -306,6 +324,7 @@ export interface TrendingCollectionsConfig {
     title: string;
     description: string;
     images: string[]; // Changed from single image to array of images
+    image?: string; // Add optional image property for compatibility
     artworkCount: number;
     badge?: string;
     badgeColor?: string;

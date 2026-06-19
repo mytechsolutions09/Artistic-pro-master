@@ -6,6 +6,7 @@ import { appCache, CACHE_KEYS, CACHE_TTL } from './cacheService';
 export interface HomepageSettings {
   id?: string;
   hero_section: any;
+  bento_hero?: any;
   image_slider: any;
   featured_grid: any;
   best_sellers: any;
@@ -14,6 +15,8 @@ export interface HomepageSettings {
   trending_collections: any;
   stats: any;
   newsletter: any;
+  promotional_bar: any;
+  faq: any;
   created_at?: string;
   updated_at?: string;
 }
@@ -23,9 +26,6 @@ export class HomepageSettingsService {
    * Get homepage settings — served from cache when available.
    */
   static async getHomepageSettings(): Promise<HomepageSettings | null> {
-    const cached = appCache.get<HomepageSettings>(CACHE_KEYS.HOMEPAGE_SETTINGS);
-    if (cached) return cached;
-
     try {
       const { data, error } = await supabase
         .from('homepage_settings')
@@ -39,7 +39,6 @@ export class HomepageSettingsService {
         throw error;
       }
 
-      if (data) appCache.set(CACHE_KEYS.HOMEPAGE_SETTINGS, data, CACHE_TTL.HOMEPAGE);
       return data;
     } catch (error) {
       console.error('Error fetching homepage settings:', error);
@@ -76,6 +75,7 @@ export class HomepageSettingsService {
             stats: settings.stats,
             newsletter: settings.newsletter,
             promotional_bar: settings.promotional_bar,
+            faq: settings.faq,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingSettings.id);
@@ -96,6 +96,7 @@ export class HomepageSettingsService {
             stats: settings.stats,
             newsletter: settings.newsletter,
             promotional_bar: settings.promotional_bar,
+            faq: settings.faq,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }]);
