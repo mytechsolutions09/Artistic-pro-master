@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from '@/src/compat/router';
 import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
+import { supabase } from '@/src/services/supabaseService';
 import {
   BarChart3,
   ShoppingBag,
@@ -44,6 +45,35 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
   const location = useLocation();
   const { navRef, onNavScroll } = usePreserveNavScroll([location.pathname]);
   const [hoveredItem, setHoveredItem] = useState<{ label: string; top: number } | null>(null);
+  const [newOrdersCount, setNewOrdersCount] = useState<number>(0);
+
+  useEffect(() => {
+    // Listen to real-time order creations
+    const channel = supabase
+      .channel('sidebar-orders-notifications')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'orders' 
+        }, 
+        (payload) => {
+          console.log('New order received in leftbar:', payload);
+          setNewOrdersCount((prev) => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/admin/orders' || location.pathname === '/admin/orders/') {
+      setNewOrdersCount(0);
+    }
+  }, [location.pathname]);
 
   const handleMouseEnter = (e: React.MouseEvent, label: string) => {
     if (!collapsed) return;
@@ -152,6 +182,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
                       strokeWidth={2}
                     />
                     {!collapsed && <span className="font-medium">{item.label}</span>}
+                    {item.id === 'orders' && newOrdersCount > 0 && (
+                      collapsed ? (
+                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border border-white rounded-full animate-pulse z-20" />
+                      ) : (
+                        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse min-w-[18px] h-4 flex items-center justify-center">
+                          {newOrdersCount}
+                        </span>
+                      )
+                    )}
                   </Link>
                 </div>
               </li>

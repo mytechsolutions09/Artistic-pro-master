@@ -5,7 +5,7 @@ const AboutUs = dynamic(() => import('@/src/page-components/AboutUs'));
 
 export const metadata: Metadata = {
   title: 'About Us | Lurevi',
-  description: 'Learn about Lurevi.',
+  description: 'Discover the story of Lurevi, your trusted destination for premium digital art prints, museum-grade framing, and modern wall decor collections in India.',
   alternates: { canonical: 'https://lurevi.in/about-us' },
 };
 

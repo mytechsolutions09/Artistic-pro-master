@@ -1017,7 +1017,7 @@ const Marketing: React.FC = () => {
       return;
     }
 
-    const domain = window.location.origin;
+    const domain = 'https://lurevi.in';
     const headers = ['Title', 'Type', 'Relative Path', 'Absolute URL', 'SEO Score'];
     const rows = filtered.map((item) => {
       const score = auditResults[item.path] ? String(auditResults[item.path].score) : 'N/A';
@@ -2013,7 +2013,7 @@ const Marketing: React.FC = () => {
         return `Saved ${keywords.length} keywords for today: ${keywords.join(', ')}.`;
       }
       case 'distribution': {
-        const targetUrl = `${window.location.origin}/`;
+        const targetUrl = 'https://lurevi.in/';
         await navigator.clipboard.writeText(targetUrl);
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(targetUrl)}`, '_blank', 'noopener,noreferrer');
         return 'Copied homepage URL and opened share dialog.';
@@ -3575,7 +3575,7 @@ const Marketing: React.FC = () => {
               };
 
               const handleCopyUrl = (path: string, index: number) => {
-                const absoluteUrl = `${window.location.origin}${path}`;
+                const absoluteUrl = `https://lurevi.in${path}`;
                 navigator.clipboard.writeText(absoluteUrl)
                   .then(() => {
                     setCopiedUrlIndex(index);

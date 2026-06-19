@@ -5,7 +5,7 @@ const ShippingInfo = dynamic(() => import('@/src/page-components/ShippingInfo'))
 
 export const metadata: Metadata = {
   title: 'Shipping Info | Lurevi',
-  description: 'Lurevi shipping details.',
+  description: "Read Lurevi's shipping and delivery policy. Find delivery timelines, transit safety details, tracking procedures, and information on free shipping in India.",
   alternates: { canonical: 'https://lurevi.in/shipping-info' },
 };
 

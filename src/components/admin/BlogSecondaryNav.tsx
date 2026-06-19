@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
-import { FileText, Image as ImageIcon, BookOpen, List } from 'lucide-react';
+import { FileText, List, Key, Download } from 'lucide-react';
 
-export type BlogTabId = 'posts' | 'list' | 'media' | 'guide';
+export type BlogTabId = 'posts' | 'list' | 'keyphrases' | 'export';
 
 interface BlogSecondaryNavProps {
   activeTab: BlogTabId;
@@ -31,16 +31,16 @@ const BLOG_TABS: Array<{
     description: 'View all existing blog posts',
   },
   {
-    id: 'media',
-    label: 'Media',
-    icon: <ImageIcon className="w-4 h-4" />,
-    description: 'Upload and attach blog images',
+    id: 'keyphrases',
+    label: 'Keyphrases',
+    icon: <Key className="w-4 h-4" />,
+    description: 'View focus keyphrases used in blogs',
   },
   {
-    id: 'guide',
-    label: 'Guide',
-    icon: <BookOpen className="w-4 h-4" />,
-    description: 'Publishing workflow and tips',
+    id: 'export',
+    label: 'Export Blogs',
+    icon: <Download className="w-4 h-4" />,
+    description: 'Export blog posts to CSV file',
   },
 ];
 
