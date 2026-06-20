@@ -7,7 +7,7 @@ import BlogList, { BlogListItem } from './BlogList';
 const SITE_URL = 'https://lurevi.in';
 
 export const metadata: Metadata = {
-  title: 'Blog | Lurevi',
+  title: 'Lurevi Blog | Luxury Decor Ideas, Art Trends & Styling',
   description:
     'Read Lurevi blog articles on luxury decor ideas, digital art trends, styling inspiration, and product guides.',
   alternates: {
@@ -16,16 +16,18 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     url: `${SITE_URL}/blog`,
-    title: 'Lurevi Blog',
+    title: 'Lurevi Blog | Luxury Decor Ideas, Art Trends & Styling',
     description:
       'Read Lurevi blog articles on luxury decor ideas, digital art trends, styling inspiration, and product guides.',
     siteName: 'Lurevi',
+    images: [{ url: `${SITE_URL}/logo.png`, width: 600, height: 200, alt: 'Lurevi Blog' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Lurevi Blog',
+    title: 'Lurevi Blog | Luxury Decor Ideas, Art Trends & Styling',
     description:
       'Read Lurevi blog articles on luxury decor ideas, digital art trends, styling inspiration, and product guides.',
+    images: [`${SITE_URL}/logo.png`],
   },
 };
 

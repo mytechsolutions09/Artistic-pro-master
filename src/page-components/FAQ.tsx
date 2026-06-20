@@ -175,6 +175,10 @@ const FAQ: React.FC = () => {
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 mb-8 text-center font-sans">
+          Frequently Asked Questions
+        </h1>
+
         {/* Search Bar */}
         <div className="max-w-2xl mx-auto mb-6">
           <div className="relative">

@@ -146,7 +146,7 @@ export default async function Page() {
       {/* Crawlable server-rendered text content for search engine indexers */}
       <noscript>
         <main style={{ maxWidth: '72rem', margin: '0 auto', padding: '1rem', fontFamily: 'Inter, sans-serif' }}>
-          <h1>Digital art prints — curated wall art for modern Indian homes</h1>
+          <h2>Digital art prints — curated wall art for modern Indian homes</h2>
           <p>
             Digital art is a contemporary art form created entirely on a digital medium, born directly on a digital screen rather than on a traditional canvas. If you want to learn more about this medium, you can read our article on <a href="https://lurevi.in/blog/what-is-digital-art">what is digital art</a>. At Lurevi, we curate only digital-native work. This means every single piece was designed digitally from the very start, rather than being scanned from a physical original, ensuring that the visual lines remain clean and crisp. Our museum-quality <a href="https://lurevi.in/categories/digital-art-prints">digital art prints</a> are produced using archival materials, promising stunning clarity and long-lasting vibrance. Explore our curated selection below to find the perfect addition to your space.
           </p>

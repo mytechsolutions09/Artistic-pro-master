@@ -4,8 +4,8 @@ import dynamic from 'next/dynamic';
 const FAQ = dynamic(() => import('@/src/page-components/FAQ'));
 
 export const metadata: Metadata = {
-  title: 'FAQ | Lurevi',
-  description: 'Frequently asked questions about Lurevi.',
+  title: 'Frequently Asked Questions (FAQ) & Customer Help | Lurevi',
+  description: 'Find answers to frequently asked questions about Lurevi orders, shipping times, return policies, payment methods, and custom artwork queries here.',
   alternates: { canonical: 'https://lurevi.in/faq' },
 };
 

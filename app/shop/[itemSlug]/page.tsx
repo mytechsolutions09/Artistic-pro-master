@@ -19,7 +19,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('slug', itemSlug)
     .single();
 
-  const title = item ? `${item.title} | Lurevi` : 'Product | Lurevi';
+  const title = item 
+    ? `${item.title} — Premium Art Print | Lurevi` 
+    : 'Premium Art Print & Luxury Wall Decor | Lurevi';
 
   return {
     title,

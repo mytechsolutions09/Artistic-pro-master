@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS public.seo_scores (
   path TEXT PRIMARY KEY,
   score INTEGER NOT NULL,
   audit_data JSONB NOT NULL,
+  is_indexed BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -15,13 +15,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: products } = await supabase
     .from('products')
-    .select('title, description, price, images, meta_description');
+    .select('title, description, price, images');
 
   const product = (products || []).find((p) => generateSlug(p.title) === productSlug);
 
   if (!product) {
     return {
-      title: 'Product | Lurevi',
+      title: 'Premium Art Print & Luxury Wall Decor | Lurevi',
       alternates: {
         canonical: `https://lurevi.in/categories/${categorySlug}/${productSlug}`,
         languages: {
@@ -34,10 +34,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const image = Array.isArray(product.images) ? product.images[0] : product.images;
   const imageUrl = image || 'https://lurevi.in/logo.png';
-  const shortDescription = product.meta_description ||
-    (product.description
-      ? product.description.replace(/<[^>]*>/g, '').substring(0, 160)
-      : '');
+  const shortDescription = product.description
+    ? product.description.replace(/<[^>]*>/g, '').substring(0, 160)
+    : '';
 
   const descText = `Buy ${product.title} as a premium digital art print. ${shortDescription ? shortDescription + ' ' : ''}Free shipping above ₹999. Ships across India.`;
 
@@ -182,7 +181,7 @@ export default async function ProductPage({ params }: Props) {
             itemScope
             itemType="https://schema.org/Product"
           >
-            <h1 itemProp="name">{product.title}</h1>
+            <h2 itemProp="name">{product.title}</h2>
             {fallbackImages.map((img) => (
               <meta key={img} itemProp="image" content={img} />
             ))}

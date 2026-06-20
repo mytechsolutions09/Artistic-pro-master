@@ -4,8 +4,8 @@ import CategoriesPage from '@/src/page-components/CategoriesPage';
 import { createStaticClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
-  title: 'Art Categories | Lurevi',
-  description: 'Explore all art categories at Lurevi.',
+  title: 'Art Categories & Collections - Browse Wall Prints | Lurevi',
+  description: 'Explore curated art categories at Lurevi. Find the perfect digital art prints, abstract designs, landscape paintings, and contemporary wall decor for your home.',
   alternates: { canonical: 'https://lurevi.in/categories' },
 };
 

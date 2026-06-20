@@ -144,6 +144,9 @@ const HomepageManagement: React.FC = () => {
         }
         if (savedSettings.categories) {
           setCategoriesSection(savedSettings.categories);
+          if (savedSettings.categories.popular_categories) {
+            setPopularCategoriesSlider(savedSettings.categories.popular_categories);
+          }
         }
         if (savedSettings.trending_collections) {
           setTrendingCollections(savedSettings.trending_collections);
@@ -434,6 +437,42 @@ const HomepageManagement: React.FC = () => {
       }))
   });
 
+  // Popular Categories Slider State
+  const [popularCategoriesSlider, setPopularCategoriesSlider] = useState<any>({
+    enabled: true,
+    title: 'Popular Categories',
+    items: [
+      {
+        id: 'canvas',
+        name: 'Canvas',
+        sublabel: 'Art Prints',
+        image: 'https://images.pexels.com/photos/1090638/pexels-photo-1090638.jpeg?auto=compress&cs=tinysrgb&w=400',
+        link: '/categories/abstract'
+      },
+      {
+        id: 'football',
+        name: 'Football',
+        sublabel: '',
+        image: 'https://images.pexels.com/photos/3621122/pexels-photo-3621122.jpeg?auto=compress&cs=tinysrgb&w=400',
+        link: '/categories/cars'
+      },
+      {
+        id: 'poster-packs',
+        name: 'Poster Packs',
+        sublabel: '',
+        image: 'https://images.pexels.com/photos/6758531/pexels-photo-6758531.jpeg?auto=compress&cs=tinysrgb&w=400',
+        link: '/categories/paintings'
+      },
+      {
+        id: 'summer',
+        name: 'Summer',
+        sublabel: '',
+        image: 'https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg?auto=compress&cs=tinysrgb&w=400',
+        link: '/categories/watercolor'
+      }
+    ]
+  });
+
   // Categories State
   const [categoriesSection, setCategoriesSection] = useState<CategoriesConfig>({
     title: 'Popular Categories',
@@ -538,7 +577,10 @@ const HomepageManagement: React.FC = () => {
         featured_grid: featuredGrid,
         best_sellers: bestSellers,
         featured_artwork: featuredArtwork,
-        categories: categoriesSection,
+        categories: {
+          ...categoriesSection,
+          popular_categories: popularCategoriesSlider
+        },
         trending_collections: trendingCollections,
         stats: statsSection,
         newsletter: newsletterSection,
@@ -611,6 +653,7 @@ const HomepageManagement: React.FC = () => {
       case 'singleBannerHero': return <Sparkles className={ic} />;
       case 'bentoHero': return <LayoutGrid className={ic} />;
       case 'hero': return <Layout className={ic} />;
+      case 'popularCategoriesSlider': return <LayoutGrid className={ic} />;
       case 'imageSlider': return <Image className={ic} />;
       case 'featuredGrid': return <Grid className={ic} />;
       case 'bestSellers': return <Star className={ic} />;
@@ -1764,6 +1807,228 @@ const HomepageManagement: React.FC = () => {
           </div>
         );
 
+      case 'popularCategoriesSlider':
+        return (
+          <div className="space-y-4">
+            {/* Enabled toggle */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+              <div>
+                <p className="text-sm font-medium text-gray-700 font-sans">Show Popular Categories Slider</p>
+                <p className="text-xs text-gray-500 font-sans font-normal">Display the circular popular categories carousel on the homepage</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPopularCategoriesSlider((prev: any) => ({ ...prev, enabled: !prev.enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${popularCategoriesSlider.enabled ? 'bg-gray-900' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${popularCategoriesSlider.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-4">
+              <h4 className="border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900 uppercase tracking-wider">Section Settings</h4>
+              
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Section Title</label>
+                <input
+                  type="text"
+                  value={popularCategoriesSlider.title}
+                  onChange={(e) => setPopularCategoriesSlider((prev: any) => ({ ...prev, title: e.target.value }))}
+                  className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="Popular Categories"
+                />
+              </div>
+
+              <div className="border-b border-gray-100 pb-2 pt-2">
+                <h5 className="text-xs font-semibold text-gray-700">Category Items ({popularCategoriesSlider.items.length})</h5>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {popularCategoriesSlider.items.map((item: any, idx: number) => (
+                  <div key={item.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Category {idx + 1}</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => {
+                            const newItems = [...popularCategoriesSlider.items];
+                            [newItems[idx], newItems[idx - 1]] = [newItems[idx - 1], newItems[idx]];
+                            setPopularCategoriesSlider((prev: any) => ({ ...prev, items: newItems }));
+                          }}
+                          className="p-1 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-30"
+                          title="Move left/up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === popularCategoriesSlider.items.length - 1}
+                          onClick={() => {
+                            const newItems = [...popularCategoriesSlider.items];
+                            [newItems[idx], newItems[idx + 1]] = [newItems[idx + 1], newItems[idx]];
+                            setPopularCategoriesSlider((prev: any) => ({ ...prev, items: newItems }));
+                          }}
+                          className="p-1 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-30"
+                          title="Move right/down"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPopularCategoriesSlider((prev: any) => ({
+                              ...prev,
+                              items: prev.items.filter((_: any, i: number) => i !== idx)
+                            }));
+                          }}
+                          className="p-1 rounded text-red-650 hover:bg-red-50"
+                          title="Delete Item"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-0.5">Name</label>
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => {
+                          const newItems = [...popularCategoriesSlider.items];
+                          newItems[idx] = { ...item, name: e.target.value };
+                          setPopularCategoriesSlider((prev: any) => ({ ...prev, items: newItems }));
+                        }}
+                        className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-900 focus:border-gray-900 focus:outline-none"
+                        placeholder="e.g. Canvas"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-0.5">Sublabel (Optional)</label>
+                      <input
+                        type="text"
+                        value={item.sublabel || ''}
+                        onChange={(e) => {
+                          const newItems = [...popularCategoriesSlider.items];
+                          newItems[idx] = { ...item, sublabel: e.target.value };
+                          setPopularCategoriesSlider((prev: any) => ({ ...prev, items: newItems }));
+                        }}
+                        className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-900 focus:border-gray-900 focus:outline-none"
+                        placeholder="e.g. Art Prints"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-0.5">Link Path</label>
+                      <input
+                        type="text"
+                        value={item.link}
+                        onChange={(e) => {
+                          const newItems = [...popularCategoriesSlider.items];
+                          newItems[idx] = { ...item, link: e.target.value };
+                          setPopularCategoriesSlider((prev: any) => ({ ...prev, items: newItems }));
+                        }}
+                        className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-900 focus:border-gray-900 focus:outline-none"
+                        placeholder="e.g. /categories/abstract"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Image URL</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={item.image}
+                          onChange={(e) => {
+                            const newItems = [...popularCategoriesSlider.items];
+                            newItems[idx] = { ...item, image: e.target.value };
+                            setPopularCategoriesSlider((prev: any) => ({ ...prev, items: newItems }));
+                          }}
+                          className="flex-1 rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-900 focus:border-gray-900 focus:outline-none font-mono"
+                          placeholder="Image URL"
+                        />
+                        <label className="flex items-center justify-center h-8 px-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                          <Upload className="w-3.5 h-3.5 text-gray-500 mr-1" />
+                          <span className="text-[11px] font-medium text-gray-700">Upload</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const result = await ImageUploadService.uploadFile(file, 'homepage-hero-images', 'popular_categories');
+                                  if (result.success && result.url) {
+                                    const newItems = [...popularCategoriesSlider.items];
+                                    newItems[idx] = { ...item, image: result.url };
+                                    setPopularCategoriesSlider((prev: any) => ({ ...prev, items: newItems }));
+                                  } else {
+                                    alert(result.error || 'Upload failed');
+                                  }
+                                } catch (err) {
+                                  alert('Upload failed. Please try again.');
+                                }
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setPopularCategoriesSlider((prev: any) => ({
+                    ...prev,
+                    items: [...prev.items, {
+                      id: `item-${Date.now()}`,
+                      name: 'New Category',
+                      sublabel: '',
+                      image: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=400',
+                      link: '/categories'
+                    }]
+                  }))}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-gray-900 px-3 text-xs font-medium text-white transition-colors hover:bg-gray-800"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Category Circle
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Section */}
+            <div className="rounded-lg bg-gray-50 p-3">
+              <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
+              <div className="bg-white rounded-2xl p-6 shadow-md relative">
+                <h3 className="text-lg font-bold text-gray-900 mb-6">{popularCategoriesSlider.title}</h3>
+                <div className="flex justify-start md:justify-evenly gap-6 md:gap-0 overflow-x-auto pb-4 scrollbar-hide px-6 md:px-0">
+                  {popularCategoriesSlider.items.map((item: any) => (
+                    <div key={item.id} className="flex flex-col items-center flex-shrink-0 w-24 sm:w-28 md:w-32">
+                      <div className="w-full aspect-square rounded-full overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-800 mt-2 text-center block truncate w-full">{item.name}</span>
+                      {item.sublabel && <span className="text-[10px] text-gray-500 text-center block truncate w-full">{item.sublabel}</span>}
+                    </div>
+                  ))}
+                </div>
+                {isPreviewMode && (
+                  <div className="absolute top-4 right-4 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                    Live Preview
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
       case 'imageSlider':
         return (
           <div className="space-y-8">
@@ -2010,8 +2275,23 @@ const HomepageManagement: React.FC = () => {
                             }}
                             className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                             placeholder="Enter slide link"
-              />
-            </div>
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] font-medium text-gray-600">Image Display Mode</label>
+                          <select
+                            value={slide.displayMode || 'cover'}
+                            onChange={(e) => {
+                              const newSlides = [...imageSlider.slides];
+                              newSlides[index] = { ...slide, displayMode: e.target.value };
+                              setImageSlider({ ...imageSlider, slides: newSlides });
+                            }}
+                            className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white cursor-pointer"
+                          >
+                            <option value="cover">Full Bleed (Cover)</option>
+                            <option value="contain">Contained (Zoom Out)</option>
+                          </select>
+                        </div>
           </div>
           
                       <div className="space-y-2">
@@ -2107,21 +2387,57 @@ const HomepageManagement: React.FC = () => {
               <h4 className="mb-2 border-b border-gray-100 pb-2 text-xs font-semibold text-gray-900">Live Preview</h4>
               <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg">
                 {imageSlider.slides.length > 0 && (
-                  <div className="relative h-96">
-                    <img
-                      src={imageSlider.slides[0].image}
-                      alt={imageSlider.slides[0].title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
-                    
-                    {/* Content */}
-                    <div className="absolute left-8 top-1/2 transform -translate-y-1/2 text-white max-w-lg">
-                      <h2 className="text-3xl font-bold mb-4">{imageSlider.slides[0].title}</h2>
-                      <p className="text-lg mb-4 text-white/90">{imageSlider.slides[0].description}</p>
-                      {imageSlider.showArtistInfo && (
-                        <p className="text-sm text-white/80">by {imageSlider.slides[0].artist}</p>
-                      )}
+                  <div className="relative h-96 bg-gray-50">
+                    {(imageSlider.slides[0].displayMode || 'cover') === 'contain' ? (
+                      <>
+                        {/* Blurred background image */}
+                        <img
+                          src={imageSlider.slides[0].image || imageSlider.slides[0].images?.[0]}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-35 scale-105 pointer-events-none z-0"
+                        />
+
+                        {/* Centered contained foreground image */}
+                        <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-8 pb-24 sm:pb-28 z-0">
+                          <img
+                            src={imageSlider.slides[0].image || imageSlider.slides[0].images?.[0]}
+                            alt={imageSlider.slides[0].title}
+                            className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg shadow-md border border-gray-200/30"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      /* Full bleed background image */
+                      <img
+                        src={imageSlider.slides[0].image || imageSlider.slides[0].images?.[0]}
+                        alt={imageSlider.slides[0].title}
+                        className="absolute inset-0 w-full h-full object-cover z-0"
+                      />
+                    )}
+
+                    {/* White gradient + text at the bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 z-10">
+                      <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none" />
+                      <div className="relative px-6 py-4 flex items-end justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-0.5 leading-snug truncate">
+                            {imageSlider.slides[0].title}
+                          </h2>
+                          {imageSlider.slides[0].subtitle && (
+                            <p className="text-[11px] text-gray-500 mb-0.5 leading-none font-normal">
+                              {imageSlider.slides[0].subtitle}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-gray-500 font-normal line-clamp-1 hidden sm:block">
+                            {imageSlider.slides[0].description}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button className="px-3 py-1 bg-gray-900 text-white font-medium rounded-full text-[10px] whitespace-nowrap">
+                            View Artwork
+                          </button>
+                        </div>
+                      </div>
                     </div>
                     
                     {/* Navigation Arrows */}
@@ -4607,6 +4923,7 @@ const HomepageManagement: React.FC = () => {
     { id: 'singleBannerHero', name: 'Single Banner Hero', type: 'singleBannerHero' },
     { id: 'bentoHero', name: 'Bento Hero', type: 'bentoHero' },
     { id: 'hero', name: 'Hero Section', type: 'hero' },
+    { id: 'popularCategoriesSlider', name: 'Popular Categories Slider', type: 'popularCategoriesSlider' },
     { id: 'imageSlider', name: 'Image Slider', type: 'imageSlider' },
     { id: 'featuredGrid', name: 'Featured Grid', type: 'featuredGrid' },
     { id: 'bestSellers', name: 'Best Sellers', type: 'bestSellers' },

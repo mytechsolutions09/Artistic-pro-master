@@ -4,8 +4,8 @@ import dynamic from 'next/dynamic';
 const Returns = dynamic(() => import('@/src/page-components/Returns'));
 
 export const metadata: Metadata = {
-  title: 'Returns and Refunds | Lurevi',
-  description: 'Lurevi returns and refunds policy.',
+  title: 'Returns and Refunds Policy - Order Returns Help | Lurevi',
+  description: 'Read the Lurevi returns and refunds policy. Learn about our 7-day return guarantee, replacements, cancellation timelines, and refund process details.',
   alternates: { canonical: 'https://lurevi.in/returns-and-refunds' },
 };
 

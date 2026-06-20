@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp, MapPin, RefreshCw, Download } from 'lucide-react';
+import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp, MapPin, RefreshCw, Download, Upload } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav';
 import { supabase } from '../../services/supabaseService';
@@ -449,6 +449,7 @@ interface SiteUrlItem {
   type: 'Static' | 'Category' | 'Product' | 'Blog';
   path: string;
   title: string;
+  date?: string;
 }
 
 const STATIC_PAGES: { path: string; title: string }[] = [
@@ -483,6 +484,9 @@ const Marketing: React.FC = () => {
   const [expandedAuditIndex, setExpandedAuditIndex] = useState<number | null>(null);
   const [isAuditingAll, setIsAuditingAll] = useState(false);
   const [urlsPage, setUrlsPage] = useState(1);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importUrlsInput, setImportUrlsInput] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     setUrlsPage(1);
@@ -664,18 +668,18 @@ const Marketing: React.FC = () => {
       const [{ data: categories }, { data: products }, { data: blogPosts }, { data: dbScores }] = await Promise.all([
         supabase
           .from('categories')
-          .select('slug, name'),
+          .select('slug, name, updated_at'),
         supabase
           .from('products')
-          .select('title, categories')
+          .select('title, categories, updated_at')
           .eq('status', 'active'),
         supabase
           .from('blog_posts')
-          .select('slug, title')
+          .select('slug, title, updated_at')
           .eq('status', 'published'),
         supabase
           .from('seo_scores')
-          .select('path, score, audit_data'),
+          .select('path, score, audit_data, is_indexed'),
       ]);
 
       if (dbScores) {
@@ -684,6 +688,7 @@ const Marketing: React.FC = () => {
           if (row.path && row.audit_data) {
             scoresMap[row.path] = {
               score: row.score,
+              is_indexed: row.is_indexed || false,
               title: row.audit_data.title,
               description: row.audit_data.description,
               h1: row.audit_data.h1,
@@ -702,7 +707,8 @@ const Marketing: React.FC = () => {
             items.push({
               type: 'Category',
               path: `/categories/${category.slug}`,
-              title: category.name || category.slug
+              title: category.name || category.slug,
+              date: category.updated_at
             });
           }
         });
@@ -718,7 +724,8 @@ const Marketing: React.FC = () => {
               items.push({
                 type: 'Product',
                 path: `/categories/${catSlug}/${pSlug}`,
-                title: product.title || pSlug
+                title: product.title || pSlug,
+                date: product.updated_at
               });
             }
           }
@@ -731,7 +738,8 @@ const Marketing: React.FC = () => {
             items.push({
               type: 'Blog',
               path: `/blog/${post.slug}`,
-              title: post.title || post.slug
+              title: post.title || post.slug,
+              date: post.updated_at
             });
           }
         });
@@ -894,9 +902,11 @@ const Marketing: React.FC = () => {
       };
 
       setAuditResults((prev) => {
+        const existing = prev[path] || {};
         const updated = {
           ...prev,
           [path]: {
+            ...existing,
             score: finalScore,
             ...auditPayload
           },
@@ -910,12 +920,14 @@ const Marketing: React.FC = () => {
       });
 
       try {
+        const currentIndexed = auditResults[path]?.is_indexed || false;
         const { error } = await supabase
           .from('seo_scores')
           .upsert({
             path,
             score: finalScore,
-            audit_data: auditPayload
+            audit_data: auditPayload,
+            is_indexed: currentIndexed
           }, { onConflict: 'path' });
 
         if (error) {
@@ -931,14 +943,16 @@ const Marketing: React.FC = () => {
         description: { text: '', status: 'error' as const, message: 'Could not fetch page HTML.' },
         h1: { count: 0, status: 'error' as const, message: 'N/A' },
         headings: { h2Count: 0, h3Count: 0, status: 'error' as const, message: 'N/A' },
-        images: { total: 0, missingAlt: 0, status: 'error' as const, message: 'N/A' },
+        images: { total: 0, missingAlt: 0, status: 'warning' as const, message: 'N/A' },
         og: { hasTitle: false, hasDesc: false, hasImage: false, status: 'error' as const, message: 'N/A' },
       };
 
       setAuditResults((prev) => {
+        const existing = prev[path] || {};
         const updated = {
           ...prev,
           [path]: {
+            ...existing,
             score: 0,
             ...errorPayload
           },
@@ -952,12 +966,14 @@ const Marketing: React.FC = () => {
       });
 
       try {
+        const currentIndexed = auditResults[path]?.is_indexed || false;
         const { error } = await supabase
           .from('seo_scores')
           .upsert({
             path,
             score: 0,
-            audit_data: errorPayload
+            audit_data: errorPayload,
+            is_indexed: currentIndexed
           }, { onConflict: 'path' });
 
         if (error) {
@@ -968,6 +984,196 @@ const Marketing: React.FC = () => {
       }
     } finally {
       setAuditingPaths((prev) => ({ ...prev, [path]: false }));
+    }
+  };
+
+  const toggleIndexed = async (path: string, currentIndexed: boolean) => {
+    const nextIndexed = !currentIndexed;
+
+    // Update local state immediately (optimistic update)
+    setAuditResults((prev) => {
+      const existing = prev[path] || {
+        score: 0,
+        title: { text: '', status: 'warning', message: 'Not audited yet' },
+        description: { text: '', status: 'warning', message: 'Not audited yet' },
+        h1: { count: 0, status: 'warning', message: 'N/A' },
+        headings: { h2Count: 0, h3Count: 0, status: 'warning', message: 'N/A' },
+        images: { total: 0, missingAlt: 0, status: 'warning', message: 'N/A' },
+        og: { hasTitle: false, hasDesc: false, hasImage: false, status: 'warning', message: 'N/A' }
+      };
+      const updated = {
+        ...prev,
+        [path]: {
+          ...existing,
+          is_indexed: nextIndexed
+        }
+      };
+      try {
+        localStorage.setItem('seo_audit_results_cache', JSON.stringify(updated));
+      } catch (error) {
+        console.error('Failed to save SEO audit cache:', error);
+      }
+      return updated;
+    });
+
+    try {
+      const existingRecord = auditResults[path];
+      const auditPayload = existingRecord?.score !== undefined ? {
+        title: existingRecord.title,
+        description: existingRecord.description,
+        h1: existingRecord.h1,
+        headings: existingRecord.headings,
+        images: existingRecord.images,
+        og: existingRecord.og
+      } : {
+        title: { text: '', status: 'warning', message: 'Not audited yet' },
+        description: { text: '', status: 'warning', message: 'Not audited yet' },
+        h1: { count: 0, status: 'warning', message: 'N/A' },
+        headings: { h2Count: 0, h3Count: 0, status: 'warning', message: 'N/A' },
+        images: { total: 0, missingAlt: 0, status: 'warning', message: 'N/A' },
+        og: { hasTitle: false, hasDesc: false, hasImage: false, status: 'warning', message: 'N/A' }
+      };
+
+      const { error } = await supabase
+        .from('seo_scores')
+        .upsert({
+          path,
+          score: existingRecord?.score ?? 0,
+          audit_data: auditPayload,
+          is_indexed: nextIndexed
+        }, { onConflict: 'path' });
+
+      if (error) {
+        console.error('Failed to update indexed status in database:', error);
+        showMessage('error', 'Failed to update indexed status in database.');
+        // Revert local state on error
+        setAuditResults((prev) => ({
+          ...prev,
+          [path]: {
+            ...prev[path],
+            is_indexed: currentIndexed
+          }
+        }));
+      } else {
+        showMessage('success', `${nextIndexed ? 'Marked as' : 'Unmarked as'} Indexed.`);
+      }
+    } catch (dbErr) {
+      console.error('Database connection error updating indexed status:', dbErr);
+      showMessage('error', 'Database connection error.');
+      // Revert local state on error
+      setAuditResults((prev) => ({
+        ...prev,
+        [path]: {
+          ...prev[path],
+          is_indexed: currentIndexed
+        }
+      }));
+    }
+  };
+
+  const handleImportIndexedUrls = async () => {
+    if (!importUrlsInput.trim()) {
+      showMessage('error', 'Please enter at least one URL path.');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const rawLines = importUrlsInput.split('\n');
+      const targetPaths: string[] = [];
+
+      rawLines.forEach((line) => {
+        let clean = line.trim();
+        if (!clean) return;
+
+        if (clean.includes('://')) {
+          try {
+            const urlObj = new URL(clean);
+            clean = urlObj.pathname + urlObj.search + urlObj.hash;
+          } catch (e) {
+            clean = clean.replace(/^https?:\/\/[^\/]+/, '');
+          }
+        } else if (clean.startsWith('lurevi.in')) {
+          clean = clean.substring('lurevi.in'.length);
+        }
+
+        if (!clean.startsWith('/')) {
+          clean = '/' + clean;
+        }
+
+        targetPaths.push(clean);
+      });
+
+      if (targetPaths.length === 0) {
+        showMessage('error', 'No valid URL paths found to import.');
+        setIsImporting(false);
+        return;
+      }
+
+      const defaultAuditPayload = {
+        title: { text: '', status: 'warning' as const, message: 'Not audited yet' },
+        description: { text: '', status: 'warning' as const, message: 'Not audited yet' },
+        h1: { count: 0, status: 'warning' as const, message: 'N/A' },
+        headings: { h2Count: 0, h3Count: 0, status: 'warning' as const, message: 'N/A' },
+        images: { total: 0, missingAlt: 0, status: 'warning' as const, message: 'N/A' },
+        og: { hasTitle: false, hasDesc: false, hasImage: false, status: 'warning' as const, message: 'N/A' }
+      };
+
+      const upsertRows = targetPaths.map((path) => {
+        const existingRecord = auditResults[path];
+        return {
+          path,
+          score: existingRecord?.score ?? 0,
+          audit_data: existingRecord?.score !== undefined ? {
+            title: existingRecord.title,
+            description: existingRecord.description,
+            h1: existingRecord.h1,
+            headings: existingRecord.headings,
+            images: existingRecord.images,
+            og: existingRecord.og
+          } : defaultAuditPayload,
+          is_indexed: true
+        };
+      });
+
+      const { error } = await supabase
+        .from('seo_scores')
+        .upsert(upsertRows, { onConflict: 'path' });
+
+      if (error) {
+        throw error;
+      }
+
+      setAuditResults((prev) => {
+        const updated = { ...prev };
+        targetPaths.forEach((path) => {
+          const existing = updated[path] || {
+            score: 0,
+            ...defaultAuditPayload
+          };
+          updated[path] = {
+            ...existing,
+            is_indexed: true
+          };
+        });
+
+        try {
+          localStorage.setItem('seo_audit_results_cache', JSON.stringify(updated));
+        } catch (cacheErr) {
+          console.error('Failed to save SEO audit cache:', cacheErr);
+        }
+
+        return updated;
+      });
+
+      showMessage('success', `Successfully marked ${targetPaths.length} URLs as indexed!`);
+      setImportUrlsInput('');
+      setIsImportModalOpen(false);
+    } catch (err: any) {
+      console.error('Failed to import indexed URLs:', err);
+      showMessage('error', err.message || 'Failed to import indexed URLs.');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -1018,14 +1224,18 @@ const Marketing: React.FC = () => {
     }
 
     const domain = 'https://lurevi.in';
-    const headers = ['Title', 'Type', 'Relative Path', 'Absolute URL', 'SEO Score'];
+    const headers = ['Title', 'Type', 'Relative Path', 'Absolute URL', 'Date', 'Indexed', 'SEO Score'];
     const rows = filtered.map((item) => {
       const score = auditResults[item.path] ? String(auditResults[item.path].score) : 'N/A';
+      const formattedDate = item.date ? new Date(item.date).toLocaleDateString('en-IN') : 'N/A';
+      const isIndexedStr = auditResults[item.path]?.is_indexed ? 'Yes' : 'No';
       return [
         item.title,
         item.type,
         item.path,
         `${domain}${item.path}`,
+        formattedDate,
+        isIndexedStr,
         score
       ];
     });
@@ -3467,6 +3677,16 @@ const Marketing: React.FC = () => {
               <div className="flex gap-1.5">
                 <button
                   type="button"
+                  onClick={() => setIsImportModalOpen(true)}
+                  disabled={urlsLoading || isAuditingAll}
+                  className={btnOutline}
+                  title="Import list of indexed URLs"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Import Indexed
+                </button>
+                <button
+                  type="button"
                   onClick={exportUrlsToCsv}
                   disabled={urlsLoading || isAuditingAll || urlsList.length === 0}
                   className={btnOutline}
@@ -3610,6 +3830,8 @@ const Marketing: React.FC = () => {
                           <th className="pb-2 font-medium">Page Title / Name</th>
                           <th className="pb-2 font-medium">Type</th>
                           <th className="pb-2 font-medium">URL Path</th>
+                          <th className="pb-2 font-medium">Date</th>
+                          <th className="pb-2 font-medium text-center">Indexed</th>
                           <th className="pb-2 font-medium">SEO Score</th>
                           <th className="pb-2 text-right font-medium">Actions</th>
                         </tr>
@@ -3633,6 +3855,18 @@ const Marketing: React.FC = () => {
                                 </td>
                                 <td className="py-2.5 text-gray-500 font-mono text-[11px] pr-3 max-w-[250px] truncate" title={item.path}>
                                   {item.path}
+                                </td>
+                                <td className="py-2.5 text-gray-500 text-[11px] pr-3 whitespace-nowrap">
+                                  {item.date ? new Date(item.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                </td>
+                                <td className="py-2.5 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={audit?.is_indexed || false}
+                                    onChange={() => void toggleIndexed(item.path, audit?.is_indexed || false)}
+                                    className="h-3.5 w-3.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                                    title="Toggle Google indexing status"
+                                  />
                                 </td>
                                 <td className="py-2.5 pr-3">
                                   {isAuditing ? (
@@ -3696,7 +3930,19 @@ const Marketing: React.FC = () => {
                               </tr>
                               {isExpanded && audit && (
                                 <tr className="bg-gray-50/30">
-                                  <td colSpan={5} className="p-3 border-t border-b border-gray-100">
+                                  <td colSpan={7} className="p-3 border-t border-b border-gray-100">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-100">
+                                      <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Detailed SEO Audit Report</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => void auditUrl(item.path)}
+                                        disabled={isAuditing || isAuditingAll}
+                                        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white hover:bg-gray-50 px-2 py-1 text-[10px] font-medium text-gray-700 transition-colors shadow-sm cursor-pointer"
+                                      >
+                                        <RefreshCw className={`h-3 w-3 ${isAuditing ? 'animate-spin' : ''}`} />
+                                        {isAuditing ? 'Analyzing...' : 'Re-analyze SEO Score'}
+                                      </button>
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-gray-700">
                                       {/* Page Title Audit */}
                                       <div className="p-2 bg-white rounded border border-gray-200/80 shadow-sm space-y-1">
@@ -3825,6 +4071,65 @@ const Marketing: React.FC = () => {
         </div>
       </div>
       </div>
+
+      {/* Import Indexed URLs Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="rounded-md border border-gray-200 bg-gray-50 p-1.5">
+                  <Upload className="h-4 w-4 text-gray-700" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-900">Import Indexed URLs</h3>
+                  <p className="text-[10px] text-gray-500">Mark multiple pages as indexed in bulk.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className={labelCls}>Enter URLs or Paths (one per line):</label>
+                <textarea
+                  value={importUrlsInput}
+                  onChange={(e) => setImportUrlsInput(e.target.value)}
+                  placeholder="https://lurevi.in/shop&#10;/categories/coder&#10;https://lurevi.in/blog/how-to-choose-digital-artwork-for-your-home"
+                  rows={8}
+                  className={`${textareaCls} font-mono text-[10px]`}
+                  disabled={isImporting}
+                />
+              </div>
+
+              <div className="flex justify-end gap-1.5 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(false)}
+                  className={btnOutline}
+                  disabled={isImporting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleImportIndexedUrls()}
+                  className={btnPrimary}
+                  disabled={isImporting}
+                >
+                  {isImporting ? 'Importing...' : 'Mark as Indexed'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };

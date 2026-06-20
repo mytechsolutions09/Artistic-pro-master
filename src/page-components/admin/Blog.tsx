@@ -86,7 +86,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
               onClick={() => onPageChange(pageNum)}
               className={`w-8 h-8 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
                 isActive
-                  ? 'bg-pink-600 text-white shadow-sm shadow-pink-100'
+                  ? 'bg-gray-900 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-200'
               }`}
               type="button"
@@ -953,11 +953,20 @@ const BlogAdmin: React.FC = () => {
       {/* Main Blog Editor Form */}
       <div className="flex-1 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
-              <h3 className="text-sm font-semibold text-gray-800">
-                {editingId ? 'Edit Blog Post' : 'Create Blog Post'}
+              <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                <span>{editingId ? 'Edit Blog Post' : 'Create Blog Post'}</span>
+                {editingId && (
+                  <button
+                    onClick={resetForm}
+                    className="text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors font-normal"
+                    type="button"
+                  >
+                    Cancel Edit & Create New
+                  </button>
+                )}
               </h3>
               
-              <div className="flex items-center gap-2 bg-pink-50 p-2 rounded-lg border border-pink-100">
+              <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
                 {!editingId ? (
                   <>
                     <input
@@ -965,14 +974,14 @@ const BlogAdmin: React.FC = () => {
                       value={aiKeyword}
                       onChange={(e) => setAiKeyword(e.target.value)}
                       placeholder="Enter keyword or topic..."
-                      className="px-3 py-1.5 border border-pink-200 rounded text-sm w-48 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                      className="px-3 py-1.5 border border-gray-300 rounded text-sm w-48 focus:outline-none focus:ring-2 focus:ring-gray-900"
                       disabled={isGenerating}
                     />
                     <button
                       type="button"
                       onClick={generateWithAI}
                       disabled={isGenerating || !aiKeyword.trim()}
-                      className="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 disabled:opacity-60 text-white rounded text-sm font-medium inline-flex items-center gap-1"
+                      className="px-3 py-1.5 bg-gray-900 hover:bg-gray-800 disabled:opacity-60 text-white rounded text-sm font-medium inline-flex items-center gap-1"
                     >
                       {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '✨ AI Generate'}
                     </button>
@@ -982,7 +991,7 @@ const BlogAdmin: React.FC = () => {
                     type="button"
                     onClick={rewriteWithAI}
                     disabled={isGenerating || !form.content.trim()}
-                    className="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 disabled:opacity-60 text-white rounded text-sm font-medium inline-flex items-center gap-1"
+                    className="px-3 py-1.5 bg-gray-900 hover:bg-gray-800 disabled:opacity-60 text-white rounded text-sm font-medium inline-flex items-center gap-1"
                   >
                     {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '✨ AI Rewrite'}
                   </button>
@@ -995,99 +1004,120 @@ const BlogAdmin: React.FC = () => {
                 value={form.title}
                 onChange={(e) => onTitleChange(e.target.value)}
                 placeholder="Title"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
               <input
                 value={form.slug}
                 onChange={(e) => setForm((prev) => ({ ...prev, slug: toSlug(e.target.value) }))}
                 placeholder="Slug (auto-generated)"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
-              <input
-                value={form.cover_image}
-                onChange={(e) => setForm((prev) => ({ ...prev, cover_image: e.target.value }))}
-                placeholder="Cover image URL"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-pink-300"
-              />
-              <div className="md:col-span-2 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, cover_image: '' }))}
-                  className="text-xs text-gray-600 underline hover:text-gray-900"
-                >
-                  Clear cover URL
-                </button>
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-xs text-gray-600 block mb-1">Upload image from local</label>
-                <label
-                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg text-sm ${
-                    uploadingImage
-                      ? 'border-gray-300 text-gray-400 cursor-not-allowed'
-                      : 'border-gray-300 text-gray-700 hover:border-pink-400 cursor-pointer'
-                  }`}
-                >
-                  {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {uploadingImage ? 'Uploading image...' : 'Choose image from computer'}
+              
+              <div className="md:col-span-2 space-y-1.5">
+                <div className="flex items-center gap-2">
                   <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-                    onChange={(e) => void onLocalImageSelect(e)}
-                    disabled={uploadingImage}
-                    className="hidden"
+                    value={form.cover_image}
+                    onChange={(e) => setForm((prev) => ({ ...prev, cover_image: e.target.value }))}
+                    placeholder="Cover image URL"
+                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                   />
-                </label>
-                <p className="text-[11px] text-gray-500 mt-1">
-                  Allowed: JPG, PNG, WEBP, GIF up to 10MB. Bucket: {BlogService.BLOG_IMAGES_BUCKET}
-                </p>
+                  <label
+                    className={`flex items-center justify-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                      uploadingImage
+                        ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {uploadingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    <span>{uploadingImage ? 'Uploading...' : 'Upload File'}</span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                      onChange={(e) => void onLocalImageSelect(e)}
+                      disabled={uploadingImage}
+                      className="hidden"
+                    />
+                  </label>
+                  {form.cover_image && (
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, cover_image: '' }))}
+                      className="text-xs text-red-600 hover:text-red-700 font-semibold px-2.5 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200/50"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {form.cover_image && (
+                  <div className="flex items-center gap-3 p-1.5 bg-gray-50 border border-gray-200 rounded-lg max-w-sm">
+                    <img
+                      key={form.cover_image}
+                      src={form.cover_image}
+                      alt="Blog cover preview"
+                      className="w-14 h-10 object-cover rounded border border-gray-300"
+                    />
+                    <div>
+                      <p className="text-[10px] font-semibold text-gray-700">Cover image attached</p>
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, cover_image: '' }))}
+                        className="text-[9px] text-red-650 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+
               <textarea
                 value={form.excerpt}
                 onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
                 placeholder="Short excerpt"
                 rows={2}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm md:col-span-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
+
               <div className="md:col-span-2">
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs text-gray-600 font-medium">Main Content</label>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs text-gray-700 font-medium">Main Content</label>
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => { setShowProductLinkModal(true); }}
                       disabled={previewMode}
-                      className="text-xs text-emerald-600 hover:text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                      className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded transition-colors inline-flex items-center gap-0.5 disabled:opacity-50 border border-emerald-100/50"
                     >
-                      <ShoppingBag className="w-3.5 h-3.5" /> Link Product
+                      <ShoppingBag className="w-3 h-3" /> Product Link
                     </button>
                     <button
                       type="button"
                       onClick={insertLink}
                       disabled={previewMode}
-                      className="text-xs text-blue-600 hover:text-blue-700 font-medium bg-blue-50 px-2.5 py-1 rounded transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                      className="text-[11px] text-blue-600 hover:text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded transition-colors inline-flex items-center gap-0.5 disabled:opacity-50 border border-blue-100/50"
                     >
-                      <Link2 className="w-3.5 h-3.5" /> Add Link
+                      <Link2 className="w-3 h-3" /> Add Link
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowBlogLinkModal(true)}
                       disabled={previewMode || posts.length === 0}
-                      className="text-xs text-pink-600 hover:text-pink-700 font-medium bg-pink-50 px-2.5 py-1 rounded transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                      className="text-[11px] text-gray-800 hover:text-gray-950 font-semibold bg-gray-50 px-2 py-0.5 rounded transition-colors inline-flex items-center gap-0.5 disabled:opacity-50 border border-gray-200/50"
                     >
-                      <Link2 className="w-3.5 h-3.5" /> Link Blog
+                      <Link2 className="w-3 h-3" /> Blog Link
                     </button>
                     <button
                       type="button"
                       onClick={() => setPreviewMode(!previewMode)}
-                      className="text-xs text-pink-600 hover:text-pink-700 font-medium bg-pink-50 px-2.5 py-1 rounded transition-colors"
+                      className="text-[11px] text-gray-800 hover:text-gray-950 font-semibold bg-gray-50 px-2 py-0.5 rounded transition-colors border border-gray-200/50"
                     >
-                      {previewMode ? 'Edit Content' : 'Preview Content'}
+                      {previewMode ? 'Edit' : 'Preview'}
                     </button>
                   </div>
                 </div>
                 {previewMode ? (
                   <div
-                    className="px-3 py-3 border border-gray-300 rounded-lg text-sm bg-gray-50 min-h-[250px] max-h-[500px] overflow-y-auto leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-pink-600 [&_a]:hover:underline"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 min-h-[200px] max-h-[400px] overflow-y-auto leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-blue-600 [&_a]:hover:underline"
                     dangerouslySetInnerHTML={{ __html: (form.content || '<p class="text-gray-400 italic">No content yet.</p>')
                       .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
                       .replace(/(?<!\!)\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
@@ -1100,11 +1130,12 @@ const BlogAdmin: React.FC = () => {
                     value={form.content}
                     onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
                     placeholder="Full blog content (HTML)"
-                    rows={12}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 font-mono"
+                    rows={9}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono"
                   />
                 )}
               </div>
+
               <input
                 value={form.tags}
                 onChange={(e) => {
@@ -1120,32 +1151,52 @@ const BlogAdmin: React.FC = () => {
                   });
                 }}
                 placeholder="Tags (comma separated)"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
               <select
                 value={form.status}
                 onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as BlogStatus }))}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
               </select>
-              <input
-                value={form.seo_title}
-                onChange={(e) => setForm((prev) => ({ ...prev, seo_title: e.target.value }))}
-                placeholder="SEO title (optional)"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
-              />
-              <input
-                value={form.seo_description}
-                onChange={(e) => setForm((prev) => ({ ...prev, seo_description: e.target.value }))}
-                placeholder="SEO description (optional)"
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
-              />
+
+              <details className="md:col-span-2 border border-gray-200 rounded-lg p-2 bg-gray-50/50 group">
+                <summary className="text-xs font-semibold text-gray-700 cursor-pointer list-none flex items-center justify-between select-none">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-gray-500" />
+                    Advanced SEO Metadata Settings (Optional)
+                  </span>
+                  <span className="text-[10px] text-gray-400 group-open:rotate-180 transition-transform duration-200">
+                    ▼
+                  </span>
+                </summary>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 pt-2 border-t border-gray-200">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-semibold text-gray-500">SEO Title</label>
+                    <input
+                      value={form.seo_title}
+                      onChange={(e) => setForm((prev) => ({ ...prev, seo_title: e.target.value }))}
+                      placeholder="SEO Title (defaults to post title)"
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-semibold text-gray-500">SEO Description</label>
+                    <input
+                      value={form.seo_description}
+                      onChange={(e) => setForm((prev) => ({ ...prev, seo_description: e.target.value }))}
+                      placeholder="SEO Description (defaults to excerpt)"
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+                    />
+                  </div>
+                </div>
+              </details>
             </div>
 
             {form.cover_image && (
-              <div className="mt-3">
+              <div className="hidden">
                 <p className="text-xs text-gray-600 mb-2">Cover preview</p>
                 <img
                   key={form.cover_image}
@@ -1159,7 +1210,7 @@ const BlogAdmin: React.FC = () => {
             <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
               <button
                 onClick={() => void submit()}
-                className="px-3 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 disabled:opacity-60"
+                className="px-3 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 disabled:opacity-60"
                 type="button"
                 disabled={saving}
               >
@@ -1177,7 +1228,7 @@ const BlogAdmin: React.FC = () => {
               </button>
               <button
                 onClick={addRandomCategoryLinks}
-                className="px-3 py-2 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg text-sm font-medium inline-flex items-center gap-1"
+                className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium inline-flex items-center gap-1"
                 type="button"
               >
                 Add 3 Category Links
@@ -1242,7 +1293,7 @@ const BlogAdmin: React.FC = () => {
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm sticky top-5">
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-pink-600" />
+                  <Sparkles className="w-4 h-4 text-gray-900" />
                   SEO Analysis
                 </h3>
                 {form.focus_keyphrase ? (
@@ -1274,7 +1325,7 @@ const BlogAdmin: React.FC = () => {
                     });
                   }}
                   placeholder="e.g. luxury wall art"
-                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 />
                 <p className="text-[10px] text-gray-500 mt-1">
                   Enter the primary search term you want this post to rank for.
@@ -1308,7 +1359,7 @@ const BlogAdmin: React.FC = () => {
                       <div 
                         key={`seo-check-${idx}`} 
                         className={`flex items-start gap-2.5 text-xs p-2 rounded-lg transition-colors ${
-                          isWarningOrError ? 'cursor-pointer hover:bg-pink-50 border border-transparent hover:border-pink-100 group' : ''
+                          isWarningOrError ? 'cursor-pointer hover:bg-gray-50 border border-transparent hover:border-gray-200 group' : ''
                         }`}
                         onClick={() => {
                           if (isWarningOrError && !isFixing) {
@@ -1319,7 +1370,7 @@ const BlogAdmin: React.FC = () => {
                       >
                         <span className="mt-0.5 flex-shrink-0">
                           {isFixing ? (
-                            <Loader2 className="w-4 h-4 text-pink-500 animate-spin" />
+                            <Loader2 className="w-4 h-4 text-gray-900 animate-spin" />
                           ) : (
                             <>
                               {result.status === 'good' && <CheckCircle className="w-4 h-4 text-green-500 fill-green-50" />}
@@ -1332,13 +1383,13 @@ const BlogAdmin: React.FC = () => {
                           <span className="font-semibold text-gray-800 flex items-center justify-between">
                             {result.name}
                             {isWarningOrError && !isFixing && (
-                              <span className="opacity-0 group-hover:opacity-100 text-[10px] text-pink-600 flex items-center gap-1 font-medium transition-opacity">
+                              <span className="opacity-0 group-hover:opacity-100 text-[10px] text-gray-900 flex items-center gap-1 font-medium transition-opacity">
                                 <Sparkles className="w-3 h-3" />
                                 Fix with AI
                               </span>
                             )}
                             {isFixing && (
-                              <span className="text-[10px] text-pink-600 flex items-center gap-1 font-medium">
+                              <span className="text-[10px] text-gray-900 flex items-center gap-1 font-medium">
                                 Fixing...
                               </span>
                             )}
@@ -1357,7 +1408,7 @@ const BlogAdmin: React.FC = () => {
               <div className="bg-white rounded-xl max-w-md w-full border border-gray-200 shadow-xl p-5 space-y-4">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                   <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-                    <Link2 className="w-4 h-4 text-pink-600" /> Link Another Blog Post
+                    <Link2 className="w-4 h-4 text-gray-900" /> Link Another Blog Post
                   </h3>
                   <button 
                     onClick={() => { setShowBlogLinkModal(false); setBlogLinkSearchQuery(''); }}
@@ -1381,7 +1432,7 @@ const BlogAdmin: React.FC = () => {
                     value={blogLinkSearchQuery}
                     onChange={(e) => setBlogLinkSearchQuery(e.target.value)}
                     placeholder="Search posts by title or slug..."
-                    className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-pink-300 font-sans"
+                    className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 font-sans"
                   />
                 </div>
 
@@ -1390,7 +1441,7 @@ const BlogAdmin: React.FC = () => {
                     <button
                       key={post.id}
                       onClick={() => insertBlogLink(post)}
-                      className="w-full text-left px-3.5 py-2.5 hover:bg-pink-50/55 hover:text-pink-750 transition-colors flex flex-col gap-0.5 text-xs text-gray-700 font-medium"
+                      className="w-full text-left px-3.5 py-2.5 hover:bg-gray-50 hover:text-gray-950 transition-colors flex flex-col gap-0.5 text-xs text-gray-700 font-medium"
                       type="button"
                     >
                       <div className="flex items-center justify-between w-full">
@@ -1527,8 +1578,8 @@ const BlogAdmin: React.FC = () => {
         )}
 
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-pink-100 rounded-lg">
-            <FileText className="w-5 h-5 text-pink-600" />
+          <div className="p-2 bg-gray-100 rounded-lg">
+            <FileText className="w-5 h-5 text-gray-900" />
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-800">Blog Admin</h2>
@@ -1540,18 +1591,6 @@ const BlogAdmin: React.FC = () => {
 
         <div className={activeSubTab === 'posts' ? 'flex flex-col gap-6' : 'hidden'}>
           <div className="mb-2">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between">
-              <span>{editingId ? 'Edit Blog Post' : 'Create New Blog Post'}</span>
-              {editingId && (
-                <button
-                  onClick={resetForm}
-                  className="text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors"
-                  type="button"
-                >
-                  Cancel Edit & Create New
-                </button>
-              )}
-            </h3>
             {renderEditor()}
           </div>
 
@@ -1565,7 +1604,7 @@ const BlogAdmin: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search blog posts..."
-                  className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                  className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 />
               </div>
             )}
@@ -1591,7 +1630,7 @@ const BlogAdmin: React.FC = () => {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-pink-50 text-pink-400">
+                              <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
                                 <FileText className="w-5 h-5" />
                               </div>
                             )}
@@ -1628,7 +1667,7 @@ const BlogAdmin: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search blog posts..."
-                className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                className="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
             </div>
           )}
@@ -1656,7 +1695,7 @@ const BlogAdmin: React.FC = () => {
                             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-pink-50 text-pink-400">
+                          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
                             <FileText className="w-6 h-6" />
                           </div>
                         )}
@@ -1715,7 +1754,7 @@ const BlogAdmin: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 gap-4">
               <div>
                 <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-                  <Key className="w-5 h-5 text-pink-600" />
+                  <Key className="w-5 h-5 text-gray-900" />
                   Focus Keyphrases Directory
                 </h3>
                 <p className="text-xs text-gray-500 mt-1">
@@ -1727,7 +1766,7 @@ const BlogAdmin: React.FC = () => {
             {/* Metrics cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-3">
-                <div className="p-2 bg-pink-50 text-pink-600 rounded-lg">
+                <div className="p-2 bg-gray-100 text-gray-900 rounded-lg">
                   <Key className="w-5 h-5" />
                 </div>
                 <div>
@@ -1779,7 +1818,7 @@ const BlogAdmin: React.FC = () => {
                 value={keyphraseSearchQuery}
                 onChange={(e) => setKeyphraseSearchQuery(e.target.value)}
                 placeholder="Search by keyphrase or blog title..."
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 font-sans"
+                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 font-sans"
               />
             </div>
 

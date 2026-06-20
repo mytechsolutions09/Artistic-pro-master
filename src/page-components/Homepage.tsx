@@ -14,6 +14,7 @@ import OptimizedImage from '../components/OptimizedImage';
 import BentoHeroSection from '../components/BentoHeroSection';
 import SingleBannerHeroSection from '../components/SingleBannerHeroSection';
 import LazyHomeSection from '../components/LazyHomeSection';
+import PopularCategoriesSection from '../components/PopularCategoriesSection';
 import { NavigationVisibilityService } from '../services/navigationVisibilityService';
 
 interface HomepageProps {
@@ -81,6 +82,10 @@ const Homepage: React.FC<HomepageProps> = ({
   const loadCriticalHomepageData = useCallback(async () => {
     if (initialSettings && initialCategories) {
       setLoading(false);
+      // Background fetch fresh settings to bypass Next.js static page caching
+      HomepageSettingsService.getHomepageSettings().then(settings => {
+        if (settings) setHomepageSettings(settings);
+      }).catch(err => console.error('Error background-fetching settings:', err));
       return;
     }
     try {
@@ -189,7 +194,8 @@ const Homepage: React.FC<HomepageProps> = ({
     ...imageSlider,
     slides: imageSlider.slides.map((slide: any) => ({
       ...slide,
-      images: slide.images || (slide.image ? [slide.image] : ['/placeholder-image.jpg'])
+      images: slide.images || (slide.image ? [slide.image] : ['/placeholder-image.jpg']),
+      displayMode: slide.displayMode || 'cover'
     }))
   };
 
@@ -835,23 +841,10 @@ const Homepage: React.FC<HomepageProps> = ({
         </section>
       )}
 
-      {/* Brand Introduction Section & Freshness Signals */}
-      <section className="py-12 px-4 bg-gray-50 border-y border-gray-100">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="flex justify-center mb-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Catalog Verified Fresh: June 2026
-            </span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-4 font-sans leading-tight">
-            Lurevi — Premium Digital Art Prints & Luxury Collections
-          </h1>
-          <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto font-sans font-normal">
-            Welcome to Lurevi, your premier destination for curated luxury digital art, high-resolution wall prints, and exclusive lifestyle collections. We design and select exquisite masterpieces that bring visual harmony, sophistication, and modern aesthetics into your home or office. Whether you are seeking museum-quality digital downloads for instant framing or looking to explore premium physical apparel, Lurevi blends artistic vision with premium craftsmanship to transform your everyday spaces.
-          </p>
-        </div>
-      </section>
+      {/* Popular Categories Circular Section */}
+      <PopularCategoriesSection config={homepageSettings?.categories?.popular_categories} />
+
+
 
       {/* Below hero: mount + product fetch as user scrolls */}
       <LazyHomeSection
@@ -861,17 +854,40 @@ const Homepage: React.FC<HomepageProps> = ({
       {/* Image Slider Section */}
       <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
-          {/* Full-bleed slider — image fills the whole card */}
-          <div className="relative rounded-2xl shadow-lg overflow-hidden h-[340px] sm:h-[420px] lg:h-[480px]">
+          {/* Slider card container */}
+          <div className="relative rounded-2xl shadow-lg overflow-hidden h-[340px] sm:h-[420px] lg:h-[480px] bg-gray-50">
 
-            {/* Full-bleed background image */}
-            <OptimizedImage
-              src={safeImageSlider.slides[currentSlide].images[0]}
-              alt={safeImageSlider.slides[currentSlide].title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 scale-100 hover:scale-105"
-              width={1400}
-              priority={true}
-            />
+            {safeImageSlider.slides[currentSlide].displayMode === 'contain' ? (
+              <>
+                {/* Blurred background image */}
+                <OptimizedImage
+                  src={safeImageSlider.slides[currentSlide].images[0]}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-30 scale-105 pointer-events-none z-0"
+                  width={150}
+                />
+
+                {/* Contained foreground image */}
+                <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-8 lg:p-12 pb-28 sm:pb-32 lg:pb-36 z-0">
+                  <OptimizedImage
+                    src={safeImageSlider.slides[currentSlide].images[0]}
+                    alt={safeImageSlider.slides[currentSlide].title}
+                    className="max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-700 scale-100 hover:scale-[1.02] rounded-lg shadow-md border border-gray-200/30"
+                    width={800}
+                    priority={true}
+                  />
+                </div>
+              </>
+            ) : (
+              /* Full-bleed background image */
+              <OptimizedImage
+                src={safeImageSlider.slides[currentSlide].images[0]}
+                alt={safeImageSlider.slides[currentSlide].title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 scale-100 hover:scale-105 z-0"
+                width={1400}
+                priority={true}
+              />
+            )}
 
             {/* Navigation Arrows */}
             {safeImageSlider.showArrows && (
@@ -1627,6 +1643,24 @@ const Homepage: React.FC<HomepageProps> = ({
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Brand Introduction Section & Freshness Signals */}
+      <section className="py-12 px-4 bg-gray-50 border-y border-gray-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="flex justify-center mb-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Catalog Verified Fresh: June 2026
+            </span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-4 font-sans leading-tight">
+            Lurevi — Premium Digital Art Prints & Luxury Collections
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto font-sans font-normal">
+            Welcome to Lurevi, your premier destination for curated luxury digital art, high-resolution wall prints, and exclusive lifestyle collections. We design and select exquisite masterpieces that bring visual harmony, sophistication, and modern aesthetics into your home or office. Whether you are seeking museum-quality digital downloads for instant framing or looking to explore premium physical apparel, Lurevi blends artistic vision with premium craftsmanship to transform your everyday spaces.
+          </p>
         </div>
       </section>
 

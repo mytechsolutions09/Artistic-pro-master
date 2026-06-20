@@ -171,7 +171,7 @@ export default async function HomePage() {
       {/* Server-rendered SEO content — visible to Google, hidden to users once JS loads */}
       <noscript>
         <main style={{ maxWidth: '72rem', margin: '0 auto', padding: '1rem', fontFamily: 'Inter, sans-serif' }}>
-          <h1>Lurevi — Premium Digital Art Prints & Luxury Collections</h1>
+          <h2>Lurevi — Premium Digital Art Prints & Luxury Collections</h2>
           <p>
             Welcome to Lurevi, your premier destination for curated luxury digital art, high-resolution wall prints, and exclusive lifestyle collections. We design and select exquisite masterpieces that bring visual harmony, sophistication, and modern aesthetics into your home or office. Whether you are seeking museum-quality digital downloads for instant framing or looking to explore premium physical apparel, Lurevi blends artistic vision with premium craftsmanship to transform your everyday spaces.
           </p>
