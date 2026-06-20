@@ -4,8 +4,11 @@ import { generateSlug } from '@/src/utils/slugUtils';
 
 const SITE_URL = 'https://lurevi.in';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const STATIC_ROUTES = [
-  { path: '/', changeFrequency: 'daily' as const, priority: 1 },
+  { path: '/', changeFrequency: 'daily' as const, priority: 1.0 },
   { path: '/browse', changeFrequency: 'daily' as const, priority: 0.9 },
   { path: '/categories', changeFrequency: 'weekly' as const, priority: 0.9 },
   { path: '/shop', changeFrequency: 'daily' as const, priority: 0.9 },
@@ -17,6 +20,11 @@ const STATIC_ROUTES = [
   { path: '/returns-and-refunds', changeFrequency: 'monthly' as const, priority: 0.5 },
   { path: '/privacy', changeFrequency: 'yearly' as const, priority: 0.3 },
   { path: '/terms-and-conditions', changeFrequency: 'yearly' as const, priority: 0.3 },
+  { path: '/about-us', changeFrequency: 'monthly' as const, priority: 0.5 },
+  { path: '/collections', changeFrequency: 'daily' as const, priority: 0.9 },
+  { path: '/collections/luxury-wall-art', changeFrequency: 'weekly' as const, priority: 0.8 },
+  { path: '/gifts', changeFrequency: 'weekly' as const, priority: 0.8 },
+  { path: '/help-center', changeFrequency: 'monthly' as const, priority: 0.5 },
 ] as const;
 
 function getPublicSupabaseClient() {
@@ -41,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       return entries;
     }
 
-    const [{ data: categories }, { data: products }, { data: blogPosts }] = await Promise.all([
+    const [{ data: categories }, { data: products }, { data: blogPosts }, { data: normalItems }] = await Promise.all([
       supabase
         .from('categories')
         .select('slug, updated_at')
@@ -54,16 +62,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .from('blog_posts')
         .select('slug, updated_at, published_at')
         .eq('status', 'published'),
+      supabase
+        .from('normal_items')
+        .select('slug, updated_at')
+        .eq('status', 'active'),
     ]);
 
     for (const category of categories ?? []) {
       if (!category?.slug) continue;
       const safeCategorySlug = encodeURIComponent(String(category.slug));
+      
+      // Traditional category listing
       entries.push({
         url: `${SITE_URL}/categories/${safeCategorySlug}`,
         lastModified: category.updated_at ? new Date(category.updated_at) : now,
         changeFrequency: 'weekly',
         priority: 0.9,
+      });
+
+      // Collections category page
+      entries.push({
+        url: `${SITE_URL}/collections/${safeCategorySlug}`,
+        lastModified: category.updated_at ? new Date(category.updated_at) : now,
+        changeFrequency: 'weekly',
+        priority: 0.8,
       });
     }
 
@@ -93,6 +115,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: post.updated_at ? new Date(post.updated_at) : post.published_at ? new Date(post.published_at) : now,
         changeFrequency: 'weekly',
         priority: 0.6,
+      });
+    }
+
+    for (const item of normalItems ?? []) {
+      if (!item?.slug) continue;
+      const safeSlug = encodeURIComponent(String(item.slug));
+      entries.push({
+        url: `${SITE_URL}/shop/${safeSlug}`,
+        lastModified: item.updated_at ? new Date(item.updated_at) : now,
+        changeFrequency: 'weekly',
+        priority: 0.7,
       });
     }
   } catch {
