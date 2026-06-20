@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp, MapPin, RefreshCw, Download, Upload } from 'lucide-react';
+import { Save, TrendingUp, Facebook, BarChart3, Eye, CheckCircle, AlertCircle, ExternalLink, Copy, Check, Search, Link2, FileText, Calendar, ChevronDown, ChevronUp, MapPin, RefreshCw, Download, Upload, Send } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import MarketingSecondaryNav from '../../components/admin/MarketingSecondaryNav';
 import { supabase } from '../../services/supabaseService';
@@ -487,6 +487,8 @@ const Marketing: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importUrlsInput, setImportUrlsInput] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
+  const [isSubmittingIndexNow, setIsSubmittingIndexNow] = useState(false);
 
   useEffect(() => {
     setUrlsPage(1);
@@ -1201,6 +1203,30 @@ const Marketing: React.FC = () => {
       showMessage('error', 'SEO audit was interrupted.');
     } finally {
       setIsAuditingAll(false);
+    }
+  };
+
+  const submitToIndexNow = async (pathsToSubmit: string[]) => {
+    if (pathsToSubmit.length === 0) return;
+    setIsSubmittingIndexNow(true);
+    try {
+      const response = await fetch('/api/admin/indexnow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urlList: pathsToSubmit })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        showMessage('success', `Successfully submitted ${pathsToSubmit.length} URL(s) to IndexNow.`);
+        setSelectedUrls(new Set());
+      } else {
+        showMessage('error', data.error || 'Failed to submit URLs to IndexNow.');
+      }
+    } catch (err) {
+      console.error('IndexNow submission failed:', err);
+      showMessage('error', 'Network error during IndexNow submission.');
+    } finally {
+      setIsSubmittingIndexNow(false);
     }
   };
 
@@ -3687,6 +3713,16 @@ const Marketing: React.FC = () => {
                 </button>
                 <button
                   type="button"
+                  onClick={() => void submitToIndexNow(Array.from(selectedUrls))}
+                  disabled={selectedUrls.size === 0 || isSubmittingIndexNow || urlsLoading}
+                  className={btnOutline}
+                  title="Submit selected URLs to IndexNow"
+                >
+                  <Send className={`h-3.5 w-3.5 ${isSubmittingIndexNow ? 'animate-pulse text-gray-400' : ''}`} />
+                  Submit Selected{selectedUrls.size > 0 ? ` (${selectedUrls.size})` : ''}
+                </button>
+                <button
+                  type="button"
                   onClick={exportUrlsToCsv}
                   disabled={urlsLoading || isAuditingAll || urlsList.length === 0}
                   className={btnOutline}
@@ -3827,6 +3863,22 @@ const Marketing: React.FC = () => {
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
                         <tr className="border-b border-gray-100 text-gray-400 font-medium">
+                          <th className="pb-2 pl-2 w-8">
+                            <input
+                              type="checkbox"
+                              checked={paginatedList.length > 0 && paginatedList.every(item => selectedUrls.has(item.path))}
+                              onChange={(e) => {
+                                const newSet = new Set(selectedUrls);
+                                if (e.target.checked) {
+                                  paginatedList.forEach(item => newSet.add(item.path));
+                                } else {
+                                  paginatedList.forEach(item => newSet.delete(item.path));
+                                }
+                                setSelectedUrls(newSet);
+                              }}
+                              className="h-3.5 w-3.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900 cursor-pointer"
+                            />
+                          </th>
                           <th className="pb-2 font-medium">Page Title / Name</th>
                           <th className="pb-2 font-medium">Type</th>
                           <th className="pb-2 font-medium">URL Path</th>
@@ -3845,6 +3897,22 @@ const Marketing: React.FC = () => {
                           return (
                             <React.Fragment key={idx}>
                               <tr className="group hover:bg-gray-50/50">
+                                <td className="py-2.5 pl-2 w-8">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedUrls.has(item.path)}
+                                    onChange={(e) => {
+                                      const newSet = new Set(selectedUrls);
+                                      if (e.target.checked) {
+                                        newSet.add(item.path);
+                                      } else {
+                                        newSet.delete(item.path);
+                                      }
+                                      setSelectedUrls(newSet);
+                                    }}
+                                    className="h-3.5 w-3.5 rounded border-gray-300 text-gray-900 focus:ring-gray-900 cursor-pointer"
+                                  />
+                                </td>
                                 <td className="py-2.5 font-medium text-gray-800 pr-3 max-w-[200px] truncate" title={item.title}>
                                   {item.title}
                                 </td>
@@ -3906,6 +3974,15 @@ const Marketing: React.FC = () => {
                                   <div className="flex items-center justify-end gap-1.5">
                                     <button
                                       type="button"
+                                      onClick={() => void submitToIndexNow([item.path])}
+                                      disabled={isSubmittingIndexNow}
+                                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                      title="Submit to IndexNow"
+                                    >
+                                      <Send className={`h-3 w-3 ${isSubmittingIndexNow ? 'opacity-50' : ''}`} />
+                                    </button>
+                                    <button
+                                      type="button"
                                       onClick={() => handleCopyUrl(item.path, idx)}
                                       className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:text-gray-800 hover:bg-gray-50 transition-colors"
                                       title="Copy URL"
@@ -3930,7 +4007,7 @@ const Marketing: React.FC = () => {
                               </tr>
                               {isExpanded && audit && (
                                 <tr className="bg-gray-50/30">
-                                  <td colSpan={7} className="p-3 border-t border-b border-gray-100">
+                                  <td colSpan={8} className="p-3 border-t border-b border-gray-100">
                                     <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-gray-100">
                                       <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Detailed SEO Audit Report</span>
                                       <button
