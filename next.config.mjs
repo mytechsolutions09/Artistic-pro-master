@@ -43,6 +43,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/blog/digital-illustration-explained',
+        destination: '/blog/digital-illustration-guide',
+        permanent: true,
+      },
+    ];
+  },
   // Fix for EISDIR readlink errors on Windows
   webpack: (config) => {
     config.resolve.symlinks = false;
