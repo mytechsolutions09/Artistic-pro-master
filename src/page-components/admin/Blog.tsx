@@ -10,6 +10,7 @@ import { Product } from '../../types';
 import { generateProductUrl, generateSlug } from '../../utils/slugUtils';
 import BlogSecondaryNav, { BlogTabId } from '../../components/admin/BlogSecondaryNav';
 import { runSeoAnalysis, SeoCheckResult } from '../../utils/seoAnalysis';
+import SitemapUrlManager from './SitemapUrlManager';
 
 type BlogFormState = {
   title: string;
@@ -213,6 +214,7 @@ const BlogAdmin: React.FC = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const [checkingLinks, setCheckingLinks] = useState(false);
   const [brokenLinks, setBrokenLinks] = useState<{url: string, status: string | number}[] | null>(null);
+  const [updatingSitemap, setUpdatingSitemap] = useState(false);
 
   const [showBlogLinkModal, setShowBlogLinkModal] = useState(false);
   const [blogLinkSearchQuery, setBlogLinkSearchQuery] = useState('');
@@ -524,6 +526,30 @@ const BlogAdmin: React.FC = () => {
       showMessage('error', error?.message || 'Failed to apply SEO blog pack.');
     } finally {
       setSeedingSeoPack(false);
+    }
+  };
+
+  const handleUpdateSitemap = async () => {
+    try {
+      setUpdatingSitemap(true);
+      showMessage('success', 'Updating sitemap...');
+      
+      const response = await fetch('/api/admin/update-sitemap', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update sitemap.');
+      }
+
+      showMessage('success', 'Sitemap updated and revalidated successfully.');
+    } catch (error: any) {
+      console.error('Failed to update sitemap:', error);
+      showMessage('error', error?.message || 'Failed to update sitemap.');
+    } finally {
+      setUpdatingSitemap(false);
     }
   };
 
@@ -1562,7 +1588,12 @@ const BlogAdmin: React.FC = () => {
 
   return (
     <AdminLayout title="Blog Management" noHeader={true}>
-      <BlogSecondaryNav activeTab={activeSubTab} onTabChange={setActiveSubTab} />
+      <BlogSecondaryNav 
+        activeTab={activeSubTab} 
+        onTabChange={setActiveSubTab} 
+        onUpdateSitemap={handleUpdateSitemap}
+        updatingSitemap={updatingSitemap}
+      />
       <div className="flex-1 flex flex-col overflow-hidden ml-24">
         <div className="p-5 space-y-4">
         {message && (
@@ -1577,17 +1608,6 @@ const BlogAdmin: React.FC = () => {
           </div>
         )}
 
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <FileText className="w-5 h-5 text-gray-900" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-gray-800">Blog Admin</h2>
-            <p className="text-sm font-medium text-gray-600 mt-1">
-              Total posts: {posts.length} | Published: {publishedCount} | Drafts: {posts.length - publishedCount}
-            </p>
-          </div>
-        </div>
 
         <div className={activeSubTab === 'posts' ? 'flex flex-col gap-6' : 'hidden'}>
           <div className="mb-2">
@@ -2001,6 +2021,10 @@ const BlogAdmin: React.FC = () => {
               </p>
             )}
           </div>
+        </div>
+
+        <div className={activeSubTab === 'sitemap_manager' ? 'space-y-4' : 'hidden'}>
+          <SitemapUrlManager />
         </div>
         </div>
       </div>
