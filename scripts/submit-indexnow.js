@@ -1,7 +1,7 @@
 const https = require('https');
 
 const host = 'lurevi.in';
-const key = '7d5bb2404b854473a4cde74023797328';
+const key = '7a81e527d5c240fcb33d79b83c15efce';
 const keyLocation = `https://${host}/${key}.txt`;
 const sitemapUrl = `https://${host}/sitemap.xml`;
 
