@@ -3,7 +3,7 @@
 import React from 'react';
 import { Link } from '@/src/compat/router';
 import { useLocation } from '@/src/compat/router';
-import { Heart, Mail, Phone, MapPin, Facebook, Instagram, Rss } from 'lucide-react';
+import { Heart, Facebook, Instagram, Rss } from 'lucide-react';
 import NewsletterForm from './NewsletterForm';
 
 
@@ -30,7 +30,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className="flex items-center mb-3">
@@ -138,24 +138,6 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-base font-semibold mb-3 text-gray-900">Contact Info</h3>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <Mail className="w-3 h-3 text-gray-700 mr-2" />
-                <span className="text-gray-600 text-sm">support@lurevi.com</span>
-              </div>
-              <div className="flex items-center">
-                <Phone className="w-3 h-3 text-gray-700 mr-2" />
-                <span className="text-gray-600 text-sm">+91 9625788455</span>
-              </div>
-              <div className="flex items-start">
-                <MapPin className="w-3 h-3 text-gray-700 mr-2 mt-1" />
-                <span className="text-gray-600 text-sm">WZ 14 Janakpuri New Delhi<br />110058, India</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Bottom Bar */}
