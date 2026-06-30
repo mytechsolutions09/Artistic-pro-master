@@ -6,7 +6,7 @@ import {
   User, Settings, ShoppingBag, Heart, Download, X, Eye, EyeOff, Star,
   FileDown, TrendingUp, Calendar, LogOut,
   Package, Zap, Sparkles, Activity, Truck, Clock, CheckCircle, RotateCcw,
-  Search, ChevronDown, ChevronUp, Edit, Shield, Key
+  Search, ChevronDown, ChevronUp, Edit, Shield, Key, Wallet, ArrowDownLeft, ArrowUpRight, RefreshCw
 } from 'lucide-react';
 import { CompleteOrderService } from '../services/completeOrderService';
 import { Order, Product } from '../types';
@@ -27,6 +27,7 @@ import OrderTrackingModal from '../components/OrderTrackingModal';
 import { delhiveryService } from '../services/DelhiveryService';
 import { ReturnService } from '../services/returnService';
 import { buildSequenceMap, formatSequenceNumber } from '../utils/sequenceNumberUtils';
+import { StoreCreditService, StoreCreditTransaction } from '../services/storeCreditService';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -110,6 +111,11 @@ const UserDashboard: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   
+  // Store credit state
+  const [storeCreditBalance, setStoreCreditBalance] = useState<number>(0);
+  const [storeCreditTransactions, setStoreCreditTransactions] = useState<StoreCreditTransaction[]>([]);
+  const [storeCreditLoading, setStoreCreditLoading] = useState(false);
+
   // Review state
   const [showReviewInput, setShowReviewInput] = useState(false);
   const [selectedProductForReview, setSelectedProductForReview] = useState<any>(null);
@@ -223,6 +229,26 @@ const UserDashboard: React.FC = () => {
     }
   }, [user]);
   
+
+  // Function to fetch store credit data
+  const fetchStoreCredit = async () => {
+    if (!user?.id) return;
+    setStoreCreditLoading(true);
+    try {
+      const [balance, historyResult] = await Promise.all([
+        StoreCreditService.getUserBalance(user.id),
+        StoreCreditService.getTransactionHistory(user.id, 30)
+      ]);
+      setStoreCreditBalance(balance);
+      if (historyResult.success && historyResult.transactions) {
+        setStoreCreditTransactions(historyResult.transactions);
+      }
+    } catch (error) {
+      console.error('Error fetching store credit:', error);
+    } finally {
+      setStoreCreditLoading(false);
+    }
+  };
 
   // Function to fetch return requests
   const fetchReturnRequests = async () => {
@@ -347,6 +373,7 @@ const UserDashboard: React.FC = () => {
     fetchUserOrders();
     fetchReturnRequests();
     fetchUserReviews();
+    fetchStoreCredit();
   }, [user]);
 
   const orderSequenceMap = React.useMemo(
@@ -931,7 +958,8 @@ const UserDashboard: React.FC = () => {
     { id: 'orders', label: 'My Orders', icon: ShoppingBag },
     { id: 'returns', label: 'Returns', icon: RotateCcw },
     { id: 'favorites', label: 'Favorites', icon: Heart },
-    { id: 'downloads', label: 'Downloads', icon: Download }
+    { id: 'downloads', label: 'Downloads', icon: Download },
+    { id: 'store-credit', label: 'Credits', icon: Wallet }
   ];
 
   const renderOverview = () => {
@@ -2194,6 +2222,139 @@ const UserDashboard: React.FC = () => {
     );
   };
 
+  const renderStoreCredit = () => {
+    const txTypeConfig: Record<string, { label: string; colorClass: string; icon: React.ReactNode }> = {
+      credit:  { label: 'Credit Added',  colorClass: 'bg-green-50 text-green-700 border-green-200',  icon: <ArrowDownLeft className="w-3 h-3" /> },
+      refund:  { label: 'Refund',         colorClass: 'bg-blue-50 text-blue-700 border-blue-200',    icon: <ArrowDownLeft className="w-3 h-3" /> },
+      return:  { label: 'Return Credit',  colorClass: 'bg-purple-50 text-purple-700 border-purple-200', icon: <ArrowDownLeft className="w-3 h-3" /> },
+      debit:   { label: 'Used',           colorClass: 'bg-red-50 text-red-700 border-red-200',       icon: <ArrowUpRight className="w-3 h-3" /> },
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 font-sans">Store Credit</h2>
+            <p className="text-gray-500 text-sm mt-0.5">Your Lurevi credit balance &amp; history</p>
+          </div>
+          <button
+            onClick={fetchStoreCredit}
+            disabled={storeCreditLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${storeCreditLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+
+        {/* Balance Card */}
+        <div className="rounded-xl bg-gradient-to-br from-gray-900 to-gray-700 text-white p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full translate-x-8 -translate-y-8" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-full -translate-x-6 translate-y-6" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3">
+              <Wallet className="w-5 h-5 text-gray-300" />
+              <span className="text-gray-300 text-sm font-medium">Available Balance</span>
+            </div>
+            {storeCreditLoading ? (
+              <div className="h-10 w-32 bg-white bg-opacity-20 rounded-lg animate-pulse" />
+            ) : (
+              <p className="text-4xl font-bold tracking-tight">
+                {StoreCreditService.formatAmount(storeCreditBalance)}
+              </p>
+            )}
+            <p className="text-gray-400 text-xs mt-2">Credits can be used at checkout towards any order</p>
+          </div>
+        </div>
+
+        {/* How to earn */}
+        <div className="bg-gray-50 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">How to Earn Credits</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { emoji: '↩️', title: 'Return Refunds', desc: 'Credits issued for approved returns' },
+              { emoji: '🎁', title: 'Promotions',     desc: 'Special credits from Lurevi offers' },
+              { emoji: '⭐', title: 'Loyalty Rewards', desc: 'Earned as you climb member levels' },
+            ].map(item => (
+              <div key={item.title} className="bg-white rounded-lg p-3 border border-gray-100">
+                <div className="text-xl mb-1">{item.emoji}</div>
+                <p className="text-xs font-semibold text-gray-800">{item.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Transaction History */}
+        <div>
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">
+            Transaction History
+            {storeCreditTransactions.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-gray-400">({storeCreditTransactions.length})</span>
+            )}
+          </h3>
+
+          {storeCreditLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white rounded-lg p-4 border border-gray-100 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 w-40 bg-gray-200 rounded" />
+                      <div className="h-2.5 w-24 bg-gray-200 rounded" />
+                    </div>
+                    <div className="h-4 w-16 bg-gray-200 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : storeCreditTransactions.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-xl">
+              <Wallet className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700">No transactions yet</p>
+              <p className="text-xs text-gray-400 mt-1">Your credit history will appear here</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {storeCreditTransactions.map((tx) => {
+                const cfg = txTypeConfig[tx.transaction_type] || txTypeConfig.credit;
+                const isCredit = tx.transaction_type !== 'debit';
+                return (
+                  <div key={tx.id} className="bg-white rounded-lg p-4 border border-gray-100 hover:border-gray-200 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${cfg.colorClass}`}>
+                        {cfg.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {tx.description || cfg.label}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {new Date(tx.created_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                          {tx.order_id && <span className="ml-2 text-gray-300">· Order #{tx.order_id.slice(-6).toUpperCase()}</span>}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className={`text-sm font-semibold ${isCredit ? 'text-green-600' : 'text-red-500'}`}>
+                          {isCredit ? '+' : '-'}{StoreCreditService.formatAmount(Math.abs(tx.amount))}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          Bal: {StoreCreditService.formatAmount(tx.balance_after)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'settings': return renderSettings();
@@ -2201,6 +2362,7 @@ const UserDashboard: React.FC = () => {
       case 'returns': return renderReturns();
       case 'favorites': return renderFavorites();
       case 'downloads': return renderDownloads();
+      case 'store-credit': return renderStoreCredit();
       default: return renderSettings();
     }
   };

@@ -1252,7 +1252,7 @@ const Products: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('created_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshingCategoryCounts, setRefreshingCategoryCounts] = useState(false);
