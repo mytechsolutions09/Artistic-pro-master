@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { createStaticClient } from '@/lib/supabase/server';
-import dynamic from 'next/dynamic';
-
-const ClothingProductPage = dynamic(() => import('@/src/page-components/ClothingProductPage'));
+import ClothingProductPage from '@/src/page-components/ClothingProductPage';
 
 interface Props {
   params: Promise<{ productSlug: string }>;
@@ -42,6 +41,10 @@ export default async function Page({ params }: Props) {
     .select('id, title, description, price, images')
     .eq('slug', productSlug)
     .single();
+
+  if (!product) {
+    return notFound();
+  }
 
   const images = product && (Array.isArray(product.images) ? product.images : product.images ? [product.images] : []);
   const fallbackImages = images && images.length > 0 ? images : ['https://lurevi.in/logo.png'];

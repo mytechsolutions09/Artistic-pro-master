@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const { data } = await supabase
       .from('categories')
-      .select('name, description, image_url')
+      .select('name, description, image')
       .eq('slug', categorySlug)
       .single();
     category = data;
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: titleText,
       description: descText,
       url: `https://lurevi.in/collections/${categorySlug}`,
-      images: category?.image_url ? [{ url: category.image_url }] : [{ url: '/logo.png' }],
+      images: category?.image ? [{ url: category.image }] : [{ url: '/logo.png' }],
     },
   };
 }
@@ -92,7 +92,7 @@ export default async function CollectionPage({ params }: Props) {
     const [{ data: catData }, { data: prodData }] = await Promise.all([
       supabase
         .from('categories')
-        .select('id, name, slug, description, image_url')
+        .select('id, name, slug, description, image')
         .eq('slug', categorySlug)
         .single(),
       supabase

@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { createStaticClient } from '@/lib/supabase/server';
-import dynamic from 'next/dynamic';
-
-const HomepageClient = dynamic(() => import('@/src/page-components/Homepage'));
+import HomepageClient from '@/src/page-components/Homepage';
 import { generateSlug } from '@/src/utils/slugUtils';
 
 export const metadata: Metadata = {

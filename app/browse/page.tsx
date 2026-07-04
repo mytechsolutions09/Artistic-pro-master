@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
-import dynamic from 'next/dynamic';
-
-const BrowsePage = dynamic(() => import('@/src/page-components/BrowsePage'));
+import BrowsePage from '@/src/page-components/BrowsePage';
 
 export const metadata: Metadata = {
   title: 'Shop Premium Digital Art & Wall Prints | Lurevi Collection',
