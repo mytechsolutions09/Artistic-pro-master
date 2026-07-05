@@ -47,19 +47,11 @@ export const optimizeImageUrl = (
     }
     // Optimize Supabase storage images
     else if (url.includes('supabase')) {
-      const isPublicStorage = url.includes('/storage/v1/object/public/');
-      if (isPublicStorage) {
-        // Route through Next.js built-in image optimization endpoint
-        const targetWidth = getNextJsWidth(width || 800);
-        optimizedUrl = `/_next/image?url=${encodeURIComponent(url)}&w=${targetWidth}&q=${quality}`;
-      } else {
-        optimizedUrl = url;
-      }
+      optimizedUrl = url;
     }
     // Local assets
     else if (url.startsWith('/') && !url.startsWith('//')) {
-      const targetWidth = getNextJsWidth(width || 800);
-      optimizedUrl = `/_next/image?url=${encodeURIComponent(url)}&w=${targetWidth}&q=${quality}`;
+      optimizedUrl = url;
     }
     // Optimize other image URLs (Cloudinary, Imgix, etc.)
     else if (url.includes('cloudinary.com')) {

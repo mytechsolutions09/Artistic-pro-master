@@ -1,12 +1,16 @@
 [build]
   command = "npm run build"
-  publish = ".next"
+  publish = "out"
 
 [build.environment]
   NODE_VERSION = "20"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# Redirect Pinterest catalog endpoint to the generated static CSV file
+[[redirects]]
+  from = "/api/pinterest-catalog"
+  to = "/pinterest-catalog.csv"
+  status = 200
+  force = true
 
 # Redirect subdomain to Men's clothing page
 [[redirects]]

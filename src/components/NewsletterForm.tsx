@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { supabase } from '../services/supabaseService';
 
 export const NewsletterForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -16,28 +17,63 @@ export const NewsletterForm: React.FC = () => {
     setMessage('');
 
     try {
-      const response = await fetch('/api/newsletter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      const cleanEmail = email.trim().toLowerCase();
 
-      const data = await response.json();
+      // Check if email already exists in newsletter_subscribers
+      const { data: existing, error: findError } = await supabase
+        .from('newsletter_subscribers')
+        .select('id, status')
+        .eq('email', cleanEmail)
+        .maybeSingle();
 
-      if (response.ok && data.success) {
-        setStatus('success');
-        setMessage(data.message || 'Thank you for subscribing!');
-        setEmail('');
-      } else {
-        setStatus('error');
-        setMessage(data.error || 'Something went wrong. Please try again.');
+      if (findError) {
+        throw findError;
       }
-    } catch (error) {
+
+      if (existing) {
+        if (existing.status === 'subscribed') {
+          setStatus('success');
+          setMessage('You are already subscribed!');
+          setEmail('');
+          return;
+        } else {
+          // Resubscribe
+          const { error: updateError } = await supabase
+            .from('newsletter_subscribers')
+            .update({ status: 'subscribed' })
+            .eq('id', existing.id);
+
+          if (updateError) throw updateError;
+
+          setStatus('success');
+          setMessage('Thank you for subscribing again!');
+          setEmail('');
+          return;
+        }
+      }
+
+      // Insert new subscriber
+      const { error: insertError } = await supabase
+        .from('newsletter_subscribers')
+        .insert([{ email: cleanEmail, status: 'subscribed' }]);
+
+      if (insertError) {
+        if (insertError.code === '23505') {
+          setStatus('success');
+          setMessage('You are already subscribed!');
+          setEmail('');
+          return;
+        }
+        throw insertError;
+      }
+
+      setStatus('success');
+      setMessage('Thank you for subscribing to Lurevi!');
+      setEmail('');
+    } catch (error: any) {
       console.error('Newsletter submit error:', error);
       setStatus('error');
-      setMessage('Failed to connect to the server. Please try again.');
+      setMessage(error.message || 'Something went wrong. Please try again.');
     }
   };
 

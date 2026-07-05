@@ -73,6 +73,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+export async function generateStaticParams() {
+  const supabase = createStaticClient();
+  const { data: products } = await supabase
+    .from('products')
+    .select('title, categories')
+    .eq('status', 'active');
+
+  const params: Array<{ categorySlug: string; productSlug: string }> = [];
+
+  for (const product of products || []) {
+    if (!product.title || !Array.isArray(product.categories) || product.categories.length === 0) {
+      continue;
+    }
+    const categorySlug = generateSlug(product.categories[0]);
+    const productSlug = generateSlug(product.title);
+    params.push({
+      categorySlug,
+      productSlug,
+    });
+  }
+
+  return params;
+}
+
 export const revalidate = 3600;
 
 export default async function ProductPage({ params }: Props) {

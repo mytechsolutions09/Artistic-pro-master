@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  
   // Avoid bundling Supabase into server vendor chunks (e.g. vendor-chunks/@supabase.js).
   // On Windows, resolving that path can fail; externalizing uses node_modules instead.
   experimental: {
@@ -16,6 +19,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

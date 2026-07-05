@@ -8,8 +8,9 @@ import { DownloadService } from '../services/downloadService';
 import { useCurrency } from '../contexts/CurrencyContext';
 
 const DownloadPage: React.FC = () => {
-  const { productId } = useParams<{ productId: string }>();
+  const params = useParams<{ productId: string }>();
   const [searchParams] = useSearchParams();
+  const productId = searchParams.get('productId') || params.productId;
   const navigate = useNavigate();
   const { currencySettings } = useCurrency();
   

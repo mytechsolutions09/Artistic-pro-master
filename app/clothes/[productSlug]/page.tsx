@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createStaticClient } from '@/lib/supabase/server';
+import { generateSlug } from '@/src/utils/slugUtils';
 import ClothingProductPage from '@/src/page-components/ClothingProductPage';
 
 interface Props {
@@ -10,11 +11,13 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { productSlug } = await params;
   const supabase = createStaticClient();
-  const { data } = await supabase
+  const { data: products } = await supabase
     .from('products')
     .select('title, description')
-    .eq('slug', productSlug)
-    .single();
+    .eq('status', 'active');
+
+  const data = (products || []).find((p) => generateSlug(p.title) === productSlug);
+
   return {
     title: data ? `${data.title} | Lurevi Clothing` : 'Clothing | Lurevi',
     description:
@@ -30,17 +33,57 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+export async function generateStaticParams() {
+  try {
+    const supabase = createStaticClient();
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('title, categories')
+      .eq('status', 'active');
+
+    if (error) {
+      console.error('Error fetching products in generateStaticParams for clothes:', error);
+      return [{ productSlug: 'fallback-product' }];
+    }
+
+    const clothingCategories = ['unisex', 'men', 'women', 'mens', 'womens', 'clothing', 'tshirt', 't-shirt', 'shirt', 'sweatshirt', 'hoodie'];
+
+    const filtered = (products || [])
+      .filter(p => {
+        if (!p.title) return false;
+        const categories = (p.categories || []).map((c: string) => c.toLowerCase());
+        return categories.some(cat => 
+          clothingCategories.some(cc => cat.includes(cc))
+        );
+      })
+      .map(p => ({
+        productSlug: generateSlug(p.title),
+      }));
+
+    console.log(`[Clothes generateStaticParams] Generated ${filtered.length} params`);
+    
+    if (filtered.length === 0) {
+      return [{ productSlug: 'fallback-product' }];
+    }
+    return filtered;
+  } catch (err) {
+    console.error('Exception in generateStaticParams for clothes:', err);
+    return [{ productSlug: 'fallback-product' }];
+  }
+}
+
 export const revalidate = 3600;
 
 export default async function Page({ params }: Props) {
   const { productSlug } = await params;
   const supabase = createStaticClient();
 
-  const { data: product } = await supabase
+  const { data: products } = await supabase
     .from('products')
-    .select('id, title, description, price, images')
-    .eq('slug', productSlug)
-    .single();
+    .select('id, title, description, price, images, status')
+    .eq('status', 'active');
+
+  const product = (products || []).find((p) => generateSlug(p.title) === productSlug);
 
   if (!product) {
     return notFound();

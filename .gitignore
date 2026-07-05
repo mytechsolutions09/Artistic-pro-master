@@ -28,3 +28,9 @@ dist-ssr
 
 # Local Netlify folder
 .netlify
+
+# Next.js static export output
+out
+
+# Pre-build generated assets
+public/pinterest-catalog.csv

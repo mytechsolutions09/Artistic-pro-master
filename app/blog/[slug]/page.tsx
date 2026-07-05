@@ -144,8 +144,7 @@ export async function generateStaticParams() {
   }
 }
 
-/** Always fetch fresh post so cover image edits from Admin appear immediately. */
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 function extractFaqs(content: string): Array<{ question: string; answer: string }> {
   const faqs: Array<{ question: string; answer: string }> = [];

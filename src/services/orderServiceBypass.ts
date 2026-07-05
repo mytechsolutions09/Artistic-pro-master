@@ -256,7 +256,7 @@ async function generateSecureDownloadLinks(
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(2, 15);
       const token = `${orderId}_${item.productId}_${timestamp}_${random}`;
-      downloadLinks.push(`${window.location.origin}/download/${item.productId}?token=${token}&order=${orderId}`);
+      downloadLinks.push(`${window.location.origin}/download?productId=${item.productId}&token=${token}&order=${orderId}`);
     }
   }
 

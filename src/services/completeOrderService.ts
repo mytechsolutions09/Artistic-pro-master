@@ -307,7 +307,7 @@ export class CompleteOrderService {
         if (product?.pdf_url) {
           // Generate secure download link with expiration
           const downloadToken = this.generateDownloadToken(orderId, item.productId);
-          const downloadLink = `${window.location.origin}/download/${item.productId}?token=${downloadToken}&order=${orderId}`;
+          const downloadLink = `${window.location.origin}/download?productId=${item.productId}&token=${downloadToken}&order=${orderId}`;
           downloadLinks.push(downloadLink);
         }
       }

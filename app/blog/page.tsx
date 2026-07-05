@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { unstable_noStore as noStore } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import { blogCoverUrl } from '@/lib/blogCover';
 import BlogList, { BlogListItem } from './BlogList';
@@ -31,9 +30,7 @@ export const metadata: Metadata = {
   },
 };
 
-/** Always fetch fresh posts so Admin cover URL changes show up without waiting for ISR. */
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600;
 
 function getPublicSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -59,7 +56,6 @@ async function getPublishedPosts(): Promise<BlogListItem[]> {
 }
 
 export default async function BlogPage() {
-  noStore();
   const posts = await getPublishedPosts();
   const listSchema = {
     '@context': 'https://schema.org',

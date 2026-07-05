@@ -4,9 +4,6 @@ import { generateSlug } from '@/src/utils/slugUtils';
 
 const SITE_URL = 'https://lurevi.in';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 const STATIC_ROUTES = [
   { path: '/', changeFrequency: 'daily' as const, priority: 1.0 },
   { path: '/browse', changeFrequency: 'daily' as const, priority: 0.9 },

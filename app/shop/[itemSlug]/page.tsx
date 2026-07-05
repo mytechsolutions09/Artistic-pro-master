@@ -34,6 +34,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+export async function generateStaticParams() {
+  const supabase = createStaticClient();
+  const { data: items } = await supabase
+    .from('normal_items')
+    .select('slug')
+    .eq('status', 'active');
+
+  return (items || []).filter((item) => item?.slug).map((item) => ({
+    itemSlug: String(item.slug),
+  }));
+}
+
 export const revalidate = 3600;
 
 export default async function Page({ params }: Props) {
