@@ -746,6 +746,69 @@ export class OrderService {
   }
 }
 
+// Helper to compress and convert image to WebP client-side
+async function compressToWebP(
+  file: File,
+  options: { maxWidth?: number; maxHeight?: number; quality?: number } = {}
+): Promise<File> {
+  const { maxWidth = 1920, maxHeight = 1920, quality = 0.8 } = options;
+
+  if (typeof window === 'undefined' || !file.type.startsWith('image/') || file.type === 'image/svg+xml') {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        // Scale image down if it exceeds max dimensions
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+              const webpFile = new File([blob], `${originalName}.webp`, {
+                type: 'image/webp',
+                lastModified: Date.now()
+              });
+              resolve(webpFile);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+}
+
 // Product Management Service
 export class ProductService {
   static async getAllProducts(): Promise<Product[]> {
@@ -1012,9 +1075,8 @@ export class ProductService {
       if (updates.clothingType !== undefined) updateData.clothingtype = updates.clothingType;
       if (updates.material !== undefined) updateData.material = updates.material;
       if (updates.brand !== undefined) updateData.brand = updates.brand;
-
-
-
+      // Get existing product first to compare updates
+      const existingProduct = await this.getProductById(id);
 
       const { data, error } = await supabase
         .from('products')
@@ -1028,7 +1090,38 @@ export class ProductService {
         throw error;
       }
       
+      // Clean up replaced files in storage
+      if (existingProduct) {
+        try {
+          const { ImageUploadService } = await import('./imageUploadService');
 
+          // Check main image replacement
+          if (updateData.main_image !== undefined && existingProduct.main_image && existingProduct.main_image !== updateData.main_image) {
+            await ImageUploadService.deleteFileByUrl(existingProduct.main_image);
+          }
+
+          // Check PDF replacement
+          if (updateData.pdf_url !== undefined && existingProduct.pdf_url && existingProduct.pdf_url !== updateData.pdf_url) {
+            await ImageUploadService.deleteFileByUrl(existingProduct.pdf_url);
+          }
+
+          // Check video replacement
+          if (updateData.video_url !== undefined && (existingProduct as any).video_url && (existingProduct as any).video_url !== updateData.video_url) {
+            await ImageUploadService.deleteFileByUrl((existingProduct as any).video_url);
+          }
+
+          // Check gallery images replacement
+          if (updateData.images !== undefined && existingProduct.images && Array.isArray(existingProduct.images)) {
+            const newImages = updateData.images || [];
+            const deletedImages = existingProduct.images.filter(img => !newImages.includes(img));
+            for (const img of deletedImages) {
+              await ImageUploadService.deleteFileByUrl(img);
+            }
+          }
+        } catch (storageCleanupError) {
+          console.warn('Non-blocking storage cleanup error on product update:', storageCleanupError);
+        }
+      }
       
       // Transform database fields to interface fields
       return {
@@ -1060,12 +1153,40 @@ export class ProductService {
 
   static async deleteProduct(id: string): Promise<boolean> {
     try {
+      // Get existing product to clean up files in storage
+      const existingProduct = await this.getProductById(id);
+
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      // If product deleted successfully, delete its files from storage
+      if (existingProduct) {
+        try {
+          const { ImageUploadService } = await import('./imageUploadService');
+          
+          if (existingProduct.main_image) {
+            await ImageUploadService.deleteFileByUrl(existingProduct.main_image);
+          }
+          if (existingProduct.pdf_url) {
+            await ImageUploadService.deleteFileByUrl(existingProduct.pdf_url);
+          }
+          if ((existingProduct as any).video_url) {
+            await ImageUploadService.deleteFileByUrl((existingProduct as any).video_url);
+          }
+          if (existingProduct.images && Array.isArray(existingProduct.images)) {
+            for (const img of existingProduct.images) {
+              await ImageUploadService.deleteFileByUrl(img);
+            }
+          }
+        } catch (storageCleanupError) {
+          console.warn('Non-blocking storage cleanup error on product delete:', storageCleanupError);
+        }
+      }
+
       return true;
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -1310,29 +1431,39 @@ export class ProductService {
 
       // Validate file
       if (!file) throw new Error('No file provided');
+
+      // Auto-compress and convert to WebP client-side
+      let uploadFile = file;
+      if (typeof window !== 'undefined' && file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+        try {
+          uploadFile = await compressToWebP(file);
+        } catch (compressionError) {
+          console.warn('Image compression failed, using original file:', compressionError);
+        }
+      }
       
       // Check file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
+      if (uploadFile.size > 10 * 1024 * 1024) {
         throw new Error('File size exceeds 10MB limit');
       }
       
       // Check file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
+      if (!allowedTypes.includes(uploadFile.type)) {
         throw new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed');
       }
 
       // Bucket should already exist - no need to create it
 
       // Create unique filename with optional product name for SEO
-      const fileExt = file.name.split('.').pop();
+      const fileExt = uploadFile.name.split('.').pop();
       const namePart = productName ? productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : 'product';
       const fileName = `${productId}/${namePart}_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       // Upload file to storage
       const { data, error } = await supabase.storage
         .from(STORAGE_BUCKETS.PRODUCT_IMAGES)
-        .upload(fileName, file, {
+        .upload(fileName, uploadFile, {
           cacheControl: '3600',
           upsert: false
         });
@@ -1381,27 +1512,37 @@ export class ProductService {
 
       // Validate file
       if (!file) throw new Error('No file provided');
+
+      // Auto-compress and convert to WebP client-side
+      let uploadFile = file;
+      if (typeof window !== 'undefined' && file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+        try {
+          uploadFile = await compressToWebP(file);
+        } catch (compressionError) {
+          console.warn('Image compression failed, using original file:', compressionError);
+        }
+      }
       
       // Check file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
+      if (uploadFile.size > 10 * 1024 * 1024) {
         throw new Error('File size exceeds 10MB limit');
       }
       
       // Check file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
+      if (!allowedTypes.includes(uploadFile.type)) {
         throw new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed');
       }
 
       // Create unique filename with optional product name for SEO
-      const fileExt = file.name.split('.').pop();
+      const fileExt = uploadFile.name.split('.').pop();
       const namePart = productName ? productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : 'clothing';
       const fileName = `${productId}/${namePart}_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       // Upload file to clothes-images bucket
       const { data, error } = await supabase.storage
         .from(STORAGE_BUCKETS.CLOTHES_IMAGES)
-        .upload(fileName, file, {
+        .upload(fileName, uploadFile, {
           cacheControl: '3600',
           upsert: false
         });
@@ -1705,6 +1846,13 @@ export class CategoryService {
 
   static async updateCategory(id: string, updates: Partial<any>): Promise<any> {
     try {
+      // Get existing category to check for image replacement
+      const { data: existingCategory } = await supabase
+        .from('categories')
+        .select('image')
+        .eq('id', id)
+        .maybeSingle();
+
       const { data, error } = await supabase
         .from('categories')
         .update(updates)
@@ -1713,6 +1861,17 @@ export class CategoryService {
         .single();
 
       if (error) throw error;
+
+      // Clean up old image if replaced
+      if (existingCategory && updates.image !== undefined && existingCategory.image && existingCategory.image !== updates.image) {
+        try {
+          const { ImageUploadService } = await import('./imageUploadService');
+          await ImageUploadService.deleteFileByUrl(existingCategory.image);
+        } catch (storageCleanupError) {
+          console.warn('Non-blocking storage cleanup error on category update:', storageCleanupError);
+        }
+      }
+
       return data;
     } catch (error) {
       console.error('Error updating category:', error);
@@ -1722,12 +1881,30 @@ export class CategoryService {
 
   static async deleteCategory(id: string): Promise<boolean> {
     try {
+      // Get existing category image
+      const { data: existingCategory } = await supabase
+        .from('categories')
+        .select('image')
+        .eq('id', id)
+        .maybeSingle();
+
       const { error } = await supabase
         .from('categories')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      // If category deleted successfully, delete its image from storage
+      if (existingCategory && existingCategory.image) {
+        try {
+          const { ImageUploadService } = await import('./imageUploadService');
+          await ImageUploadService.deleteFileByUrl(existingCategory.image);
+        } catch (storageCleanupError) {
+          console.warn('Non-blocking storage cleanup error on category delete:', storageCleanupError);
+        }
+      }
+
       return true;
     } catch (error) {
       console.error('Error deleting category:', error);

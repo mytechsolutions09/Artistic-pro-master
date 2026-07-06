@@ -98,25 +98,44 @@ export class ImageUploadService {
         return { success: false, error: `Invalid bucket type: ${bucketType}` };
       }
 
+      // Auto-compress and convert images to WebP client-side
+      let uploadFile = file;
+      let finalCustomName = customName;
+
+      if (typeof window !== 'undefined' && file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+        try {
+          uploadFile = await this.compressToWebP(file);
+          if (finalCustomName) {
+            const lastDotIndex = finalCustomName.lastIndexOf('.');
+            if (lastDotIndex !== -1) {
+              finalCustomName = finalCustomName.substring(0, lastDotIndex) + '.webp';
+            } else {
+              finalCustomName = finalCustomName + '.webp';
+            }
+          }
+        } catch (compressionError) {
+          console.warn('Image compression failed, using original file:', compressionError);
+        }
+      }
+
       // Validate file
-      const validation = this.validateFile(file, bucketType);
+      const validation = this.validateFile(uploadFile, bucketType);
       if (!validation.valid) {
         return { success: false, error: validation.error };
       }
 
       // Generate unique filename
-      const fileName = customName || this.generateFileName(file);
+      const fileName = finalCustomName || this.generateFileName(uploadFile);
       const filePath = `${folder}/${fileName}`;
 
       // Debug logging
-
 
 
       
       // Upload file with optimized caching headers to reduce egress costs
       const { error } = await supabase.storage
         .from(bucketConfig.name)
-        .upload(filePath, file, {
+        .upload(filePath, uploadFile, {
           cacheControl: '31536000', // 1 year cache for static assets
           upsert: false
         });
@@ -213,6 +232,42 @@ export class ImageUploadService {
 
     } catch (error) {
       console.error('Delete exception:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      };
+    }
+  }
+
+  /**
+   * Delete a file from Supabase Storage by its public URL
+   */
+  static async deleteFileByUrl(url: string): Promise<UploadResult> {
+    try {
+      if (!url || typeof url !== 'string') {
+        return { success: false, error: 'Invalid URL' };
+      }
+
+      const match = url.match(/\/storage\/v1\/object\/public\/([^\/]+)\/(.+)$/);
+      if (!match) {
+        return { success: false, error: 'Not a valid Supabase storage URL' };
+      }
+
+      const bucketName = match[1];
+      const filePath = decodeURIComponent(match[2]);
+
+      const { error } = await supabase.storage
+        .from(bucketName)
+        .remove([filePath]);
+
+      if (error) {
+        console.error(`Error deleting file from bucket ${bucketName} at path ${filePath}:`, error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Delete by URL exception:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error occurred' 
@@ -537,6 +592,67 @@ export class ImageUploadService {
    */
   static async uploadHomepageTrendingImage(file: File, collectionId: string): Promise<UploadResult> {
     return this.uploadFile(file, 'homepage-trending-images', 'trending', `collection_${collectionId}_${Date.now()}.${file.name.split('.').pop()}`);
+  }
+
+  /**
+   * Compress and convert image to WebP client-side
+   */
+  private static async compressToWebP(
+    file: File,
+    options: { maxWidth?: number; maxHeight?: number; quality?: number } = {}
+  ): Promise<File> {
+    const { maxWidth = 1920, maxHeight = 1920, quality = 0.8 } = options;
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          // Scale image down if it exceeds max dimensions
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const webpFile = new File([blob], `${originalName}.webp`, {
+                  type: 'image/webp',
+                  lastModified: Date.now()
+                });
+                resolve(webpFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/webp',
+            quality
+          );
+        };
+        img.onerror = () => resolve(file);
+      };
+      reader.onerror = () => resolve(file);
+    });
   }
 }
 
