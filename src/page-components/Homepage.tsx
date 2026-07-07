@@ -58,7 +58,7 @@ const Homepage: React.FC<HomepageProps> = ({
           const { supabase } = await import('../services/supabaseService');
           const { data: productsData, error: productsError } = await supabase
             .from('products')
-            .select('id, title, price, original_price, discount_percentage, images, main_image, categories, category, rating, downloads, slug, status, featured, product_type, created_date')
+            .select('id, title, price, original_price, discount_percentage, images, main_image, categories, category, rating, downloads, status, featured, product_type, created_date')
             .eq('status', 'active')
             .order('created_date', { ascending: false })
             .limit(50);

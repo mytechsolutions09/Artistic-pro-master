@@ -34,7 +34,7 @@ export default async function HomePage() {
   // Fetch initial products for the homepage (Best Sellers, Featured Artwork)
   const { data: initialProducts } = await supabase
     .from('products')
-    .select('id, title, price, original_price, discount_percentage, images, main_image, categories, category, rating, downloads, slug, status, featured, product_type, created_date')
+    .select('id, title, price, original_price, discount_percentage, images, main_image, categories, category, rating, downloads, status, featured, product_type, created_date')
     .eq('status', 'active')
     .order('created_date', { ascending: false })
     .limit(36);
