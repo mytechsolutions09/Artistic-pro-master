@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Only enable export in production to avoid strict param errors during dev
+  output: process.env.NODE_ENV === 'development' ? undefined : 'export',
   trailingSlash: true,
   
   // Avoid bundling Supabase into server vendor chunks (e.g. vendor-chunks/@supabase.js).

@@ -7,6 +7,7 @@ import ProductCard from '@/src/components/ProductCard';
 import { marked } from 'marked';
 import { User } from 'lucide-react';
 import ShareButton from '@/src/components/ShareButton';
+import TableOfContents from '@/src/components/TableOfContents';
 
 
 const SITE_URL = 'https://lurevi.in';
@@ -227,72 +228,146 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     })),
   } : null;
 
+  let htmlContent = (marked.parse(parseMarkdownInsideHtml(post.content.replace(/^[ \t]+/gm, ''))) as string)
+    .replace(/<h1/g, '<h2')
+    .replace(/<\/h1>/g, '<\/h2>');
+
+  const toc: Array<{ id: string; text: string; level: number }> = [];
+  htmlContent = htmlContent.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h\1>/g, (match, level, attrs, innerText) => {
+    let id = '';
+    const idMatch = attrs.match(/id="([^"]+)"/);
+    if (idMatch) {
+      id = idMatch[1];
+    } else {
+      const text = innerText.replace(/<[^>]+>/g, '').trim();
+      id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      attrs = `${attrs} id="${id}"`;
+    }
+    const text = innerText.replace(/<[^>]+>/g, '').trim();
+    if (text) {
+      toc.push({ id, text, level: parseInt(level) });
+    }
+    return `<h${level}${attrs}>${innerText}</h${level}>`;
+  });
+
+  // Format date like "8 JUL 2026"
+  const formattedDate = new Date(publishedISO).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).toUpperCase();
+
+  // Derive a category label from first tag or fallback
+  const categoryLabel = Array.isArray(post.tags) && post.tags.length > 0
+    ? post.tags[0].toUpperCase()
+    : 'BLOG';
+
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
+    <main className="mx-auto max-w-5xl px-4 py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       {faqSchema && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       )}
-      <Link href="/blog" className="text-sm text-teal-700 hover:text-teal-800 font-medium">
-        Back to Blog
+
+      {/* Back to Blog */}
+      <Link href="/blog" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 font-medium tracking-wide uppercase mb-6 transition-colors">
+        ‹ Back to Blogs
       </Link>
-      <h1 className="mt-3 text-3xl font-semibold text-gray-900">{post.title}</h1>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500 font-sans">
-        <span>Published: {new Date(publishedISO).toLocaleDateString('en-IN')}</span>
-        <span>•</span>
-        <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          Last Updated: June 2026
-        </span>
-        <span className="ml-auto">
-          <ShareButton title={post.title} url={`${SITE_URL}/blog/${post.slug}`} />
-        </span>
+
+      {/* Hero: Image left, Meta right */}
+      <div className="flex flex-col md:flex-row gap-8 md:gap-10 items-start mb-10">
+        {/* Cover Image */}
+        {post.slug !== 'lurevi-vs-artzolo-comparison-guide' && (
+          <div className="w-full md:w-[45%] shrink-0 rounded-xl overflow-hidden border border-gray-100">
+            <img
+              src={blogCoverUrl(post.cover_image)}
+              alt={post.title}
+              className="w-full h-auto object-cover"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
+          </div>
+        )}
+
+        {/* Right Meta Column */}
+        <div className="flex-1 flex flex-col justify-start pt-1">
+          {/* Category + Date */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-[11px] font-bold tracking-widest uppercase bg-gray-100 text-gray-600 px-2.5 py-1 rounded">
+              {categoryLabel}
+            </span>
+            <span className="text-xs text-gray-400 flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2" />
+                <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" />
+                <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" />
+                <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" />
+              </svg>
+              {formattedDate}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-4">
+            {post.title}
+          </h1>
+
+          {/* Excerpt as blockquote */}
+          {post.excerpt && (
+            <blockquote className="border-l-4 border-gray-300 pl-4 text-sm text-gray-600 italic mb-5 leading-relaxed">
+              {post.excerpt}
+            </blockquote>
+          )}
+
+          {/* Tags */}
+          {Array.isArray(post.tags) && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-5">
+              {post.tags.map((tag) => (
+                <span key={tag} className="text-[11px] text-gray-500 hover:text-gray-800 cursor-pointer transition-colors">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Share */}
+          <div className="flex items-center gap-2 text-xs text-gray-400 uppercase tracking-widest mt-auto">
+            <span className="font-semibold">Share:</span>
+            <ShareButton title={post.title} url={`${SITE_URL}/blog/${post.slug}`} />
+          </div>
+        </div>
       </div>
 
-      {post.slug !== 'lurevi-vs-artzolo-comparison-guide' && (
-        <img
-          src={blogCoverUrl(post.cover_image)}
-          alt={post.title}
-          className="mt-5 w-full h-72 object-cover rounded-lg border border-gray-100"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-        />
-      )}
+      {/* Divider */}
+      <div className="border-t border-gray-100 mb-8" />
 
-      {post.excerpt && <p className="mt-5 text-base text-gray-700">{post.excerpt}</p>}
+      {/* Article + TOC */}
+      <div className="flex flex-col lg:flex-row gap-12 items-start">
+        {/* Article content */}
+        <div className="flex-1 min-w-0">
+          <article
+            className="leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-gray-900 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-gray-900 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-6 [&_img]:mx-auto [&_a]:text-teal-700 [&_a]:hover:underline [&_a]:font-medium [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24"
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
 
-      <article 
-        className="mt-6 leading-7 text-gray-800 space-y-4 font-normal [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_strong]:font-semibold [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4 [&_img]:mx-auto [&_a]:text-teal-700 [&_a]:hover:underline [&_a]:font-medium [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
-        dangerouslySetInnerHTML={{ 
-          __html: (marked.parse(parseMarkdownInsideHtml(post.content.replace(/^[ \t]+/gm, ''))) as string)
-            .replace(/<h1/g, '<h2')
-            .replace(/<\/h1>/g, '<\/h2>') 
-        }}
-      />
-
-      {Array.isArray(post.tags) && post.tags.length > 0 && (
-        <div className="mt-6 flex flex-wrap gap-2">
-          {post.tags.map((tag) => (
-            <span key={tag} className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
-              #{tag}
-            </span>
-          ))}
+          {/* Author & Reviewer Attribution */}
+          <div className="mt-12 border-t border-gray-200 pt-6 flex items-start space-x-4 bg-gray-50 p-4 rounded-xl font-sans">
+            <div className="w-12 h-12 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0 text-teal-600">
+              <User className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Written & Reviewed by Arpit</h3>
+              <p className="text-xs text-gray-500 font-medium">Co-Founder & Lead Art Curation Director</p>
+              <p className="text-xs text-gray-600 mt-1.5 leading-relaxed font-normal font-sans">
+                Arpit is a co-founder and lead curator at Lurevi. With extensive experience in the Indian e-commerce landscape and digital art curation, Arpit drives the platform's vision of making premium contemporary prints accessible to modern homes across India.
+              </p>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Author & Reviewer Attribution */}
-      <div className="mt-12 border-t border-gray-200 pt-6 flex items-start space-x-4 bg-gray-50 p-4 rounded-xl font-sans">
-        <div className="w-12 h-12 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0 text-teal-600">
-          <User className="w-6 h-6" />
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900">Written & Reviewed by Arpit</h3>
-          <p className="text-xs text-gray-500 font-medium">Co-Founder & Lead Art Curation Director</p>
-          <p className="text-xs text-gray-600 mt-1.5 leading-relaxed font-normal font-sans">
-            Arpit is a co-founder and lead curator at Lurevi. With extensive experience in the Indian e-commerce landscape and digital art curation, Arpit drives the platform's vision of making premium contemporary prints accessible to modern homes across India.
-          </p>
-        </div>
+        {/* Sticky TOC */}
+        <TableOfContents toc={toc} />
       </div>
 
       {/* Featured Products Section */}
