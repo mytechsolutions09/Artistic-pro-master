@@ -34,3 +34,6 @@ out
 
 # Pre-build generated assets
 public/pinterest-catalog.csv
+
+# Local development API folder (copied from api_dev)
+app/api

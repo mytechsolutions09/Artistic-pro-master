@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from '@/src/compat/router';
 import { usePreserveNavScroll } from '@/src/hooks/usePreserveNavScroll';
 import { supabase } from '@/src/services/supabaseService';
+import { RealUserService } from '@/src/services/realUserService';
 import {
   BarChart3,
   ShoppingBag,
@@ -46,34 +47,153 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
   const { navRef, onNavScroll } = usePreserveNavScroll([location.pathname]);
   const [hoveredItem, setHoveredItem] = useState<{ label: string; top: number } | null>(null);
   const [newOrdersCount, setNewOrdersCount] = useState<number>(0);
+  const [newMessagesCount, setNewMessagesCount] = useState<number>(0);
+  const [newUsersCount, setNewUsersCount] = useState<number>(0);
+
+  const ordersCountRef = useRef<number>(0);
+  const messagesCountRef = useRef<number>(0);
+  const usersCountRef = useRef<number>(0);
+
+  const playNotificationSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+        
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      const now = audioCtx.currentTime;
+      playTone(523.25, now, 0.4);      // C5 note
+      playTone(783.99, now + 0.12, 0.6); // G5 note
+    } catch (e) {
+      console.log('Notification audio play blocked or failed:', e);
+    }
+  };
+
+  const updateOrdersCount = (count: number, playSound: boolean) => {
+    if (playSound && count > ordersCountRef.current) {
+      playNotificationSound();
+    }
+    ordersCountRef.current = count;
+    setNewOrdersCount(count);
+  };
+
+  const updateMessagesCount = (count: number, playSound: boolean) => {
+    if (playSound && count > messagesCountRef.current) {
+      playNotificationSound();
+    }
+    messagesCountRef.current = count;
+    setNewMessagesCount(count);
+  };
+
+  const updateUsersCount = (count: number, playSound: boolean) => {
+    if (playSound && count > usersCountRef.current) {
+      playNotificationSound();
+    }
+    usersCountRef.current = count;
+    setNewUsersCount(count);
+  };
+
+  const fetchNewOrdersCount = async (playSound = false) => {
+    try {
+      const { count, error } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      if (!error && count !== null) {
+        updateOrdersCount(count, playSound);
+      }
+    } catch (err) {
+      console.error('Error fetching new orders count:', err);
+    }
+  };
+
+  const fetchNewMessagesCount = async (playSound = false) => {
+    try {
+      const { count, error } = await supabase
+        .from('contact_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'new');
+      if (!error && count !== null) {
+        updateMessagesCount(count, playSound);
+      }
+    } catch (err) {
+      console.error('Error fetching new messages count:', err);
+    }
+  };
+
+  const fetchNewUsersCount = async (playSound = false) => {
+    try {
+      const users = await RealUserService.getAllUsers();
+      if (users && Array.isArray(users)) {
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const count = users.filter(u => new Date(u.created_at) > thirtyDaysAgo).length;
+        updateUsersCount(count, playSound);
+      }
+    } catch (err) {
+      console.error('Error fetching new users count:', err);
+    }
+  };
 
   useEffect(() => {
-    // Listen to real-time order creations
-    const channel = supabase
-      .channel('sidebar-orders-notifications')
+    fetchNewOrdersCount(false);
+    fetchNewMessagesCount(false);
+    fetchNewUsersCount(false);
+
+    // Listen to real-time order changes
+    const ordersChannel = supabase
+      .channel('sidebar-orders-realtime')
       .on('postgres_changes', 
         { 
-          event: 'INSERT', 
+          event: '*', 
           schema: 'public', 
           table: 'orders' 
         }, 
-        (payload) => {
-          console.log('New order received in leftbar:', payload);
-          setNewOrdersCount((prev) => prev + 1);
+        () => {
+          fetchNewOrdersCount(true);
         }
       )
       .subscribe();
 
+    // Listen to real-time message changes
+    const messagesChannel = supabase
+      .channel('sidebar-messages-realtime')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'contact_messages' 
+        }, 
+        () => {
+          fetchNewMessagesCount(true);
+        }
+      )
+      .subscribe();
+
+    // Poll for user count every 60 seconds
+    const userInterval = setInterval(() => fetchNewUsersCount(true), 60000);
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(messagesChannel);
+      clearInterval(userInterval);
     };
   }, []);
-
-  useEffect(() => {
-    if (location.pathname === '/admin/orders' || location.pathname === '/admin/orders/') {
-      setNewOrdersCount(0);
-    }
-  }, [location.pathname]);
 
   const handleMouseEnter = (e: React.MouseEvent, label: string) => {
     if (!collapsed) return;
@@ -184,10 +304,34 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, onMenuItemClick,
                     {!collapsed && <span className="font-medium">{item.label}</span>}
                     {item.id === 'orders' && newOrdersCount > 0 && (
                       collapsed ? (
-                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border border-white rounded-full animate-pulse z-20" />
+                        <span className="absolute top-1 right-2 bg-red-500 text-white text-[8px] font-bold min-w-[14px] h-[14px] px-0.5 rounded-full animate-pulse flex items-center justify-center border border-white z-20">
+                          {newOrdersCount}
+                        </span>
                       ) : (
                         <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse min-w-[18px] h-4 flex items-center justify-center">
                           {newOrdersCount}
+                        </span>
+                      )
+                    )}
+                    {item.id === 'customer-care' && newMessagesCount > 0 && (
+                      collapsed ? (
+                        <span className="absolute top-1 right-2 bg-red-500 text-white text-[8px] font-bold min-w-[14px] h-[14px] px-0.5 rounded-full animate-pulse flex items-center justify-center border border-white z-20">
+                          {newMessagesCount}
+                        </span>
+                      ) : (
+                        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse min-w-[18px] h-4 flex items-center justify-center">
+                          {newMessagesCount}
+                        </span>
+                      )
+                    )}
+                    {item.id === 'users' && newUsersCount > 0 && (
+                      collapsed ? (
+                        <span className="absolute top-1 right-2 bg-red-500 text-white text-[8px] font-bold min-w-[14px] h-[14px] px-0.5 rounded-full animate-pulse flex items-center justify-center border border-white z-20">
+                          {newUsersCount}
+                        </span>
+                      ) : (
+                        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse min-w-[18px] h-4 flex items-center justify-center">
+                          {newUsersCount}
                         </span>
                       )
                     )}
