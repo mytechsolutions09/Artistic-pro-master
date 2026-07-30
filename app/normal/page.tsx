@@ -4,6 +4,13 @@ import NormalItemsPage from '@/src/page-components/NormalItemsPage';
 export const metadata: Metadata = {
   title: 'Browse Premium Art Prints & Wall Decor | Lurevi',
   description: 'Browse our complete catalog of premium normal prints and artistic wall decor. High-quality prints designed to bring character and style to any room in your home.',
+  alternates: {
+    canonical: 'https://lurevi.in/normal',
+    languages: {
+      'en-IN': 'https://lurevi.in/normal',
+      'x-default': 'https://lurevi.in/normal',
+    },
+  },
 };
 
 export default function Page() {

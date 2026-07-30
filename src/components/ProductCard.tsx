@@ -53,26 +53,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                categoriesLower.includes('dried fruit') || 
                categoriesLower.includes('spice');
 
-  // Generate appropriate URL
-  const isNormalItem = product.categories && product.categories.includes('Normal');
-  
-  // For normal items, always generate URL from title (not stored slug)
-  // Normal items now use shop URL: /shop/title-slug
-  const normalTitleSlug = generateSlug(product.title);
+  // Generate canonical URL for this product type
   const productSlug = product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  
-  const productUrl = isClothing 
+
+  const isNormalItem = product.categories && product.categories.includes('Normal');
+
+  const productUrl = isClothing
     ? `/clothes/${productSlug}`
     : isFB
-      ? `/${productSlug}`  // F&B products use direct URL: /product-slug
-      : isNormalItem
-        ? `/shop/${normalTitleSlug}`
-        : generateProductUrl(
-            product.categories && product.categories.length > 0 
-              ? product.categories[0] 
-              : (product as any).category || 'general', 
-            product.title
-          );
+      ? `/${productSlug}` // F&B products use direct URL: /product-slug
+      : generateProductUrl(
+          product.categories && product.categories.length > 0
+            ? product.categories[0]
+            : (product as any).category || 'general',
+          product.title
+        );
 
   return (
     <Link

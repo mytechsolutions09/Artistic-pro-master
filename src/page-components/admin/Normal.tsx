@@ -166,10 +166,9 @@ const Normal: React.FC = () => {
     }
 
     try {
-      // Regenerate slug if title changed
-      const newSlug = formData.title.trim() !== editingItem.title 
-        ? NormalItemsService.generateSlug(formData.title.trim())
-        : editingItem.slug;
+      // Always regenerate slug from the current title to ensure consistency.
+      // This also auto-heals any items whose stored slug was set incorrectly (e.g. legacy data).
+      const newSlug = NormalItemsService.generateSlug(formData.title.trim());
 
       const updateData: Partial<NormalItem> = {
         title: formData.title.trim(),
@@ -386,7 +385,7 @@ const Normal: React.FC = () => {
                           <td className="whitespace-nowrap px-3 py-2 text-right">
                             <div className="inline-flex items-center gap-0.5">
                               <a
-                                href={`/${generateSlug(item.title)}`}
+                                href={`/categories/normal/${generateSlug(item.title)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={iconBtn}
@@ -488,6 +487,19 @@ const Normal: React.FC = () => {
                   className={inputCls}
                   placeholder="Title"
                 />
+                {formData.title.trim() && (
+                  <p className="mt-1 text-[10px] text-gray-400">
+                    Canonical URL:{' '}
+                    <a
+                      href={`/categories/normal/${NormalItemsService.generateSlug(formData.title.trim())}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-blue-600 hover:underline"
+                    >
+                      lurevi.in/categories/normal/{NormalItemsService.generateSlug(formData.title.trim())}
+                    </a>
+                  </p>
+                )}
               </div>
 
               <div>

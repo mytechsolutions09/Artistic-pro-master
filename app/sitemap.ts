@@ -43,26 +43,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const supabase = getPublicSupabaseClient();
     if (!supabase) {
+      console.warn('⚠️ [Sitemap] Supabase URL or Anon Key missing in environment during build! Sitemap will only contain static routes.');
       return entries;
     }
 
-    const [{ data: categories }, { data: products }, { data: blogPosts }, { data: normalItems }] = await Promise.all([
+    const [{ data: categories }, { data: products }, { data: blogPosts }] = await Promise.all([
       supabase
         .from('categories')
         .select('slug, updated_at')
         .eq('status', 'active'),
       supabase
         .from('products')
-        .select('title, categories, updated_at')
+        .select('title, categories, updated_at, gender')
         .eq('status', 'active'),
       supabase
         .from('blog_posts')
         .select('slug, updated_at, published_at')
         .eq('status', 'published'),
-      supabase
-        .from('normal_items')
-        .select('slug, updated_at')
-        .eq('status', 'active'),
     ]);
 
     for (const category of categories ?? []) {
@@ -87,17 +84,48 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     for (const product of products ?? []) {
-      if (!product?.title || !Array.isArray(product.categories) || product.categories.length === 0) {
-        continue;
+      if (!product?.title) continue;
+
+      const safeProductSlug = encodeURIComponent(generateSlug(product.title));
+      
+      // Determine if this is a clothing product
+      const isClothing = 
+        (product.gender === 'Men' || product.gender === 'Women' || product.gender === 'Unisex') ||
+        (Array.isArray(product.categories) && product.categories.some(cat => {
+          const lowerCat = String(cat).toLowerCase();
+          return lowerCat.includes('men') || 
+                 lowerCat.includes('women') || 
+                 lowerCat.includes('unisex') ||
+                 lowerCat.includes('clothing');
+        }));
+
+      // Determine if this is an F&B product
+      const categoriesList = Array.isArray(product.categories) ? product.categories : [];
+      const categoriesLower = categoriesList.map(c => String(c).toLowerCase()).join(' ');
+      const isFB = categoriesLower.includes('food & beverage') || 
+                   categoriesLower.includes('f&b') || 
+                   categoriesLower.includes('food-beverage') ||
+                   categoriesLower.includes('dry fruit') || 
+                   categoriesLower.includes('dried fruit') || 
+                   categoriesLower.includes('spice');
+
+      let productPath = '';
+      if (isClothing) {
+        productPath = `/clothes/${safeProductSlug}`;
+      } else if (isFB) {
+        productPath = `/${safeProductSlug}`;
+      } else {
+        const categorySlug = categoriesList[0];
+        if (categorySlug) {
+          const safeCategorySlug = encodeURIComponent(generateSlug(String(categorySlug)));
+          productPath = `/categories/${safeCategorySlug}/${safeProductSlug}`;
+        } else {
+          productPath = `/categories/general/${safeProductSlug}`;
+        }
       }
 
-      const categorySlug = product.categories[0];
-      if (!categorySlug) continue;
-      const safeCategorySlug = encodeURIComponent(generateSlug(String(categorySlug)));
-      const safeProductSlug = encodeURIComponent(generateSlug(product.title));
-
       entries.push({
-        url: `${SITE_URL}/categories/${safeCategorySlug}/${safeProductSlug}`,
+        url: `${SITE_URL}${productPath}`,
         lastModified: product.updated_at ? new Date(product.updated_at) : now,
         changeFrequency: 'weekly',
         priority: 0.7,
@@ -115,18 +143,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
-    for (const item of normalItems ?? []) {
-      if (!item?.slug) continue;
-      const safeSlug = encodeURIComponent(String(item.slug));
-      entries.push({
-        url: `${SITE_URL}/shop/${safeSlug}`,
-        lastModified: item.updated_at ? new Date(item.updated_at) : now,
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      });
-    }
-  } catch {
-    // If DB is unavailable during generation, keep static routes in sitemap.
+    console.log(`✅ [Sitemap] Generated ${entries.length} URLs for sitemap.xml (${categories?.length || 0} categories, ${products?.length || 0} products, ${blogPosts?.length || 0} blog posts).`);
+  } catch (err: any) {
+    console.error('❌ [Sitemap] Error querying database for sitemap:', err?.message || err);
   }
 
   return entries;

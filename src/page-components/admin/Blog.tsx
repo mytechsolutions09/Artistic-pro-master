@@ -284,11 +284,9 @@ const BlogAdmin: React.FC = () => {
       categoriesLower.includes('dry fruit') ||
       categoriesLower.includes('dried fruit') ||
       categoriesLower.includes('spice');
-    const isNormalItem = product.categories && product.categories.includes('Normal');
     const productSlug = product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     if (isClothing) return `/clothes/${productSlug}`;
     if (isFB) return `/${productSlug}`;
-    if (isNormalItem) return `/shop/${generateSlug(product.title)}`;
     return generateProductUrl(
       product.categories && product.categories.length > 0
         ? product.categories[0]

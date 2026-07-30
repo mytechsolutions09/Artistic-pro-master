@@ -304,16 +304,12 @@ const Homepage: React.FC<HomepageProps> = ({
                  categoriesLower.includes('spice');
 
     // Check if normal item
-    const isNormalItem = product.categories && product.categories.includes('Normal');
-
     const productSlug = product.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
     if (isClothing) {
       return `/clothes/${productSlug}`;
     } else if (isFB) {
       return `/${productSlug}`;
-    } else if (isNormalItem) {
-      return `/shop/${generateSlug(product.title)}`;
     } else {
       return generateProductUrl(category, product.title);
     }

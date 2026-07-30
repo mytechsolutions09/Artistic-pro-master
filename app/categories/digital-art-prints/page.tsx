@@ -2,11 +2,18 @@ import type { Metadata } from 'next';
 import { createStaticClient } from '@/lib/supabase/server';
 import ProductCard from '@/src/components/ProductCard';
 import { Link } from '@/src/compat/router';
+import { generateSlug } from '@/src/utils/slugUtils';
 
 export const metadata: Metadata = {
   title: 'Digital Art Prints — Curated Wall Art for Indian Homes | Lurevi',
   description: 'Shop digital art prints in India. Lurevi curates modern wall art from independent artists — archival-quality prints, delivered to your door. Free shipping above ₹999.',
-  alternates: { canonical: 'https://lurevi.in/categories/digital-art-prints' },
+  alternates: {
+    canonical: 'https://lurevi.in/categories/digital-art-prints',
+    languages: {
+      'en-IN': 'https://lurevi.in/categories/digital-art-prints',
+      'x-default': 'https://lurevi.in/categories/digital-art-prints',
+    },
+  },
 };
 
 export const revalidate = 3600;
@@ -114,7 +121,7 @@ export default async function DigitalArtPrintsPage() {
         "@type": "Product",
         "name": product.title,
         "image": product.images?.[0] || '',
-        "url": `https://lurevi.in/shop/${product.slug || product.id}`,
+        "url": `https://lurevi.in/categories/${Array.isArray(product.categories) && product.categories.length > 0 ? generateSlug(product.categories[0]) : 'digital-art-prints'}/${generateSlug(product.title)}`,
         "offers": {
           "@type": "Offer",
           "price": product.price,

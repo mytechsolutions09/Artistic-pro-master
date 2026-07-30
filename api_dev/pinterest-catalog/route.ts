@@ -73,7 +73,7 @@ export async function GET() {
       const description = p.description || p.title;
       
       const slug = p.slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const link = `https://lurevi.in/shop/${slug}`;
+      const link = `https://lurevi.in/categories/normal/${slug}`;
       
       const image_link = p.main_image || (p.images && p.images[0]) || '';
       const price = `${p.price || 0} INR`;

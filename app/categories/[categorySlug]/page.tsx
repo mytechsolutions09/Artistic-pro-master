@@ -158,14 +158,17 @@ export default async function CategoryPage({ params }: Props) {
               <section>
                 <h2>{finalCategory.name} Artworks</h2>
                 <ul>
-                  {products.map((p) => (
-                    <li key={p.id}>
-                      <a href={`/categories/${categorySlug}/${p.slug || generateSlug(p.title)}`}>
-                        {p.title} — ₹{p.price}
-                        {p.description && ` — ${p.description.substring(0, 120)}`}
-                      </a>
-                    </li>
-                  ))}
+                  {products.map((p) => {
+                    const primaryCatSlug = Array.isArray(p.categories) && p.categories.length > 0 ? generateSlug(p.categories[0]) : categorySlug;
+                    return (
+                      <li key={p.id}>
+                        <a href={`/categories/${primaryCatSlug}/${p.slug || generateSlug(p.title)}`}>
+                          {p.title} — ₹{p.price}
+                          {p.description && ` — ${p.description.substring(0, 120)}`}
+                        </a>
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             )}

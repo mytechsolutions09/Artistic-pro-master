@@ -28,7 +28,7 @@ import { Review } from '../types';
 import { MessageCircle, ThumbsUp } from 'lucide-react';
 
 const NormalItemsPage: React.FC = () => {
-  // Support /normal/:itemSlug, /:itemSlug, and /shop/:itemSlug routes
+  // Support /normal/:itemSlug and /:itemSlug routes (/shop/:itemSlug retired — Netlify _redirects sends 301 to /categories/normal/:slug)
   const { itemSlug, categorySlug } = useParams<{ itemSlug?: string; categorySlug?: string }>();
   const slug = itemSlug || categorySlug;
   const navigate = useNavigate();

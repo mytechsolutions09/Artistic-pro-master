@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createStaticClient } from '@/lib/supabase/server';
@@ -9,15 +10,19 @@ interface Props {
   params: Promise<{ categorySlug: string; productSlug: string }>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { categorySlug, productSlug } = await params;
+const getActiveProducts = cache(async () => {
   const supabase = createStaticClient();
-
   const { data: products } = await supabase
     .from('products')
-    .select('title, description, price, images');
+    .select('id, title, description, price, images, tags, categories')
+    .eq('status', 'active');
+  return products || [];
+});
 
-  const product = (products || []).find((p) => generateSlug(p.title) === productSlug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { categorySlug, productSlug } = await params;
+  const products = await getActiveProducts();
+  const product = products.find((p) => generateSlug(p.title) === productSlug);
 
   if (!product) {
     return {
@@ -75,11 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  const supabase = createStaticClient();
-  const { data: products } = await supabase
-    .from('products')
-    .select('title, categories')
-    .eq('status', 'active');
+  const products = await getActiveProducts();
 
   const params: Array<{ categorySlug: string; productSlug: string }> = [];
 
@@ -102,13 +103,9 @@ export const revalidate = 3600;
 
 export default async function ProductPage({ params }: Props) {
   const { categorySlug, productSlug } = await params;
-  const supabase = createStaticClient();
+  const products = await getActiveProducts();
 
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, title, description, price, images, tags, categories');
-
-  const product = (products || []).find((p) => generateSlug(p.title) === productSlug);
+  const product = products.find((p) => generateSlug(p.title) === productSlug);
 
   if (!product) {
     return notFound();

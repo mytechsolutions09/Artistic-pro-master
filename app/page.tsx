@@ -151,7 +151,7 @@ export default async function HomePage() {
               <h2 className="text-lg font-medium text-gray-900">Featured Artworks</h2>
               <ul className="mt-2 list-disc pl-5 text-sm text-gray-700 space-y-1">
                 {featuredProducts.slice(0, 10).map((p) => {
-                  const categorySlug = Array.isArray(p.categories) ? p.categories[0] : 'browse';
+                  const categorySlug = Array.isArray(p.categories) && p.categories.length > 0 ? generateSlug(p.categories[0]) : 'browse';
                   return (
                     <li key={p.id}>
                       <a href={`/categories/${categorySlug}/${p.slug || generateSlug(p.title)}`} className="hover:underline">
@@ -250,7 +250,7 @@ export default async function HomePage() {
               <ul>
                 {featuredProducts.map((p) => (
                   <li key={p.id}>
-                    <a href={`/categories/${Array.isArray(p.categories) ? p.categories[0] : 'browse'}/${p.slug || generateSlug(p.title)}`}>
+                    <a href={`/categories/${Array.isArray(p.categories) && p.categories.length > 0 ? generateSlug(p.categories[0]) : 'browse'}/${p.slug || generateSlug(p.title)}`}>
                       {p.title} — ₹{p.price}
                     </a>
                   </li>
