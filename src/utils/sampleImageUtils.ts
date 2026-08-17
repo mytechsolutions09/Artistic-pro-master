@@ -48,21 +48,28 @@ export function getSampleImages(productId: string, count: number = 3): string[] 
  * Check if a product needs sample images
  */
 export function needsSampleImages(product: any): boolean {
-  return (
-    !product.images || 
-    product.images.length === 0 || 
-    !product.main_image ||
-    product.main_image === null ||
-    product.main_image === 'None'
-  );
+  if (!product) return true;
+  const hasValidImages = Array.isArray(product.images) && product.images.length > 0 && product.images.some((img: string) => typeof img === 'string' && img.trim() !== '' && img !== 'None' && img !== 'null');
+  const hasValidMainImage = typeof product.main_image === 'string' && product.main_image.trim() !== '' && product.main_image !== 'None' && product.main_image !== 'null';
+  return !hasValidImages && !hasValidMainImage;
 }
 
 /**
  * Enhance a product with sample images if needed
  */
 export function enhanceProductWithSampleImages(product: any): any {
+  if (!product) return product;
+  
+  // Ensure images array is initialized if main_image exists
+  if (product.main_image && product.main_image !== 'None' && (!product.images || product.images.length === 0)) {
+    return {
+      ...product,
+      images: [product.main_image]
+    };
+  }
+
   if (needsSampleImages(product)) {
-    const sampleImages = getSampleImages(product.id, 3);
+    const sampleImages = getSampleImages(product.id || 'default', 3);
     return {
       ...product,
       images: sampleImages,

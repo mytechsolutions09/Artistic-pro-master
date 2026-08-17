@@ -122,8 +122,6 @@ const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
         onError={handleImageError}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
-        referrerPolicy="no-referrer"
-        crossOrigin="anonymous"
       />
       
       {/* Error state */}

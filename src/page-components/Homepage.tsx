@@ -356,7 +356,9 @@ const Homepage: React.FC<HomepageProps> = ({
         price: product.price,
         originalPrice: product.originalPrice,
         discountPercentage: product.discountPercentage,
-        images: product.images || (product.main_image ? [product.main_image] : ['/placeholder-image.jpg']),
+        images: (product.images && product.images.length > 0 && product.images[0])
+          ? product.images
+          : (product.main_image ? [product.main_image] : (product.image ? [product.image] : ['/placeholder-image.jpg'])),
         rating: product.rating || 4.5,
         downloads: product.downloads || 0,
         favoritesCount: product.favoritesCount || 0,
@@ -374,7 +376,9 @@ const Homepage: React.FC<HomepageProps> = ({
     ...bestSellers,
     selectedProducts: getBestSellersProducts().map((product: any) => ({
       ...product,
-      images: product.images || (product.image ? [product.image] : ['/placeholder-image.jpg']),
+      images: (product.images && product.images.length > 0 && product.images[0])
+        ? product.images
+        : (product.main_image ? [product.main_image] : (product.image ? [product.image] : ['/placeholder-image.jpg'])),
       link: getProductLink(product)
     }))
   };
@@ -410,15 +414,21 @@ const Homepage: React.FC<HomepageProps> = ({
       return true;
     });
     
+    // Filter out products already displayed in Best Sellers
+    const bestSellerIds = new Set(getBestSellersProducts().map((p: any) => p.id));
+    const availableArtProducts = artOnlyProducts.filter(p => !bestSellerIds.has(p.id));
+
     // Get featured products (products marked as featured in database)
-    const featuredProducts = artOnlyProducts.filter(product => product.featured === true);
+    const featuredProducts = availableArtProducts.filter(product => product.featured === true);
     
-    // If we have featured products, use them; otherwise use top products by rating
-    const artworkProducts = featuredProducts.length > 0 
+    // If we have featured products, use them; otherwise use next distinct products
+    const artworkProducts = featuredProducts.length >= 4 
       ? featuredProducts.slice(0, 4)
-      : artOnlyProducts
-          .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-          .slice(0, 4);
+      : (featuredProducts.length > 0
+          ? [...featuredProducts, ...availableArtProducts.filter(p => !featuredProducts.includes(p))].slice(0, 4)
+          : (availableArtProducts.length >= 4 
+              ? availableArtProducts.slice(0, 4) 
+              : [...availableArtProducts, ...artOnlyProducts.filter(p => bestSellerIds.has(p.id))].slice(0, 4)));
     
     return artworkProducts.map(product => {
       const category = product.categories?.[0] || product.category || 'Art';
@@ -432,7 +442,9 @@ const Homepage: React.FC<HomepageProps> = ({
         price: product.price,
         originalPrice: product.originalPrice,
         discountPercentage: product.discountPercentage,
-        images: product.images || (product.main_image ? [product.main_image] : ['/placeholder-image.jpg']),
+        images: (product.images && product.images.length > 0 && product.images[0])
+          ? product.images
+          : (product.main_image ? [product.main_image] : (product.image ? [product.image] : ['/placeholder-image.jpg'])),
         rating: product.rating || 4.5,
         downloads: product.downloads || 0,
         favoritesCount: product.favoritesCount || 0,
@@ -1093,43 +1105,43 @@ const Homepage: React.FC<HomepageProps> = ({
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
             {safeBestSellers.selectedProducts.map((product: any) => (
-              <Link key={product.id} to={product.link} className="group">
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative overflow-hidden h-80">
-                    <OptimizedImage
-                      src={product.images[0]}
-                      alt={product.title}
-                      className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
-                      width={500}
-                      priority={false}
-                    />
-                    {safeBestSellers.showBadge && (
-                      <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium text-white bg-${product.badgeColor}-500 font-sans font-normal`}>
-                        {product.badge}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-xs font-semibold text-gray-800 mb-2 truncate font-sans font-normal" title={product.title}>{product.title}</h3>
+              <Link key={product.id} to={product.link} className="group block">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 relative h-80">
+                  <OptimizedImage
+                    src={product.images[0]}
+                    alt={product.title}
+                    className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+                    width={500}
+                    priority={false}
+                  />
+                  {safeBestSellers.showBadge && (
+                    <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium text-white bg-${product.badgeColor}-500 font-sans font-normal z-10`}>
+                      {product.badge}
+                    </div>
+                  )}
+
+                  {/* Overlay Content Section - slides up on hover */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md transform translate-y-0 opacity-100 sm:translate-y-full sm:group-hover:translate-y-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 ease-in-out border-t border-gray-100/50 shadow-md z-10">
+                    <h3 className="text-xs font-semibold text-gray-800 mb-1 truncate font-sans font-normal" title={product.title}>{product.title}</h3>
                     
                     {/* Price Section */}
-                    <div className="mb-2">
+                    <div className="mb-1.5">
                       {product.originalPrice && product.originalPrice > product.price ? (
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           <div className="flex items-center space-x-2">
-                            <div className="text-base font-semibold text-black font-sans font-normal">
+                            <div className="text-sm font-semibold text-black font-sans font-normal">
                               {formatUIPrice(product.price, 'INR')}
                             </div>
-                            <div className="text-xs text-green-700 font-semibold font-sans font-normal">
+                            <div className="text-[10px] text-green-700 font-semibold font-sans font-normal">
                               {product.discountPercentage}% OFF
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 line-through font-sans font-normal">
+                          <div className="text-[10px] text-gray-600 line-through font-sans font-normal">
                             {formatUIPrice(product.originalPrice, 'INR')}
                           </div>
                         </div>
                       ) : (
-                        <div className="text-base font-semibold text-black font-sans font-normal">
+                        <div className="text-sm font-semibold text-black font-sans font-normal">
                           {formatUIPrice(product.price, 'INR')}
                         </div>
                       )}
@@ -1183,43 +1195,43 @@ const Homepage: React.FC<HomepageProps> = ({
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {safeFeaturedArtwork.selectedProducts.map((product: any) => (
-              <Link key={product.id} to={product.link} className="group">
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative overflow-hidden h-80">
-                    <OptimizedImage
-                      src={product.images[0]}
-                      alt={product.title}
-                      className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
-                      width={400}
-                      priority={false}
-                    />
-                    {safeFeaturedArtwork.showBadge && (
-                      <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium text-white bg-${product.badgeColor}-500 font-sans font-normal`}>
-                        {product.badge}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-xs font-semibold text-gray-800 mb-2 truncate font-sans font-normal" title={product.title}>{product.title}</h3>
+              <Link key={product.id} to={product.link} className="group block">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 relative h-80">
+                  <OptimizedImage
+                    src={product.images[0]}
+                    alt={product.title}
+                    className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+                    width={400}
+                    priority={false}
+                  />
+                  {safeFeaturedArtwork.showBadge && (
+                    <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium text-white bg-${product.badgeColor}-500 font-sans font-normal z-10`}>
+                      {product.badge}
+                    </div>
+                  )}
+
+                  {/* Overlay Content Section - slides up on hover */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md transform translate-y-0 opacity-100 sm:translate-y-full sm:group-hover:translate-y-0 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 ease-in-out border-t border-gray-100/50 shadow-md z-10">
+                    <h3 className="text-xs font-semibold text-gray-800 mb-1 truncate font-sans font-normal" title={product.title}>{product.title}</h3>
                     
                     {/* Price Section */}
-                    <div className="mb-2">
+                    <div className="mb-1.5">
                       {product.originalPrice && product.originalPrice > product.price ? (
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           <div className="flex items-center space-x-2">
-                            <div className="text-base font-semibold text-black font-sans font-normal">
+                            <div className="text-sm font-semibold text-black font-sans font-normal">
                               {formatUIPrice(product.price, 'INR')}
                             </div>
-                            <div className="text-xs text-green-700 font-semibold font-sans font-normal">
+                            <div className="text-[10px] text-green-700 font-semibold font-sans font-normal">
                               {product.discountPercentage}% OFF
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 line-through font-sans font-normal">
+                          <div className="text-[10px] text-gray-600 line-through font-sans font-normal">
                             {formatUIPrice(product.originalPrice, 'INR')}
                           </div>
                         </div>
                       ) : (
-                        <div className="text-base font-semibold text-black font-sans font-normal">
+                        <div className="text-sm font-semibold text-black font-sans font-normal">
                           {formatUIPrice(product.price, 'INR')}
                         </div>
                       )}

@@ -32,7 +32,7 @@ const AboutUs: React.FC = () => {
 
   const teamMembers = [
     {
-      name: "Arpit Kanotra",
+      name: "Arppit Kanotra",
       role: "Founder & CEO",
       description: "Visionary entrepreneur with 15+ years in e-commerce and digital marketing. Passionate about making art accessible to everyone."
     },

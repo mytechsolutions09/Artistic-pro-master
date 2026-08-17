@@ -357,10 +357,10 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
               <User className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Written & Reviewed by Arpit</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Written & Reviewed by Arppit</h3>
               <p className="text-xs text-gray-500 font-medium">Co-Founder & Lead Art Curation Director</p>
               <p className="text-xs text-gray-600 mt-1.5 leading-relaxed font-normal font-sans">
-                Arpit is a co-founder and lead curator at Lurevi. With extensive experience in the Indian e-commerce landscape and digital art curation, Arpit drives the platform's vision of making premium contemporary prints accessible to modern homes across India.
+                Arppit is a co-founder and lead curator at Lurevi. With extensive experience in the Indian e-commerce landscape and digital art curation, Arppit drives the platform's vision of making premium contemporary prints accessible to modern homes across India.
               </p>
             </div>
           </div>

@@ -719,12 +719,16 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
                 </div>
               ) : (
                 <div 
-                  className="w-full aspect-[6/5] max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] max-w-[600px] overflow-hidden group cursor-zoom-in relative"
+                  className={`w-full aspect-[6/5] max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] max-w-[600px] overflow-hidden group cursor-zoom-in relative ${
+                    selectedProductImage === 4 ? 'bg-[#f9fafb] flex items-center justify-center' : ''
+                  }`}
                 >
                   <img
                     src={productImages[selectedProductImage]}
                     alt={`${product.title} — digital art print by Lurevi`}
-                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-125 origin-center"
+                    className={`w-full h-full ${
+                      selectedProductImage === 4 ? 'object-contain' : 'object-cover'
+                    } transition-transform duration-300 ease-in-out group-hover:scale-125 origin-center`}
                     onContextMenu={handleContextMenu}
                     onDragStart={handleDragStart}
                     draggable={false}
@@ -1303,7 +1307,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ initialProduct }) => {
                   </div>
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs font-semibold text-gray-900">Arpit</span>
+                      <span className="text-xs font-semibold text-gray-900">Arppit</span>
                       <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">Head Curator</span>
                       <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full font-medium font-sans">Verified: June 2026</span>
                     </div>
